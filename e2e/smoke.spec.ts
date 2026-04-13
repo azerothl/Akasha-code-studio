@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
@@ -120,15 +120,22 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+async function selectDemoProject(page: Page) {
+  await page.getByTestId("studio-load-project").click();
+  await page.getByRole("button", { name: /Démo E2E/i }).click();
+}
+
 test("loads layout and lists mocked project", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Code Studio/i })).toBeVisible();
+  await page.getByTestId("studio-load-project").click();
   await expect(page.getByRole("button", { name: /Démo E2E/i })).toBeVisible();
 });
 
 test("loads project tech stack from metadata", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  await selectDemoProject(page);
+  await page.getByRole("button", { name: /Paramètres du projet/i }).click();
   const stackArea = page.locator(".stack-textarea");
   await expect(stackArea).toBeVisible();
   await expect(stackArea).toHaveValue("React + Vite");
@@ -136,7 +143,7 @@ test("loads project tech stack from metadata", async ({ page }) => {
 
 test("opens index.html and shows preview title", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  await selectDemoProject(page);
   await page.getByRole("button", { name: "index.html" }).click();
   await page.getByRole("tab", { name: /^Aperçu$/i }).click();
   await expect(page.locator('iframe[title="Aperçu"]').contentFrame().getByRole("heading", { name: "Studio" })).toBeVisible({
@@ -146,7 +153,7 @@ test("opens index.html and shows preview title", async ({ page }) => {
 
 test("sends chat message to daemon (mocked)", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  await selectDemoProject(page);
   await page.locator(".chat-form textarea").fill("Hello scaffold");
   await page.getByRole("button", { name: "Envoyer" }).click();
   await expect(page.getByText(/La tâche est terminée/i)).toBeVisible({ timeout: 10_000 });
