@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          projects: [{ id: demoId, path: `/tmp/studio/${demoId}` }],
+          projects: [{ id: demoId, name: "Démo E2E", path: `/tmp/studio/${demoId}` }],
         }),
       });
       return;
@@ -24,6 +24,39 @@ test.beforeEach(async ({ page }) => {
     }
     await route.continue();
   });
+
+  await page.route(
+    (url) => {
+      try {
+        const p = new URL(url).pathname.replace(/\/$/, "");
+        return p === `/api/studio/projects/${demoId}`;
+      } catch {
+        return false;
+      }
+    },
+    async (route) => {
+      const m = route.request().method();
+      if (m === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: demoId,
+            name: "Démo E2E",
+            created_at: "2020-01-01T00:00:00Z",
+            evolutions: [],
+            tech_stack: "React + Vite",
+          }),
+        });
+        return;
+      }
+      if (m === "PATCH") {
+        await route.fulfill({ status: 200, body: "{}" });
+        return;
+      }
+      await route.continue();
+    },
+  );
 
   await page.route(`**/api/studio/projects/${demoId}/files`, async (route) => {
     await route.fulfill({
@@ -68,17 +101,42 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ ack: true, task_id: demoId, session_id: "t", message: "ok" }),
     });
   });
+
+  await page.route("**/api/tasks/**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        task_id: demoId,
+        status: "completed",
+        assigned_agent: "studio_scaffold",
+        progress: [{ progress_pct: 100, message: "Mock — tâche terminée" }],
+      }),
+    });
+  });
 });
 
 test("loads layout and lists mocked project", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Akasha Code Studio/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /00000000/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Code Studio/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Démo E2E/i })).toBeVisible();
+});
+
+test("loads project tech stack from metadata", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  const stackArea = page.locator(".stack-textarea");
+  await expect(stackArea).toBeVisible();
+  await expect(stackArea).toHaveValue("React + Vite");
 });
 
 test("opens index.html and shows preview title", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /00000000/i }).click();
+  await page.getByRole("button", { name: /Démo E2E/i }).click();
   await page.getByRole("button", { name: "index.html" }).click();
   await expect(page.locator("iframe[title=preview]").contentFrame().getByRole("heading", { name: "Studio" })).toBeVisible({
     timeout: 10_000,
@@ -87,8 +145,8 @@ test("opens index.html and shows preview title", async ({ page }) => {
 
 test("sends chat message to daemon (mocked)", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /00000000/i }).click();
+  await page.getByRole("button", { name: /Démo E2E/i }).click();
   await page.locator(".chat-form textarea").fill("Hello scaffold");
   await page.getByRole("button", { name: "Envoyer" }).click();
-  await expect(page.getByText(/Tâche/)).toBeVisible();
+  await expect(page.getByText(/La tâche est terminée/i)).toBeVisible({ timeout: 10_000 });
 });

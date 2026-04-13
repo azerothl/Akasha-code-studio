@@ -1,7 +1,23 @@
 /** Base URL: dev server proxies /api to the daemon (see vite.config.ts). */
 const api = (path: string) => path.startsWith("/") ? path : `/${path}`;
 
-export type StudioProject = { id: string; path: string };
+export type StudioProject = { id: string; name: string; path: string };
+
+export type Evolution = {
+  id: string;
+  branch: string;
+  status: string;
+  created_at: string;
+  root_task_id?: string | null;
+};
+
+export type StudioProjectMeta = {
+  id: string;
+  name: string;
+  created_at: string;
+  evolutions?: Evolution[];
+  tech_stack?: string | null;
+};
 
 export async function listProjects(): Promise<StudioProject[]> {
   const r = await fetch(api("/api/studio/projects"));
@@ -10,20 +26,39 @@ export async function listProjects(): Promise<StudioProject[]> {
   return j.projects ?? [];
 }
 
-export async function createProject(name?: string): Promise<{ id: string; path: string }> {
+/** At least one of `name` or `tech_stack` must be set. Use `tech_stack: null` to clear the stack. */
+export async function patchProjectSettings(
+  projectId: string,
+  body: { name?: string; tech_stack?: string | null },
+): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`patchProjectSettings ${r.status}: ${t}`);
+  }
+}
+
+export async function createProject(opts?: {
+  name?: string;
+  tech_stack?: string;
+}): Promise<{ id: string; path: string }> {
   const r = await fetch(api("/api/studio/projects"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(name ? { name } : {}),
+    body: JSON.stringify(opts && (opts.name || opts.tech_stack) ? { ...opts } : {}),
   });
   if (!r.ok) throw new Error(`createProject ${r.status}`);
   return r.json() as Promise<{ id: string; path: string }>;
 }
 
-export async function getProjectMeta(projectId: string): Promise<unknown> {
+export async function getProjectMeta(projectId: string): Promise<StudioProjectMeta> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`));
   if (!r.ok) throw new Error(`getProjectMeta ${r.status}`);
-  return r.json();
+  return r.json() as Promise<StudioProjectMeta>;
 }
 
 export async function listFiles(projectId: string): Promise<string[]> {
@@ -73,14 +108,6 @@ export async function runBuild(
     error?: string;
   }>;
 }
-
-export type Evolution = {
-  id: string;
-  branch: string;
-  status: string;
-  created_at: string;
-  root_task_id?: string | null;
-};
 
 export async function listEvolutions(projectId: string): Promise<Evolution[]> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/evolutions`));
@@ -143,8 +170,23 @@ export async function sendMessage(body: {
   return j;
 }
 
-export async function getTask(taskId: string): Promise<unknown> {
+export type TaskStatusResponse = {
+  task_id: string;
+  status: string;
+  assigned_agent?: string;
+  progress?: { progress_pct: number; message: string }[];
+};
+
+export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   const r = await fetch(api(`/api/tasks/${taskId}`));
   if (!r.ok) throw new Error(`getTask ${r.status}`);
-  return r.json();
+  return r.json() as Promise<TaskStatusResponse>;
+}
+
+export function isTaskTerminal(status: string): boolean {
+  return ["completed", "failed", "cancelled", "interrupted"].includes(status);
+}
+
+export function isTaskNeedsUser(status: string): boolean {
+  return status === "waiting_user_input";
 }

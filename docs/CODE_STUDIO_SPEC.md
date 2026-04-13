@@ -34,6 +34,9 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-008 | 5 | `GET/POST .../evolutions`, merge, abandon ; méta dans `.akasha-studio.json` | Fait |
 | STU-009 | 6 | Limite parallélisme studio (`AKASHA_STUDIO_MAX_PARALLEL_OPS`) | Fait |
 | STU-010 | 1 | Rappel prompt « périmètre studio » si racine sous `studio-projects` | Fait (`STUDIO_DISK_REMINDER`) |
+| STU-010b | 1 | Désactiver le garde-fou **small-talk** (suppression des réponses « outil ») pour les tâches dont le disque outil est sous `studio-projects/` | Fait (`run_message_via_llm`) |
+| STU-014 | 1 | Liste projets avec **nom lisible** + `PATCH .../projects/:id` pour renommer l’affichage | Fait |
+| STU-015 | 1 | Champ **stack technique** en méta (POST/PATCH, GET méta) ; préfixe injecté dans `POST /api/message` pour les agents `studio_*` | Fait |
 | STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Reporté (utiliser `run_in_container` côté agent + policy) |
 | STU-012 | 3 | Proxy preview dev server | Reporté |
 | STU-013 | 8 | Application de patchs par hunk dans l’UI | Reporté |
@@ -61,9 +64,10 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 
 | Méthode | Chemin | Description |
 |---------|--------|-------------|
-| GET | `/api/studio/projects` | Liste `{ projects: [{ id, path }] }` |
-| POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…" }` → `{ id, path }` |
-| GET | `/api/studio/projects/:id` | Lit méta + évolutions sérialisées |
+| GET | `/api/studio/projects` | Liste `{ projects: [{ id, name, path }] }` (`name` depuis `.akasha-studio.json` ou repli `Projet xxxxxxxx`) |
+| POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` |
+| PATCH | `/api/studio/projects/:id` | Corps `{ "name": "…" }` et/ou `{ "tech_stack": "…" \| null }` (`null` ou chaîne vide efface la stack) |
+| GET | `/api/studio/projects/:id` | Lit méta + évolutions sérialisées (inclut `tech_stack` optionnel) |
 
 ### Fichiers & raw
 
@@ -107,6 +111,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Preview | Fichiers `.html` : blob URL + iframe `sandbox` |
 | Barre ops | Clone HTTPS, build argv, merge / abandon évolution |
 | Chat | `POST /api/message` avec `studio_project_id`, agent forcé, évolution |
+| Stack projet | `<select>` de préréglages (Vite/React/TS, Python/uv/Streamlit, Go, Rust, etc.) + option « Personnalisé » ; section repliable avec cases à cocher (frontend, backend, design, données, qualité) qui complètent le texte ; enregistrement = chaîne unique via `PATCH` (`tech_stack`) |
 | Logs build | Résultat `POST .../build` |
 | Indicateur sandbox | L’UI affiche que le périmètre disque est le dossier projet ; l’isolation réseau/conteneur dépend de la policy et de `run_in_container` |
 
