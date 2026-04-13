@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as api from "./api";
+import { loadChatMessages, saveChatMessages } from "./chatStorage";
 import {
   BASE_STACK_PRESETS,
   STACK_ADDON_GROUPS,
@@ -127,6 +128,30 @@ function StackFields({
   );
 }
 
+function CollapsiblePanel({
+  title,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="panel panel-collapsible">
+      <button type="button" className="panel-collapse-trigger" onClick={onToggle} aria-expanded={open}>
+        <span className="panel-collapse-chevron" aria-hidden>
+          {open ? "▼" : "▶"}
+        </span>
+        <h2>{title}</h2>
+      </button>
+      {open ? <div className="panel-collapse-inner">{children}</div> : null}
+    </section>
+  );
+}
+
 function formatTaskStatusFr(status: string): string {
   const m: Record<string, string> = {
     pending: "En attente",
@@ -181,6 +206,19 @@ export default function App() {
     done: boolean;
   } | null>(null);
 
+  const [modalCreateOpen, setModalCreateOpen] = useState(false);
+  const [modalLoadOpen, setModalLoadOpen] = useState(false);
+  const [sidebarLeftVisible, setSidebarLeftVisible] = useState(true);
+  const [sidebarRightVisible, setSidebarRightVisible] = useState(true);
+  const [sectionOpen, setSectionOpen] = useState({
+    project: true,
+    files: true,
+    settings: false,
+    evolutions: false,
+  });
+
+  const skipChatSaveOnce = useRef(false);
+
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
     [projects, selectedId],
@@ -209,6 +247,24 @@ export default function App() {
   useEffect(() => {
     void refreshProjects();
   }, [refreshProjects]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setChat([]);
+      return;
+    }
+    skipChatSaveOnce.current = true;
+    setChat(loadChatMessages(selectedId));
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    if (skipChatSaveOnce.current) {
+      skipChatSaveOnce.current = false;
+      return;
+    }
+    saveChatMessages(selectedId, chat);
+  }, [selectedId, chat]);
 
   useEffect(() => {
     setRenameDraft(selectedProject?.name ?? "");
@@ -440,6 +496,7 @@ export default function App() {
       setNewStackPresetId(STACK_PRESET_NONE);
       setNewStackCustomText("");
       setNewStackAddons(emptyStackAddons());
+      setModalCreateOpen(false);
       setStatus(`Projet « ${name} » créé`);
     } catch (e) {
       setError(String(e));
@@ -626,66 +683,74 @@ export default function App() {
 
   const agentHint = AGENT_OPTIONS.find((o) => o.value === agent)?.hint ?? "";
 
+  const appClass =
+    "app" +
+    (!sidebarLeftVisible ? " app--hide-left" : "") +
+    (!sidebarRightVisible ? " app--hide-right" : "");
+
   return (
-    <div className="app">
-      <header className="app-header">
-        <div>
+    <div className={appClass}>
+      <header className="app-header app-header--compact">
+        <div className="app-header-row">
           <h1>Code Studio</h1>
-          <p className="subtitle">
-            Atelier projet pour le daemon Akasha — fichiers sous <code>studio-projects/</code>, pas sur tout le disque.
-          </p>
+          <div className="app-header-actions">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              aria-pressed={sidebarLeftVisible}
+              title="Afficher ou masquer le panneau gauche"
+              onClick={() => setSidebarLeftVisible((v) => !v)}
+            >
+              {sidebarLeftVisible ? "◀ Gauche" : "▶ Gauche"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              aria-pressed={sidebarRightVisible}
+              title="Afficher ou masquer le panneau chat"
+              onClick={() => setSidebarRightVisible((v) => !v)}
+            >
+              {sidebarRightVisible ? "Chat ▶" : "◀ Chat"}
+            </button>
+          </div>
         </div>
       </header>
 
-      <aside className="sidebar">
-        <section className="panel">
-          <h2>Projets</h2>
-          <p className="hint">Chaque projet a un nom lisible (modifiable) et un identifiant technique unique.</p>
-          <div className="field-row field-row-stack">
-            <label className="field">
-              <span>Nom du nouveau projet</span>
-              <input
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="Ex. Landing vitrine"
-              />
-            </label>
-            <button type="button" className="btn btn-primary" onClick={() => void onCreateProject()}>
-              Créer
+      <aside className="sidebar" aria-hidden={!sidebarLeftVisible}>
+        <CollapsiblePanel
+          title="Projet"
+          open={sectionOpen.project}
+          onToggle={() => setSectionOpen((s) => ({ ...s, project: !s.project }))}
+        >
+          <div className="project-actions-row">
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setModalCreateOpen(true)}>
+              Créer un projet
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              data-testid="studio-load-project"
+              onClick={() => setModalLoadOpen(true)}
+            >
+              Charger un projet
             </button>
           </div>
-          <div className="new-project-stack">
-            <span className="field-label-like">Stack à la création (optionnel)</span>
-            <StackFields
-              selectId="new-project-stack-select"
-              presetId={newStackPresetId}
-              onPresetChange={onNewStackPresetSelect}
-              customText={newStackCustomText}
-              onCustomTextChange={setNewStackCustomText}
-              addons={newStackAddons}
-              onToggleAddon={toggleNewStackAddon}
-              composedStack={newProjectComposedStack}
-            />
-          </div>
-          <ul className="project-list">
-            {projects.map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  className={`project-item ${p.id === selectedId ? "active" : ""}`}
-                  onClick={() => setSelectedId(p.id)}
-                >
-                  <span className="project-name">{p.name}</span>
-                  <span className="project-id">{p.id.slice(0, 8)}…</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+          {selectedProject ? (
+            <p className="current-project-line">
+              <span className="current-project-name">{selectedProject.name}</span>
+              <span className="project-id">{selectedProject.id.slice(0, 8)}…</span>
+            </p>
+          ) : (
+            <p className="hint">Aucun projet chargé — utilisez les boutons ci-dessus.</p>
+          )}
+        </CollapsiblePanel>
 
-        <section className="panel panel-files">
-          <div className="panel-files-header">
-            <h2>Fichiers du projet</h2>
+        <CollapsiblePanel
+          title="Fichiers du projet"
+          open={sectionOpen.files}
+          onToggle={() => setSectionOpen((s) => ({ ...s, files: !s.files }))}
+        >
+          <div className="panel-files-header panel-files-header--inline">
             <button
               type="button"
               className="btn btn-ghost btn-sm"
@@ -718,11 +783,14 @@ export default function App() {
               ))}
             </ul>
           )}
-        </section>
+        </CollapsiblePanel>
 
         {selectedId ? (
-          <section className="panel panel-project-settings">
-            <h2>Paramètres du projet</h2>
+          <CollapsiblePanel
+            title="Paramètres du projet"
+            open={sectionOpen.settings}
+            onToggle={() => setSectionOpen((s) => ({ ...s, settings: !s.settings }))}
+          >
             <div className="project-settings">
               <div className="rename-box">
                 <label className="field">
@@ -756,11 +824,14 @@ export default function App() {
                 </button>
               </div>
             </div>
-          </section>
+          </CollapsiblePanel>
         ) : null}
 
-        <section className="panel">
-          <h2>Évolutions Git</h2>
+        <CollapsiblePanel
+          title="Évolutions Git"
+          open={sectionOpen.evolutions}
+          onToggle={() => setSectionOpen((s) => ({ ...s, evolutions: !s.evolutions }))}
+        >
           <p className="hint">Branche dédiée par idée ; fusion dans main depuis la barre du bas.</p>
           <label className="field">
             <span>Label de branche (optionnel)</span>
@@ -787,7 +858,7 @@ export default function App() {
               </li>
             ))}
           </ul>
-        </section>
+        </CollapsiblePanel>
       </aside>
 
       <div className="center">
@@ -935,7 +1006,7 @@ export default function App() {
         {status ? <div className="banner banner-ok">{status}</div> : null}
       </div>
 
-      <aside className="chat-panel">
+      <aside className="chat-panel" aria-hidden={!sidebarRightVisible}>
         <div className="pane-title">Message à l’agent</div>
         <label className="field agent-select">
           <span>Rôle de l’agent</span>
@@ -1000,6 +1071,102 @@ export default function App() {
         <div className="pane-title">Journal de build</div>
         <pre className="build-pre">{buildLog || "—"}</pre>
       </aside>
+
+      {modalLoadOpen ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setModalLoadOpen(false)}
+          onKeyDown={(e) => e.key === "Escape" && setModalLoadOpen(false)}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-load-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="modal-load-title">Charger un projet</h3>
+            <p className="hint">Sélectionnez un projet existant sur ce poste (via le daemon).</p>
+            {projects.length === 0 ? (
+              <p className="hint">Aucun projet — créez-en un d’abord.</p>
+            ) : (
+              <ul className="project-list modal-project-list">
+                {projects.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className={`project-item ${p.id === selectedId ? "active" : ""}`}
+                      data-testid={`studio-project-${p.id}`}
+                      onClick={() => {
+                        setSelectedId(p.id);
+                        setModalLoadOpen(false);
+                      }}
+                    >
+                      <span className="project-name">{p.name}</span>
+                      <span className="project-id">{p.id.slice(0, 8)}…</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setModalLoadOpen(false)}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {modalCreateOpen ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setModalCreateOpen(false)}
+          onKeyDown={(e) => e.key === "Escape" && setModalCreateOpen(false)}
+        >
+          <div
+            className="modal-card modal-card--wide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-create-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="modal-create-title">Nouveau projet</h3>
+            <p className="hint">Un dépôt Git local est initialisé automatiquement dans le dossier du projet.</p>
+            <label className="field">
+              <span>Nom du projet</span>
+              <input
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="Ex. Landing vitrine"
+              />
+            </label>
+            <div className="new-project-stack">
+              <span className="field-label-like">Stack à la création (optionnel)</span>
+              <StackFields
+                selectId="modal-new-project-stack-select"
+                presetId={newStackPresetId}
+                onPresetChange={onNewStackPresetSelect}
+                customText={newStackCustomText}
+                onCustomTextChange={setNewStackCustomText}
+                addons={newStackAddons}
+                onToggleAddon={toggleNewStackAddon}
+                composedStack={newProjectComposedStack}
+              />
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setModalCreateOpen(false)}>
+                Annuler
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => void onCreateProject()}>
+                Créer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
