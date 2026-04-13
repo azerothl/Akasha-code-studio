@@ -1,0 +1,250 @@
+:root {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  line-height: 1.45;
+  color: #e8e8ec;
+  background: #12141a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  grid-template-rows: auto 1fr 140px;
+  height: 100vh;
+  gap: 0;
+}
+
+.app h1 {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: #1a1d26;
+  border-bottom: 1px solid #2a2f3d;
+}
+
+.sidebar {
+  grid-row: 2 / 4;
+  border-right: 1px solid #2a2f3d;
+  display: flex;
+  flex-direction: column;
+  background: #161922;
+  overflow: auto;
+}
+
+.sidebar h2 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8b92a8;
+  margin: 0.75rem 0.75rem 0.35rem;
+}
+
+.sidebar button,
+.sidebar .row-btn {
+  display: block;
+  width: calc(100% - 1rem);
+  margin: 0.15rem 0.5rem;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #c8cdd8;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.sidebar button:hover,
+.sidebar .row-btn:hover {
+  background: #252a38;
+}
+
+.sidebar button.active {
+  background: #2d3548;
+  color: #fff;
+}
+
+.center {
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  border-bottom: 1px solid #2a2f3d;
+}
+
+.editor-pane,
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-pane {
+  border-right: 1px solid #2a2f3d;
+}
+
+.pane-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8b92a8;
+  padding: 0.35rem 0.6rem;
+  background: #1a1d26;
+}
+
+textarea.editor {
+  flex: 1;
+  margin: 0;
+  padding: 0.6rem;
+  border: none;
+  resize: none;
+  font-family: "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  font-size: 0.8rem;
+  background: #0e1015;
+  color: #dce0ea;
+}
+
+.preview-frame {
+  flex: 1;
+  border: none;
+  background: #fff;
+}
+
+.chat-panel {
+  grid-column: 3;
+  grid-row: 2 / 4;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #2a2f3d;
+  background: #161922;
+  min-height: 0;
+}
+
+.ops-bar {
+  grid-column: 2;
+  grid-row: 3;
+  padding: 0.5rem 0.75rem;
+  background: #1a1d26;
+  border-top: 1px solid #2a2f3d;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8rem;
+  overflow: auto;
+}
+
+.ops-bar label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #a8b0c4;
+}
+
+.ops-bar input,
+.ops-bar select {
+  background: #0e1015;
+  border: 1px solid #2a2f3d;
+  color: #e8e8ec;
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+}
+
+.ops-bar button {
+  background: #3d5a80;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.ops-bar button.secondary {
+  background: #2a2f3d;
+}
+
+.ops-bar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-log {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.chat-log .msg {
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  background: #1f2433;
+}
+
+.chat-log .msg.user {
+  background: #243044;
+}
+
+.chat-form {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-top: 1px solid #2a2f3d;
+}
+
+.chat-form textarea {
+  flex: 1;
+  min-height: 3rem;
+  resize: vertical;
+  background: #0e1015;
+  border: 1px solid #2a2f3d;
+  color: #e8e8ec;
+  border-radius: 4px;
+  padding: 0.4rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.chat-form button {
+  align-self: flex-end;
+  background: #4a7c59;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+}
+
+.status-line {
+  font-size: 0.75rem;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+}
+
+.error {
+  color: #f87171;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.success {
+  color: #86efac;
+  font-size: 0.8rem;
+}
