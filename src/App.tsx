@@ -214,6 +214,7 @@ export default function App() {
     project: true,
     files: true,
     settings: false,
+    ops: true,
     evolutions: false,
   });
 
@@ -683,40 +684,30 @@ export default function App() {
 
   const agentHint = AGENT_OPTIONS.find((o) => o.value === agent)?.hint ?? "";
 
-  const appClass =
+  const previewUrl = devPreviewUrl ?? staticPreviewBlobUrl;
+
+  const openPreviewInNewWindow = useCallback(() => {
+    if (!previewUrl) return;
+    window.open(previewUrl, "_blank", "noopener,noreferrer");
+  }, [previewUrl]);
+
+  const appLayoutClass =
     "app" +
-    (!sidebarLeftVisible ? " app--hide-left" : "") +
-    (!sidebarRightVisible ? " app--hide-right" : "");
+    (!sidebarLeftVisible ? " app--left-collapsed" : "") +
+    (!sidebarRightVisible ? " app--right-collapsed" : "");
 
   return (
-    <div className={appClass}>
+    <div className={appLayoutClass}>
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
-          <div className="app-header-actions">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              aria-pressed={sidebarLeftVisible}
-              title="Afficher ou masquer le panneau gauche"
-              onClick={() => setSidebarLeftVisible((v) => !v)}
-            >
-              {sidebarLeftVisible ? "◀ Gauche" : "▶ Gauche"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              aria-pressed={sidebarRightVisible}
-              title="Afficher ou masquer le panneau chat"
-              onClick={() => setSidebarRightVisible((v) => !v)}
-            >
-              {sidebarRightVisible ? "Chat ▶" : "◀ Chat"}
-            </button>
-          </div>
         </div>
       </header>
 
-      <aside className="sidebar" aria-hidden={!sidebarLeftVisible}>
+      <div className={`sidebar-column${!sidebarLeftVisible ? " sidebar-column--collapsed" : ""}`}>
+        {sidebarLeftVisible ? (
+        <aside className="sidebar">
+          <div className="sidebar-scroll">
         <CollapsiblePanel
           title="Projet"
           open={sectionOpen.project}
@@ -769,19 +760,21 @@ export default function App() {
               « Rafraîchir » si la liste ne se met pas à jour.
             </p>
           ) : (
-            <ul className="file-list">
-              {files.map((f) => (
-                <li key={f}>
-                  <button
-                    type="button"
-                    className={f === filePath ? "active" : ""}
-                    onClick={() => void openFile(f)}
-                  >
-                    {f}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="file-list-scroll">
+              <ul className="file-list">
+                {files.map((f) => (
+                  <li key={f}>
+                    <button
+                      type="button"
+                      className={f === filePath ? "active" : ""}
+                      onClick={() => void openFile(f)}
+                    >
+                      {f}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </CollapsiblePanel>
 
@@ -832,7 +825,7 @@ export default function App() {
           open={sectionOpen.evolutions}
           onToggle={() => setSectionOpen((s) => ({ ...s, evolutions: !s.evolutions }))}
         >
-          <p className="hint">Branche dédiée par idée ; fusion dans main depuis la barre du bas.</p>
+          <p className="hint">Branche dédiée par idée ; fusionnez vers main depuis la section « Import & build ».</p>
           <label className="field">
             <span>Label de branche (optionnel)</span>
             <input
@@ -859,7 +852,110 @@ export default function App() {
             ))}
           </ul>
         </CollapsiblePanel>
-      </aside>
+
+        <CollapsiblePanel
+          title="Import & build"
+          open={sectionOpen.ops}
+          onToggle={() => setSectionOpen((s) => ({ ...s, ops: !s.ops }))}
+        >
+          <div className="ops-panel">
+            <div className="ops-group ops-group--stacked">
+              <label className="field">
+                <span>URL du dépôt (HTTPS)</span>
+                <input
+                  className="ops-input"
+                  value={cloneUrl}
+                  onChange={(e) => setCloneUrl(e.target.value)}
+                  placeholder="https://github.com/…"
+                  title="Adresse Git distante à cloner dans le dossier du projet (écrase ou fusionne selon le dépôt)."
+                />
+              </label>
+              <button
+                type="button"
+                className="btn btn-secondary btn-block"
+                disabled={!selectedId}
+                title="Exécute git clone dans le répertoire du projet Code Studio pour récupérer le code d’un dépôt distant."
+                onClick={() => void onClone()}
+              >
+                Cloner (HTTPS)
+              </button>
+            </div>
+            <div className="ops-group ops-group--stacked">
+              <label className="field">
+                <span>Commande de build</span>
+                <input
+                  className="ops-input"
+                  value={buildCmd}
+                  onChange={(e) => setBuildCmd(e.target.value)}
+                  placeholder="npm run build"
+                  title="Ligne de commande exécutée dans le dossier projet (ex. npm run build, cargo build)."
+                />
+              </label>
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                disabled={!selectedId}
+                title="Lance la commande sur le serveur Akasha et affiche la sortie dans le journal de build (panneau droit)."
+                onClick={() => void onBuild()}
+              >
+                Exécuter le build
+              </button>
+            </div>
+            <div className="ops-group ops-group--stacked">
+              <button
+                type="button"
+                className="btn btn-secondary btn-block"
+                disabled={!selectedId || !selectedEvoId}
+                title="Fusionne la branche d’évolution sélectionnée dans main (git merge côté daemon)."
+                onClick={() => {
+                  if (selectedId && selectedEvoId) {
+                    void api
+                      .mergeEvolution(selectedId, selectedEvoId)
+                      .then(() => refreshEvolutions())
+                      .catch((e) => setError(String(e)));
+                  }
+                }}
+              >
+                Fusionner dans main
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-block"
+                disabled={!selectedId || !selectedEvoId}
+                title="Abandonne la branche d’évolution sans fusion (supprime ou réinitialise selon la logique du daemon)."
+                onClick={() => {
+                  if (selectedId && selectedEvoId) {
+                    void api
+                      .abandonEvolution(selectedId, selectedEvoId)
+                      .then(() => refreshEvolutions())
+                      .catch((e) => setError(String(e)));
+                  }
+                }}
+              >
+                Abandonner la branche
+              </button>
+            </div>
+            {error ? <div className="banner banner-error">{error}</div> : null}
+            {status ? <div className="banner banner-ok">{status}</div> : null}
+          </div>
+        </CollapsiblePanel>
+          </div>
+        </aside>
+        ) : null}
+        <button
+          type="button"
+          className="sidebar-split-toggle sidebar-split-toggle--left"
+          aria-expanded={sidebarLeftVisible}
+          title={
+            sidebarLeftVisible
+              ? "Masquer le panneau gauche (replie vers la gauche)"
+              : "Afficher le panneau gauche"
+          }
+          onClick={() => setSidebarLeftVisible((v) => !v)}
+        >
+          {sidebarLeftVisible ? "◀" : "▶"}
+        </button>
+      </div>
 
       <div className="center">
         <div className="center-tabs" role="tablist" aria-label="Éditeur ou aperçu">
@@ -907,9 +1003,19 @@ export default function App() {
                 type="button"
                 className="btn btn-secondary btn-sm"
                 disabled={!selectedId || !devPreviewUrl}
+                title="Arrête le serveur de développement lancé par le daemon."
                 onClick={() => void onStopPreview()}
               >
                 Arrêter le serveur
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={!previewUrl}
+                title="Ouvre l’URL d’aperçu (serveur dev ou fichier HTML) dans un nouvel onglet ou une nouvelle fenêtre du navigateur."
+                onClick={() => openPreviewInNewWindow()}
+              >
+                Nouvelle fenêtre
               </button>
             </div>
             {previewLog ? (
@@ -945,68 +1051,9 @@ export default function App() {
         )}
       </div>
 
-      <div className="ops-bar">
-        <div className="ops-group">
-          <span className="ops-label">Importer</span>
-          <input
-            className="ops-input"
-            value={cloneUrl}
-            onChange={(e) => setCloneUrl(e.target.value)}
-            placeholder="https://github.com/…"
-          />
-          <button type="button" className="btn btn-secondary" disabled={!selectedId} onClick={() => void onClone()}>
-            Cloner (HTTPS)
-          </button>
-        </div>
-        <div className="ops-group">
-          <span className="ops-label">Build</span>
-          <input
-            className="ops-input"
-            value={buildCmd}
-            onChange={(e) => setBuildCmd(e.target.value)}
-            placeholder="npm run build"
-          />
-          <button type="button" className="btn btn-primary" disabled={!selectedId} onClick={() => void onBuild()}>
-            Exécuter
-          </button>
-        </div>
-        <div className="ops-group">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={!selectedId || !selectedEvoId}
-            onClick={() => {
-              if (selectedId && selectedEvoId) {
-                void api
-                  .mergeEvolution(selectedId, selectedEvoId)
-                  .then(() => refreshEvolutions())
-                  .catch((e) => setError(String(e)));
-              }
-            }}
-          >
-            Fusionner dans main
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            disabled={!selectedId || !selectedEvoId}
-            onClick={() => {
-              if (selectedId && selectedEvoId) {
-                void api
-                  .abandonEvolution(selectedId, selectedEvoId)
-                  .then(() => refreshEvolutions())
-                  .catch((e) => setError(String(e)));
-              }
-            }}
-          >
-            Abandonner la branche
-          </button>
-        </div>
-        {error ? <div className="banner banner-error">{error}</div> : null}
-        {status ? <div className="banner banner-ok">{status}</div> : null}
-      </div>
-
-      <aside className="chat-panel" aria-hidden={!sidebarRightVisible}>
+      <div className={`chat-column${!sidebarRightVisible ? " chat-column--collapsed" : ""}`}>
+        {sidebarRightVisible ? (
+        <aside className="chat-panel">
         <div className="pane-title">Message à l’agent</div>
         <label className="field agent-select">
           <span>Rôle de l’agent</span>
@@ -1071,6 +1118,17 @@ export default function App() {
         <div className="pane-title">Journal de build</div>
         <pre className="build-pre">{buildLog || "—"}</pre>
       </aside>
+        ) : null}
+        <button
+          type="button"
+          className="sidebar-split-toggle sidebar-split-toggle--right"
+          aria-expanded={sidebarRightVisible}
+          title={sidebarRightVisible ? "Masquer le panneau chat (replie vers la droite)" : "Afficher le panneau chat"}
+          onClick={() => setSidebarRightVisible((v) => !v)}
+        >
+          {sidebarRightVisible ? "▶" : "◀"}
+        </button>
+      </div>
 
       {modalLoadOpen ? (
         <div
