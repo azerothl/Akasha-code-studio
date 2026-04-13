@@ -91,6 +91,22 @@ kbd {
   color: var(--text-muted);
 }
 
+.panel-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.panel-files-header h2 {
+  margin: 0;
+}
+
+.panel-files .hint {
+  margin-bottom: 0;
+}
+
 .hint {
   margin: 0 0 0.5rem;
   font-size: 0.78rem;
@@ -267,6 +283,9 @@ kbd {
 
 .new-project-stack {
   margin-bottom: 0.65rem;
+  max-height: min(38vh, 20rem);
+  overflow-y: auto;
+  padding-right: 0.2rem;
 }
 
 .field-label-like {
@@ -408,11 +427,50 @@ kbd {
 }
 
 .center {
+  grid-column: 2;
   grid-row: 2;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   border-bottom: 1px solid var(--border);
+}
+
+.center-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  background: #141824;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.center-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.center-tab:hover {
+  color: #dce2ee;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.center-tab.active {
+  color: #fff;
+  border-color: var(--border);
+  background: rgba(91, 141, 239, 0.12);
+}
+
+.center-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .editor-pane,
@@ -422,8 +480,48 @@ kbd {
   min-height: 0;
 }
 
-.editor-pane {
-  border-right: 1px solid var(--border);
+.monaco-container {
+  flex: 1;
+  min-height: 220px;
+}
+
+.editor-hint {
+  margin: 0;
+  padding: 0.35rem 0.5rem 0.5rem;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: #141824;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pane-title-inline {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.preview-install-log {
+  margin: 0;
+  max-height: 6rem;
+  overflow: auto;
+  font-size: 0.68rem;
+  padding: 0.35rem 0.5rem;
+  background: #0a0c10;
+  color: #9aa3b5;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .pane-title {

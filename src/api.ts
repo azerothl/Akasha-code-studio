@@ -68,6 +68,40 @@ export async function listFiles(projectId: string): Promise<string[]> {
   return j.files ?? [];
 }
 
+export type StudioPreviewStartResponse = {
+  ok: boolean;
+  url: string;
+  port: number;
+  installed?: boolean;
+  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+};
+
+/** Lance `npm install` si besoin puis `npm run dev` (serveur en arrière-plan sur le daemon). */
+export async function startStudioPreview(
+  projectId: string,
+  body?: { force_install?: boolean; port?: number },
+): Promise<StudioPreviewStartResponse> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/preview/start`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body ?? {}),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`startStudioPreview ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<StudioPreviewStartResponse>;
+}
+
+export async function stopStudioPreview(projectId: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/preview/stop`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) throw new Error(`stopStudioPreview ${r.status}`);
+}
+
 export async function readRawFile(
   projectId: string,
   path: string,

@@ -37,6 +37,7 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-010b | 1 | Désactiver le garde-fou **small-talk** (suppression des réponses « outil ») pour les tâches dont le disque outil est sous `studio-projects/` | Fait (`run_message_via_llm`) |
 | STU-014 | 1 | Liste projets avec **nom lisible** + `PATCH .../projects/:id` pour renommer l’affichage | Fait |
 | STU-015 | 1 | Champ **stack technique** en méta (POST/PATCH, GET méta) ; préfixe injecté dans `POST /api/message` pour les agents `studio_*` | Fait |
+| STU-016 | 3 | UI : onglets **Éditeur** / **Aperçu** ; éditeur **Monaco** (workers via CDN) ; **Play** lance `npm install` si besoin puis `npm run dev` côté daemon | Fait |
 | STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Reporté (utiliser `run_in_container` côté agent + policy) |
 | STU-012 | 3 | Proxy preview dev server | Reporté |
 | STU-013 | 8 | Application de patchs par hunk dans l’UI | Reporté |
@@ -68,6 +69,8 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 | POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` |
 | PATCH | `/api/studio/projects/:id` | Corps `{ "name": "…" }` et/ou `{ "tech_stack": "…" \| null }` (`null` ou chaîne vide efface la stack) |
 | GET | `/api/studio/projects/:id` | Lit méta + évolutions sérialisées (inclut `tech_stack` optionnel) |
+| POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, installed?, install? }`. |
+| POST | `/api/studio/projects/:id/preview/stop` | Arrête le processus dev enregistré pour ce projet (`{ ok, stopped }`). |
 
 ### Fichiers & raw
 
@@ -107,8 +110,9 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 |------|----------------------|
 | Liste projets | Création `POST /projects`, sélection charge fichiers + évolutions |
 | Arbre fichiers | `GET /files` ; clic → `GET /raw` |
-| Éditeur | Affichage texte (MVP textarea) ; pas d’écriture directe vers l’API dans le MVP |
-| Preview | Fichiers `.html` : blob URL + iframe `sandbox` |
+| Zone centrale | Onglets **Éditeur** \| **Aperçu** (tabs) |
+| Éditeur | **Monaco Editor** (`@monaco-editor/react`), thème sombre, coloration selon l’extension ; édition locale uniquement (pas de sauvegarde API). Workers Monaco chargés depuis jsDelivr (`monaco-editor@0.52.2`) pour compatibilité bundle Vite. |
+| Aperçu | **▶ Lancer la prévisualisation** : `POST .../preview/start` — serveur dev sur `127.0.0.1` ; **Arrêter le serveur** : `POST .../preview/stop`. Sinon, fichier `.html` ouvert : aperçu statique (blob + iframe `sandbox`). Priorité : URL serveur dev si actif, sinon blob. |
 | Barre ops | Clone HTTPS, build argv, merge / abandon évolution |
 | Chat | `POST /api/message` avec `studio_project_id`, agent forcé, évolution |
 | Stack projet | `<select>` de préréglages (Vite/React/TS, Python/uv/Streamlit, Go, Rust, etc.) + option « Personnalisé » ; section repliable avec cases à cocher (frontend, backend, design, données, qualité) qui complètent le texte ; enregistrement = chaîne unique via `PATCH` (`tech_stack`) |
@@ -123,6 +127,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 - **Build API** : arguments filtrés (pas de `|`, `;`, `&`, retours ligne, `..`).
 - **Hôte** : `npm install` / scripts post-install sur le poste = risque résiduel — **STU-011** reporté vers conteneur.
 - **Réseau** : non restreint par le daemon pour les commandes build (contrairement à un runner conteneurisé idéal).
+- **Prévisualisation** : le daemon lance `npm run dev` sur l’hôte (`127.0.0.1:<port>`) ; l’UI charge les workers Monaco depuis un CDN (accès Internet requis pour l’éditeur en production build).
 
 ---
 

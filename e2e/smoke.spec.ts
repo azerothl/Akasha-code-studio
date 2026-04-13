@@ -138,7 +138,8 @@ test("opens index.html and shows preview title", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Démo E2E/i }).click();
   await page.getByRole("button", { name: "index.html" }).click();
-  await expect(page.locator("iframe[title=preview]").contentFrame().getByRole("heading", { name: "Studio" })).toBeVisible({
+  await page.getByRole("tab", { name: /^Aperçu$/i }).click();
+  await expect(page.locator('iframe[title="Aperçu"]').contentFrame().getByRole("heading", { name: "Studio" })).toBeVisible({
     timeout: 10_000,
   });
 });

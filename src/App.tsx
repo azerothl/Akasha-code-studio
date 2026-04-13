@@ -9,6 +9,7 @@ import {
   composeStackString,
   emptyStackAddons,
 } from "./stackConfig";
+import { CodeEditor } from "./codeEditor";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -155,7 +156,13 @@ export default function App() {
   const [files, setFiles] = useState<string[]>([]);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [editorText, setEditorText] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  /** Aperçu HTML statique (blob) depuis un fichier ouvert. */
+  const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
+  /** URL du serveur dev lancé par le daemon (`npm run dev`). */
+  const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
+  const [centerTab, setCenterTab] = useState<"editor" | "preview">("editor");
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [previewLog, setPreviewLog] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
@@ -299,7 +306,11 @@ export default function App() {
       setFiles([]);
       setFilePath(null);
       setEditorText("");
-      setPreviewUrl(null);
+      setStaticPreviewBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setDevPreviewUrl(null);
       setEvolutions([]);
       return;
     }
@@ -329,6 +340,53 @@ export default function App() {
     }
   }, [selectedId]);
 
+  const refreshFiles = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      const f = await api.listFiles(selectedId);
+      setFiles(f);
+      setStatus("Fichiers actualisés");
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId]);
+
+  const onPlayPreview = useCallback(async () => {
+    if (!selectedId) return;
+    setPreviewBusy(true);
+    setPreviewLog("");
+    setError(null);
+    try {
+      const r = await api.startStudioPreview(selectedId, { force_install: false });
+      setDevPreviewUrl(r.url);
+      if (r.install) {
+        const { stdout, stderr } = r.install;
+        setPreviewLog([stdout, stderr].filter(Boolean).join("\n"));
+      } else {
+        setPreviewLog("");
+      }
+      setCenterTab("preview");
+      setStatus(`Prévisualisation : ${r.url}`);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setPreviewBusy(false);
+    }
+  }, [selectedId]);
+
+  const onStopPreview = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.stopStudioPreview(selectedId);
+      setDevPreviewUrl(null);
+      setStatus("Prévisualisation arrêtée");
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId]);
+
   const openFile = async (path: string) => {
     if (!selectedId) return;
     setError(null);
@@ -339,12 +397,12 @@ export default function App() {
       const ext = path.toLowerCase();
       if (ext.endsWith(".html") || ext.endsWith(".htm")) {
         const blob = new Blob([raw.content ?? ""], { type: "text/html" });
-        setPreviewUrl((prev) => {
+        setStaticPreviewBlobUrl((prev) => {
           if (prev) URL.revokeObjectURL(prev);
           return URL.createObjectURL(blob);
         });
       } else {
-        setPreviewUrl(null);
+        setStaticPreviewBlobUrl(null);
       }
     } catch (e) {
       setError(String(e));
@@ -353,9 +411,19 @@ export default function App() {
 
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (staticPreviewBlobUrl) URL.revokeObjectURL(staticPreviewBlobUrl);
     };
-  }, [previewUrl]);
+  }, [staticPreviewBlobUrl]);
+
+  useEffect(() => {
+    const id = selectedId;
+    return () => {
+      if (id) {
+        void api.stopStudioPreview(id).catch(() => {});
+      }
+      setDevPreviewUrl(null);
+    };
+  }, [selectedId]);
 
   const onCreateProject = async () => {
     setError(null);
@@ -613,7 +681,48 @@ export default function App() {
               </li>
             ))}
           </ul>
-          {selectedId ? (
+        </section>
+
+        <section className="panel panel-files">
+          <div className="panel-files-header">
+            <h2>Fichiers du projet</h2>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              disabled={!selectedId}
+              title="Recharger la liste depuis le daemon"
+              onClick={() => void refreshFiles()}
+            >
+              Rafraîchir
+            </button>
+          </div>
+          {!selectedId ? (
+            <p className="hint">Sélectionnez un projet pour voir ses fichiers.</p>
+          ) : files.length === 0 ? (
+            <p className="hint">
+              Aucun fichier encore — envoyez une consigne à l’agent ou clonez un dépôt. Après une tâche terminée, utilisez
+              « Rafraîchir » si la liste ne se met pas à jour.
+            </p>
+          ) : (
+            <ul className="file-list">
+              {files.map((f) => (
+                <li key={f}>
+                  <button
+                    type="button"
+                    className={f === filePath ? "active" : ""}
+                    onClick={() => void openFile(f)}
+                  >
+                    {f}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {selectedId ? (
+          <section className="panel panel-project-settings">
+            <h2>Paramètres du projet</h2>
             <div className="project-settings">
               <div className="rename-box">
                 <label className="field">
@@ -647,29 +756,8 @@ export default function App() {
                 </button>
               </div>
             </div>
-          ) : null}
-        </section>
-
-        <section className="panel">
-          <h2>Fichiers du projet</h2>
-          {files.length === 0 ? (
-            <p className="hint">Aucun fichier encore — envoyez une consigne à l’agent ou clonez un dépôt.</p>
-          ) : (
-            <ul className="file-list">
-              {files.map((f) => (
-                <li key={f}>
-                  <button
-                    type="button"
-                    className={f === filePath ? "active" : ""}
-                    onClick={() => void openFile(f)}
-                  >
-                    {f}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          </section>
+        ) : null}
 
         <section className="panel">
           <h2>Évolutions Git</h2>
@@ -703,24 +791,87 @@ export default function App() {
       </aside>
 
       <div className="center">
-        <div className="editor-pane">
-          <div className="pane-title">Éditeur {filePath ? <code>{filePath}</code> : null}</div>
-          <textarea
-            className="editor"
-            value={editorText}
-            onChange={(e) => setEditorText(e.target.value)}
-            placeholder="Ouvrez un fichier à gauche. L’édition locale n’est pas encore renvoyée au daemon — utilisez le chat pour faire modifier l’agent."
-            spellCheck={false}
-          />
+        <div className="center-tabs" role="tablist" aria-label="Éditeur ou aperçu">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "editor"}
+            className={`center-tab ${centerTab === "editor" ? "active" : ""}`}
+            onClick={() => setCenterTab("editor")}
+          >
+            Éditeur
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "preview"}
+            className={`center-tab ${centerTab === "preview" ? "active" : ""}`}
+            onClick={() => setCenterTab("preview")}
+          >
+            Aperçu
+          </button>
         </div>
-        <div className="preview-pane">
-          <div className="pane-title">Aperçu HTML</div>
-          {previewUrl ? (
-            <iframe className="preview-frame" title="preview" src={previewUrl} sandbox="allow-scripts" />
-          ) : (
-            <div className="preview-empty">Ouvrez un fichier <code>.html</code> pour prévisualiser.</div>
-          )}
-        </div>
+        {centerTab === "editor" ? (
+          <div className="center-body editor-pane">
+            <div className="pane-title">Éditeur {filePath ? <code>{filePath}</code> : null}</div>
+            <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
+            <p className="hint editor-hint">
+              L’édition locale n’est pas renvoyée au daemon — utilisez le chat pour faire modifier l’agent.
+            </p>
+          </div>
+        ) : (
+          <div className="center-body preview-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Aperçu</span>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={!selectedId || previewBusy}
+                title="npm install si nécessaire, puis npm run dev (Vite, etc.)"
+                onClick={() => void onPlayPreview()}
+              >
+                {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={!selectedId || !devPreviewUrl}
+                onClick={() => void onStopPreview()}
+              >
+                Arrêter le serveur
+              </button>
+            </div>
+            {previewLog ? (
+              <pre className="preview-install-log" title="Sortie npm install">
+                {previewLog}
+              </pre>
+            ) : null}
+            {devPreviewUrl || staticPreviewBlobUrl ? (
+              <iframe
+                className="preview-frame"
+                title="Aperçu"
+                src={devPreviewUrl ?? staticPreviewBlobUrl ?? undefined}
+                sandbox={
+                  devPreviewUrl
+                    ? "allow-scripts allow-same-origin allow-forms allow-popups"
+                    : "allow-scripts"
+                }
+              />
+            ) : (
+              <div className="preview-empty">
+                <p>
+                  <strong>Serveur de dev</strong> : cliquez sur « Lancer la prévisualisation » (projet avec{" "}
+                  <code>package.json</code> et script <code>dev</code>). Le daemon exécute <code>npm install</code>{" "}
+                  si <code>node_modules</code> est absent.
+                </p>
+                <p>
+                  <strong>HTML statique</strong> : ouvrez un fichier <code>.html</code> dans l’arborescence, puis
+                  revenez ici — l’aperçu s’affiche sans serveur.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ops-bar">
