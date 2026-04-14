@@ -67,6 +67,14 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.route(`**/api/studio/projects/${demoId}/raw**`, async (route) => {
+    if (route.request().method() === "PUT") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, path: "index.html" }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -151,10 +159,29 @@ test("opens index.html and shows preview title", async ({ page }) => {
   });
 });
 
+test("saves editor changes with PUT /raw", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("button", { name: "index.html" }).click();
+  await page.locator(".monaco-editor").click();
+  await page.keyboard.press("End");
+  await page.keyboard.type("<!-- e2e-save -->");
+
+  const put = page.waitForRequest(
+    (r) => r.url().includes(`/api/studio/projects/${demoId}/raw`) && r.method() === "PUT",
+  );
+  await page.getByTestId("studio-save-file").click();
+  const req = await put;
+  const body = req.postDataJSON() as { content?: string };
+  expect(body.content ?? "").toContain("<!-- e2e-save -->");
+});
+
 test("sends chat message to daemon (mocked)", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
   await page.locator(".chat-form textarea").fill("Hello scaffold");
   await page.getByRole("button", { name: "Envoyer" }).click();
-  await expect(page.getByText(/La tâche est terminée/i)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/Mock — tâche terminée|La tâche est terminée/i)).toBeVisible({
+    timeout: 10_000,
+  });
 });

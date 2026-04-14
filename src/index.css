@@ -700,6 +700,27 @@ kbd {
   min-height: 0;
 }
 
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: #141824;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.editor-open-path {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #dce2ee;
+}
+
 .monaco-container {
   flex: 1;
   min-height: 220px;
@@ -860,6 +881,27 @@ textarea.editor {
   margin-bottom: 0.5rem;
 }
 
+.chat-panel .panel-collapsible.chat-task-trace-wrap {
+  margin: 0.35rem 0.5rem 0.5rem;
+  flex-shrink: 0;
+}
+
+.task-trace-scroll {
+  max-height: 11rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.15rem;
+  margin-top: 0.15rem;
+}
+
+.task-trace-scroll .task-trace {
+  margin: 0;
+}
+
+.task-trace-idle-hint {
+  margin: 0;
+}
+
 .task-trace {
   margin: 0.35rem 0.5rem 0.5rem;
   padding: 0.55rem 0.65rem;
@@ -877,8 +919,57 @@ textarea.editor {
   border-color: rgba(61, 154, 106, 0.35);
 }
 
+.task-trace.done[data-task-status="failed"] {
+  border-color: rgba(224, 85, 85, 0.55);
+  box-shadow: 0 0 0 1px rgba(224, 85, 85, 0.12);
+}
+
+.task-trace.done[data-task-status="waiting_user_input"] {
+  border-color: rgba(230, 180, 80, 0.55);
+  box-shadow: 0 0 0 1px rgba(230, 180, 80, 0.1);
+}
+
 .task-trace.idle {
   opacity: 0.9;
+  padding: 0.35rem 0.15rem 0.15rem;
+  border: none;
+  background: transparent;
+}
+
+.task-trace-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 0.35rem;
+}
+
+.task-trace-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+}
+
+.task-trace-badge--live {
+  color: #9ec5ff;
+  background: rgba(91, 141, 239, 0.2);
+}
+
+.task-trace-badge--final {
+  color: #9ee9c0;
+  background: rgba(61, 154, 106, 0.22);
+}
+
+.task-trace.done[data-task-status="failed"] .task-trace-badge--final {
+  color: #ffb4b4;
+  background: rgba(224, 85, 85, 0.2);
+}
+
+.task-trace.done[data-task-status="waiting_user_input"] .task-trace-badge--final {
+  color: #f5d78a;
+  background: rgba(230, 180, 80, 0.18);
 }
 
 .task-trace-title {

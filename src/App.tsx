@@ -133,14 +133,16 @@ function CollapsiblePanel({
   open,
   onToggle,
   children,
+  className,
 }: {
   title: string;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="panel panel-collapsible">
+    <section className={["panel", "panel-collapsible", className].filter(Boolean).join(" ")}>
       <button type="button" className="panel-collapse-trigger" onClick={onToggle} aria-expanded={open}>
         <span className="panel-collapse-chevron" aria-hidden>
           {open ? "▼" : "▶"}
@@ -167,6 +169,42 @@ function formatTaskStatusFr(status: string): string {
   return m[status] ?? status;
 }
 
+/** Dernière ligne de progression trop générique pour la remplacer par un texte fixe (voir daemon `task_progress_is_chat_stub`). */
+function isStubProgressMessage(msg: string): boolean {
+  const t = msg.trim();
+  if (t.length === 0) return true;
+  const stubs = new Set([
+    "Terminé.",
+    "Done.",
+    "Échec.",
+    "Annulé.",
+    "Failed.",
+    "Cancelled.",
+    "Sous-tâches en cours.",
+  ]);
+  if (stubs.has(t)) return true;
+  if (t.startsWith("Task delegated to agent")) return true;
+  return false;
+}
+
+/** Texte affiché dans le chat à la fin du suivi de tâche (préfère la dernière progression substantive renvoyée par le daemon). */
+function chatMessageForTerminalTask(status: string, lastProgressMessage: string | undefined): string {
+  const last = lastProgressMessage?.trim();
+  if (status === "completed") {
+    if (last && !isStubProgressMessage(last)) {
+      return last;
+    }
+    return "La tâche est terminée. Les nouveaux fichiers apparaissent dans l’arborescence (rafraîchissement automatique).";
+  }
+  if (status === "failed") {
+    return "La tâche a échoué — voir l’onglet Tâches dans l’UI Akasha principale ou les logs du daemon.";
+  }
+  if (status === "waiting_user_input") {
+    return "Le daemon attend une validation (approbation d’outil ou question utilisateur).";
+  }
+  return `État : ${formatTaskStatusFr(status)}`;
+}
+
 export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -181,6 +219,10 @@ export default function App() {
   const [files, setFiles] = useState<string[]>([]);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [editorText, setEditorText] = useState("");
+  /** Dernière version connue sur le daemon (après ouverture ou enregistrement réussi). */
+  const [savedEditorText, setSavedEditorText] = useState("");
+  /** Fichier ouvert en mode binaire (pas de champ `content` dans la réponse raw). */
+  const [editorBinary, setEditorBinary] = useState(false);
   /** Aperçu HTML statique (blob) depuis un fichier ouvert. */
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
@@ -205,6 +247,9 @@ export default function App() {
     line: string;
     done: boolean;
   } | null>(null);
+  const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
+  /** Annule le polling en cours (nouveau message ou démontage du composant). */
+  const pollTaskAbortRef = useRef<AbortController | null>(null);
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
@@ -228,6 +273,11 @@ export default function App() {
   const composedStack = useMemo(
     () => composeStackString(stackPresetId, stackCustomText, stackAddons),
     [stackPresetId, stackCustomText, stackAddons],
+  );
+
+  const editorDirty = useMemo(
+    () => Boolean(filePath && !editorBinary && editorText !== savedEditorText),
+    [filePath, editorBinary, editorText, savedEditorText],
   );
 
   const newProjectComposedStack = useMemo(
@@ -363,6 +413,8 @@ export default function App() {
       setFiles([]);
       setFilePath(null);
       setEditorText("");
+      setSavedEditorText("");
+      setEditorBinary(false);
       setStaticPreviewBlobUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return null;
@@ -372,6 +424,10 @@ export default function App() {
       return;
     }
     let cancelled = false;
+    setFilePath(null);
+    setEditorText("");
+    setSavedEditorText("");
+    setEditorBinary(false);
     (async () => {
       try {
         const f = await api.listFiles(selectedId);
@@ -444,27 +500,84 @@ export default function App() {
     }
   }, [selectedId]);
 
-  const openFile = async (path: string) => {
-    if (!selectedId) return;
+  const openFile = useCallback(
+    async (path: string) => {
+      if (!selectedId) return;
+      if (filePath && editorDirty) {
+        const ok = window.confirm(
+          "Des modifications non enregistrées dans le fichier ouvert seront perdues. Continuer ?",
+        );
+        if (!ok) return;
+      }
+      setError(null);
+      setFilePath(path);
+      try {
+        const raw = await api.readRawFile(selectedId, path);
+        const text = raw.content;
+        const isBinary = text === undefined && Boolean(raw.content_base64);
+        if (isBinary) {
+          setEditorBinary(true);
+          setEditorText("(binaire — enregistrement depuis l’éditeur non disponible)");
+          setSavedEditorText("");
+          setStaticPreviewBlobUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return null;
+          });
+        } else {
+          setEditorBinary(false);
+          const body = text ?? "";
+          setEditorText(body);
+          setSavedEditorText(body);
+          const ext = path.toLowerCase();
+          if (ext.endsWith(".html") || ext.endsWith(".htm")) {
+            const blob = new Blob([body], { type: "text/html" });
+            setStaticPreviewBlobUrl((prev) => {
+              if (prev) URL.revokeObjectURL(prev);
+              return URL.createObjectURL(blob);
+            });
+          } else {
+            setStaticPreviewBlobUrl(null);
+          }
+        }
+      } catch (e) {
+        setError(String(e));
+      }
+    },
+    [selectedId, filePath, editorDirty],
+  );
+
+  const saveEditor = useCallback(async () => {
+    if (!selectedId || !filePath || editorBinary || !editorDirty) return;
     setError(null);
-    setFilePath(path);
     try {
-      const raw = await api.readRawFile(selectedId, path);
-      setEditorText(raw.content ?? "(binaire ou vide)");
-      const ext = path.toLowerCase();
+      await api.writeRawFile(selectedId, filePath, editorText);
+      setSavedEditorText(editorText);
+      const ext = filePath.toLowerCase();
       if (ext.endsWith(".html") || ext.endsWith(".htm")) {
-        const blob = new Blob([raw.content ?? ""], { type: "text/html" });
+        const blob = new Blob([editorText], { type: "text/html" });
         setStaticPreviewBlobUrl((prev) => {
           if (prev) URL.revokeObjectURL(prev);
           return URL.createObjectURL(blob);
         });
-      } else {
-        setStaticPreviewBlobUrl(null);
       }
+      setStatus(`Fichier enregistré : ${filePath}`);
     } catch (e) {
       setError(String(e));
     }
-  };
+  }, [selectedId, filePath, editorBinary, editorDirty, editorText]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "s" && e.key !== "S") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (centerTab !== "editor") return;
+      if (!filePath || editorBinary || !editorDirty) return;
+      e.preventDefault();
+      void saveEditor();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [centerTab, filePath, editorBinary, editorDirty, saveEditor]);
 
   useEffect(() => {
     return () => {
@@ -594,11 +707,12 @@ export default function App() {
   }, [evolutions, selectedEvoId]);
 
   const pollTask = useCallback(
-    async (taskId: string) => {
+    async (taskId: string, signal: AbortSignal) => {
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
       try {
-        for (let i = 0; i < 120; i++) {
+        while (!signal.aborted) {
           const t = await api.getTask(taskId);
+          if (signal.aborted) return;
           const last = t.progress?.length ? t.progress[t.progress.length - 1] : undefined;
           const line = last
             ? `${last.progress_pct}% — ${last.message}`
@@ -617,36 +731,14 @@ export default function App() {
                 /* ignore */
               }
             }
-            const summary =
-              t.status === "completed"
-                ? "La tâche est terminée. Les nouveaux fichiers apparaissent dans l’arborescence (rafraîchissement automatique)."
-                : t.status === "failed"
-                  ? "La tâche a échoué — voir l’onglet Tâches dans l’UI Akasha principale ou les logs du daemon."
-                  : t.status === "waiting_user_input"
-                    ? "Le daemon attend une validation (approbation d’outil ou question utilisateur)."
-                    : `État : ${formatTaskStatusFr(t.status)}`;
+            const summary = chatMessageForTerminalTask(t.status, last?.message);
             setChat((c) => [...c, { role: "assistant", text: summary }]);
             return;
           }
           await sleep(1500);
         }
-        setTaskTrace((prev) =>
-          prev
-            ? {
-                ...prev,
-                line: "Suivi arrêté (timeout côté UI après ~3 min). La tâche peut encore tourner — vérifiez l’UI Akasha ou GET /api/tasks/…",
-                done: true,
-              }
-            : null,
-        );
-        setChat((c) => [
-          ...c,
-          {
-            role: "assistant",
-            text: "Le suivi automatique a expiré. Ouvrez l’interface Akasha habituelle ou interrogez GET /api/tasks/{id} pour l’état réel.",
-          },
-        ]);
       } catch (e) {
+        if (signal.aborted) return;
         setTaskTrace((prev) =>
           prev ? { ...prev, line: `Erreur de suivi : ${e}`, done: true } : null,
         );
@@ -655,12 +747,20 @@ export default function App() {
     [selectedId],
   );
 
+  useEffect(
+    () => () => {
+      pollTaskAbortRef.current?.abort();
+    },
+    [],
+  );
+
   const onSendChat = async () => {
     const text = chatInput.trim();
     if (!text || !selectedId) return;
     setChat((c) => [...c, { role: "user", text }]);
     setChatInput("");
     setError(null);
+    pollTaskAbortRef.current?.abort();
     setTaskTrace(null);
     try {
       const { task_id } = await api.sendMessage({
@@ -670,13 +770,15 @@ export default function App() {
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
       });
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
       setTaskTrace({
         id: task_id,
         status: "queued",
         line: "Requête acceptée par le daemon — démarrage…",
         done: false,
       });
-      void pollTask(task_id);
+      void pollTask(task_id, ac.signal);
     } catch (e) {
       setError(String(e));
     }
@@ -980,10 +1082,28 @@ export default function App() {
         </div>
         {centerTab === "editor" ? (
           <div className="center-body editor-pane">
-            <div className="pane-title">Éditeur {filePath ? <code>{filePath}</code> : null}</div>
+            <div className="editor-toolbar">
+              <span className="pane-title-inline">Éditeur</span>
+              {filePath ? (
+                <code className="editor-open-path" title={filePath}>
+                  {filePath}
+                </code>
+              ) : null}
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                data-testid="studio-save-file"
+                disabled={!selectedId || !filePath || editorBinary || !editorDirty}
+                title="Enregistrer sur le disque du projet (Ctrl+S ou Cmd+S)"
+                onClick={() => void saveEditor()}
+              >
+                Enregistrer
+              </button>
+            </div>
             <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
             <p className="hint editor-hint">
-              L’édition locale n’est pas renvoyée au daemon — utilisez le chat pour faire modifier l’agent.
+              Les fichiers texte peuvent être enregistrés sur le disque du projet (bouton ou Ctrl+S). Le chat reste
+              utile pour des changements plus larges ou revus par l’agent.
             </p>
           </div>
         ) : (
@@ -1074,21 +1194,39 @@ export default function App() {
           <p className="hint">Aucune branche d’évolution sélectionnée — les changements suivent la branche Git courante du dossier.</p>
         )}
 
-        {taskTrace ? (
-          <div className={`task-trace ${taskTrace.done ? "done" : "running"}`}>
-            <div className="task-trace-title">Suivi de la dernière tâche</div>
-            <div className="task-trace-id">
-              ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
-            </div>
-            <div className="task-trace-line">{taskTrace.line}</div>
-            {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
+        <CollapsiblePanel
+          className="chat-task-trace-wrap"
+          title="Suivi de la dernière tâche"
+          open={taskTraceSectionOpen}
+          onToggle={() => setTaskTraceSectionOpen((v) => !v)}
+        >
+          <div className="task-trace-scroll">
+            {taskTrace ? (
+              <div
+                className={`task-trace ${taskTrace.done ? "done" : "running"}`}
+                data-task-status={taskTrace.status}
+              >
+                <div className="task-trace-header-row">
+                  <span className={`task-trace-badge task-trace-badge--${taskTrace.done ? "final" : "live"}`}>
+                    {taskTrace.done ? "État final" : "En cours"}
+                  </span>
+                </div>
+                <div className="task-trace-id">
+                  ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
+                </div>
+                <div className="task-trace-line">{taskTrace.line}</div>
+                {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
+              </div>
+            ) : (
+              <div className="task-trace idle">
+                <p className="hint task-trace-idle-hint">
+                  Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s) jusqu’à un état final ou une attente
+                  utilisateur.
+                </p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="task-trace idle">
-            <div className="task-trace-title">Suivi de tâche</div>
-            <p className="hint">Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s).</p>
-          </div>
-        )}
+        </CollapsiblePanel>
 
         <div className="chat-log">
           {chat.map((m, i) => (

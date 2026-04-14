@@ -105,11 +105,30 @@ export async function stopStudioPreview(projectId: string): Promise<void> {
 export async function readRawFile(
   projectId: string,
   path: string,
-): Promise<{ content?: string; mime: string; path: string }> {
+): Promise<{ content?: string; content_base64?: string; mime: string; path: string }> {
   const q = new URLSearchParams({ path });
   const r = await fetch(api(`/api/studio/projects/${projectId}/raw?${q}`));
   if (!r.ok) throw new Error(`readRawFile ${r.status}`);
-  return r.json() as Promise<{ content?: string; mime: string; path: string }>;
+  return r.json() as Promise<{
+    content?: string;
+    content_base64?: string;
+    mime: string;
+    path: string;
+  }>;
+}
+
+/** Écrit le fichier texte sous le projet studio (UTF-8). Crée les répertoires parents si besoin. */
+export async function writeRawFile(projectId: string, path: string, content: string): Promise<void> {
+  const q = new URLSearchParams({ path });
+  const r = await fetch(api(`/api/studio/projects/${projectId}/raw?${q}`), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`writeRawFile ${r.status}: ${t}`);
+  }
 }
 
 export async function gitClone(projectId: string, repoUrl: string, branch?: string): Promise<void> {
