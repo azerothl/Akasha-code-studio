@@ -1,17 +1,63 @@
+/*
+ * Thème aligné sur l’application Tauri Akasha (`apps/akasha-ui/src/styles.css`, `dark_akasha`).
+ * Variables `--akasha-*` + alias `--bg-*` / `--accent` pour le reste de cette feuille.
+ */
 :root {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
-  color: #e6e9ef;
-  background: #0f1117;
-  --bg-elevated: #171a22;
-  --bg-panel: #1b1f2a;
-  --border: #2c3344;
-  --text-muted: #9aa3b5;
-  --accent: #5b8def;
-  --accent-hover: #7aa3f5;
-  --success: #3d9a6a;
-  --danger: #e05555;
+  --akasha-bg: #0d0d14;
+  --akasha-bg-elevated: #12121e;
+  --akasha-bg-surface: #12121e;
+  --akasha-bg-surface-hover: #1e1e38;
+  --akasha-bg-card: #1a1a2e;
+  --akasha-text: #f1f5f9;
+  --akasha-text-muted: #94a3b8;
+  --akasha-text-dim: #64748b;
+  --akasha-border: rgba(139, 92, 246, 0.25);
+  --akasha-accent: #8b5cf6;
+  --akasha-accent-hover: #7c3aed;
+  --akasha-accent-light: #a78bfa;
+  --akasha-accent-cyan: #06b6d4;
+  --akasha-success: #10b981;
+  --akasha-error: #ef4444;
+  --akasha-warning: #f59e0b;
+  --akasha-warning-hover: #fbbf24;
+  --akasha-gradient: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  --akasha-gradient-hover: linear-gradient(135deg, #7c3aed, #0891b2);
+  --akasha-btn-primary-bg: var(--akasha-gradient);
+  --akasha-btn-primary-hover-bg: var(--akasha-gradient-hover);
+  --akasha-btn-primary-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  --akasha-btn-primary-hover-shadow: 0 8px 28px rgba(139, 92, 246, 0.52);
+  --akasha-btn-primary-hover-transform: translateY(-1px);
+  --akasha-radius-button: 12px;
+  --akasha-btn-secondary-border: rgba(139, 92, 246, 0.45);
+  --akasha-btn-secondary-fg: #a78bfa;
+  --akasha-btn-secondary-fg-hover: #f1f5f9;
+  --akasha-btn-secondary-border-hover: rgba(139, 92, 246, 0.65);
+  --akasha-btn-secondary-bg-hover: rgba(139, 92, 246, 0.12);
+
+  /* Compatibilité avec les sélecteurs existants de Code Studio */
+  --bg-elevated: var(--akasha-bg-elevated);
+  --bg-panel: var(--akasha-bg-card);
+  --border: var(--akasha-border);
+  --text-muted: var(--akasha-text-muted);
+  --accent: var(--akasha-accent);
+  --accent-hover: var(--akasha-accent-hover);
+  --success: var(--akasha-success);
+  --danger: var(--akasha-error);
   --radius: 8px;
+
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--akasha-text);
+  background: var(--akasha-bg);
+}
+
+[data-theme^="dark"] {
+  color-scheme: dark;
+}
+
+:focus-visible {
+  outline: 2px solid var(--akasha-accent);
+  outline-offset: 2px;
 }
 
 * {
@@ -28,11 +74,20 @@ body,
 body {
   margin: 0;
   min-height: 100%;
+  background: var(--akasha-bg);
+  color: var(--akasha-text);
+}
+
+.app-header h1,
+.panel h2,
+.pane-title,
+.pane-title-inline {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 code,
 kbd {
-  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.88em;
   background: rgba(0, 0, 0, 0.35);
   padding: 0.12em 0.35em;
@@ -69,13 +124,13 @@ kbd {
 .app-header {
   grid-column: 1 / -1;
   padding: 0.85rem 1.25rem;
-  background: linear-gradient(180deg, #1a1f2e 0%, #141824 100%);
+  background: linear-gradient(180deg, var(--akasha-bg-card) 0%, var(--akasha-bg-elevated) 100%);
   border-bottom: 1px solid var(--border);
 }
 
 .app-header--compact {
   padding: 0.4rem 0.75rem;
-  background: #141824;
+  background: var(--akasha-bg-card);
 }
 
 .app-header-row {
@@ -144,7 +199,7 @@ kbd {
   align-self: stretch;
   border: none;
   border-left: 1px solid var(--border);
-  background: #141824;
+  background: var(--akasha-bg-card);
   color: var(--text-muted);
   cursor: pointer;
   font-size: 0.8rem;
@@ -154,8 +209,8 @@ kbd {
 }
 
 .sidebar-split-toggle:hover {
-  color: #e6e9ef;
-  background: #1a1f2a;
+  color: var(--akasha-text);
+  background: var(--akasha-bg-surface-hover);
 }
 
 /* Bouton à droite du chat : ancré au bord droit de la fenêtre (replie vers la droite) */
@@ -349,9 +404,9 @@ kbd {
 .field input,
 .field select,
 .ops-input {
-  background: #0c0e14;
+  background: var(--akasha-bg-surface);
   border: 1px solid var(--border);
-  color: #e6e9ef;
+  color: var(--akasha-text);
   border-radius: 6px;
   padding: 0.45rem 0.55rem;
   font-size: 0.85rem;
@@ -373,35 +428,48 @@ kbd {
 
 .btn {
   border: none;
-  border-radius: 6px;
+  border-radius: var(--akasha-radius-button, 6px);
   padding: 0.45rem 0.85rem;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--akasha-btn-primary-bg, var(--akasha-accent));
   color: #fff;
+  box-shadow: var(--akasha-btn-primary-shadow, none);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--akasha-btn-primary-hover-bg, var(--akasha-accent-hover));
+  box-shadow: var(--akasha-btn-primary-hover-shadow, none);
+  transform: var(--akasha-btn-primary-hover-transform, none);
 }
 
 .btn-secondary {
-  background: #363d52;
-  color: #e6e9ef;
+  background: transparent;
+  color: var(--akasha-btn-secondary-fg, var(--akasha-text-muted));
+  border: 1px solid var(--akasha-btn-secondary-border, var(--akasha-border));
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #454d66;
+  color: var(--akasha-btn-secondary-fg-hover, var(--akasha-text));
+  border-color: var(--akasha-btn-secondary-border-hover, var(--akasha-text-dim));
+  background: var(--akasha-btn-secondary-bg-hover, transparent);
 }
 
 .btn-ghost {
@@ -411,8 +479,9 @@ kbd {
 }
 
 .btn-ghost:hover:not(:disabled) {
-  color: #e6e9ef;
-  border-color: #4a5568;
+  color: var(--akasha-text);
+  border-color: var(--akasha-accent);
+  background: var(--akasha-btn-secondary-bg-hover);
 }
 
 .btn-sm {
@@ -459,8 +528,8 @@ kbd {
 }
 
 .project-item.active {
-  border-color: var(--accent);
-  background: rgba(91, 141, 239, 0.12);
+  border-color: var(--akasha-accent);
+  background: rgba(139, 92, 246, 0.12);
 }
 
 .project-name {
@@ -521,8 +590,8 @@ kbd {
   padding: 0.4rem 0.5rem;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: #1e2433;
-  color: #e6e9ef;
+  background: var(--akasha-bg-surface);
+  color: var(--akasha-text);
   font-size: 0.82rem;
 }
 
@@ -544,7 +613,7 @@ kbd {
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #c8ceda;
+  color: var(--akasha-text-muted);
   user-select: none;
 }
 
@@ -590,7 +659,7 @@ kbd {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.78rem;
-  color: #c8ceda;
+  color: var(--akasha-text-muted);
   cursor: pointer;
 }
 
@@ -604,7 +673,7 @@ kbd {
   box-sizing: border-box;
   resize: vertical;
   min-height: 4.5rem;
-  font-family: ui-monospace, monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -617,7 +686,7 @@ kbd {
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #c8ceda;
+  color: var(--akasha-text-muted);
   font-size: 0.82rem;
   cursor: pointer;
 }
@@ -629,7 +698,7 @@ kbd {
 
 .file-list button.active,
 .evo-list button.active {
-  background: rgba(91, 141, 239, 0.2);
+  background: rgba(139, 92, 246, 0.22);
   color: #fff;
 }
 
@@ -659,7 +728,7 @@ kbd {
   display: flex;
   gap: 0.35rem;
   padding: 0.35rem 0.5rem;
-  background: #141824;
+  background: var(--akasha-bg-card);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -676,14 +745,14 @@ kbd {
 }
 
 .center-tab:hover {
-  color: #dce2ee;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--akasha-text);
+  background: rgba(139, 92, 246, 0.08);
 }
 
 .center-tab.active {
   color: #fff;
-  border-color: var(--border);
-  background: rgba(91, 141, 239, 0.12);
+  border-color: var(--akasha-btn-secondary-border);
+  background: rgba(139, 92, 246, 0.18);
 }
 
 .center-body {
@@ -706,7 +775,7 @@ kbd {
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem 0.5rem;
-  background: #141824;
+  background: var(--akasha-bg-card);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -718,7 +787,7 @@ kbd {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #dce2ee;
+  color: var(--akasha-text);
 }
 
 .monaco-container {
@@ -739,7 +808,7 @@ kbd {
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem 0.5rem;
-  background: #141824;
+  background: var(--akasha-bg-card);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -759,8 +828,8 @@ kbd {
   overflow: auto;
   font-size: 0.68rem;
   padding: 0.35rem 0.5rem;
-  background: #0a0c10;
-  color: #9aa3b5;
+  background: var(--akasha-bg);
+  color: var(--akasha-text-muted);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -772,7 +841,7 @@ kbd {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   padding: 0.4rem 0.65rem;
-  background: #141824;
+  background: var(--akasha-bg-card);
   border-bottom: 1px solid var(--border);
 }
 
@@ -782,11 +851,11 @@ textarea.editor {
   padding: 0.65rem;
   border: none;
   resize: none;
-  font-family: "Cascadia Code", ui-monospace, monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.8rem;
   line-height: 1.45;
-  background: #0a0c10;
-  color: #dce2ee;
+  background: var(--akasha-bg);
+  color: var(--akasha-text);
 }
 
 .preview-frame {
@@ -847,13 +916,13 @@ textarea.editor {
 }
 
 .banner-error {
-  background: rgba(224, 85, 85, 0.15);
-  color: #ffb4b4;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fecaca;
 }
 
 .banner-ok {
-  background: rgba(61, 154, 106, 0.15);
-  color: #9ee9c0;
+  background: rgba(16, 185, 129, 0.15);
+  color: #a7f3d0;
 }
 
 .chat-panel {
@@ -876,7 +945,7 @@ textarea.editor {
 .branch-pill {
   font-size: 0.8rem;
   padding: 0.35rem 0.5rem;
-  background: rgba(91, 141, 239, 0.12);
+  background: rgba(139, 92, 246, 0.12);
   border-radius: 6px;
   margin-bottom: 0.5rem;
 }
@@ -907,21 +976,21 @@ textarea.editor {
   padding: 0.55rem 0.65rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: #12151c;
+  background: var(--akasha-bg-elevated);
 }
 
 .task-trace.running {
-  border-color: rgba(91, 141, 239, 0.45);
-  box-shadow: 0 0 0 1px rgba(91, 141, 239, 0.08);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.1);
 }
 
 .task-trace.done {
-  border-color: rgba(61, 154, 106, 0.35);
+  border-color: rgba(16, 185, 129, 0.45);
 }
 
 .task-trace.done[data-task-status="failed"] {
-  border-color: rgba(224, 85, 85, 0.55);
-  box-shadow: 0 0 0 1px rgba(224, 85, 85, 0.12);
+  border-color: rgba(239, 68, 68, 0.55);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.12);
 }
 
 .task-trace.done[data-task-status="waiting_user_input"] {
@@ -953,18 +1022,18 @@ textarea.editor {
 }
 
 .task-trace-badge--live {
-  color: #9ec5ff;
-  background: rgba(91, 141, 239, 0.2);
+  color: var(--akasha-accent-light);
+  background: rgba(139, 92, 246, 0.22);
 }
 
 .task-trace-badge--final {
-  color: #9ee9c0;
-  background: rgba(61, 154, 106, 0.22);
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.22);
 }
 
 .task-trace.done[data-task-status="failed"] .task-trace-badge--final {
-  color: #ffb4b4;
-  background: rgba(224, 85, 85, 0.2);
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .task-trace.done[data-task-status="waiting_user_input"] .task-trace-badge--final {
@@ -989,7 +1058,7 @@ textarea.editor {
 .task-trace-line {
   font-size: 0.84rem;
   line-height: 1.4;
-  color: #d0d6e4;
+  color: var(--akasha-text);
 }
 
 .task-spinner {
@@ -1023,12 +1092,12 @@ textarea.editor {
 }
 
 .bubble.user {
-  background: #243044;
+  background: rgba(139, 92, 246, 0.22);
   align-self: flex-end;
 }
 
 .bubble.assistant {
-  background: #1e2433;
+  background: var(--akasha-bg-surface);
   border: 1px solid var(--border);
   align-self: flex-start;
 }
@@ -1045,9 +1114,9 @@ textarea.editor {
   flex: 1;
   min-height: 4.5rem;
   resize: vertical;
-  background: #0c0e14;
+  background: var(--akasha-bg-surface);
   border: 1px solid var(--border);
-  color: #e6e9ef;
+  color: var(--akasha-text);
   border-radius: 6px;
   padding: 0.45rem;
   font-family: inherit;
@@ -1067,7 +1136,8 @@ textarea.editor {
   line-height: 1.35;
   overflow: auto;
   max-height: 100px;
-  background: #0a0c10;
+  background: var(--akasha-bg);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   border-radius: 6px;
   border: 1px solid var(--border);
 }
