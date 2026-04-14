@@ -834,6 +834,36 @@ kbd {
   flex-shrink: 0;
 }
 
+.preview-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.preview-dev-log {
+  flex: 1;
+  margin: 0;
+  overflow: auto;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  padding: 0.5rem 0.65rem;
+  background: var(--akasha-bg);
+  color: var(--akasha-text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 120px;
+}
+
+.preview-logs-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  max-width: 48rem;
+  color: var(--text-muted);
+}
+
 .pane-title {
   font-size: 0.7rem;
   font-weight: 700;
@@ -948,6 +978,13 @@ textarea.editor {
   background: rgba(139, 92, 246, 0.12);
   border-radius: 6px;
   margin-bottom: 0.5rem;
+}
+
+.branch-pill--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
 }
 
 .chat-panel .panel-collapsible.chat-task-trace-wrap {

@@ -30,14 +30,16 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-004 | 1 | `GET /api/studio/projects`, `POST .../projects` | Fait |
 | STU-005 | 1 | `GET .../files`, `GET .../raw?path=` avec rejet `..` et hors racine | Fait |
 | STU-006 | 4 | `POST .../git/clone` (HTTPS, répertoire quasi vide) | Fait |
-| STU-007 | 2 | `POST .../build` avec `argv[]`, `timeout_sec`, capture stdout/stderr bornée | Fait |
+| STU-007 | 2 | `POST .../build` avec `argv[]`, `timeout_sec`, capture stdout/stderr bornée ; sous Windows shims npm/pnpm/yarn via shell | Fait |
 | STU-008 | 5 | `GET/POST .../evolutions`, merge, abandon ; méta dans `.akasha-studio.json` | Fait |
 | STU-009 | 6 | Limite parallélisme studio (`AKASHA_STUDIO_MAX_PARALLEL_OPS`) | Fait |
 | STU-010 | 1 | Rappel prompt « périmètre studio » si racine sous `studio-projects` | Fait (`STUDIO_DISK_REMINDER`) |
 | STU-010b | 1 | Désactiver le garde-fou **small-talk** (suppression des réponses « outil ») pour les tâches dont le disque outil est sous `studio-projects/` | Fait (`run_message_via_llm`) |
 | STU-014 | 1 | Liste projets avec **nom lisible** + `PATCH .../projects/:id` pour renommer l’affichage | Fait |
 | STU-015 | 1 | Champ **stack technique** en méta (POST/PATCH, GET méta) ; préfixe injecté dans `POST /api/message` pour les agents `studio_*` | Fait |
-| STU-016 | 3 | UI : onglets **Éditeur** / **Aperçu** ; éditeur **Monaco** (workers via CDN) ; **Play** lance `npm install` si besoin puis `npm run dev` côté daemon | Fait |
+| STU-016 | 3 | UI : onglets **Éditeur** / **Aperçu** / **Logs** ; éditeur **Monaco** (workers via CDN) ; **Play** lance `npm install` si besoin puis `npm run dev` côté daemon ; logs dev via `GET .../preview/logs` | Fait |
+| STU-017 | 3 | `GET .../preview/logs`, `POST .../preview/install`, `git_branch` sur GET méta projet | Fait |
+| STU-018 | 1 | Fichier `CODE_STUDIO_PLAN.md` à la création ; garde-fou `write_file` anti-markdown sur fichiers code studio ; vérif post-tâche optionnelle (méta `verify_*`) | Fait |
 | STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Reporté (utiliser `run_in_container` côté agent + policy) |
 | STU-012 | 3 | Proxy preview dev server | Reporté |
 | STU-013 | 8 | Application de patchs par hunk dans l’UI | Reporté |
@@ -67,10 +69,12 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 |---------|--------|-------------|
 | GET | `/api/studio/projects` | Liste `{ projects: [{ id, name, path }] }` (`name` depuis `.akasha-studio.json` ou repli `Projet xxxxxxxx`) |
 | POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` |
-| PATCH | `/api/studio/projects/:id` | Corps `{ "name": "…" }` et/ou `{ "tech_stack": "…" \| null }` (`null` ou chaîne vide efface la stack) |
-| GET | `/api/studio/projects/:id` | Lit méta + évolutions sérialisées (inclut `tech_stack` optionnel) |
-| POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, installed?, install? }`. |
+| PATCH | `/api/studio/projects/:id` | Corps : `name`, `tech_stack`, et/ou options de vérif post-tâche : `verify_skip` (bool), `verify_argv` (tableau de chaînes ou `null`), `verify_timeout_sec` (nombre 1–3600 ou `null`) |
+| GET | `/api/studio/projects/:id` | Lit méta + évolutions (`tech_stack`, champs `verify_*`). Ajoute `git_branch` et `git_worktree_clean` lorsque le dépôt Git est valide. |
+| POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, installed?, install? }`. **Windows** : `npm` est invoqué via `cmd.exe /c` (même logique que le build). Les sorties du serveur dev sont capturées pour `GET .../preview/logs`. |
 | POST | `/api/studio/projects/:id/preview/stop` | Arrête le processus dev enregistré pour ce projet (`{ ok, stopped }`). |
+| GET | `/api/studio/projects/:id/preview/logs` | `{ running, log, preview_inactive? }` — tampon borné des stdout/stderr du `npm run dev`. |
+| POST | `/api/studio/projects/:id/preview/install` | Corps `{ "force": bool }`. Exécute `npm install` sans lancer le serveur ; si `force` est faux et `node_modules` existe, `{ ok, skipped, reason }`. |
 
 ### Fichiers & raw
 
@@ -89,9 +93,11 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 
 | Méthode | Chemin | Corps | Description |
 |---------|--------|-------|-------------|
-| POST | `/api/studio/projects/:id/build` | `{ "argv": ["npm","run","build"], "timeout_sec"?: number }` | Exécute sur l’**hôte** avec `cwd` = projet ; sortie tronquée |
+| POST | `/api/studio/projects/:id/build` | `{ "argv": ["npm","run","build"], "timeout_sec"?: number }` | Exécute sur l’**hôte** avec `cwd` = projet ; sortie tronquée. Sous **Windows**, les commandes `npm`, `npx`, `pnpm`, `yarn`, `corepack` passent par `cmd.exe /c` pour éviter « program not found » (shims `.cmd`). |
 
 Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "timeout"`.
+
+**Vérification post-tâche (agents Code Studio)** : après une tâche dont le disque outil est sous `studio-projects/`, le daemon lance une commande de vérif si `verify_skip` est faux dans `.akasha-studio.json` : `verify_argv` si défini, sinon `npm run build` si `package.json` existe, sinon `cargo check` si `Cargo.toml` existe. En cas d’échec, la tâche est marquée **failed** et un `ProgressUpdate` contient la sortie tronquée.
 
 ### Évolutions (workflow branche)
 
@@ -110,7 +116,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 |------|----------------------|
 | Liste projets | Création `POST /projects`, sélection charge fichiers + évolutions |
 | Arbre fichiers | `GET /files` ; clic → `GET /raw` |
-| Zone centrale | Onglets **Éditeur** \| **Aperçu** (tabs) |
+| Zone centrale | Onglets **Éditeur** \| **Aperçu** \| **Logs serveur** (sortie du `npm run dev` côté daemon) |
 | Éditeur | **Monaco Editor** (`@monaco-editor/react`), thème sombre, coloration selon l’extension ; édition locale uniquement (pas de sauvegarde API). Workers Monaco chargés depuis jsDelivr (`monaco-editor@0.52.2`) pour compatibilité bundle Vite. |
 | Aperçu | **▶ Lancer la prévisualisation** : `POST .../preview/start` — serveur dev sur `127.0.0.1` ; **Arrêter le serveur** : `POST .../preview/stop`. Sinon, fichier `.html` ouvert : aperçu statique (blob + iframe `sandbox`). Priorité : URL serveur dev si actif, sinon blob. |
 | Barre ops | Clone HTTPS, build argv, merge / abandon évolution |

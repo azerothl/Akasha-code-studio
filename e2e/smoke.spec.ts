@@ -46,6 +46,8 @@ test.beforeEach(async ({ page }) => {
             created_at: "2020-01-01T00:00:00Z",
             evolutions: [],
             tech_stack: "React + Vite",
+            git_branch: "main",
+            git_worktree_clean: true,
           }),
         });
         return;
@@ -83,6 +85,52 @@ test.beforeEach(async ({ page }) => {
         mime: "text/html",
         content: "<!DOCTYPE html><html><body><h1>Studio</h1></body></html>",
       }),
+    });
+  });
+
+  await page.route(`**/api/studio/projects/${demoId}/preview/**`, async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/\/$/, "");
+    const method = route.request().method();
+    if (method === "GET" && path.endsWith("/preview/logs")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ running: false, log: "", preview_inactive: true }),
+      });
+      return;
+    }
+    if (method === "POST" && path.endsWith("/preview/start")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, url: "http://127.0.0.1:5180", port: 5180 }),
+      });
+      return;
+    }
+    if (method === "POST" && path.endsWith("/preview/stop")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, stopped: true }),
+      });
+      return;
+    }
+    if (method === "POST" && path.endsWith("/preview/install")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, skipped: true, reason: "node_modules_present" }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route(`**/api/studio/projects/${demoId}/build`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ exit_code: 0, stdout: "mock build", stderr: "" }),
     });
   });
 

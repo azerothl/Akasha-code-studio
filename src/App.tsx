@@ -17,7 +17,7 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
     value: "studio_scaffold",
     label: "Squelette d’app",
-    hint: "Vite + React + TS, structure minimale et README.",
+    hint: "Structure minimale (README, manifeste, entrées) selon la stack du projet ou le message utilisateur.",
   },
   {
     value: "studio_frontend",
@@ -197,7 +197,10 @@ function chatMessageForTerminalTask(status: string, lastProgressMessage: string 
     return "La tâche est terminée. Les nouveaux fichiers apparaissent dans l’arborescence (rafraîchissement automatique).";
   }
   if (status === "failed") {
-    return "La tâche a échoué — voir l’onglet Tâches dans l’UI Akasha principale ou les logs du daemon.";
+    if (last && !isStubProgressMessage(last)) {
+      return last;
+    }
+    return "La tâche a échoué (vérif automatique build/check ou erreur agent) — voir le suivi ci-dessus ou les logs du daemon.";
   }
   if (status === "waiting_user_input") {
     return "Le daemon attend une validation (approbation d’outil ou question utilisateur).";
@@ -227,9 +230,14 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview">("editor");
+  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs">("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
+  const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
+  const [devServerLog, setDevServerLog] = useState("");
+  const [depsInstallBusy, setDepsInstallBusy] = useState(false);
+  const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
+  const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
@@ -250,6 +258,9 @@ export default function App() {
   const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
   /** Annule le polling en cours (nouveau message ou démontage du composant). */
   const pollTaskAbortRef = useRef<AbortController | null>(null);
+  const editorDirtyRef = useRef(false);
+  const filePathRef = useRef<string | null>(null);
+  const editorBinaryRef = useRef(false);
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
@@ -279,6 +290,16 @@ export default function App() {
     () => Boolean(filePath && !editorBinary && editorText !== savedEditorText),
     [filePath, editorBinary, editorText, savedEditorText],
   );
+
+  useEffect(() => {
+    editorDirtyRef.current = editorDirty;
+  }, [editorDirty]);
+  useEffect(() => {
+    filePathRef.current = filePath;
+  }, [filePath]);
+  useEffect(() => {
+    editorBinaryRef.current = editorBinary;
+  }, [editorBinary]);
 
   const newProjectComposedStack = useMemo(
     () => composeStackString(newStackPresetId, newStackCustomText, newStackAddons),
@@ -326,6 +347,8 @@ export default function App() {
       setStackPresetId(STACK_PRESET_NONE);
       setStackCustomText("");
       setStackAddons(emptyStackAddons());
+      setGitHeadBranch(null);
+      setGitWorktreeClean(null);
       return;
     }
     let cancelled = false;
@@ -333,6 +356,8 @@ export default function App() {
       .getProjectMeta(selectedId)
       .then((m) => {
         if (cancelled) return;
+        setGitHeadBranch(m.git_branch ?? null);
+        setGitWorktreeClean(m.git_worktree_clean ?? null);
         const raw = (m.tech_stack ?? "").trim();
         if (raw) {
           setStackPresetId(STACK_PRESET_CUSTOM);
@@ -349,6 +374,8 @@ export default function App() {
           setStackPresetId(STACK_PRESET_NONE);
           setStackCustomText("");
           setStackAddons(emptyStackAddons());
+          setGitHeadBranch(null);
+          setGitWorktreeClean(null);
         }
       });
     return () => {
@@ -453,17 +480,52 @@ export default function App() {
     }
   }, [selectedId]);
 
+  const reloadOpenFileFromServer = useCallback(async () => {
+    if (!selectedId || !filePath || editorBinary) return;
+    try {
+      const raw = await api.readRawFile(selectedId, filePath);
+      const text = raw.content ?? "";
+      setEditorText(text);
+      setSavedEditorText(text);
+      const ext = filePath.toLowerCase();
+      if (ext.endsWith(".html") || ext.endsWith(".htm")) {
+        const blob = new Blob([text], { type: "text/html" });
+        setStaticPreviewBlobUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return URL.createObjectURL(blob);
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [selectedId, filePath, editorBinary]);
+
   const refreshFiles = useCallback(async () => {
     if (!selectedId) return;
     setError(null);
     try {
       const f = await api.listFiles(selectedId);
       setFiles(f);
-      setStatus("Fichiers actualisés");
+      let metaNote = "";
+      try {
+        const m = await api.getProjectMeta(selectedId);
+        setGitHeadBranch(m.git_branch ?? null);
+        setGitWorktreeClean(m.git_worktree_clean ?? null);
+      } catch {
+        /* ignore */
+      }
+      if (filePath && f.includes(filePath) && !editorBinary) {
+        if (editorDirty) {
+          metaNote = " — éditeur non rechargé (fichier modifié localement)";
+        } else {
+          await reloadOpenFileFromServer();
+        }
+      }
+      setStatus(`Fichiers actualisés${metaNote}`);
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId]);
+  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer]);
 
   const onPlayPreview = useCallback(async () => {
     if (!selectedId) return;
@@ -471,7 +533,7 @@ export default function App() {
     setPreviewLog("");
     setError(null);
     try {
-      const r = await api.startStudioPreview(selectedId, { force_install: false });
+      const r = await api.startStudioPreview(selectedId, { force_install: forceInstallBeforePreview });
       setDevPreviewUrl(r.url);
       if (r.install) {
         const { stdout, stderr } = r.install;
@@ -486,6 +548,31 @@ export default function App() {
     } finally {
       setPreviewBusy(false);
     }
+  }, [selectedId, forceInstallBeforePreview]);
+
+  const onInstallDepsOnly = useCallback(async () => {
+    if (!selectedId) return;
+    setDepsInstallBusy(true);
+    setError(null);
+    setPreviewLog("");
+    try {
+      const r = await api.installStudioDeps(selectedId, { force: true });
+      if (r.skipped) {
+        setPreviewLog(`Dépendances déjà présentes (${r.reason ?? "node_modules"}).`);
+        setStatus("node_modules déjà installé");
+      } else if (r.install) {
+        const { stdout, stderr, exit_code } = r.install;
+        setPreviewLog(
+          [`Code: ${exit_code}`, stdout, stderr].filter(Boolean).join("\n\n"),
+        );
+        setStatus(r.ok ? "npm install terminé" : "npm install a échoué — voir le journal ci-dessous");
+      }
+      setCenterTab("preview");
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setDepsInstallBusy(false);
+    }
   }, [selectedId]);
 
   const onStopPreview = useCallback(async () => {
@@ -494,6 +581,7 @@ export default function App() {
     try {
       await api.stopStudioPreview(selectedId);
       setDevPreviewUrl(null);
+      setDevServerLog("");
       setStatus("Prévisualisation arrêtée");
     } catch (e) {
       setError(String(e));
@@ -726,7 +814,32 @@ export default function App() {
           if (api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status)) {
             if (api.isTaskTerminal(t.status) && t.status === "completed" && selectedId) {
               try {
-                setFiles(await api.listFiles(selectedId));
+                const fl = await api.listFiles(selectedId);
+                setFiles(fl);
+                const fp = filePathRef.current;
+                if (
+                  fp
+                  && fl.includes(fp)
+                  && !editorDirtyRef.current
+                  && !editorBinaryRef.current
+                ) {
+                  try {
+                    const raw = await api.readRawFile(selectedId, fp);
+                    const text = raw.content ?? "";
+                    setEditorText(text);
+                    setSavedEditorText(text);
+                    const ext = fp.toLowerCase();
+                    if (ext.endsWith(".html") || ext.endsWith(".htm")) {
+                      const blob = new Blob([text], { type: "text/html" });
+                      setStaticPreviewBlobUrl((prev) => {
+                        if (prev) URL.revokeObjectURL(prev);
+                        return URL.createObjectURL(blob);
+                      });
+                    }
+                  } catch {
+                    /* ignore */
+                  }
+                }
               } catch {
                 /* ignore */
               }
@@ -753,6 +866,55 @@ export default function App() {
     },
     [],
   );
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "logs") return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const j = await api.getPreviewLogs(selectedId);
+        if (!cancelled) setDevServerLog(j.log ?? "");
+      } catch {
+        if (!cancelled) setDevServerLog("");
+      }
+    };
+    void tick();
+    const id = setInterval(tick, 1500);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [selectedId, centerTab]);
+
+  const onRegeneratePlan = useCallback(async () => {
+    if (!selectedId) return;
+    const msg = `[Tâche Code Studio — plan projet]
+Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse la structure du dépôt (fichiers, stack, scripts), puis crée ou remplace CODE_STUDIO_PLAN.md à la racine avec : titre du projet, stack observée, objectif, étapes, et historique des changements (ce que tu déduis du code existant). N’invente pas de fonctionnalités non présentes dans les fichiers.`;
+    setChat((c) => [...c, { role: "user", text: msg }]);
+    setError(null);
+    pollTaskAbortRef.current?.abort();
+    setTaskTrace(null);
+    try {
+      const { task_id } = await api.sendMessage({
+        message: msg,
+        studio_project_id: selectedId,
+        studio_assigned_agent: agent || undefined,
+        studio_evolution_id: selectedEvoId ?? undefined,
+        studio_evolution_branch: activeBranch ?? undefined,
+      });
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
+      setTaskTrace({
+        id: task_id,
+        status: "queued",
+        line: "Régénération du plan…",
+        done: false,
+      });
+      void pollTask(task_id, ac.signal);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask]);
 
   const onSendChat = async () => {
     const text = chatInput.trim();
@@ -784,7 +946,19 @@ export default function App() {
     }
   };
 
-  const agentHint = AGENT_OPTIONS.find((o) => o.value === agent)?.hint ?? "";
+  const agentHint = useMemo(() => {
+    const opt = AGENT_OPTIONS.find((o) => o.value === agent);
+    if (!opt) return "";
+    if (agent === "studio_scaffold") {
+      const stack = composedStack.trim();
+      if (stack) {
+        const s = stack.length > 320 ? `${stack.slice(0, 320)}…` : stack;
+        return `Structure minimale alignée sur la stack enregistrée : ${s}`;
+      }
+      return opt.hint;
+    }
+    return opt.hint;
+  }, [agent, composedStack]);
 
   const previewUrl = devPreviewUrl ?? staticPreviewBlobUrl;
 
@@ -927,7 +1101,9 @@ export default function App() {
           open={sectionOpen.evolutions}
           onToggle={() => setSectionOpen((s) => ({ ...s, evolutions: !s.evolutions }))}
         >
-          <p className="hint">Branche dédiée par idée ; fusionnez vers main depuis la section « Import & build ».</p>
+          <p className="hint">
+            Branche de travail isolée pour une évolution (idée ou feature) ; fusionnez vers la branche principale depuis « Import & build ».
+          </p>
           <label className="field">
             <span>Label de branche (optionnel)</span>
             <input
@@ -1008,7 +1184,7 @@ export default function App() {
                 type="button"
                 className="btn btn-secondary btn-block"
                 disabled={!selectedId || !selectedEvoId}
-                title="Fusionne la branche d’évolution sélectionnée dans main (git merge côté daemon)."
+                title="Fusionne la branche de travail sélectionnée dans la branche principale (main ou master, côté daemon)."
                 onClick={() => {
                   if (selectedId && selectedEvoId) {
                     void api
@@ -1024,7 +1200,7 @@ export default function App() {
                 type="button"
                 className="btn btn-ghost btn-block"
                 disabled={!selectedId || !selectedEvoId}
-                title="Abandonne la branche d’évolution sans fusion (supprime ou réinitialise selon la logique du daemon)."
+                title="Abandonne la branche de travail sans fusion (suppression côté daemon selon la logique Git)."
                 onClick={() => {
                   if (selectedId && selectedEvoId) {
                     void api
@@ -1060,7 +1236,7 @@ export default function App() {
       </div>
 
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur ou aperçu">
+        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu ou logs">
           <button
             type="button"
             role="tab"
@@ -1078,6 +1254,15 @@ export default function App() {
             onClick={() => setCenterTab("preview")}
           >
             Aperçu
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "logs"}
+            className={`center-tab ${centerTab === "logs" ? "active" : ""}`}
+            onClick={() => setCenterTab("logs")}
+          >
+            Logs serveur
           </button>
         </div>
         {centerTab === "editor" ? (
@@ -1106,15 +1291,32 @@ export default function App() {
               utile pour des changements plus larges ou revus par l’agent.
             </p>
           </div>
-        ) : (
+        ) : centerTab === "preview" ? (
           <div className="center-body preview-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">Aperçu</span>
+              <label className="preview-checkbox" title="Relance npm install avant le serveur (utile après changement de dépendances).">
+                <input
+                  type="checkbox"
+                  checked={forceInstallBeforePreview}
+                  onChange={(e) => setForceInstallBeforePreview(e.target.checked)}
+                />
+                Forcer npm install
+              </label>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={!selectedId || depsInstallBusy}
+                title="Exécute uniquement npm install dans le dossier projet (sans démarrer le serveur)."
+                onClick={() => void onInstallDepsOnly()}
+              >
+                {depsInstallBusy ? "Installation…" : "Installer les dépendances"}
+              </button>
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
                 disabled={!selectedId || previewBusy}
-                title="npm install si nécessaire, puis npm run dev (Vite, etc.)"
+                title="npm install si nécessaire (ou forcé), puis npm run dev (Vite, etc.)"
                 onClick={() => void onPlayPreview()}
               >
                 {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
@@ -1168,6 +1370,18 @@ export default function App() {
               </div>
             )}
           </div>
+        ) : (
+          <div className="center-body preview-pane preview-pane--logs">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Logs du serveur de dev</span>
+              <p className="hint preview-logs-hint">
+                Sortie standard et erreurs du processus <code>npm run dev</code> (Vite, etc.). Ouvrez cet onglet pour voir les erreurs de compilation ou du backend qui n’apparaissent pas dans l’iframe.
+              </p>
+            </div>
+            <pre className="preview-dev-log" title="Logs du serveur">
+              {devServerLog || "— (lancez la prévisualisation puis revenez ici — rafraîchissement automatique)"}
+            </pre>
+          </div>
         )}
       </div>
 
@@ -1186,13 +1400,36 @@ export default function App() {
           </select>
         </label>
         {agentHint ? <p className="hint agent-hint">{agentHint}</p> : null}
-        {activeBranch ? (
-          <div className="branch-pill">
-            Branche active : <code>{activeBranch}</code>
+        <div className="branch-pill branch-pill--stacked">
+          <div>
+            Branche Git actuelle (dépôt local) :{" "}
+            <code title="git rev-parse --abbrev-ref HEAD">{gitHeadBranch ?? "—"}</code>
+            {gitWorktreeClean === false ? (
+              <span className="hint"> — modifications non commitées</span>
+            ) : null}
+            {gitWorktreeClean === true ? (
+              <span className="hint"> — arbre de travail propre</span>
+            ) : null}
           </div>
-        ) : (
-          <p className="hint">Aucune branche d’évolution sélectionnée — les changements suivent la branche Git courante du dossier.</p>
-        )}
+          {activeBranch ? (
+            <div>
+              Branche de travail <strong>Code Studio</strong> sélectionnée : <code>{activeBranch}</code> (les messages agent utilisent cette branche si le dépôt est dessus).
+            </div>
+          ) : (
+            <p className="hint">
+              Aucune branche de travail isolée sélectionnée : les messages à l’agent s’appliquent à la branche Git affichée ci-dessus. Créez une branche ci-contre (« Évolutions Git ») pour isoler une évolution.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm btn-block"
+          disabled={!selectedId}
+          title="Envoie une consigne à l’agent pour créer ou remplir CODE_STUDIO_PLAN.md"
+          onClick={() => void onRegeneratePlan()}
+        >
+          Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
+        </button>
 
         <CollapsiblePanel
           className="chat-task-trace-wrap"

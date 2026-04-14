@@ -17,6 +17,13 @@ export type StudioProjectMeta = {
   created_at: string;
   evolutions?: Evolution[];
   tech_stack?: string | null;
+  verify_skip?: boolean;
+  verify_argv?: string[] | null;
+  verify_timeout_sec?: number | null;
+  /** Branche Git courante (`git rev-parse --abbrev-ref HEAD`), si dépôt présent. */
+  git_branch?: string | null;
+  /** `true` si `git status --porcelain` est vide. */
+  git_worktree_clean?: boolean | null;
 };
 
 export async function listProjects(): Promise<StudioProject[]> {
@@ -29,7 +36,13 @@ export async function listProjects(): Promise<StudioProject[]> {
 /** At least one of `name` or `tech_stack` must be set. Use `tech_stack: null` to clear the stack. */
 export async function patchProjectSettings(
   projectId: string,
-  body: { name?: string; tech_stack?: string | null },
+  body: {
+    name?: string;
+    tech_stack?: string | null;
+    verify_skip?: boolean;
+    verify_argv?: string[] | null;
+    verify_timeout_sec?: number | null;
+  },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
     method: "PATCH",
@@ -100,6 +113,44 @@ export async function stopStudioPreview(projectId: string): Promise<void> {
     body: "{}",
   });
   if (!r.ok) throw new Error(`stopStudioPreview ${r.status}`);
+}
+
+/** Logs stdout/stderr du serveur `npm run dev` (tampon côté daemon). */
+export async function getPreviewLogs(projectId: string): Promise<{
+  running: boolean;
+  log: string;
+  preview_inactive?: boolean;
+}> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/preview/logs`));
+  if (!r.ok) throw new Error(`getPreviewLogs ${r.status}`);
+  return r.json() as Promise<{ running: boolean; log: string; preview_inactive?: boolean }>;
+}
+
+/** `npm install` uniquement (sans lancer le serveur de dev). */
+export async function installStudioDeps(
+  projectId: string,
+  opts?: { force?: boolean },
+): Promise<{
+  ok: boolean;
+  skipped?: boolean;
+  reason?: string;
+  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+}> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/preview/install`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ force: opts?.force ?? false }),
+  });
+  const j = (await r.json()) as {
+    ok: boolean;
+    skipped?: boolean;
+    reason?: string;
+    install?: { exit_code: number | null; stdout?: string; stderr?: string };
+  };
+  if (!r.ok && !j.install) {
+    throw new Error(`installStudioDeps ${r.status}`);
+  }
+  return j;
 }
 
 export async function readRawFile(
