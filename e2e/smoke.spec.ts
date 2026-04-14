@@ -181,7 +181,7 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
   await selectDemoProject(page);
   await page.locator(".chat-form textarea").fill("Hello scaffold");
   await page.getByRole("button", { name: "Envoyer" }).click();
-  await expect(page.getByText(/Mock — tâche terminée|La tâche est terminée/i)).toBeVisible({
+  await expect(page.locator(".bubble.assistant").getByText(/Mock — tâche terminée|La tâche est terminée/i)).toBeVisible({
     timeout: 10_000,
   });
 });

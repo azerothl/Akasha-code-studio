@@ -55,6 +55,7 @@ export function CodeEditor({ path, value, onChange }: CodeEditorProps) {
           wordWrap: "on",
           scrollBeyondLastLine: false,
           fontSize: 13,
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
           automaticLayout: true,
           tabSize: 2,
         }}
