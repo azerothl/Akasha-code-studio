@@ -287,6 +287,33 @@ export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   return r.json() as Promise<TaskStatusResponse>;
 }
 
+/** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */
+export type TaskHumanInputPayload = {
+  task_id: string;
+  question: string;
+  context: string;
+  choices: string[] | null;
+};
+
+export async function getTaskHumanInput(taskId: string): Promise<TaskHumanInputPayload | null> {
+  const r = await fetch(api(`/api/tasks/${taskId}/human-input`));
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`getTaskHumanInput ${r.status}`);
+  return r.json() as Promise<TaskHumanInputPayload>;
+}
+
+export async function postTaskHumanReply(taskId: string, response: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/human-reply`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ response }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`postTaskHumanReply ${r.status}: ${t}`);
+  }
+}
+
 export function isTaskTerminal(status: string): boolean {
   return ["completed", "failed", "cancelled", "interrupted"].includes(status);
 }

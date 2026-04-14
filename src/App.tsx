@@ -255,6 +255,15 @@ export default function App() {
     line: string;
     done: boolean;
   } | null>(null);
+  /** Réponse attendue par le daemon (`ask_user`, approbation, …) — alimenté par GET …/human-input. */
+  const [pendingHumanInput, setPendingHumanInput] = useState<{
+    taskId: string;
+    question: string;
+    context: string;
+    choices: string[] | null;
+  } | null>(null);
+  const [humanReplyDraft, setHumanReplyDraft] = useState("");
+  const [humanReplyBusy, setHumanReplyBusy] = useState(false);
   const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
   /** Annule le polling en cours (nouveau message ou démontage du composant). */
   const pollTaskAbortRef = useRef<AbortController | null>(null);
@@ -801,6 +810,30 @@ export default function App() {
         while (!signal.aborted) {
           const t = await api.getTask(taskId);
           if (signal.aborted) return;
+
+          let hi: api.TaskHumanInputPayload | null = null;
+          try {
+            hi = await api.getTaskHumanInput(taskId);
+          } catch {
+            hi = null;
+          }
+          if (signal.aborted) return;
+          if (hi?.question) {
+            setPendingHumanInput({
+              taskId,
+              question: hi.question,
+              context: (hi.context ?? "").trim(),
+              choices: hi.choices?.length ? hi.choices : null,
+            });
+            setTaskTrace({
+              id: taskId,
+              status: t.status,
+              line: "L’agent attend votre réponse (champs ci-dessous).",
+              done: true,
+            });
+            return;
+          }
+
           const last = t.progress?.length ? t.progress[t.progress.length - 1] : undefined;
           const line = last
             ? `${last.progress_pct}% — ${last.message}`
@@ -893,6 +926,8 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
     setChat((c) => [...c, { role: "user", text: msg }]);
     setError(null);
     pollTaskAbortRef.current?.abort();
+    setPendingHumanInput(null);
+    setHumanReplyDraft("");
     setTaskTrace(null);
     try {
       const { task_id } = await api.sendMessage({
@@ -923,6 +958,8 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
     setChatInput("");
     setError(null);
     pollTaskAbortRef.current?.abort();
+    setPendingHumanInput(null);
+    setHumanReplyDraft("");
     setTaskTrace(null);
     try {
       const { task_id } = await api.sendMessage({
@@ -945,6 +982,33 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
       setError(String(e));
     }
   };
+
+  const onSubmitHumanReply = useCallback(async () => {
+    if (!pendingHumanInput) return;
+    const text = humanReplyDraft.trim();
+    if (!text) return;
+    setHumanReplyBusy(true);
+    setError(null);
+    try {
+      await api.postTaskHumanReply(pendingHumanInput.taskId, text);
+      const tid = pendingHumanInput.taskId;
+      setPendingHumanInput(null);
+      setHumanReplyDraft("");
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
+      setTaskTrace({
+        id: tid,
+        status: "running",
+        line: "Réponse enregistrée — reprise de la tâche…",
+        done: false,
+      });
+      void pollTask(tid, ac.signal);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setHumanReplyBusy(false);
+    }
+  }, [pendingHumanInput, humanReplyDraft, pollTask]);
 
   const agentHint = useMemo(() => {
     const opt = AGENT_OPTIONS.find((o) => o.value === agent);
@@ -1441,17 +1505,70 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
             {taskTrace ? (
               <div
                 className={`task-trace ${taskTrace.done ? "done" : "running"}`}
-                data-task-status={taskTrace.status}
+                data-task-status={
+                  pendingHumanInput?.taskId === taskTrace.id ? "waiting_user_input" : taskTrace.status
+                }
               >
                 <div className="task-trace-header-row">
-                  <span className={`task-trace-badge task-trace-badge--${taskTrace.done ? "final" : "live"}`}>
-                    {taskTrace.done ? "État final" : "En cours"}
+                  <span
+                    className={`task-trace-badge task-trace-badge--${
+                      pendingHumanInput?.taskId === taskTrace.id
+                        ? "human"
+                        : taskTrace.done
+                          ? "final"
+                          : "live"
+                    }`}
+                  >
+                    {pendingHumanInput?.taskId === taskTrace.id
+                      ? "Réponse requise"
+                      : taskTrace.done
+                        ? "État final"
+                        : "En cours"}
                   </span>
                 </div>
                 <div className="task-trace-id">
                   ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
                 </div>
                 <div className="task-trace-line">{taskTrace.line}</div>
+                {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
+                  <div className="task-human-input">
+                    <p className="task-human-input-question">{pendingHumanInput.question}</p>
+                    {pendingHumanInput.context ? (
+                      <p className="task-human-input-context">{pendingHumanInput.context}</p>
+                    ) : null}
+                    {pendingHumanInput.choices?.length ? (
+                      <div className="task-human-input-choices">
+                        {pendingHumanInput.choices.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            disabled={humanReplyBusy}
+                            onClick={() => setHumanReplyDraft(c)}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                    <textarea
+                      className="task-human-input-textarea"
+                      value={humanReplyDraft}
+                      onChange={(e) => setHumanReplyDraft(e.target.value)}
+                      placeholder="Saisissez votre réponse (ou choisissez un bouton ci-dessus)…"
+                      rows={3}
+                      disabled={humanReplyBusy}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm task-human-input-submit"
+                      disabled={humanReplyBusy || !humanReplyDraft.trim()}
+                      onClick={() => void onSubmitHumanReply()}
+                    >
+                      {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
+                    </button>
+                  </div>
+                ) : null}
                 {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
               </div>
             ) : (

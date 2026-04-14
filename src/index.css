@@ -1068,6 +1068,11 @@ textarea.editor {
   background: rgba(16, 185, 129, 0.22);
 }
 
+.task-trace-badge--human {
+  color: #f5d78a;
+  background: rgba(230, 180, 80, 0.22);
+}
+
 .task-trace.done[data-task-status="failed"] .task-trace-badge--final {
   color: #fecaca;
   background: rgba(239, 68, 68, 0.2);
@@ -1096,6 +1101,54 @@ textarea.editor {
   font-size: 0.84rem;
   line-height: 1.4;
   color: var(--akasha-text);
+}
+
+.task-human-input {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.task-human-input-question {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--akasha-text);
+}
+
+.task-human-input-context {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.task-human-input-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.task-human-input-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--akasha-bg);
+  color: var(--akasha-text);
+  resize: vertical;
+  min-height: 3.5rem;
+}
+
+.task-human-input-submit {
+  align-self: flex-start;
 }
 
 .task-spinner {
