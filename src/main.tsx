@@ -4,9 +4,6 @@ import { loader } from "@monaco-editor/react";
 import App from "./App";
 import "./index.css";
 
-/** Même thème par défaut que l’UI Tauri (`apps/akasha-ui`, `dark_akasha`). */
-document.documentElement.setAttribute("data-theme", "dark_akasha");
-
 /** Workers chargés depuis le CDN (évite les soucis de bundle Rollup avec monaco-editor ESM). */
 loader.config({
   paths: {

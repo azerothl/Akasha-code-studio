@@ -2,8 +2,7 @@
  * Thème aligné sur l’application Tauri Akasha (`apps/akasha-ui/src/styles.css`, `dark_akasha`).
  * Variables `--akasha-*` + alias `--bg-*` / `--accent` pour le reste de cette feuille.
  */
-:root,
-[data-theme="dark_akasha"] {
+:root {
   --akasha-bg: #0d0d14;
   --akasha-bg-elevated: #12121e;
   --akasha-bg-surface: #12121e;
