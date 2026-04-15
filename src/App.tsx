@@ -300,6 +300,8 @@ export default function App() {
   const [humanReplyDraft, setHumanReplyDraft] = useState("");
   const [humanReplyBusy, setHumanReplyBusy] = useState(false);
   const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
+  /** Rôle + aide + plan : replié par défaut pour laisser la place au suivi et au chat. */
+  const [agentRoleSectionOpen, setAgentRoleSectionOpen] = useState(false);
   /** Annule le polling en cours (nouveau message ou démontage du composant). */
   const pollTaskAbortRef = useRef<AbortController | null>(null);
   const editorDirtyRef = useRef(false);
@@ -1054,6 +1056,11 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
     }
   }, [pendingHumanInput, humanReplyDraft, pollTask]);
 
+  const agentLabel = useMemo(
+    () => AGENT_OPTIONS.find((o) => o.value === agent)?.label ?? "Agent",
+    [agent],
+  );
+
   const agentHint = useMemo(() => {
     const opt = AGENT_OPTIONS.find((o) => o.value === agent);
     if (!opt) return "";
@@ -1085,6 +1092,40 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
+          {selectedProject ? (
+            <div className="app-header-meta" aria-label="Projet et branches Git">
+              <span className="app-header-project">
+                <span className="app-header-project-name">{selectedProject.name}</span>
+                <code className="app-header-project-id" title={selectedProject.id}>
+                  {selectedProject.id.slice(0, 8)}…
+                </code>
+              </span>
+              <span className="app-header-branches">
+                <span className="app-header-branch" title="Branche Git courante (HEAD)">
+                  <span className="app-header-branch-label">HEAD</span>
+                  <code>{gitHeadBranch ?? "—"}</code>
+                  {gitWorktreeClean === false ? (
+                    <span className="app-header-dirty" title="Modifications non commitées">
+                      ●
+                    </span>
+                  ) : null}
+                  {gitWorktreeClean === true ? (
+                    <span className="app-header-clean hint" title="Arbre de travail propre">
+                      propre
+                    </span>
+                  ) : null}
+                </span>
+                {activeBranch ? (
+                  <span className="app-header-branch" title="Branche d’évolution Code Studio sélectionnée">
+                    <span className="app-header-branch-label">Évolution</span>
+                    <code>{activeBranch}</code>
+                  </span>
+                ) : null}
+              </span>
+            </div>
+          ) : (
+            <span className="hint app-header-placeholder">Aucun projet chargé</span>
+          )}
         </div>
       </header>
 
@@ -1111,9 +1152,8 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
             </button>
           </div>
           {selectedProject ? (
-            <p className="current-project-line">
-              <span className="current-project-name">{selectedProject.name}</span>
-              <span className="project-id">{selectedProject.id.slice(0, 8)}…</span>
+            <p className="hint sidebar-project-hint">
+              Projet actif : nom, identifiant court et branches dans l’en-tête.
             </p>
           ) : (
             <p className="hint">Aucun projet chargé — utilisez les boutons ci-dessus.</p>
@@ -1497,163 +1537,164 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
       <div className={`chat-column${!sidebarRightVisible ? " chat-column--collapsed" : ""}`}>
         {sidebarRightVisible ? (
         <aside className="chat-panel">
-        <div className="pane-title">Message à l’agent</div>
-        <label className="field agent-select">
-          <span>Rôle de l’agent</span>
-          <select value={agent} onChange={(e) => setAgent(e.target.value)}>
-            {AGENT_OPTIONS.map((o) => (
-              <option key={o.value || "auto"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {agentHint ? <p className="hint agent-hint">{agentHint}</p> : null}
-        <div className="branch-pill branch-pill--stacked">
-          <div>
-            Branche Git actuelle (dépôt local) :{" "}
-            <code title="git rev-parse --abbrev-ref HEAD">{gitHeadBranch ?? "—"}</code>
-            {gitWorktreeClean === false ? (
-              <span className="hint"> — modifications non commitées</span>
-            ) : null}
-            {gitWorktreeClean === true ? (
-              <span className="hint"> — arbre de travail propre</span>
-            ) : null}
-          </div>
-          {activeBranch ? (
-            <div>
-              Branche de travail <strong>Code Studio</strong> sélectionnée : <code>{activeBranch}</code> (les messages agent utilisent cette branche si le dépôt est dessus).
-            </div>
-          ) : (
-            <p className="hint">
-              Aucune branche de travail isolée sélectionnée : les messages à l’agent s’appliquent à la branche Git affichée ci-dessus. Créez une branche ci-contre (« Évolutions Git ») pour isoler une évolution.
-            </p>
-          )}
-        </div>
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm btn-block"
-          disabled={!selectedId}
-          title="Envoie une consigne à l’agent pour créer ou remplir CODE_STUDIO_PLAN.md"
-          onClick={() => void onRegeneratePlan()}
-        >
-          Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
-        </button>
-
         <CollapsiblePanel
-          className="chat-task-trace-wrap"
-          title="Suivi de la dernière tâche"
-          open={taskTraceSectionOpen}
-          onToggle={() => setTaskTraceSectionOpen((v) => !v)}
+          className="chat-agent-role-wrap"
+          title={`Rôle de l’agent — ${agentLabel}`}
+          open={agentRoleSectionOpen}
+          onToggle={() => setAgentRoleSectionOpen((v) => !v)}
         >
-          <div className="task-trace-scroll">
-            {taskTrace ? (
-              <div
-                className={`task-trace ${taskTrace.done ? "done" : "running"}`}
-                data-task-status={
-                  pendingHumanInput?.taskId === taskTrace.id ? "waiting_user_input" : taskTrace.status
-                }
-              >
-                <div className="task-trace-header-row">
-                  <span
-                    className={`task-trace-badge task-trace-badge--${
-                      pendingHumanInput?.taskId === taskTrace.id
-                        ? "human"
-                        : taskTrace.done
-                          ? "final"
-                          : "live"
-                    }`}
-                  >
-                    {pendingHumanInput?.taskId === taskTrace.id
-                      ? "Réponse requise"
-                      : taskTrace.done
-                        ? "État final"
-                        : "En cours"}
-                  </span>
-                </div>
-                <div className="task-trace-id">
-                  ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
-                </div>
-                <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
-                {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
-                  <div className="task-human-input">
-                    <p className="task-human-input-question">{pendingHumanInput.question}</p>
-                    {pendingHumanInput.context ? (
-                      <p className="task-human-input-context">{pendingHumanInput.context}</p>
-                    ) : null}
-                    {pendingHumanInput.choices?.length ? (
-                      <div className="task-human-input-choices">
-                        {pendingHumanInput.choices.map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            disabled={humanReplyBusy}
-                            onClick={() => setHumanReplyDraft(c)}
-                          >
-                            {c}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    <textarea
-                      className="task-human-input-textarea"
-                      value={humanReplyDraft}
-                      onChange={(e) => setHumanReplyDraft(e.target.value)}
-                      placeholder="Saisissez votre réponse (ou choisissez un bouton ci-dessus)…"
-                      rows={3}
-                      disabled={humanReplyBusy}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm task-human-input-submit"
-                      disabled={humanReplyBusy || !humanReplyDraft.trim()}
-                      onClick={() => void onSubmitHumanReply()}
-                    >
-                      {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
-                    </button>
-                  </div>
-                ) : null}
-                {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
-              </div>
-            ) : (
-              <div className="task-trace idle">
-                <p className="hint task-trace-idle-hint">
-                  Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s) jusqu’à un état final ou une attente
-                  utilisateur.
-                </p>
-              </div>
-            )}
-          </div>
+          <label className="field agent-select">
+            <span>Rôle de l’agent</span>
+            <select value={agent} onChange={(e) => setAgent(e.target.value)}>
+              {AGENT_OPTIONS.map((o) => (
+                <option key={o.value || "auto"} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {agentHint ? <p className="hint agent-hint">{agentHint}</p> : null}
+          {!activeBranch ? (
+            <p className="hint agent-branch-hint">
+              Aucune branche d’évolution sélectionnée : les messages utilisent la branche <strong>HEAD</strong> affichée
+              dans l’en-tête. Créez une branche dans « Évolutions Git » pour isoler une évolution.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm btn-block"
+            disabled={!selectedId}
+            title="Envoie une consigne à l’agent pour créer ou remplir CODE_STUDIO_PLAN.md"
+            onClick={() => void onRegeneratePlan()}
+          >
+            Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
+          </button>
         </CollapsiblePanel>
 
-        <div className="chat-log">
-          {chat.map((m, i) => (
-            <div key={i} className={`bubble ${m.role}`}>
-              <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+        <div className="chat-activity-area">
+          <CollapsiblePanel
+            className="chat-task-trace-wrap"
+            title="Suivi de la dernière tâche"
+            open={taskTraceSectionOpen}
+            onToggle={() => setTaskTraceSectionOpen((v) => !v)}
+          >
+            <div className="task-trace-scroll">
+              {taskTrace ? (
+                <div
+                  className={`task-trace ${taskTrace.done ? "done" : "running"}`}
+                  data-task-status={
+                    pendingHumanInput?.taskId === taskTrace.id ? "waiting_user_input" : taskTrace.status
+                  }
+                >
+                  <div className="task-trace-header-row">
+                    <span
+                      className={`task-trace-badge task-trace-badge--${
+                        pendingHumanInput?.taskId === taskTrace.id
+                          ? "human"
+                          : taskTrace.done
+                            ? "final"
+                            : "live"
+                      }`}
+                    >
+                      {pendingHumanInput?.taskId === taskTrace.id
+                        ? "Réponse requise"
+                        : taskTrace.done
+                          ? "État final"
+                          : "En cours"}
+                    </span>
+                  </div>
+                  <div className="task-trace-id">
+                    ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
+                  </div>
+                  <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
+                  {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
+                    <div className="task-human-input">
+                      <p className="task-human-input-question">{pendingHumanInput.question}</p>
+                      {pendingHumanInput.context ? (
+                        <p className="task-human-input-context">{pendingHumanInput.context}</p>
+                      ) : null}
+                      {pendingHumanInput.choices?.length ? (
+                        <div className="task-human-input-choices">
+                          {pendingHumanInput.choices.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              disabled={humanReplyBusy}
+                              onClick={() => setHumanReplyDraft(c)}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      <textarea
+                        className="task-human-input-textarea"
+                        value={humanReplyDraft}
+                        onChange={(e) => setHumanReplyDraft(e.target.value)}
+                        placeholder="Saisissez votre réponse (ou choisissez un bouton ci-dessus)…"
+                        rows={3}
+                        disabled={humanReplyBusy}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm task-human-input-submit"
+                        disabled={humanReplyBusy || !humanReplyDraft.trim()}
+                        onClick={() => void onSubmitHumanReply()}
+                      >
+                        {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
+                      </button>
+                    </div>
+                  ) : null}
+                  {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
+                </div>
+              ) : (
+                <div className="task-trace idle">
+                  <p className="hint task-trace-idle-hint">
+                    Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s) jusqu’à un état final ou une attente
+                    utilisateur.
+                  </p>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-        <div className="chat-form">
-          <textarea
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                void onSendChat();
-              }
-            }}
-          />
-          <button type="button" className="btn btn-primary" disabled={!selectedId} onClick={() => void onSendChat()}>
-            Envoyer
-          </button>
-        </div>
-        <p className="kbd-hint">Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour envoyer</p>
+          </CollapsiblePanel>
 
-        <div className="pane-title">Journal de build</div>
-        <pre className="build-pre">{buildLog || "—"}</pre>
+          <section className="chat-conversation-panel" aria-label="Conversation agent">
+            <div className="pane-title pane-title--compact">Conversation</div>
+            <div className="chat-log">
+              {chat.map((m, i) => (
+                <div key={i} className={`bubble ${m.role}`}>
+                  <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="chat-panel-footer">
+          <div className="chat-form">
+            <textarea
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  void onSendChat();
+                }
+              }}
+            />
+            <button type="button" className="btn btn-primary" disabled={!selectedId} onClick={() => void onSendChat()}>
+              Envoyer
+            </button>
+          </div>
+          <p className="kbd-hint">
+            Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour envoyer
+          </p>
+
+          <div className="pane-title">Journal de build</div>
+          <pre className="build-pre">{buildLog || "—"}</pre>
+        </div>
       </aside>
         ) : null}
         <button
