@@ -581,6 +581,26 @@ kbd {
   margin: 0.2rem 0;
 }
 
+.file-list-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.file-list-row > button:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-list-delete {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-width: 3.25rem;
+  text-align: center;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.4rem !important;
+}
+
 .project-item {
   width: 100%;
   display: flex;

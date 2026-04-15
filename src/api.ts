@@ -194,6 +194,18 @@ export async function writeRawFile(projectId: string, path: string, content: str
   }
 }
 
+/** Supprime un fichier du projet (fichier uniquement, pas un répertoire). */
+export async function deleteRawFile(projectId: string, path: string): Promise<void> {
+  const q = new URLSearchParams({ path });
+  const r = await fetch(api(`/api/studio/projects/${projectId}/raw?${q}`), {
+    method: "DELETE",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`deleteRawFile ${r.status}: ${t}`);
+  }
+}
+
 export async function gitClone(projectId: string, repoUrl: string, branch?: string): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/git/clone`), {
     method: "POST",

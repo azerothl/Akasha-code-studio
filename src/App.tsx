@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages } from "./chatStorage";
+import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
 import {
   BASE_STACK_PRESETS,
   STACK_ADDON_GROUPS,
@@ -680,6 +681,39 @@ export default function App() {
     [selectedId, filePath, editorDirty],
   );
 
+  const onDeleteFile = useCallback(
+    async (path: string) => {
+      if (!selectedId) return;
+      if (
+        !window.confirm(
+          `Supprimer définitivement « ${path} » sur le disque du projet ? Cette action est irréversible.`,
+        )
+      ) {
+        return;
+      }
+      setError(null);
+      try {
+        await api.deleteRawFile(selectedId, path);
+        if (filePath === path) {
+          setFilePath(null);
+          setEditorText("");
+          setSavedEditorText("");
+          setEditorBinary(false);
+          setStaticPreviewBlobUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return null;
+          });
+        }
+        const fl = await api.listFiles(selectedId);
+        setFiles(fl);
+        setStatus(`Fichier supprimé : ${path}`);
+      } catch (e) {
+        setError(String(e));
+      }
+    },
+    [selectedId, filePath],
+  );
+
   const saveEditor = useCallback(async () => {
     if (!selectedId || !filePath || editorBinary || !editorDirty) return;
     setError(null);
@@ -841,7 +875,7 @@ export default function App() {
   }, [evolutions, selectedEvoId]);
 
   const pollTask = useCallback(
-    async (taskId: string, signal: AbortSignal) => {
+    async (taskId: string, signal: AbortSignal, studioProjectId: string | null) => {
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
       try {
         while (!signal.aborted) {
@@ -890,6 +924,9 @@ export default function App() {
             done: api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status),
           });
           if (api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status)) {
+            if (studioProjectId && api.isTaskTerminal(t.status)) {
+              clearActiveTask(studioProjectId);
+            }
             if (api.isTaskTerminal(t.status) && t.status === "completed" && selectedId) {
               try {
                 const fl = await api.listFiles(selectedId);
@@ -937,6 +974,39 @@ export default function App() {
     },
     [selectedId],
   );
+
+  /** Au chargement / changement de projet : reprendre le polling si une tâche non terminale était en cours. */
+  useEffect(() => {
+    if (!selectedId) return;
+    let cancelled = false;
+    const stored = loadActiveTask(selectedId);
+    if (!stored?.taskId) return;
+    void (async () => {
+      try {
+        const t = await api.getTask(stored.taskId);
+        if (cancelled) return;
+        if (api.isTaskTerminal(t.status)) {
+          clearActiveTask(selectedId);
+          return;
+        }
+        pollTaskAbortRef.current?.abort();
+        const ac = new AbortController();
+        pollTaskAbortRef.current = ac;
+        setTaskTrace({
+          id: stored.taskId,
+          status: t.status,
+          line: "Tâche en cours (reprise après rechargement)…",
+          done: false,
+        });
+        void pollTask(stored.taskId, ac.signal, selectedId);
+      } catch {
+        if (!cancelled) clearActiveTask(selectedId);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, pollTask]);
 
   useEffect(
     () => () => {
@@ -995,7 +1065,8 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         line: "Régénération du plan…",
         done: false,
       });
-      void pollTask(task_id, ac.signal);
+      saveActiveTask(selectedId, task_id);
+      void pollTask(task_id, ac.signal, selectedId);
     } catch (e) {
       setError(String(e));
     }
@@ -1027,7 +1098,8 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         line: "Requête acceptée par le daemon — démarrage…",
         done: false,
       });
-      void pollTask(task_id, ac.signal);
+      saveActiveTask(selectedId, task_id);
+      void pollTask(task_id, ac.signal, selectedId);
     } catch (e) {
       setError(String(e));
     }
@@ -1052,13 +1124,13 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         line: "Réponse enregistrée — reprise de la tâche…",
         done: false,
       });
-      void pollTask(tid, ac.signal);
+      void pollTask(tid, ac.signal, selectedId);
     } catch (e) {
       setError(String(e));
     } finally {
       setHumanReplyBusy(false);
     }
-  }, [pendingHumanInput, humanReplyDraft, pollTask]);
+  }, [pendingHumanInput, humanReplyDraft, pollTask, selectedId]);
 
   const agentLabel = useMemo(
     () => AGENT_OPTIONS.find((o) => o.value === agent)?.label ?? "Agent",
@@ -1191,13 +1263,23 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
             <div className="file-list-scroll">
               <ul className="file-list">
                 {files.map((f) => (
-                  <li key={f}>
+                  <li key={f} className="file-list-row">
                     <button
                       type="button"
                       className={f === filePath ? "active" : ""}
                       onClick={() => void openFile(f)}
                     >
                       {f}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm file-list-delete"
+                      data-testid="studio-delete-file"
+                      title={`Supprimer ${f}`}
+                      aria-label={`Supprimer le fichier ${f}`}
+                      onClick={() => void onDeleteFile(f)}
+                    >
+                      Suppr.
                     </button>
                   </li>
                 ))}
