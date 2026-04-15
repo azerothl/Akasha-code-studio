@@ -77,6 +77,14 @@ test.beforeEach(async ({ page }) => {
       });
       return;
     }
+    if (route.request().method() === "DELETE") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, path: "index.html" }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -216,7 +224,7 @@ test("loads project tech stack from metadata", async ({ page }) => {
 test("opens index.html and shows preview title", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("button", { name: "index.html" }).click();
+  await page.getByRole("button", { name: "index.html", exact: true }).click();
   await page.getByRole("tab", { name: /^Aperçu$/i }).click();
   await expect(page.locator('iframe[title="Aperçu"]').contentFrame().getByRole("heading", { name: "Studio" })).toBeVisible({
     timeout: 10_000,
@@ -226,7 +234,7 @@ test("opens index.html and shows preview title", async ({ page }) => {
 test("saves editor changes with PUT /raw", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("button", { name: "index.html" }).click();
+  await page.getByRole("button", { name: "index.html", exact: true }).click();
   await page.locator(".monaco-editor").click();
   await page.keyboard.press("End");
   await page.keyboard.type("<!-- e2e-save -->");
@@ -248,4 +256,15 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
   await expect(page.locator(".bubble.assistant").getByText(/Mock — tâche terminée|La tâche est terminée/i)).toBeVisible({
     timeout: 10_000,
   });
+});
+
+test("deletes file via DELETE /raw (mocked)", async ({ page }) => {
+  const del = page.waitForRequest(
+    (r) => r.url().includes(`/api/studio/projects/${demoId}/raw`) && r.method() === "DELETE",
+  );
+  await page.goto("/");
+  await selectDemoProject(page);
+  page.once("dialog", (d) => d.accept());
+  await page.getByTestId("studio-delete-file").click();
+  await del;
 });

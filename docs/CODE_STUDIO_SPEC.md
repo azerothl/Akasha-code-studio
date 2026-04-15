@@ -40,6 +40,7 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-016 | 3 | UI : onglets **Éditeur** / **Aperçu** / **Logs** ; éditeur **Monaco** (workers via CDN) ; **Play** lance `npm install` si besoin puis `npm run dev` côté daemon ; logs dev via `GET .../preview/logs` | Fait |
 | STU-017 | 3 | `GET .../preview/logs`, `POST .../preview/install`, `git_branch` sur GET méta projet | Fait |
 | STU-018 | 1 | Fichier `CODE_STUDIO_PLAN.md` à la création ; garde-fou `write_file` anti-markdown sur fichiers code studio ; vérif post-tâche optionnelle (méta `verify_*`) | Fait |
+| STU-019 | 1 | Tâches studio : prompt système **dédié** (`CODE_STUDIO_APP_CONTEXT` + instructions outils compactes, sans bloc général Akasha TUI/skills) ; `strip_markdown_fences` sur `write_file` ; persistance UI du `task_id` (rechargement) ; `DELETE .../raw` + outil `delete_file` côté agent | Fait |
 | STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Reporté (utiliser `run_in_container` côté agent + policy) |
 | STU-012 | 3 | Proxy preview dev server | Reporté |
 | STU-013 | 8 | Application de patchs par hunk dans l’UI | Reporté |
@@ -82,6 +83,7 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 |---------|--------|-------------|
 | GET | `/api/studio/projects/:id/files` | `{ files: string[] }` (limite profondeur / nombre) |
 | GET | `/api/studio/projects/:id/raw?path=` | JSON `{ path, mime, content }` ou `content_base64` |
+| DELETE | `/api/studio/projects/:id/raw?path=` | Supprime le fichier indiqué (fichier uniquement, pas un répertoire) ; mêmes règles de chemin que GET/PUT |
 
 ### Git
 

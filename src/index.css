@@ -100,7 +100,7 @@ kbd {
 
 .app {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) 1fr minmax(300px, 400px);
+  grid-template-columns: minmax(240px, 300px) 1fr minmax(420px, 560px);
   grid-template-rows: auto 1fr;
   height: 100%;
   max-height: 100%;
@@ -110,7 +110,7 @@ kbd {
 
 /* Colonnes latérales explicites : le centre (1fr) récupère tout l’espace libéré */
 .app.app--left-collapsed {
-  grid-template-columns: 28px 1fr minmax(300px, 400px);
+  grid-template-columns: 28px 1fr minmax(420px, 560px);
 }
 
 .app.app--right-collapsed {
@@ -141,11 +141,84 @@ kbd {
   flex-wrap: wrap;
 }
 
+.app-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 1rem;
+  font-size: 0.78rem;
+  color: var(--akasha-text-muted);
+  max-width: min(100%, 52rem);
+}
+
+.app-header-project {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+}
+
+.app-header-project-name {
+  font-weight: 600;
+  color: var(--akasha-text);
+  max-width: min(18rem, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header-project-id {
+  font-size: 0.72rem;
+  opacity: 0.9;
+}
+
+.app-header-branches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.85rem;
+}
+
+.app-header-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.app-header-branch-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.app-header-dirty {
+  color: var(--akasha-warning);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.app-header-clean {
+  margin-left: 0.05rem;
+  font-size: 0.68rem;
+}
+
+.app-header-placeholder {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 650;
   letter-spacing: -0.02em;
+}
+
+.sidebar-project-hint {
+  margin: 0.15rem 0 0;
 }
 
 .subtitle {
@@ -506,6 +579,26 @@ kbd {
 .file-list li,
 .evo-list li {
   margin: 0.2rem 0;
+}
+
+.file-list-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.file-list-row > button:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-list-delete {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-width: 3.25rem;
+  text-align: center;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.4rem !important;
 }
 
 .project-item {
@@ -978,8 +1071,10 @@ textarea.editor {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.45rem;
   min-height: 0;
   overflow: hidden;
+  padding: 0.5rem;
 }
 
 .agent-select select {
@@ -990,28 +1085,79 @@ textarea.editor {
   margin: 0.25rem 0 0.5rem;
 }
 
-.branch-pill {
-  font-size: 0.8rem;
-  padding: 0.35rem 0.5rem;
-  background: rgba(139, 92, 246, 0.12);
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
+.agent-branch-hint {
+  margin: 0 0 0.5rem;
 }
 
-.branch-pill--stacked {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.35rem;
-}
-
-.chat-panel .panel-collapsible.chat-task-trace-wrap {
-  margin: 0.35rem 0.5rem 0.5rem;
+.chat-panel .panel-collapsible.chat-agent-role-wrap {
+  margin: 0;
   flex-shrink: 0;
 }
 
+.chat-agent-role-wrap .panel-collapse-trigger h2 {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+.chat-panel .panel-collapsible.chat-task-trace-wrap {
+  margin: 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1 1 45%;
+  max-height: 58%;
+}
+
+.chat-panel .chat-task-trace-wrap .panel-collapse-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-activity-area {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-activity-area .chat-task-trace-wrap:has(.panel-collapse-trigger[aria-expanded="true"]) {
+  min-height: 8rem;
+}
+
+.chat-activity-area .chat-task-trace-wrap:has(.panel-collapse-trigger[aria-expanded="false"]) {
+  flex: 0 0 auto;
+  max-height: none;
+}
+
+.chat-conversation-panel {
+  flex: 1 1 55%;
+  min-height: 9rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--akasha-bg-elevated);
+  overflow: hidden;
+}
+
+.pane-title--compact {
+  margin: 0;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
 .task-trace-scroll {
-  max-height: 11rem;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 0.15rem;
@@ -1313,7 +1459,7 @@ textarea.editor {
 .chat-log {
   flex: 1;
   overflow-y: auto;
-  padding: 0.45rem 0.55rem;
+  padding: 0.55rem 0.65rem;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -1338,11 +1484,20 @@ textarea.editor {
   align-self: flex-start;
 }
 
+.chat-panel-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.45rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid var(--border);
+}
+
 .chat-form {
   display: flex;
   gap: 0.45rem;
-  padding: 0.5rem;
-  border-top: 1px solid var(--border);
+  padding: 0;
   align-items: flex-end;
 }
 
@@ -1360,18 +1515,18 @@ textarea.editor {
 }
 
 .kbd-hint {
-  margin: 0 0.5rem 0.35rem;
+  margin: 0;
   font-size: 0.72rem;
   color: var(--text-muted);
 }
 
 .build-pre {
-  margin: 0 0.5rem 0.5rem;
+  margin: 0;
   padding: 0.45rem;
   font-size: 0.72rem;
   line-height: 1.35;
   overflow: auto;
-  max-height: 100px;
+  max-height: 84px;
   background: var(--akasha-bg);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   border-radius: 6px;
