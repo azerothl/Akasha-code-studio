@@ -158,6 +158,22 @@ test.beforeEach(async ({ page }) => {
     });
   });
 
+  await page.route(`**/api/tasks/${demoId}/human-input`, async (route) => {
+    await route.fulfill({ status: 404, body: "" });
+  });
+
+  await page.route(`**/api/tasks/${demoId}/human-reply`, async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
   await page.route("**/api/tasks/**", async (route) => {
     if (route.request().method() !== "GET") {
       await route.continue();

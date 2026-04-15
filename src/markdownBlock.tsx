@@ -2,14 +2,39 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 
+function sanitizeMarkdownUrl(url?: string) {
+  if (url == null) {
+    return undefined;
+  }
+
+  const trimmed = url.trim();
+  if (trimmed === "") {
+    return undefined;
+  }
+
+  if (trimmed.startsWith("#") || trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  if (/^(https?:|mailto:|tel:)/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return undefined;
+}
+
 const mdComponents: Partial<Components> = {
   a({ href, children, ...rest }) {
-    const external = href != null && /^https?:\/\//i.test(href);
+    const safeHref = sanitizeMarkdownUrl(href);
+    const external = safeHref != null && /^https?:\/\//i.test(safeHref);
     return (
-      <a href={href} {...rest} {...(external ? { target: "_blank", rel: "noreferrer noopener" } : {})}>
+      <a href={safeHref} {...rest} {...(external ? { target: "_blank", rel: "noreferrer noopener" } : {})}>
         {children}
       </a>
     );
+  },
+  img() {
+    return null;
   },
 };
 

@@ -600,7 +600,7 @@ export default function App() {
     setError(null);
     setPreviewLog("");
     try {
-      const r = await api.installStudioDeps(selectedId, { force: true });
+      const r = await api.installStudioDeps(selectedId, { force: forceInstallBeforePreview });
       if (r.skipped) {
         setPreviewLog(`Dépendances déjà présentes (${r.reason ?? "node_modules"}).`);
         setStatus("node_modules déjà installé");
@@ -617,7 +617,7 @@ export default function App() {
     } finally {
       setDepsInstallBusy(false);
     }
-  }, [selectedId]);
+  }, [selectedId, forceInstallBeforePreview]);
 
   const onStopPreview = useCallback(async () => {
     if (!selectedId) return;
@@ -953,12 +953,13 @@ export default function App() {
       } catch {
         if (!cancelled) setDevServerLog("");
       }
+      if (!cancelled) {
+        setTimeout(() => void tick(), 1500);
+      }
     };
     void tick();
-    const id = setInterval(tick, 1500);
     return () => {
       cancelled = true;
-      clearInterval(id);
     };
   }, [selectedId, centerTab]);
 

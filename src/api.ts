@@ -141,16 +141,28 @@ export async function installStudioDeps(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ force: opts?.force ?? false }),
   });
-  const j = (await r.json()) as {
-    ok: boolean;
-    skipped?: boolean;
-    reason?: string;
-    install?: { exit_code: number | null; stdout?: string; stderr?: string };
-  };
-  if (!r.ok && !j.install) {
-    throw new Error(`installStudioDeps ${r.status}`);
+  const contentType = r.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
+
+  if (isJson) {
+    const j = (await r.json()) as {
+      ok: boolean;
+      skipped?: boolean;
+      reason?: string;
+      install?: { exit_code: number | null; stdout?: string; stderr?: string };
+    };
+    if (!r.ok && !j.install) {
+      throw new Error(`installStudioDeps ${r.status}`);
+    }
+    return j;
   }
-  return j;
+
+  const text = await r.text();
+  if (!r.ok) {
+    throw new Error(`installStudioDeps ${r.status}${text ? `: ${text}` : ""}`);
+  }
+
+  throw new Error(`installStudioDeps ${r.status}: expected JSON response`);
 }
 
 export async function readRawFile(
