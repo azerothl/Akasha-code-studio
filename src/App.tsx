@@ -967,8 +967,12 @@ export default function App() {
 
   const onRegeneratePlan = useCallback(async () => {
     if (!selectedId) return;
-    const msg = `[Tâche Code Studio — plan projet]
-Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse la structure du dépôt (fichiers, stack, scripts), puis crée ou remplace CODE_STUDIO_PLAN.md à la racine avec : titre du projet, stack observée, objectif, étapes, et historique des changements (ce que tu déduis du code existant). N’invente pas de fonctionnalités non présentes dans les fichiers.`;
+    const msg = `[Tâche Code Studio — plan projet (réinitialisation / complétion)]
+Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre : …\`), **Description**, **Scope**, **Stack**, **Structure du projet**, **Commandes**, **Fichiers hors scope**, **Demandes d'évolutions utilisateur par phase**, **Recommandations**, **Todos**, **Informations complémentaires** (conserver ces titres \`## …\` et cet ordre).
+1) \`read_file workspace:/CODE_STUDIO_PLAN.md\` si le fichier existe.
+2) Si le fichier existe : **fusionner** — compléter ou corriger section par section à partir du dépôt ; **ne pas** réécrire tout le document si le contenu est déjà structuré : préserver les sections encore pertinentes et l’historique utile (lignes datées dans *Informations complémentaires* ou *Demandes d'évolutions…*).
+3) Si le fichier est absent : le créer avec le gabarit complet (placeholders acceptés) en synthétisant fichiers, stack et scripts réels.
+4) Ne pas inventer de fonctionnalités absentes du code. Réécriture intégrale **uniquement** si le fichier est vide ou totalement hors gabarit sans sections exploitables.`;
     setChat((c) => [...c, { role: "user", text: msg }]);
     setError(null);
     pollTaskAbortRef.current?.abort();
