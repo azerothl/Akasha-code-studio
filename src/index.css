@@ -847,14 +847,32 @@ kbd {
   flex: 1;
   margin: 0;
   overflow: auto;
-  font-size: 0.68rem;
-  line-height: 1.4;
-  padding: 0.5rem 0.65rem;
-  background: var(--akasha-bg);
-  color: var(--akasha-text-muted);
+  font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: color-mix(in srgb, var(--akasha-bg) 88%, #0b0b10 12%);
+  color: #d4d4d8;
   white-space: pre-wrap;
   word-break: break-word;
   min-height: 120px;
+  tab-size: 2;
+}
+
+.preview-dev-log--empty {
+  color: var(--text-muted);
+  background: var(--akasha-bg);
+}
+
+.preview-dev-log--html {
+  /* Contenu généré par ansi_up : couleurs inline + texte hérité pour le reste */
+  letter-spacing: 0.01em;
+}
+
+.preview-dev-log--html span {
+  /* ansi_up : empêcher les spans trop serrés sur certains navigateurs */
+  vertical-align: baseline;
 }
 
 .preview-logs-hint {

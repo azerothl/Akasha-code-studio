@@ -11,6 +11,7 @@ import {
   emptyStackAddons,
 } from "./stackConfig";
 import { CodeEditor } from "./codeEditor";
+import { DevServerLogView } from "./devServerLogView";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -1442,9 +1443,10 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
                 Sortie standard et erreurs du processus <code>npm run dev</code> (Vite, etc.). Ouvrez cet onglet pour voir les erreurs de compilation ou du backend qui n’apparaissent pas dans l’iframe.
               </p>
             </div>
-            <pre className="preview-dev-log" title="Logs du serveur">
-              {devServerLog || "— (lancez la prévisualisation puis revenez ici — rafraîchissement automatique)"}
-            </pre>
+            <DevServerLogView
+              text={devServerLog}
+              emptyHint="— (lancez la prévisualisation puis revenez ici — rafraîchissement automatique)"
+            />
           </div>
         )}
       </div>
