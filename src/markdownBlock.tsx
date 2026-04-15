@@ -33,8 +33,8 @@ const mdComponents: Partial<Components> = {
       </a>
     );
   },
-  img() {
-    return null;
+  img({ alt }) {
+    return alt ? <span>[image: {alt}]</span> : null;
   },
 };
 
