@@ -834,6 +834,54 @@ kbd {
   flex-shrink: 0;
 }
 
+.preview-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.preview-dev-log {
+  flex: 1;
+  margin: 0;
+  overflow: auto;
+  font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: color-mix(in srgb, var(--akasha-bg) 88%, #0b0b10 12%);
+  color: #d4d4d8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 120px;
+  tab-size: 2;
+}
+
+.preview-dev-log--empty {
+  color: var(--text-muted);
+  background: var(--akasha-bg);
+}
+
+.preview-dev-log--html {
+  /* Contenu généré par ansi_up : couleurs inline + texte hérité pour le reste */
+  letter-spacing: 0.01em;
+}
+
+.preview-dev-log--html span {
+  /* ansi_up : empêcher les spans trop serrés sur certains navigateurs */
+  vertical-align: baseline;
+}
+
+.preview-logs-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  max-width: 48rem;
+  color: var(--text-muted);
+}
+
 .pane-title {
   font-size: 0.7rem;
   font-weight: 700;
@@ -950,6 +998,13 @@ textarea.editor {
   margin-bottom: 0.5rem;
 }
 
+.branch-pill--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
 .chat-panel .panel-collapsible.chat-task-trace-wrap {
   margin: 0.35rem 0.5rem 0.5rem;
   flex-shrink: 0;
@@ -1031,6 +1086,11 @@ textarea.editor {
   background: rgba(16, 185, 129, 0.22);
 }
 
+.task-trace-badge--human {
+  color: #f5d78a;
+  background: rgba(230, 180, 80, 0.22);
+}
+
 .task-trace.done[data-task-status="failed"] .task-trace-badge--final {
   color: #fecaca;
   background: rgba(239, 68, 68, 0.2);
@@ -1059,6 +1119,182 @@ textarea.editor {
   font-size: 0.84rem;
   line-height: 1.4;
   color: var(--akasha-text);
+}
+
+/* Markdown (suivi de tâche + chat) */
+.md-content {
+  word-break: break-word;
+}
+
+.md-content--bubble {
+  color: inherit;
+}
+
+.md-content p {
+  margin: 0.4em 0;
+}
+
+.md-content p:first-child {
+  margin-top: 0;
+}
+
+.md-content p:last-child {
+  margin-bottom: 0;
+}
+
+.md-content ul,
+.md-content ol {
+  margin: 0.4em 0;
+  padding-left: 1.35em;
+}
+
+.md-content li {
+  margin: 0.12em 0;
+}
+
+.md-content h1,
+.md-content h2,
+.md-content h3,
+.md-content h4,
+.md-content h5,
+.md-content h6 {
+  margin: 0.5em 0 0.35em;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--akasha-text);
+}
+
+.md-content h1 {
+  font-size: 1.12em;
+}
+
+.md-content h2 {
+  font-size: 1.06em;
+}
+
+.md-content h3,
+.md-content h4,
+.md-content h5,
+.md-content h6 {
+  font-size: 1em;
+}
+
+.md-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 0.1em 0.28em;
+  border-radius: 4px;
+  background: rgba(125, 125, 125, 0.2);
+}
+
+.bubble.user .md-content code {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.md-content pre {
+  margin: 0.45em 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--akasha-bg-surface);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  font-size: 0.9em;
+  line-height: 1.35;
+}
+
+.md-content pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.md-content a {
+  color: var(--accent);
+}
+
+.md-content blockquote {
+  margin: 0.4em 0;
+  padding-left: 0.65em;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+
+.md-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.md-content hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.65em 0;
+}
+
+.md-content table {
+  border-collapse: collapse;
+  font-size: 0.92em;
+  margin: 0.45em 0;
+  width: 100%;
+}
+
+.md-content th,
+.md-content td {
+  border: 1px solid var(--border);
+  padding: 0.25em 0.45em;
+  text-align: left;
+}
+
+.md-content th {
+  background: rgba(125, 125, 125, 0.12);
+}
+
+.task-human-input {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.task-human-input-question {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--akasha-text);
+}
+
+.task-human-input-context {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.task-human-input-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.task-human-input-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--akasha-bg);
+  color: var(--akasha-text);
+  resize: vertical;
+  min-height: 3.5rem;
+}
+
+.task-human-input-submit {
+  align-self: flex-start;
 }
 
 .task-spinner {

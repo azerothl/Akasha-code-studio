@@ -17,6 +17,13 @@ export type StudioProjectMeta = {
   created_at: string;
   evolutions?: Evolution[];
   tech_stack?: string | null;
+  verify_skip?: boolean;
+  verify_argv?: string[] | null;
+  verify_timeout_sec?: number | null;
+  /** Branche Git courante (`git rev-parse --abbrev-ref HEAD`), si dépôt présent. */
+  git_branch?: string | null;
+  /** `true` si `git status --porcelain` est vide. */
+  git_worktree_clean?: boolean | null;
 };
 
 export async function listProjects(): Promise<StudioProject[]> {
@@ -29,7 +36,13 @@ export async function listProjects(): Promise<StudioProject[]> {
 /** At least one of `name` or `tech_stack` must be set. Use `tech_stack: null` to clear the stack. */
 export async function patchProjectSettings(
   projectId: string,
-  body: { name?: string; tech_stack?: string | null },
+  body: {
+    name?: string;
+    tech_stack?: string | null;
+    verify_skip?: boolean;
+    verify_argv?: string[] | null;
+    verify_timeout_sec?: number | null;
+  },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
     method: "PATCH",
@@ -100,6 +113,56 @@ export async function stopStudioPreview(projectId: string): Promise<void> {
     body: "{}",
   });
   if (!r.ok) throw new Error(`stopStudioPreview ${r.status}`);
+}
+
+/** Logs stdout/stderr du serveur `npm run dev` (tampon côté daemon). */
+export async function getPreviewLogs(projectId: string): Promise<{
+  running: boolean;
+  log: string;
+  preview_inactive?: boolean;
+}> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/preview/logs`));
+  if (!r.ok) throw new Error(`getPreviewLogs ${r.status}`);
+  return r.json() as Promise<{ running: boolean; log: string; preview_inactive?: boolean }>;
+}
+
+/** `npm install` uniquement (sans lancer le serveur de dev). */
+export async function installStudioDeps(
+  projectId: string,
+  opts?: { force?: boolean },
+): Promise<{
+  ok: boolean;
+  skipped?: boolean;
+  reason?: string;
+  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+}> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/preview/install`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ force: opts?.force ?? false }),
+  });
+  const contentType = r.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
+
+  if (isJson) {
+    const j = (await r.json()) as {
+      ok: boolean;
+      skipped?: boolean;
+      reason?: string;
+      install?: { exit_code: number | null; stdout?: string; stderr?: string };
+    };
+    if (!r.ok && !j.install) {
+      throw new Error(`installStudioDeps ${r.status}`);
+    }
+    return j;
+  }
+
+  const text = await r.text();
+  if (!r.ok) {
+    throw new Error(`installStudioDeps ${r.status}${text ? `: ${text}` : ""}`);
+  }
+
+  throw new Error(`installStudioDeps ${r.status}: expected JSON response`);
 }
 
 export async function readRawFile(
@@ -228,12 +291,41 @@ export type TaskStatusResponse = {
   status: string;
   assigned_agent?: string;
   progress?: { progress_pct: number; message: string }[];
+  /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
+  failure_detail?: string | null;
 };
 
 export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   const r = await fetch(api(`/api/tasks/${taskId}`));
   if (!r.ok) throw new Error(`getTask ${r.status}`);
   return r.json() as Promise<TaskStatusResponse>;
+}
+
+/** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */
+export type TaskHumanInputPayload = {
+  task_id: string;
+  question: string;
+  context: string;
+  choices: string[] | null;
+};
+
+export async function getTaskHumanInput(taskId: string): Promise<TaskHumanInputPayload | null> {
+  const r = await fetch(api(`/api/tasks/${taskId}/human-input`));
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`getTaskHumanInput ${r.status}`);
+  return r.json() as Promise<TaskHumanInputPayload>;
+}
+
+export async function postTaskHumanReply(taskId: string, response: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/human-reply`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ response }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`postTaskHumanReply ${r.status}: ${t}`);
+  }
 }
 
 export function isTaskTerminal(status: string): boolean {
