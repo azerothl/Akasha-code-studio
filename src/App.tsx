@@ -11,9 +11,13 @@ import {
   composeStackString,
   emptyStackAddons,
 } from "./stackConfig";
+import { AgentCapabilitiesTable } from "./agentCapabilities";
 import { CodeEditor } from "./codeEditor";
 import { DevServerLogView } from "./devServerLogView";
+import { inferActionRisk, riskLabel, type ActionRiskLevel } from "./inferActionRisk";
 import { MarkdownBlock } from "./markdownBlock";
+import { CODE_MODE_OPTIONS, loadPersistedCodeMode, persistCodeMode } from "./studioConstants";
+import type { StudioCodeMode } from "./api";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -36,6 +40,11 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
     value: "studio_fullstack",
     label: "Full-stack",
     hint: "Frontend + backend cohérents dans un même passage.",
+  },
+  {
+    value: "studio_planner",
+    label: "Planification (lecture seule)",
+    hint: "Explorer le dépôt et mettre à jour CODE_STUDIO_PLAN.md uniquement — pas de code applicatif.",
   },
 ];
 
@@ -204,6 +213,18 @@ function looksLikeTimeoutMessage(msg: string): boolean {
   );
 }
 
+function looksLikeStructuredRefusal(text: string): boolean {
+  const t = text.trim();
+  if (/^refus\b/i.test(t)) return true;
+  if (/^acceptation\b/i.test(t)) return false;
+  return (
+    t.includes("Refus :") ||
+    t.includes("Refus collectif") ||
+    t.includes("merci d'arrêter") ||
+    t.includes("merci d'arrêter cette action")
+  );
+}
+
 /** Texte affiché dans le chat à la fin du suivi de tâche (préfère la dernière progression substantive renvoyée par le daemon). */
 function chatMessageForTerminalTask(
   status: string,
@@ -266,7 +287,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs">("editor");
+  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan">("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -290,6 +311,8 @@ export default function App() {
     status: string;
     line: string;
     done: boolean;
+    /** Étiquettes courtes dérivées des progressions daemon. */
+    progressChips?: string[];
   } | null>(null);
   /** Réponse attendue par le daemon (`ask_user`, approbation, …) — alimenté par GET …/human-input. */
   const [pendingHumanInput, setPendingHumanInput] = useState<{
@@ -320,6 +343,19 @@ export default function App() {
     ops: true,
     evolutions: false,
   });
+
+  const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
+  const [policyHintOneShot, setPolicyHintOneShot] = useState("");
+  const [delegateSingleLevel, setDelegateSingleLevel] = useState(false);
+  const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
+  const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  const [planDocText, setPlanDocText] = useState("");
+  const [planDocSnapshot, setPlanDocSnapshot] = useState("");
+  const [planDocLoading, setPlanDocLoading] = useState(false);
+  const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
+  const [showAgentMatrix, setShowAgentMatrix] = useState(false);
+  /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
+  const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
 
   const skipChatSaveOnce = useRef(false);
 
@@ -396,6 +432,8 @@ export default function App() {
       setStackAddons(emptyStackAddons());
       setGitHeadBranch(null);
       setGitWorktreeClean(null);
+      setEvolutionSummaryDraft("");
+      setPolicyNotesDraft("");
       return;
     }
     let cancelled = false;
@@ -405,6 +443,8 @@ export default function App() {
         if (cancelled) return;
         setGitHeadBranch(m.git_branch ?? null);
         setGitWorktreeClean(m.git_worktree_clean ?? null);
+        setEvolutionSummaryDraft((m.evolution_summary ?? "").trim());
+        setPolicyNotesDraft((m.policy_notes ?? "").trim());
         const raw = (m.tech_stack ?? "").trim();
         if (raw) {
           setStackPresetId(STACK_PRESET_CUSTOM);
@@ -423,12 +463,67 @@ export default function App() {
           setStackAddons(emptyStackAddons());
           setGitHeadBranch(null);
           setGitWorktreeClean(null);
+          setEvolutionSummaryDraft("");
+          setPolicyNotesDraft("");
         }
       });
     return () => {
       cancelled = true;
     };
   }, [selectedId]);
+
+  useEffect(() => {
+    persistCodeMode(codeMode);
+  }, [codeMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const p = await api.listPendingHumanInput();
+        if (!cancelled) setPendingInbox(p);
+      } catch {
+        if (!cancelled) setPendingInbox([]);
+      }
+    };
+    void tick();
+    const id = window.setInterval(() => void tick(), 12000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "plan") return;
+    let cancelled = false;
+    setPlanDocLoading(true);
+    void api
+      .readRawFile(selectedId, "CODE_STUDIO_PLAN.md")
+      .then((raw) => {
+        if (cancelled) return;
+        const t = raw.content ?? "";
+        setPlanDocText(t);
+        const snap = sessionStorage.getItem(`akasha-plan-snap-${selectedId}`);
+        if (snap !== null) setPlanDocSnapshot(snap);
+        else {
+          setPlanDocSnapshot(t);
+          sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, t);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPlanDocText("");
+          setPlanDocSnapshot("");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPlanDocLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, centerTab]);
 
   const toggleStackAddon = useCallback((cat: StackAddonCategoryId, optId: string) => {
     setStackAddons((prev) => {
@@ -815,6 +910,33 @@ export default function App() {
     }
   };
 
+  const onSaveEvolutionAndPolicy = async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.patchProjectSettings(selectedId, {
+        evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
+        policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+      });
+      setStatus("Résumé d’évolution et politique enregistrés (réinjectés dans les prochains messages)");
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const onSavePlanFromTab = async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.writeRawFile(selectedId, "CODE_STUDIO_PLAN.md", planDocText);
+      setPlanDocSnapshot(planDocText);
+      sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+      setStatus("CODE_STUDIO_PLAN.md enregistré sur le disque projet");
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
   const onClone = async () => {
     if (!selectedId || !cloneUrl.trim()) return;
     setError(null);
@@ -901,6 +1023,7 @@ export default function App() {
               status: t.status,
               line: "L’agent attend votre réponse (champs ci-dessous).",
               done: true,
+              progressChips: undefined,
             });
             return;
           }
@@ -917,11 +1040,21 @@ export default function App() {
             : last
               ? `${last.progress_pct}% — ${last.message}`
               : formatTaskStatusFr(t.status);
+          const rawProgress = t.progress ?? [];
+          const progressChips = rawProgress
+            .filter((p) => p.message && !isStubProgressMessage(p.message))
+            .slice(-12)
+            .map((p) => {
+              const msg = p.message.trim();
+              const short = msg.length > 96 ? `${msg.slice(0, 96)}…` : msg;
+              return `${p.progress_pct}% ${short}`;
+            });
           setTaskTrace({
             id: taskId,
             status: t.status,
             line,
             done: api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status),
+            progressChips: progressChips.length ? progressChips : undefined,
           });
           if (api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status)) {
             if (studioProjectId && api.isTaskTerminal(t.status)) {
@@ -1057,7 +1190,11 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
       });
+      setPolicyHintOneShot("");
       const ac = new AbortController();
       pollTaskAbortRef.current = ac;
       setTaskTrace({
@@ -1065,13 +1202,14 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         status: "queued",
         line: "Régénération du plan…",
         done: false,
+        progressChips: undefined,
       });
       saveActiveTask(selectedId, task_id);
       void pollTask(task_id, ac.signal, selectedId);
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask]);
+  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel]);
 
   const onSendChat = async () => {
     const text = chatInput.trim();
@@ -1090,7 +1228,11 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
       });
+      setPolicyHintOneShot("");
       const ac = new AbortController();
       pollTaskAbortRef.current = ac;
       setTaskTrace({
@@ -1098,6 +1240,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         status: "queued",
         line: "Requête acceptée par le daemon — démarrage…",
         done: false,
+        progressChips: undefined,
       });
       saveActiveTask(selectedId, task_id);
       void pollTask(task_id, ac.signal, selectedId);
@@ -1108,8 +1251,15 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
 
   const onSubmitHumanReply = useCallback(async () => {
     if (!pendingHumanInput) return;
-    const text = humanReplyDraft.trim();
+    let text = humanReplyDraft.trim();
     if (!text) return;
+    const refusal = looksLikeStructuredRefusal(text);
+    let nextStreak = refusal ? humanRefusalStreak + 1 : 0;
+    if (refusal && nextStreak >= 3) {
+      text = `${text}\n\n[Note interface Code Studio] Refus répétés : merci de poser une question précise à l'utilisateur ou de proposer une marche alternative (ne pas réessayer la même action sans nouveau contexte).`;
+      nextStreak = 0;
+    }
+    setHumanRefusalStreak(nextStreak);
     setHumanReplyBusy(true);
     setError(null);
     try {
@@ -1131,7 +1281,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     } finally {
       setHumanReplyBusy(false);
     }
-  }, [pendingHumanInput, humanReplyDraft, pollTask, selectedId]);
+  }, [pendingHumanInput, humanReplyDraft, pollTask, selectedId, humanRefusalStreak]);
 
   const agentLabel = useMemo(
     () => AGENT_OPTIONS.find((o) => o.value === agent)?.label ?? "Agent",
@@ -1151,6 +1301,15 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     }
     return opt.hint;
   }, [agent, composedStack]);
+
+  const humanInputRiskLevel = useMemo((): ActionRiskLevel | null => {
+    if (!pendingHumanInput) return null;
+    return inferActionRisk(`${pendingHumanInput.question}\n${pendingHumanInput.context}`);
+  }, [pendingHumanInput]);
+
+  useEffect(() => {
+    setHumanRefusalStreak(0);
+  }, [pendingHumanInput?.taskId]);
 
   const previewUrl = devPreviewUrl ?? staticPreviewBlobUrl;
 
@@ -1327,6 +1486,37 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                   Enregistrer la stack
                 </button>
               </div>
+              <div className="evolution-policy-box">
+                <p className="hint evolution-policy-intro">
+                  Résumé d’évolution et notes de politique : injectés dans les prochains messages (daemon), pour la session
+                  ou l’itération courante — utile après rechargement ou longue session.
+                </p>
+                <label className="field">
+                  <span>Résumé d’évolution / session</span>
+                  <textarea
+                    className="evolution-policy-textarea"
+                    rows={4}
+                    spellCheck={false}
+                    value={evolutionSummaryDraft}
+                    onChange={(e) => setEvolutionSummaryDraft(e.target.value)}
+                    placeholder="Ex. objectif de la branche, décisions déjà prises, ce qu’il reste à faire…"
+                  />
+                </label>
+                <label className="field">
+                  <span>Notes de politique (outils, périmètre)</span>
+                  <textarea
+                    className="evolution-policy-textarea"
+                    rows={4}
+                    spellCheck={false}
+                    value={policyNotesDraft}
+                    onChange={(e) => setPolicyNotesDraft(e.target.value)}
+                    placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
+                  />
+                </label>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
+                  Enregistrer résumé &amp; politique
+                </button>
+              </div>
             </div>
           </CollapsiblePanel>
         ) : null}
@@ -1493,6 +1683,15 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
           <button
             type="button"
             role="tab"
+            aria-selected={centerTab === "plan"}
+            className={`center-tab ${centerTab === "plan" ? "active" : ""}`}
+            onClick={() => setCenterTab("plan")}
+          >
+            Plan
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={centerTab === "logs"}
             className={`center-tab ${centerTab === "logs" ? "active" : ""}`}
             onClick={() => setCenterTab("logs")}
@@ -1605,6 +1804,57 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
               </div>
             )}
           </div>
+        ) : centerTab === "plan" ? (
+          <div className="center-body plan-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">CODE_STUDIO_PLAN.md</span>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={!selectedId || planDocLoading}
+                onClick={() => void onSavePlanFromTab()}
+              >
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={!selectedId}
+                title="Mémorise la version courante pour comparer (session navigateur)"
+                onClick={() => {
+                  if (!selectedId) return;
+                  setPlanDocSnapshot(planDocText);
+                  sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+                  setStatus("Référence plan mise à jour pour comparaison");
+                }}
+              >
+                Référence (diff)
+              </button>
+            </div>
+            {planDocLoading ? (
+              <p className="hint">Chargement…</p>
+            ) : (
+              <>
+                <p className="hint plan-pane-hint">
+                  Édition directe du fichier à la racine du projet. La « référence » sert d’instantané local pour voir si
+                  le texte a changé depuis le dernier marquage.
+                </p>
+                <p className="plan-diff-stats">
+                  {planDocSnapshot && planDocSnapshot !== planDocText
+                    ? `Écart avec la référence : ${planDocText.length} vs ${planDocSnapshot.length} caractères.`
+                    : "Aucun écart avec la référence mémorisée (ou référence identique)."}
+                </p>
+                <textarea
+                  className="plan-doc-textarea"
+                  spellCheck={false}
+                  value={planDocText}
+                  onChange={(e) => setPlanDocText(e.target.value)}
+                  rows={28}
+                  aria-label="Contenu de CODE_STUDIO_PLAN.md"
+                />
+              </>
+            )}
+          </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">
             <div className="preview-toolbar">
@@ -1624,6 +1874,18 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
       <div className={`chat-column${!sidebarRightVisible ? " chat-column--collapsed" : ""}`}>
         {sidebarRightVisible ? (
         <aside className="chat-panel">
+        {selectedId ? (
+          <div className="sandbox-reminder" role="status">
+            Sandbox disque : <code>{selectedId.slice(0, 8)}…</code> — les outils agent sont limités à ce dossier projet
+            (voir daemon / policy).
+          </div>
+        ) : null}
+        {pendingInbox.length > 1 ? (
+          <div className="pending-inbox-banner" role="status">
+            {pendingInbox.length} tâche(s) en attente de réponse (file globale — ouvrez la bonne dans l’UI principale
+            Akasha si besoin).
+          </div>
+        ) : null}
         <CollapsiblePanel
           className="chat-agent-role-wrap"
           title={`Rôle de l’agent — ${agentLabel}`}
@@ -1656,6 +1918,14 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
           >
             Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
           </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-block"
+            onClick={() => setShowAgentMatrix((v) => !v)}
+          >
+            {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
+          </button>
+          {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
         </CollapsiblePanel>
 
         <div className="chat-activity-area">
@@ -1694,8 +1964,25 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                     ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
                   </div>
                   <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
+                  {taskTrace.progressChips && taskTrace.progressChips.length > 0 ? (
+                    <ul className="task-progress-chips" aria-label="Étapes récentes">
+                      {taskTrace.progressChips.map((c, i) => (
+                        <li key={`${c}-${i}`} className="task-progress-chip">
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
                     <div className="task-human-input">
+                      {humanInputRiskLevel ? (
+                        <span
+                          className={`risk-badge risk-badge--${humanInputRiskLevel}`}
+                          title="Estimation locale (mots-clés) — pas une analyse serveur"
+                        >
+                          {riskLabel(humanInputRiskLevel)}
+                        </span>
+                      ) : null}
                       <p className="task-human-input-question">{pendingHumanInput.question}</p>
                       {pendingHumanInput.context ? (
                         <p className="task-human-input-context">{pendingHumanInput.context}</p>
@@ -1715,6 +2002,51 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                           ))}
                         </div>
                       ) : null}
+                      {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
+                        <p className="denial-loop-hint" role="status">
+                          Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
+                          pour éviter que l’agent réessaie la même action. Au 3ᵉ refus structuré, une note est ajoutée
+                          automatiquement pour l’agent.
+                        </p>
+                      ) : null}
+                      <div className="task-human-input-quick">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={humanReplyBusy}
+                          onClick={() =>
+                            setHumanReplyDraft(
+                              "Acceptation : vous pouvez poursuivre avec cette approche, en restant dans le périmètre du plan.",
+                            )
+                          }
+                        >
+                          Accepter (modèle)
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={humanReplyBusy}
+                          onClick={() =>
+                            setHumanReplyDraft(
+                              "Refus : merci d’arrêter cette action et de proposer une alternative plus sûre ou conforme au plan.",
+                            )
+                          }
+                        >
+                          Refuser (modèle)
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={humanReplyBusy}
+                          onClick={() =>
+                            setHumanReplyDraft(
+                              "Refus collectif : toutes les actions en attente similaires doivent être annulées ; expliquez pourquoi et proposez la suite.",
+                            )
+                          }
+                        >
+                          Tout refuser (message type)
+                        </button>
+                      </div>
                       <textarea
                         className="task-human-input-textarea"
                         value={humanReplyDraft}
@@ -1759,6 +2091,37 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         </div>
 
         <div className="chat-panel-footer">
+          <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+            {CODE_MODE_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                title={o.hint}
+                onClick={() => setCodeMode(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <label className="field chat-policy-hint-field">
+            <span>Consigne ponctuelle (optionnel, un envoi)</span>
+            <input
+              type="text"
+              value={policyHintOneShot}
+              onChange={(e) => setPolicyHintOneShot(e.target.value)}
+              placeholder="Ex. ne pas toucher au dossier legacy/…"
+              spellCheck={false}
+            />
+          </label>
+          <label className="field-inline delegate-single">
+            <input
+              type="checkbox"
+              checked={delegateSingleLevel}
+              onChange={(e) => setDelegateSingleLevel(e.target.checked)}
+            />
+            <span>Délégation simple (préfixe anti sous-agent)</span>
+          </label>
           <div className="chat-form">
             <textarea
               value={chatInput}

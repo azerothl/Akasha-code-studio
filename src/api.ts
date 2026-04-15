@@ -20,6 +20,10 @@ export type StudioProjectMeta = {
   verify_skip?: boolean;
   verify_argv?: string[] | null;
   verify_timeout_sec?: number | null;
+  /** Résumé évolution / session (réinjecté dans les messages). */
+  evolution_summary?: string | null;
+  /** Notes de politique outils / périmètre (réinjectées). */
+  policy_notes?: string | null;
   /** Branche Git courante (`git rev-parse --abbrev-ref HEAD`), si dépôt présent. */
   git_branch?: string | null;
   /** `true` si `git status --porcelain` est vide. */
@@ -42,6 +46,8 @@ export async function patchProjectSettings(
     verify_skip?: boolean;
     verify_argv?: string[] | null;
     verify_timeout_sec?: number | null;
+    evolution_summary?: string | null;
+    policy_notes?: string | null;
   },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
@@ -270,6 +276,9 @@ export async function abandonEvolution(projectId: string, evolutionId: string): 
   if (!r.ok) throw new Error(`abandonEvolution ${r.status}`);
 }
 
+/** Mode Code Studio injecté dans le message (daemon). */
+export type StudioCodeMode = "plan" | "implement" | "build" | "free";
+
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
@@ -277,6 +286,11 @@ export async function sendMessage(body: {
   studio_assigned_agent?: string;
   studio_evolution_branch?: string;
   studio_evolution_id?: string;
+  studio_code_mode?: StudioCodeMode;
+  /** Consigne ponctuelle pour cette requête uniquement. */
+  studio_policy_hint?: string;
+  /** Préfixe daemon : éviter sous-agents / délégations implicites. */
+  studio_delegate_single_level?: boolean;
 }): Promise<{ task_id: string }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
@@ -288,6 +302,11 @@ export async function sendMessage(body: {
       ...(body.studio_assigned_agent ? { studio_assigned_agent: body.studio_assigned_agent } : {}),
       ...(body.studio_evolution_branch ? { studio_evolution_branch: body.studio_evolution_branch } : {}),
       ...(body.studio_evolution_id ? { studio_evolution_id: body.studio_evolution_id } : {}),
+      ...(body.studio_code_mode && body.studio_code_mode !== "free"
+        ? { studio_code_mode: body.studio_code_mode }
+        : {}),
+      ...(body.studio_policy_hint?.trim() ? { studio_policy_hint: body.studio_policy_hint.trim() } : {}),
+      ...(body.studio_delegate_single_level ? { studio_delegate_single_level: true } : {}),
     }),
   });
   if (!r.ok) {
@@ -326,6 +345,14 @@ export async function getTaskHumanInput(taskId: string): Promise<TaskHumanInputP
   if (r.status === 404) return null;
   if (!r.ok) throw new Error(`getTaskHumanInput ${r.status}`);
   return r.json() as Promise<TaskHumanInputPayload>;
+}
+
+/** Toutes les tâches en attente de réponse utilisateur (rechargement / file). */
+export async function listPendingHumanInput(): Promise<TaskHumanInputPayload[]> {
+  const r = await fetch(api("/api/pending-human-input"));
+  if (!r.ok) throw new Error(`listPendingHumanInput ${r.status}`);
+  const j = (await r.json()) as { pending: TaskHumanInputPayload[] };
+  return j.pending ?? [];
 }
 
 export async function postTaskHumanReply(taskId: string, response: string): Promise<void> {
