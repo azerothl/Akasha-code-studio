@@ -1005,6 +1005,7 @@ export default function App() {
     })();
     return () => {
       cancelled = true;
+      pollTaskAbortRef.current?.abort();
     };
   }, [selectedId, pollTask]);
 

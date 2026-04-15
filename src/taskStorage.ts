@@ -1,5 +1,5 @@
 /** Persistance du suivi de tâche agent par projet (rechargement de page). */
-const PREFIX = "akasha_code_studio_task:";
+const PREFIX = "akasha-code-studio-task-v1:";
 
 export type StoredActiveTask = { taskId: string; startedAt: number };
 
@@ -21,10 +21,18 @@ export function loadActiveTask(projectId: string): StoredActiveTask | null {
 export function saveActiveTask(projectId: string, taskId: string) {
   if (typeof localStorage === "undefined") return;
   const payload: StoredActiveTask = { taskId, startedAt: Date.now() };
-  localStorage.setItem(PREFIX + projectId, JSON.stringify(payload));
+  try {
+    localStorage.setItem(PREFIX + projectId, JSON.stringify(payload));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function clearActiveTask(projectId: string) {
   if (typeof localStorage === "undefined") return;
-  localStorage.removeItem(PREFIX + projectId);
+  try {
+    localStorage.removeItem(PREFIX + projectId);
+  } catch {
+    /* ignore */
+  }
 }
