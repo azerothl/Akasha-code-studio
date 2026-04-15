@@ -279,6 +279,8 @@ export type TaskStatusResponse = {
   status: string;
   assigned_agent?: string;
   progress?: { progress_pct: number; message: string }[];
+  /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
+  failure_detail?: string | null;
 };
 
 export async function getTask(taskId: string): Promise<TaskStatusResponse> {

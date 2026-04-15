@@ -12,6 +12,7 @@ import {
 } from "./stackConfig";
 import { CodeEditor } from "./codeEditor";
 import { DevServerLogView } from "./devServerLogView";
+import { MarkdownBlock } from "./markdownBlock";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -188,9 +189,28 @@ function isStubProgressMessage(msg: string): boolean {
   return false;
 }
 
+function looksLikeTimeoutMessage(msg: string): boolean {
+  const t = msg.toLowerCase();
+  return (
+    t.includes("timeout") ||
+    t.includes("timed out") ||
+    t.includes("délai") ||
+    t.includes("delai") ||
+    t.includes("deadline") ||
+    t.includes("etimedout") ||
+    t.includes("504") ||
+    t.includes("408")
+  );
+}
+
 /** Texte affiché dans le chat à la fin du suivi de tâche (préfère la dernière progression substantive renvoyée par le daemon). */
-function chatMessageForTerminalTask(status: string, lastProgressMessage: string | undefined): string {
+function chatMessageForTerminalTask(
+  status: string,
+  lastProgressMessage: string | undefined,
+  failureDetail?: string | null,
+): string {
   const last = lastProgressMessage?.trim();
+  const detail = failureDetail?.trim();
   if (status === "completed") {
     if (last && !isStubProgressMessage(last)) {
       return last;
@@ -198,10 +218,24 @@ function chatMessageForTerminalTask(status: string, lastProgressMessage: string 
     return "La tâche est terminée. Les nouveaux fichiers apparaissent dans l’arborescence (rafraîchissement automatique).";
   }
   if (status === "failed") {
-    if (last && !isStubProgressMessage(last)) {
-      return last;
+    const body =
+      detail && (!last || isStubProgressMessage(last))
+        ? detail
+        : last && !isStubProgressMessage(last)
+          ? last
+          : detail || null;
+    if (body) {
+      const hint = looksLikeTimeoutMessage(body)
+        ? "\n\n(Souvent un timeout réseau ou LLM — vous pouvez renvoyer la même consigne pour relancer.)"
+        : "";
+      return body.length > 2800 ? `${body.slice(0, 2800)}…${hint}` : `${body}${hint}`;
     }
-    return "La tâche a échoué (vérif automatique build/check ou erreur agent) — voir le suivi ci-dessus ou les logs du daemon.";
+    return "Échec sans détail persisté. Vérifiez l’onglet « Logs serveur », le journal de build, ou renvoyez la consigne pour une nouvelle tentative.";
+  }
+  if (status === "cancelled") {
+    if (detail && (!last || isStubProgressMessage(last))) return detail;
+    if (last && !isStubProgressMessage(last)) return last;
+    return "La tâche a été annulée.";
   }
   if (status === "waiting_user_input") {
     return "Le daemon attend une validation (approbation d’outil ou question utilisateur).";
@@ -836,9 +870,17 @@ export default function App() {
           }
 
           const last = t.progress?.length ? t.progress[t.progress.length - 1] : undefined;
-          const line = last
-            ? `${last.progress_pct}% — ${last.message}`
-            : formatTaskStatusFr(t.status);
+          const lastMsg = last?.message?.trim() ?? "";
+          const fd = (t.failure_detail ?? "").trim();
+          const useFailureDetail =
+            (t.status === "failed" || t.status === "cancelled") &&
+            fd.length > 0 &&
+            (!lastMsg || isStubProgressMessage(lastMsg));
+          const line = useFailureDetail
+            ? `${last?.progress_pct ?? 100}% — ${fd.length > 900 ? `${fd.slice(0, 900)}…` : fd}`
+            : last
+              ? `${last.progress_pct}% — ${last.message}`
+              : formatTaskStatusFr(t.status);
           setTaskTrace({
             id: taskId,
             status: t.status,
@@ -878,7 +920,7 @@ export default function App() {
                 /* ignore */
               }
             }
-            const summary = chatMessageForTerminalTask(t.status, last?.message);
+            const summary = chatMessageForTerminalTask(t.status, last?.message, t.failure_detail);
             setChat((c) => [...c, { role: "assistant", text: summary }]);
             return;
           }
@@ -1531,7 +1573,7 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
                 <div className="task-trace-id">
                   ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
                 </div>
-                <div className="task-trace-line">{taskTrace.line}</div>
+                <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
                 {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
                   <div className="task-human-input">
                     <p className="task-human-input-question">{pendingHumanInput.question}</p>
@@ -1587,7 +1629,7 @@ Le fichier CODE_STUDIO_PLAN.md est absent ou doit être réinitialisé. Analyse 
         <div className="chat-log">
           {chat.map((m, i) => (
             <div key={i} className={`bubble ${m.role}`}>
-              {m.text}
+              <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
             </div>
           ))}
         </div>
