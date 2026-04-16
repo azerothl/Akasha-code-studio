@@ -89,6 +89,14 @@ async function mockStudioBase(page: Page) {
   await page.route(`**/api/tasks/${runTaskId}/human-input`, async (route) => {
     await route.fulfill({ status: 404, body: "" });
   });
+
+  await page.route("**/api/pending-human-input", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ pending: [] }),
+    });
+  });
 }
 
 test.beforeEach(async ({ page }) => {

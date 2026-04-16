@@ -37,7 +37,7 @@ export async function listProjects(): Promise<StudioProject[]> {
   return j.projects ?? [];
 }
 
-/** At least one of `name` or `tech_stack` must be set. Use `tech_stack: null` to clear the stack. */
+/** Patch project settings. Any subset of fields may be provided; `tech_stack: null` clears the stack. */
 export async function patchProjectSettings(
   projectId: string,
   body: {

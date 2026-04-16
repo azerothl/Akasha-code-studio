@@ -504,11 +504,16 @@ export default function App() {
         if (cancelled) return;
         const t = raw.content ?? "";
         setPlanDocText(t);
-        const snap = sessionStorage.getItem(`akasha-plan-snap-${selectedId}`);
-        if (snap !== null) setPlanDocSnapshot(snap);
-        else {
+        try {
+          const snap = sessionStorage.getItem(`akasha-plan-snap-${selectedId}`);
+          if (snap !== null) {
+            setPlanDocSnapshot(snap);
+          } else {
+            setPlanDocSnapshot(t);
+            sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, t);
+          }
+        } catch {
           setPlanDocSnapshot(t);
-          sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, t);
         }
       })
       .catch(() => {
@@ -1661,7 +1666,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
       </div>
 
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu ou logs">
+        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan ou logs">
           <button
             type="button"
             role="tab"
