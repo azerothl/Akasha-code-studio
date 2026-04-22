@@ -1646,6 +1646,16 @@ textarea.editor {
   line-height: 1.45;
 }
 
+.markdown-doc-preview {
+  flex: 1;
+  min-height: 200px;
+  overflow: auto;
+  background: var(--akasha-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+}
+
 .design-diagnostics {
   margin: 0;
   padding-left: 1rem;

@@ -271,6 +271,12 @@ function chatMessageForTerminalTask(
   return `État : ${formatTaskStatusFr(status)}`;
 }
 
+function isMarkdownPath(path: string | null): boolean {
+  if (!path) return false;
+  const p = path.toLowerCase();
+  return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
+}
+
 export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -362,6 +368,9 @@ export default function App() {
   const [designDocSnapshot, setDesignDocSnapshot] = useState("");
   const [designDocLoading, setDesignDocLoading] = useState(false);
   const [autoApplyDesign, setAutoApplyDesign] = useState(true);
+  const [editorMarkdownPreview, setEditorMarkdownPreview] = useState(false);
+  const [planMarkdownPreview, setPlanMarkdownPreview] = useState(false);
+  const [designMarkdownPreview, setDesignMarkdownPreview] = useState(false);
   const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
   const [showAgentMatrix, setShowAgentMatrix] = useState(false);
   /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
@@ -395,6 +404,9 @@ export default function App() {
   useEffect(() => {
     editorBinaryRef.current = editorBinary;
   }, [editorBinary]);
+  useEffect(() => {
+    if (!isMarkdownPath(filePath)) setEditorMarkdownPreview(false);
+  }, [filePath]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -1340,6 +1352,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     if (!selectedId) return;
     const msg = `[Tâche Code Studio — DESIGN.md (${forceRecreateFromProjectStyle ? "recréation depuis style projet" : "réinitialisation / complétion"})]
 Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + sections markdown explicatives).
+Language requirement: the DESIGN.md file MUST be written in English only (headings, rationale, component notes, and usage guidance).
 1) Lire DESIGN.md si présent.
 2) Si DESIGN.md est absent, recréer le document à partir des styles réellement présents dans le projet:
    - inspecter en priorité \`index.css\`, \`*.css\`, \`tailwind.config.*\`, tokens thème, variables CSS (\`--*\`), composants UI clés.
@@ -1360,6 +1373,7 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
         forceRecreateFromProjectStyle
           ? "Priorité: recréer DESIGN.md depuis les styles du dépôt actuel (pas de style inventé)."
           : "",
+        "Règle obligatoire: DESIGN.md doit rester entièrement en anglais.",
       ]
         .filter(Boolean)
         .join("\n");
@@ -1909,8 +1923,23 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
               >
                 Enregistrer
               </button>
+              {isMarkdownPath(filePath) ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setEditorMarkdownPreview((v) => !v)}
+                >
+                  {editorMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
+                </button>
+              ) : null}
             </div>
-            <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
+            {editorMarkdownPreview && isMarkdownPath(filePath) ? (
+              <div className="markdown-doc-preview">
+                <MarkdownBlock text={editorText} className="md-content" />
+              </div>
+            ) : (
+              <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
+            )}
             <p className="hint editor-hint">
               Les fichiers texte peuvent être enregistrés sur le disque du projet (bouton ou Ctrl+S). Le chat reste
               utile pour des changements plus larges ou revus par l’agent.
@@ -2021,6 +2050,14 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
               >
                 Référence (diff)
               </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={planDocLoading}
+                onClick={() => setPlanMarkdownPreview((v) => !v)}
+              >
+                {planMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
+              </button>
             </div>
             {planDocLoading ? (
               <p className="hint">Chargement…</p>
@@ -2035,14 +2072,20 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
                     ? `Écart avec la référence : ${planDocText.length} vs ${planDocSnapshot.length} caractères.`
                     : "Aucun écart avec la référence mémorisée (ou référence identique)."}
                 </p>
-                <textarea
-                  className="plan-doc-textarea"
-                  spellCheck={false}
-                  value={planDocText}
-                  onChange={(e) => setPlanDocText(e.target.value)}
-                  rows={28}
-                  aria-label="Contenu de CODE_STUDIO_PLAN.md"
-                />
+                {planMarkdownPreview ? (
+                  <div className="markdown-doc-preview">
+                    <MarkdownBlock text={planDocText} className="md-content" />
+                  </div>
+                ) : (
+                  <textarea
+                    className="plan-doc-textarea"
+                    spellCheck={false}
+                    value={planDocText}
+                    onChange={(e) => setPlanDocText(e.target.value)}
+                    rows={28}
+                    aria-label="Contenu de CODE_STUDIO_PLAN.md"
+                  />
+                )}
               </>
             )}
           </div>
@@ -2075,6 +2118,14 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
               <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignCss()}>
                 Export CSS
               </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={designDocLoading}
+                onClick={() => setDesignMarkdownPreview((v) => !v)}
+              >
+                {designMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
+              </button>
             </div>
             {designDocLoading ? (
               <p className="hint">Chargement…</p>
@@ -2103,14 +2154,20 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
                     ))}
                   </ul>
                 ) : null}
-                <textarea
-                  className="plan-doc-textarea"
-                  spellCheck={false}
-                  value={designDocText}
-                  onChange={(e) => setDesignDocText(e.target.value)}
-                  rows={28}
-                  aria-label="Contenu de DESIGN.md"
-                />
+                {designMarkdownPreview ? (
+                  <div className="markdown-doc-preview">
+                    <MarkdownBlock text={designDocText} className="md-content" />
+                  </div>
+                ) : (
+                  <textarea
+                    className="plan-doc-textarea"
+                    spellCheck={false}
+                    value={designDocText}
+                    onChange={(e) => setDesignDocText(e.target.value)}
+                    rows={28}
+                    aria-label="Contenu de DESIGN.md"
+                  />
+                )}
               </>
             )}
           </div>
