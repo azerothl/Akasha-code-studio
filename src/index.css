@@ -1646,6 +1646,32 @@ textarea.editor {
   line-height: 1.45;
 }
 
+.design-diagnostics {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.76rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.design-diagnostic--error {
+  color: var(--akasha-error);
+}
+
+.design-diagnostic--warning {
+  color: var(--akasha-warning);
+}
+
+.design-diagnostic--info {
+  color: var(--akasha-text-muted);
+}
+
+.chat-design-hint {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
 .task-progress-chips {
   list-style: none;
   margin: 0.35rem 0 0;
