@@ -205,6 +205,59 @@ kbd {
   font-size: 0.68rem;
 }
 
+.app-header-code-rag {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.45rem;
+}
+
+.app-header-reindex-btn {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.45rem;
+  min-height: 0;
+}
+
+.code-rag-badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--akasha-bg-elevated);
+  color: var(--akasha-text-muted);
+  white-space: nowrap;
+}
+
+.code-rag-badge--loading {
+  opacity: 0.85;
+}
+
+.code-rag-badge--ready {
+  border-color: color-mix(in srgb, var(--akasha-accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--akasha-accent) 14%, var(--akasha-bg-elevated));
+  color: var(--akasha-text);
+}
+
+.code-rag-badge--stale {
+  border-color: color-mix(in srgb, var(--akasha-warning) 55%, var(--border));
+  background: color-mix(in srgb, var(--akasha-warning) 12%, var(--akasha-bg-elevated));
+  color: var(--akasha-warning);
+}
+
+.code-rag-badge--absent {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.code-rag-badge--error {
+  border-color: color-mix(in srgb, var(--akasha-error) 45%, var(--border));
+  background: color-mix(in srgb, var(--akasha-error) 10%, var(--akasha-bg-elevated));
+  color: var(--akasha-error);
+}
+
 .app-header-placeholder {
   margin: 0;
   font-size: 0.78rem;
@@ -1644,6 +1697,42 @@ textarea.editor {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.8rem;
   line-height: 1.45;
+}
+
+.markdown-doc-preview {
+  flex: 1;
+  min-height: 200px;
+  overflow: auto;
+  background: var(--akasha-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+}
+
+.design-diagnostics {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.76rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.design-diagnostic--error {
+  color: var(--akasha-error);
+}
+
+.design-diagnostic--warning {
+  color: var(--akasha-warning);
+}
+
+.design-diagnostic--info {
+  color: var(--akasha-text-muted);
+}
+
+.chat-design-hint {
+  margin: 0;
+  font-size: 0.72rem;
 }
 
 .task-progress-chips {
