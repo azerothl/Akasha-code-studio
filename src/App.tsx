@@ -651,7 +651,8 @@ export default function App() {
   }, [selectedId, centerTab]);
 
   useEffect(() => {
-    if (!selectedId || (centerTab !== "design" && !autoApplyDesign)) return;
+    const shouldLoadDesignDoc = centerTab === "design" || autoApplyDesign;
+    if (!selectedId || !shouldLoadDesignDoc) return;
     let cancelled = false;
     setDesignDocLoading(true);
     void api
