@@ -78,6 +78,34 @@ async function mockStudioBase(page: Page) {
     });
   });
 
+  await page.route(`**/api/studio/projects/${demoId}/code-rag/status`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ready",
+        files_indexed: 1,
+        chunks_indexed: 1,
+        built_at: "2020-01-02T00:00:00Z",
+        stale: false,
+      }),
+    });
+  });
+
+  await page.route(`**/api/studio/projects/${demoId}/code-rag/reindex`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ready",
+        files_indexed: 1,
+        chunks_indexed: 2,
+        built_at: "2020-01-03T00:00:00Z",
+        stale: false,
+      }),
+    });
+  });
+
   await page.route("**/api/message", async (route) => {
     await route.fulfill({
       status: 200,

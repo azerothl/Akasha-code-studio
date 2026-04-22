@@ -11,6 +11,15 @@ export type Evolution = {
   root_task_id?: string | null;
 };
 
+/** État de l’index code-RAG du projet (recherche sémantique / contexte agent). */
+export type CodeRagStatus = {
+  status: string;
+  files_indexed: number;
+  chunks_indexed: number;
+  built_at: string | null;
+  stale: boolean;
+};
+
 export type StudioProjectMeta = {
   id: string;
   name: string;
@@ -78,6 +87,29 @@ export async function getProjectMeta(projectId: string): Promise<StudioProjectMe
   const r = await fetch(api(`/api/studio/projects/${projectId}`));
   if (!r.ok) throw new Error(`getProjectMeta ${r.status}`);
   return r.json() as Promise<StudioProjectMeta>;
+}
+
+export async function getCodeRagStatus(projectId: string): Promise<CodeRagStatus> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/code-rag/status`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getCodeRagStatus ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<CodeRagStatus>;
+}
+
+/** Force une reconstruction complète de l’index (bloquant côté daemon, peut prendre du temps). */
+export async function reindexCodeRag(projectId: string): Promise<CodeRagStatus> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/code-rag/reindex`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`reindexCodeRag ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<CodeRagStatus>;
 }
 
 export async function listFiles(projectId: string): Promise<string[]> {

@@ -310,6 +310,11 @@ export default function App() {
   const [depsInstallBusy, setDepsInstallBusy] = useState(false);
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
   const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
+  /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
+  const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
+  const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
+  const [codeRagStatusError, setCodeRagStatusError] = useState<string | null>(null);
+  const [codeRagReindexBusy, setCodeRagReindexBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
@@ -513,6 +518,56 @@ export default function App() {
     return () => {
       cancelled = true;
     };
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setCodeRagStatus(null);
+      setCodeRagStatusError(null);
+      setCodeRagStatusLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setCodeRagStatusLoading(true);
+    setCodeRagStatusError(null);
+    void api
+      .getCodeRagStatus(selectedId)
+      .then((s) => {
+        if (!cancelled) {
+          setCodeRagStatus(s);
+          setCodeRagStatusError(null);
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setCodeRagStatus(null);
+          setCodeRagStatusError(String(e));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCodeRagStatusLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  const onReindexCodeRag = useCallback(async () => {
+    if (!selectedId) return;
+    setCodeRagReindexBusy(true);
+    setCodeRagStatusError(null);
+    setError(null);
+    try {
+      const s = await api.reindexCodeRag(selectedId);
+      setCodeRagStatus(s);
+      setStatus(
+        `Index code mis à jour : ${s.files_indexed} fichier(s), ${s.chunks_indexed} bloc(s)${s.built_at ? ` (${s.built_at})` : ""}.`,
+      );
+    } catch (e) {
+      setCodeRagStatusError(String(e));
+    } finally {
+      setCodeRagReindexBusy(false);
+    }
   }, [selectedId]);
 
   useEffect(() => {
@@ -1528,6 +1583,14 @@ Procédure:
     window.open(previewUrl, "_blank", "noopener,noreferrer");
   }, [previewUrl]);
 
+  const codeRagBadgeTitle = useMemo(() => {
+    if (codeRagStatusLoading) return "Chargement de l’état d’index…";
+    if (codeRagStatusError) return codeRagStatusError;
+    if (!codeRagStatus) return "";
+    const { files_indexed, chunks_indexed, built_at, status } = codeRagStatus;
+    return `État : ${status}. Fichiers indexés : ${files_indexed}, blocs : ${chunks_indexed}.${built_at ? ` Dernière construction : ${built_at}.` : ""}`;
+  }, [codeRagStatus, codeRagStatusError, codeRagStatusLoading]);
+
   const appLayoutClass =
     "app" +
     (!sidebarLeftVisible ? " app--left-collapsed" : "") +
@@ -1545,6 +1608,43 @@ Procédure:
                 <code className="app-header-project-id" title={selectedProject.id}>
                   {selectedProject.id.slice(0, 8)}…
                 </code>
+              </span>
+              <span className="app-header-code-rag" aria-label="Index code du projet">
+                {codeRagStatusLoading ? (
+                  <span className="code-rag-badge code-rag-badge--loading" data-testid="studio-code-rag-badge">
+                    Index…
+                  </span>
+                ) : codeRagStatusError ? (
+                  <span
+                    className="code-rag-badge code-rag-badge--error"
+                    data-testid="studio-code-rag-badge"
+                    title={codeRagBadgeTitle}
+                  >
+                    Index indisponible
+                  </span>
+                ) : codeRagStatus ? (
+                  <span
+                    className={`code-rag-badge code-rag-badge--${codeRagStatus.status}`}
+                    data-testid="studio-code-rag-badge"
+                    title={codeRagBadgeTitle}
+                  >
+                    {codeRagStatus.status === "absent"
+                      ? "Non indexé"
+                      : codeRagStatus.status === "stale"
+                        ? "Index obsolète"
+                        : "Indexé"}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm app-header-reindex-btn"
+                  data-testid="studio-code-rag-reindex"
+                  disabled={codeRagReindexBusy || codeRagStatusLoading}
+                  title="Reconstruire l’index local des sources (recherche et contexte pour l’agent)"
+                  onClick={() => void onReindexCodeRag()}
+                >
+                  {codeRagReindexBusy ? "Réindexation…" : "Réindexer"}
+                </button>
               </span>
               <span className="app-header-branches">
                 <span className="app-header-branch" title="Branche Git courante (HEAD)">
