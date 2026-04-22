@@ -65,6 +65,22 @@ const VALID_COMPONENT_PROPERTIES = new Set([
 ]);
 
 /**
+ * Compact English hint for `studio_design_hint` on DESIGN.md regenerate tasks.
+ * Daemon truncates at 4000 chars (`MAX_DESIGN_HINT_CHARS`); keep this well under that budget.
+ */
+export const DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN = [
+  "Code Studio DESIGN.md — structure contract:",
+  "YAML front matter between --- … --- then markdown body (no # file title).",
+  "Top-level YAML keys only: optional version: alpha; name; optional description; colors; typography; rounded; spacing; components.",
+  "No theme:/semver design schema. Put narrative in markdown, not parallel YAML schemes.",
+  "colors: flat token -> quoted #hex. typography: nested tokens (fontFamily, fontSize, fontWeight, lineHeight; optional letterSpacing, textTransform).",
+  "rounded/spacing: px|em|rem, numbers, or {token.path} refs (no spaces inside braces). rounded keys may include DEFAULT.",
+  "components: nested maps; props: backgroundColor (hex|rgba|transparent|ref), textColor, typography, rounded, padding, size, height, width. Sibling keys for states (e.g. *-hover) are OK.",
+  "## order (each slot once; English prose): (1) ## Brand & Style OR ## Overview → (2) ## Colors → (3) ## Typography → (4) ## Layout & Spacing OR ## Layout → (5) ## Elevation & depth → (6) ## Shapes → (7) ## Components (### subsections allowed) → (8) optional ## Do's and don'ts. Extra ## only after slot (8) if used.",
+  "Wrong headings for slots: e.g. ## Color Palette, ## Design System (not recognized). File must be English-only; no task recap or npm instructions inside DESIGN.md.",
+].join(" ");
+
+/**
  * English block appended to Code Studio “regenerate DESIGN.md” tasks so the model
  * emits a file that matches `parseDesignDoc` / UI expectations (not a generic article).
  */
@@ -73,40 +89,40 @@ export const DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN = `
 
 The deliverable is a single file \`DESIGN.md\` with **YAML front matter** between the first pair of \`---\` lines, **one blank line after the closing \`---\`**, then the **markdown body**. Nothing else (no task recap, no npm commands, no “I created the file” paragraph, no non-English text anywhere in the file).
 
-**YAML — allowed top-level keys only**
+**YAML — top-level keys (reference-quality shape)**
 
-Use this structure; **do not** add parallel schemes such as \`theme:\`, semantic \`version: 1.0.0\`, or moving the palette only into markdown tables/CSS var names instead of \`colors:\`.
+Use this structure; **do not** add parallel schemes such as \`theme:\`, semver \`version: 1.0.0\` as a “design schema”, or moving the palette **only** into markdown/CSS vars instead of the \`colors:\` map.
 
-- \`version: alpha\` — literal \`alpha\` for Code Studio tooling (not semver here).
-- \`name: "…"\` — short app/product name (English).
+- \`version: alpha\` — **optional**; if you include \`version\`, prefer the literal \`alpha\` for Code Studio tooling (not semver here).
+- \`name: "…"\` or \`name: …\` — short app/product name (English).
 - \`description: "…"\` — optional one-line English summary.
-- \`colors:\` — flat map \`token_name: "#RRGGBB"\` (quoted hex). Values must reflect styles **found in the repo** (CSS, Tailwind theme, etc.); do not invent colors.
-- \`typography:\` — each token is a **nested YAML object** with at least \`fontFamily\`, \`fontSize\`, \`fontWeight\`, \`lineHeight\` (optional: \`letterSpacing\`, \`textTransform\`, …). Do **not** replace this with a bullet list or prose-only typography in YAML.
-- \`rounded:\` — map token → \`NNpx\` / \`Nem\` / \`Nrem\` or a token reference \`{rounded.sm}\` style (no spaces inside \`{…}\`).
-- \`spacing:\` — map token → bare number, dimension, or \`{token.path}\`.
-- \`components:\` — \`componentName:\` then nested properties drawn only from: **backgroundColor**, **textColor**, **typography**, **rounded**, **padding**, **size**, **height**, **width**. Reference other tokens as \`{colors.primary}\`, \`{typography.body-md}\`, etc.
+- \`colors:\` — flat map \`token-name: "#RRGGBB"\` (quoted hex). Values must reflect styles **found in the repo** when recreating from code; do not invent colors.
+- \`typography:\` — each role (e.g. \`display-lg:\`, \`body-md:\`) is a **nested YAML object** with at least \`fontFamily\`, \`fontSize\`, \`fontWeight\`, \`lineHeight\` (optional: \`letterSpacing\`, \`textTransform\`, …). \`fontFamily\` may be a bare token (\`Inter\`) or quoted. \`fontWeight\` may be quoted when numeric. Do **not** replace this block with bullet-list typography.
+- \`rounded:\` — map token → \`NNpx\` / \`Nem\` / \`Nrem\` / \`9999px\`-style radii, or a token reference \`{rounded.sm}\` (no spaces inside \`{…}\`). Keys may include \`DEFAULT\` where that matches the project.
+- \`spacing:\` — map token → bare number, \`NNpx\`/\`Nrem\`, or \`{token.path}\`.
+- \`components:\` — each \`component-name:\` is a nested map. Allowed property keys only: **backgroundColor**, **textColor**, **typography**, **rounded**, **padding**, **size**, **height**, **width**. Values may be hex, \`rgba(...)\`, \`transparent\`, dimensions, shorthand like \`0 24px\`, or \`{colors.*}\` / \`{typography.*}\` / \`{spacing.*}\` / \`{rounded.*}\`. Separate component entries for states (e.g. \`*-hover\`) are encouraged when they differ.
 
-**Markdown body — \`##\` sections only, fixed order**
+**Markdown body — \`##\` narrative sections, fixed logical order**
 
-- Do **not** use an \`# …\` top-level title; identity belongs in YAML \`name\` / \`description\`.
-- Use **exactly** these level-2 headings, in this order, each once (English prose under each):
-  1. \`## Overview\`
+- Do **not** use an \`# …\` top-level document title; identity lives in YAML \`name\` (and optional \`description\`).
+- Use **level-2** headings \`## …\` for the main narrative, in this **logical** order (each canonical **slot** appears once). **Accepted titles** (Code Studio maps aliases to the same slot):
+  1. **Overview slot:** \`## Brand & Style\` **or** \`## Overview\`
   2. \`## Colors\`
   3. \`## Typography\`
-  4. \`## Layout\`
-  5. \`## Elevation & depth\`
+  4. **Layout slot:** \`## Layout & Spacing\` **or** \`## Layout\`
+  5. \`## Elevation & depth\` (or \`## Elevation\` — maps to the same slot)
   6. \`## Shapes\`
-  7. \`## Components\`
-  8. \`## Do's and don'ts\`
-- Do **not** substitute labels like \`## Color Palette\`, \`## Design System\`, or \`## Spacing & Layout\` as replacements for the canonical names above (aliases are not recognized for those).
-- Optional extra \`## …\` sections are allowed **only after** \`## Do's and don'ts\` so canonical order stays valid.
-- Tables in the body are optional illustration only; they **must not** replace the YAML token maps.
+  7. \`## Components\` — you may use \`### …\` sub-headings inside this section for groups (Glass, Buttons, …).
+  8. **Optional:** \`## Do's and don'ts\` — include when you have explicit guardrails; omit if nothing material (do not invent filler).
+- **Do not** use unrecognized substitutes for required slots, e.g. \`## Color Palette\`, \`## Design System\`, or a combined heading that is **not** one of the accepted titles above for that slot.
+- Optional extra \`## …\` sections are allowed **only after** the last used slot from the list above (including after \`## Do's and don'ts\` when present) so canonical order stays valid.
+- Tables and bullet lists in the body are for explanation only; they **must not** replace the YAML token maps.
 
 **Forbidden inside \`DESIGN.md\`**
 
 - Any language other than English in headings or body.
 - Chat-style closing (“here is what I did…”), runbooks, or shell/npm instructions.
-- Duplicate \`##\` headings for the same canonical topic.
+- Duplicate \`##\` headings that map to the **same** canonical slot (e.g. both \`## Overview\` and \`## Brand & Style\`).
 - Styles, colors, or fonts not evidenced in project source/stylesheets/config when recreating from the repo.
 `.trim();
 

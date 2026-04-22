@@ -21,6 +21,7 @@ import type { StudioCodeMode } from "./api";
 import {
   buildDesignPolicyHint,
   DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN,
+  DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN,
   designTokensToCss,
   designTokensToJson,
   normalizeDesignDoc,
@@ -1382,10 +1383,13 @@ Procédure:
           ? "Priorité: recréer DESIGN.md depuis les styles du dépôt actuel (pas de style inventé)."
           : "",
         "Règle obligatoire: DESIGN.md doit rester entièrement en anglais.",
-        "Structure obligatoire: suivre le bloc « Mandatory file shape (Code Studio DESIGN.md) » du message utilisateur (YAML + ordre exact des sections ##).",
+        "Structure obligatoire: suivre le bloc « Mandatory file shape (Code Studio DESIGN.md) » du message utilisateur (YAML + ordre des sections ##, titres acceptés inclus).",
       ]
         .filter(Boolean)
         .join("\n");
+      const regenerateDesignHint = [DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN, designHint.trim()]
+        .filter(Boolean)
+        .join("\n\n");
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1395,6 +1399,7 @@ Procédure:
         studio_code_mode: codeMode,
         studio_policy_hint: oneShotPolicy || undefined,
         studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: regenerateDesignHint || undefined,
         studio_design_doc: designDocText.trim() || undefined,
       });
       setPolicyHintOneShot("");
