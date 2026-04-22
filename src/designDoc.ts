@@ -173,3 +173,38 @@ export function designTokensToJson(parsed: DesignParseResult): string {
   )}\n`;
 }
 
+export function normalizeDesignDoc(raw: string): string {
+  const parsed = parseDesignDoc(raw);
+  if (parsed.status === "absent") return raw;
+  const fmLines: string[] = [];
+  fmLines.push("---");
+  fmLines.push(`name: ${parsed.tokens.name ? JSON.stringify(parsed.tokens.name) : "\"Design System\""}`);
+  fmLines.push("colors:");
+  for (const [k, v] of Object.entries(parsed.tokens.colors)) {
+    fmLines.push(`  ${k}: ${JSON.stringify(v)}`);
+  }
+  fmLines.push("typography:");
+  if (parsed.tokens.typographyKeys.length === 0) {
+    fmLines.push("  body: {}");
+  } else {
+    for (const key of parsed.tokens.typographyKeys) {
+      fmLines.push(`  ${key}: {}`);
+    }
+  }
+  if (Object.keys(parsed.tokens.rounded).length > 0) {
+    fmLines.push("rounded:");
+    for (const [k, v] of Object.entries(parsed.tokens.rounded)) {
+      fmLines.push(`  ${k}: ${JSON.stringify(v)}`);
+    }
+  }
+  if (Object.keys(parsed.tokens.spacing).length > 0) {
+    fmLines.push("spacing:");
+    for (const [k, v] of Object.entries(parsed.tokens.spacing)) {
+      fmLines.push(`  ${k}: ${JSON.stringify(v)}`);
+    }
+  }
+  fmLines.push("---");
+  const body = (parsed.body ?? "").trim();
+  return `${fmLines.join("\n")}\n\n${body}\n`;
+}
+

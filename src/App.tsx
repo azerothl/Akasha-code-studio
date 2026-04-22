@@ -22,6 +22,7 @@ import {
   buildDesignPolicyHint,
   designTokensToCss,
   designTokensToJson,
+  normalizeDesignDoc,
   parseDesignDoc,
 } from "./designDoc";
 
@@ -1051,8 +1052,12 @@ export default function App() {
       const file = input.files?.[0];
       if (!file) return;
       const text = await file.text();
-      setDesignDocText(text);
-      setStatus(`Design importé depuis ${file.name}`);
+      const normalized = normalizeDesignDoc(text);
+      setDesignDocText(normalized);
+      const parsed = parseDesignDoc(normalized);
+      setStatus(
+        `Design importé depuis ${file.name} — statut: ${parsed.status}, diagnostics: ${parsed.diagnostics.length}`,
+      );
     };
     input.click();
   }, []);
