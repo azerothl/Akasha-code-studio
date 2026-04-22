@@ -1336,13 +1336,18 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     }
   }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, autoApplyDesign, designHint, designDocText]);
 
-  const onRegenerateDesign = useCallback(async () => {
+  const onRegenerateDesign = useCallback(async (forceRecreateFromProjectStyle = false) => {
     if (!selectedId) return;
-    const msg = `[Tâche Code Studio — DESIGN.md (réinitialisation / complétion)]
+    const msg = `[Tâche Code Studio — DESIGN.md (${forceRecreateFromProjectStyle ? "recréation depuis style projet" : "réinitialisation / complétion"})]
 Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + sections markdown explicatives).
 1) Lire DESIGN.md si présent.
-2) Fusionner sans perdre la prose utile ; conserver les tokens valides existants.
-3) Vérifier la cohérence minimale (name, colors, typography, sections).`;
+2) Si DESIGN.md est absent, recréer le document à partir des styles réellement présents dans le projet:
+   - inspecter en priorité \`index.css\`, \`*.css\`, \`tailwind.config.*\`, tokens thème, variables CSS (\`--*\`), composants UI clés.
+   - extraire palette, typographie, spacing, rayons, patterns de composants.
+   - ne pas inventer de styles absents du code.
+3) Si DESIGN.md existe, fusionner sans perdre la prose utile ; conserver les tokens valides existants.
+4) Vérifier la cohérence minimale (name, colors, typography, sections).
+5) Écrire ou mettre à jour \`workspace:/DESIGN.md\`.`; 
     setChat((c) => [...c, { role: "user", text: msg }]);
     setError(null);
     pollTaskAbortRef.current?.abort();
@@ -1350,6 +1355,14 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const oneShotPolicy = [
+        policyHintOneShot.trim(),
+        forceRecreateFromProjectStyle
+          ? "Priorité: recréer DESIGN.md depuis les styles du dépôt actuel (pas de style inventé)."
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1357,7 +1370,7 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
         studio_code_mode: codeMode,
-        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_policy_hint: oneShotPolicy || undefined,
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_doc: designDocText.trim() || undefined,
       });
@@ -2070,6 +2083,12 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
                 <p className="hint plan-pane-hint">
                   Contrat design projet (source de vérité agent/UI). Statut: <strong>{parsedDesignDoc.status}</strong>.
                 </p>
+                {parsedDesignDoc.status === "absent" ? (
+                  <p className="hint plan-pane-hint">
+                    Aucun `DESIGN.md` détecté. Utilisez “Initialiser / régénérer le design” pour le recréer à partir des
+                    styles présents dans le projet.
+                  </p>
+                ) : null}
                 <p className="plan-diff-stats">
                   {designDocSnapshot && designDocSnapshot !== designDocText
                     ? `Écart avec la référence : ${designDocText.length} vs ${designDocSnapshot.length} caractères.`
@@ -2166,6 +2185,15 @@ Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + se
             onClick={() => void onRegenerateDesign()}
           >
             Initialiser / régénérer le design (DESIGN.md)
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-block"
+            disabled={!selectedId}
+            title="Force une recréation de DESIGN.md à partir des styles réellement présents dans le dépôt."
+            onClick={() => void onRegenerateDesign(true)}
+          >
+            Recréer DESIGN.md depuis le style du projet
           </button>
           <button
             type="button"
