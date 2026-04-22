@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeDesignDoc, parseDesignDoc } from "./designDoc";
+import { DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN, normalizeDesignDoc, parseDesignDoc } from "./designDoc";
 
 const SAMPLE_FM = `version: alpha
 name: Test
@@ -67,6 +67,17 @@ R
 `),
     );
     expect(r.diagnostics.some((d) => d.severity === "error")).toBe(false);
+  });
+});
+
+describe("DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN", () => {
+  it("lists canonical ## headings and forbids generic substitutes", () => {
+    expect(DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN).toContain("## Overview");
+    expect(DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN).toContain("## Colors");
+    expect(DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN).toContain("## Elevation & depth");
+    expect(DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN).toContain("version: alpha");
+    expect(DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN).toContain("## Color Palette");
+    expect(DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN).toContain("Forbidden inside");
   });
 });
 

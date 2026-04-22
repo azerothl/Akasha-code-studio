@@ -20,6 +20,7 @@ import { CODE_MODE_OPTIONS, loadPersistedCodeMode, persistCodeMode } from "./stu
 import type { StudioCodeMode } from "./api";
 import {
   buildDesignPolicyHint,
+  DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN,
   designTokensToCss,
   designTokensToJson,
   normalizeDesignDoc,
@@ -1356,16 +1357,18 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
   const onRegenerateDesign = useCallback(async (forceRecreateFromProjectStyle = false) => {
     if (!selectedId) return;
     const msg = `[Tâche Code Studio — DESIGN.md (${forceRecreateFromProjectStyle ? "recréation depuis style projet" : "réinitialisation / complétion"})]
-Produire ou mettre à jour DESIGN.md au format design.md (front matter YAML + sections markdown explicatives).
+Produire ou mettre à jour DESIGN.md pour qu'il respecte **exactement** le gabarit Code Studio ci-dessous (pas un article markdown générique ni un document de design “libre”).
+
 Language requirement: the DESIGN.md file MUST be written in English only (headings, rationale, component notes, and usage guidance).
-1) Lire DESIGN.md si présent.
-2) Si DESIGN.md est absent, recréer le document à partir des styles réellement présents dans le projet:
-   - inspecter en priorité \`index.css\`, \`*.css\`, \`tailwind.config.*\`, tokens thème, variables CSS (\`--*\`), composants UI clés.
-   - extraire palette, typographie, spacing, rayons, patterns de composants.
-   - ne pas inventer de styles absents du code.
-3) Si DESIGN.md existe, fusionner sans perdre la prose utile ; conserver les tokens valides existants.
-4) Vérifier la cohérence minimale (name, colors, typography, sections).
-5) Écrire ou mettre à jour \`workspace:/DESIGN.md\`.`; 
+
+${DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN}
+
+Procédure:
+1) Lire \`workspace:/DESIGN.md\` si présent.
+2) Si DESIGN.md est absent ou recréation forcée depuis le dépôt: extraire **uniquement** ce qui est observable dans le code — en priorité \`index.css\`, \`*.css\`, \`tailwind.config.*\`, thème/tokens, variables CSS (\`--*\`), composants UI clés. Ne pas inventer de styles absents du code.
+3) Si DESIGN.md existe déjà (et pas de recréation forcée): fusionner sans perdre la prose utile ; conserver les tokens YAML valides ; réaligner la structure sur le gabarit si nécessaire.
+4) Vérifier cohérence: \`name\`, \`colors\`, \`typography\` (objets imbriqués YAML), \`rounded\`/\`spacing\` si présents dans le code, sections \`##\` canoniques dans l'ordre indiqué dans le bloc anglais.
+5) Écrire ou mettre à jour **uniquement** \`workspace:/DESIGN.md\` (pas d'autres fichiers pour cette tâche sauf lecture).`;
     setChat((c) => [...c, { role: "user", text: msg }]);
     setError(null);
     pollTaskAbortRef.current?.abort();
@@ -1379,6 +1382,7 @@ Language requirement: the DESIGN.md file MUST be written in English only (headin
           ? "Priorité: recréer DESIGN.md depuis les styles du dépôt actuel (pas de style inventé)."
           : "",
         "Règle obligatoire: DESIGN.md doit rester entièrement en anglais.",
+        "Structure obligatoire: suivre le bloc « Mandatory file shape (Code Studio DESIGN.md) » du message utilisateur (YAML + ordre exact des sections ##).",
       ]
         .filter(Boolean)
         .join("\n");

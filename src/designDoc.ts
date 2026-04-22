@@ -64,6 +64,52 @@ const VALID_COMPONENT_PROPERTIES = new Set([
   "width",
 ]);
 
+/**
+ * English block appended to Code Studio “regenerate DESIGN.md” tasks so the model
+ * emits a file that matches `parseDesignDoc` / UI expectations (not a generic article).
+ */
+export const DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN = `
+### Mandatory file shape (Code Studio DESIGN.md)
+
+The deliverable is a single file \`DESIGN.md\` with **YAML front matter** between the first pair of \`---\` lines, **one blank line after the closing \`---\`**, then the **markdown body**. Nothing else (no task recap, no npm commands, no “I created the file” paragraph, no non-English text anywhere in the file).
+
+**YAML — allowed top-level keys only**
+
+Use this structure; **do not** add parallel schemes such as \`theme:\`, semantic \`version: 1.0.0\`, or moving the palette only into markdown tables/CSS var names instead of \`colors:\`.
+
+- \`version: alpha\` — literal \`alpha\` for Code Studio tooling (not semver here).
+- \`name: "…"\` — short app/product name (English).
+- \`description: "…"\` — optional one-line English summary.
+- \`colors:\` — flat map \`token_name: "#RRGGBB"\` (quoted hex). Values must reflect styles **found in the repo** (CSS, Tailwind theme, etc.); do not invent colors.
+- \`typography:\` — each token is a **nested YAML object** with at least \`fontFamily\`, \`fontSize\`, \`fontWeight\`, \`lineHeight\` (optional: \`letterSpacing\`, \`textTransform\`, …). Do **not** replace this with a bullet list or prose-only typography in YAML.
+- \`rounded:\` — map token → \`NNpx\` / \`Nem\` / \`Nrem\` or a token reference \`{rounded.sm}\` style (no spaces inside \`{…}\`).
+- \`spacing:\` — map token → bare number, dimension, or \`{token.path}\`.
+- \`components:\` — \`componentName:\` then nested properties drawn only from: **backgroundColor**, **textColor**, **typography**, **rounded**, **padding**, **size**, **height**, **width**. Reference other tokens as \`{colors.primary}\`, \`{typography.body-md}\`, etc.
+
+**Markdown body — \`##\` sections only, fixed order**
+
+- Do **not** use an \`# …\` top-level title; identity belongs in YAML \`name\` / \`description\`.
+- Use **exactly** these level-2 headings, in this order, each once (English prose under each):
+  1. \`## Overview\`
+  2. \`## Colors\`
+  3. \`## Typography\`
+  4. \`## Layout\`
+  5. \`## Elevation & depth\`
+  6. \`## Shapes\`
+  7. \`## Components\`
+  8. \`## Do's and don'ts\`
+- Do **not** substitute labels like \`## Color Palette\`, \`## Design System\`, or \`## Spacing & Layout\` as replacements for the canonical names above (aliases are not recognized for those).
+- Optional extra \`## …\` sections are allowed **only after** \`## Do's and don'ts\` so canonical order stays valid.
+- Tables in the body are optional illustration only; they **must not** replace the YAML token maps.
+
+**Forbidden inside \`DESIGN.md\`**
+
+- Any language other than English in headings or body.
+- Chat-style closing (“here is what I did…”), runbooks, or shell/npm instructions.
+- Duplicate \`##\` headings for the same canonical topic.
+- Styles, colors, or fonts not evidenced in project source/stylesheets/config when recreating from the repo.
+`.trim();
+
 function parseFrontMatter(raw: string): { fm: string | null; body: string } {
   const match = raw.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
   if (!match) return { fm: null, body: raw };
