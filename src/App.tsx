@@ -385,6 +385,7 @@ export default function App() {
   const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
 
   const skipChatSaveOnce = useRef(false);
+  const appliedCssVarsRef = useRef<Set<string>>(new Set());
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
@@ -418,18 +419,33 @@ export default function App() {
 
   useEffect(() => {
     const root = document.documentElement;
+    const prevKeys = appliedCssVarsRef.current;
+    const newKeys = new Set<string>();
     for (const [k, v] of Object.entries(parsedDesignDoc.tokens.colors)) {
-      root.style.setProperty(`--design-color-${k}`, v);
+      const varName = `--design-color-${k}`;
+      root.style.setProperty(varName, v);
+      newKeys.add(varName);
     }
     for (const [k, v] of Object.entries(parsedDesignDoc.tokens.spacing)) {
-      root.style.setProperty(`--design-spacing-${k}`, v);
+      const varName = `--design-spacing-${k}`;
+      root.style.setProperty(varName, v);
+      newKeys.add(varName);
     }
     for (const [k, v] of Object.entries(parsedDesignDoc.tokens.rounded)) {
-      root.style.setProperty(`--design-rounded-${k}`, v);
+      const varName = `--design-rounded-${k}`;
+      root.style.setProperty(varName, v);
+      newKeys.add(varName);
     }
     if (parsedDesignDoc.tokens.colors.primary) {
       root.style.setProperty("--akasha-accent", parsedDesignDoc.tokens.colors.primary);
+      newKeys.add("--akasha-accent");
     }
+    for (const key of prevKeys) {
+      if (!newKeys.has(key)) {
+        root.style.removeProperty(key);
+      }
+    }
+    appliedCssVarsRef.current = newKeys;
   }, [parsedDesignDoc]);
 
   const newProjectComposedStack = useMemo(
@@ -472,6 +488,12 @@ export default function App() {
   useEffect(() => {
     setRenameDraft(selectedProject?.name ?? "");
   }, [selectedProject?.id, selectedProject?.name]);
+
+  useEffect(() => {
+    setDesignDocText("");
+    setDesignDocSnapshot("");
+    setDesignMarkdownPreview(false);
+  }, [selectedId]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -629,7 +651,7 @@ export default function App() {
   }, [selectedId, centerTab]);
 
   useEffect(() => {
-    if (!selectedId || centerTab !== "design") return;
+    if (!selectedId || (centerTab !== "design" && !autoApplyDesign)) return;
     let cancelled = false;
     setDesignDocLoading(true);
     void api
@@ -662,7 +684,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedId, centerTab]);
+  }, [selectedId, centerTab, autoApplyDesign]);
 
   const toggleStackAddon = useCallback((cat: StackAddonCategoryId, optId: string) => {
     setStackAddons((prev) => {
@@ -1971,7 +1993,7 @@ Procédure:
       </div>
 
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan ou logs">
+        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design ou logs">
           <button
             type="button"
             role="tab"
