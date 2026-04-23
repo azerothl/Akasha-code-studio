@@ -17,7 +17,8 @@ export type DesignTokenState = {
   typographyDetails: Record<string, Record<string, string>>;
   spacing: Record<string, string>;
   rounded: Record<string, string>;
-  components: Record<string, string[]>;
+  /** Nom de composant YAML → paires propriété → valeur brute (résolution des refs côté UI). */
+  components: Record<string, Record<string, string>>;
 };
 
 export type DesignParseResult = {
@@ -206,10 +207,10 @@ function parseSimpleYamlMap(frontMatter: string): DesignTokenState {
     if (section === "components" && key) {
       if (indent === 2) {
         currentComponent = key;
-        if (!tokens.components[currentComponent]) tokens.components[currentComponent] = [];
-      } else if (indent >= 4 && currentComponent) {
-        tokens.components[currentComponent] ??= [];
-        tokens.components[currentComponent].push(key);
+        tokens.components[currentComponent] ??= {};
+      } else if (indent >= 4 && currentComponent && value) {
+        tokens.components[currentComponent] ??= {};
+        tokens.components[currentComponent][key] = value;
       }
     }
   }
@@ -351,7 +352,7 @@ export function parseDesignDoc(raw: string): DesignParseResult {
     }
   }
   for (const [componentName, props] of Object.entries(tokens.components)) {
-    for (const prop of props) {
+    for (const prop of Object.keys(props)) {
       if (!VALID_COMPONENT_PROPERTIES.has(prop)) {
         diagnostics.push({
           severity: "warning",
