@@ -52,6 +52,7 @@ test.beforeEach(async ({ page }) => {
             tech_stack: "React + Vite",
             git_branch: "main",
             git_worktree_clean: true,
+            git_worktree_lines: [],
           }),
         });
         return;
@@ -223,6 +224,15 @@ test.beforeEach(async ({ page }) => {
       await route.continue();
       return;
     }
+    const url = route.request().url();
+    if (url.includes("/events")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ events: [{ event_type: "mock", at: "2020-01-01T00:00:00Z", payload: { ok: true } }] }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -231,6 +241,10 @@ test.beforeEach(async ({ page }) => {
         status: "completed",
         assigned_agent: "studio_scaffold",
         progress: [{ progress_pct: 100, message: "Mock — tâche terminée" }],
+        suggested_actions: [
+          { id: "open-ed", label: "Ouvrir l’éditeur", kind: "ui", ui_action: "open_editor" },
+          { id: "msg-1", label: "Continuer", kind: "message", message: "Poursuivre le scaffold" },
+        ],
       }),
     });
   });
@@ -259,7 +273,7 @@ test("loads layout and lists mocked project", async ({ page }) => {
 test("loads project tech stack from metadata", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("button", { name: /Paramètres du projet/i }).click();
+  await page.getByTestId("studio-project-settings-menu").click();
   const stackArea = page.locator(".stack-textarea");
   await expect(stackArea).toBeVisible();
   await expect(stackArea).toHaveValue("React + Vite");

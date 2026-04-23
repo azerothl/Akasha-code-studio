@@ -41,6 +41,8 @@ export type StudioProjectMeta = {
   git_branch?: string | null;
   /** `true` si `git status --porcelain` est vide. */
   git_worktree_clean?: boolean | null;
+  /** Lignes `git status --porcelain` (codes + chemin), renvoyées par le daemon (plafonnées). */
+  git_worktree_lines?: { status: string; path: string }[];
 };
 
 export async function listProjects(): Promise<StudioProject[]> {
@@ -389,6 +391,15 @@ export async function sendMessage(body: {
   return j;
 }
 
+/** Suggestion « prochaine action » (Code Studio + daemon). */
+export type TaskSuggestedAction = {
+  id: string;
+  label: string;
+  kind: "message" | "ui";
+  message?: string;
+  ui_action?: string;
+};
+
 export type TaskStatusResponse = {
   task_id: string;
   status: string;
@@ -396,12 +407,27 @@ export type TaskStatusResponse = {
   progress?: { progress_pct: number; message: string }[];
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
+  suggested_actions?: TaskSuggestedAction[];
 };
 
 export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   const r = await fetch(api(`/api/tasks/${taskId}`));
   if (!r.ok) throw new Error(`getTask ${r.status}`);
   return r.json() as Promise<TaskStatusResponse>;
+}
+
+export type TaskEventEntry = {
+  event_type: string;
+  at: string;
+  task_id?: string | null;
+  payload?: unknown;
+};
+
+export async function getTaskEvents(taskId: string): Promise<TaskEventEntry[]> {
+  const r = await fetch(api(`/api/tasks/${taskId}/events`));
+  if (!r.ok) throw new Error(`getTaskEvents ${r.status}`);
+  const j = (await r.json()) as { events?: TaskEventEntry[] };
+  return j.events ?? [];
 }
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */
