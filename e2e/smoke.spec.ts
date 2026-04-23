@@ -315,7 +315,7 @@ test("opens Design tab and saves DESIGN.md", async ({ page }) => {
       r.url().includes("path=DESIGN.md") &&
       r.method() === "PUT",
   );
-  await page.getByRole("button", { name: "Enregistrer" }).first().click();
+  await page.getByTestId("studio-save-design").click();
   await put;
 });
 

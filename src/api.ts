@@ -11,9 +11,13 @@ export type Evolution = {
   root_task_id?: string | null;
 };
 
-/** État de l’index code-RAG du projet (recherche sémantique / contexte agent). */
+/** État de l’index code-RAG du projet (recherche sémantique / contexte agent).
+ * - `absent` : aucun index n’existe encore
+ * - `stale`  : index présent mais obsolète (fichiers modifiés depuis)
+ * - `ready`  : index à jour
+ */
 export type CodeRagStatus = {
-  status: string;
+  status: "absent" | "stale" | "ready";
   files_indexed: number;
   chunks_indexed: number;
   built_at: string | null;

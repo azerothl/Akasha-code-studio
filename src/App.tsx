@@ -1092,7 +1092,9 @@ export default function App() {
     try {
       await api.writeRawFile(selectedId, "CODE_STUDIO_PLAN.md", planDocText);
       setPlanDocSnapshot(planDocText);
-      sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+      try {
+        sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+      } catch { /* quota / private mode — snapshot skipped */ }
       setStatus("CODE_STUDIO_PLAN.md enregistré sur le disque projet");
     } catch (e) {
       setError(String(e));
@@ -1117,7 +1119,9 @@ export default function App() {
     try {
       await api.writeRawFile(selectedId, "DESIGN.md", designDocText);
       setDesignDocSnapshot(designDocText);
-      sessionStorage.setItem(`akasha-design-snap-${selectedId}`, designDocText);
+      try {
+        sessionStorage.setItem(`akasha-design-snap-${selectedId}`, designDocText);
+      } catch { /* quota / private mode — snapshot skipped */ }
       setStatus("DESIGN.md enregistré sur le disque projet");
     } catch (e) {
       setError(String(e));
@@ -1647,13 +1651,13 @@ Procédure:
                   </span>
                 ) : codeRagStatus ? (
                   <span
-                    className={`code-rag-badge code-rag-badge--${codeRagStatus.status}`}
+                    className={`code-rag-badge code-rag-badge--${codeRagStatus.stale || codeRagStatus.status === "stale" ? "stale" : codeRagStatus.status === "absent" ? "absent" : "ready"}`}
                     data-testid="studio-code-rag-badge"
                     title={codeRagBadgeTitle}
                   >
                     {codeRagStatus.status === "absent"
                       ? "Non indexé"
-                      : codeRagStatus.status === "stale"
+                      : codeRagStatus.stale || codeRagStatus.status === "stale"
                         ? "Index obsolète"
                         : "Indexé"}
                   </span>
@@ -2181,7 +2185,9 @@ Procédure:
                 onClick={() => {
                   if (!selectedId) return;
                   setPlanDocSnapshot(planDocText);
-                  sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+                  try {
+                    sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+                  } catch { /* quota / private mode — snapshot skipped */ }
                   setStatus("Référence plan mise à jour pour comparaison");
                 }}
               >
@@ -2233,6 +2239,7 @@ Procédure:
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
+                data-testid="studio-save-design"
                 disabled={!selectedId || designDocLoading}
                 onClick={() => void onSaveDesignFromTab()}
               >
