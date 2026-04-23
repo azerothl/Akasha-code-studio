@@ -126,10 +126,7 @@ kbd {
 }
 
 .app-main--center-max .chat-column {
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  border: none;
+  display: none;
 }
 
 .app-main--chat-max {
@@ -137,10 +134,7 @@ kbd {
 }
 
 .app-main--chat-max .center {
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  border: none;
+  display: none;
 }
 
 .app-header {

@@ -31,24 +31,27 @@ function normalizeMessage(m: unknown): ChatMessage | null {
 
 export function loadChatMessages(projectId: string): ChatMessage[] {
   if (typeof localStorage === "undefined") return [];
-  const tryKey = (key: string): ChatMessage[] => {
+  const tryKey = (key: string): { present: boolean; messages: ChatMessage[] } => {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return { present: false, messages: [] };
     try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return [];
       const j = JSON.parse(raw) as unknown;
-      if (!Array.isArray(j)) return [];
-      return j
-        .map((row) => normalizeMessage(row))
-        .filter((m): m is ChatMessage => m !== null)
-        .slice(-200);
+      if (!Array.isArray(j)) return { present: true, messages: [] };
+      return {
+        present: true,
+        messages: j
+          .map((row) => normalizeMessage(row))
+          .filter((m): m is ChatMessage => m !== null)
+          .slice(-200),
+      };
     } catch {
-      return [];
+      return { present: true, messages: [] };
     }
   };
   const v2 = tryKey(PREFIX + projectId);
-  if (v2.length) return v2;
+  if (v2.present) return v2.messages;
   const legacy = tryKey("akasha-code-studio-chat-v1:" + projectId);
-  return legacy;
+  return legacy.messages;
 }
 
 export function saveChatMessages(projectId: string, messages: ChatMessage[]): void {

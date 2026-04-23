@@ -220,11 +220,15 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.route("**/api/tasks/**", async (route) => {
+    const url = route.request().url();
+    if (url.endsWith("/human-input") || url.endsWith("/human-reply")) {
+      await route.continue();
+      return;
+    }
     if (route.request().method() !== "GET") {
       await route.continue();
       return;
     }
-    const url = route.request().url();
     if (url.includes("/events")) {
       await route.fulfill({
         status: 200,
@@ -342,4 +346,39 @@ test("deletes file via DELETE /raw (mocked)", async ({ page }) => {
   page.once("dialog", (d) => d.accept());
   await page.getByTestId("studio-delete-file").click();
   await del;
+});
+
+test("opens Git worktree popover (empty state)", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-git-worktree-toggle").click();
+  const popover = page.getByRole("dialog", { name: /État du worktree Git/i });
+  await expect(popover).toBeVisible();
+  await expect(popover.getByText(/Aucune modification détectée/i)).toBeVisible();
+});
+
+test("opens task detail modal and shows mocked event", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const detailBtn = page.locator(".bubble.assistant").getByRole("button", { name: /Détails de la tâche/i });
+  await expect(detailBtn).toBeVisible({ timeout: 10_000 });
+  await detailBtn.click();
+  const modal = page.getByRole("dialog", { name: /Détail de la tâche/i });
+  await expect(modal).toBeVisible();
+  await expect(modal.locator(".task-detail-events code").filter({ hasText: /^mock$/ })).toBeVisible({ timeout: 5_000 });
+});
+
+test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const suggestionsArea = page.locator(".chat-suggestions");
+  await expect(suggestionsArea).toBeVisible({ timeout: 10_000 });
+  const messageChip = suggestionsArea.getByRole("button", { name: /Continuer/i });
+  await expect(messageChip).toBeVisible();
+  await messageChip.click();
+  await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
 });
