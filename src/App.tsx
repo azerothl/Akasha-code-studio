@@ -1618,6 +1618,13 @@ Procédure:
     return `État : ${status}. Fichiers indexés : ${files_indexed}, blocs : ${chunks_indexed}.${built_at ? ` Dernière construction : ${built_at}.` : ""}`;
   }, [codeRagStatus, codeRagStatusError, codeRagStatusLoading]);
 
+  const codeRagBadgeVariant = useMemo(() => {
+    if (!codeRagStatus) return "ready" as const;
+    if (codeRagStatus.status === "absent") return "absent" as const;
+    if (codeRagStatus.stale || codeRagStatus.status === "stale") return "stale" as const;
+    return "ready" as const;
+  }, [codeRagStatus]);
+
   const appLayoutClass =
     "app" +
     (!sidebarLeftVisible ? " app--left-collapsed" : "") +
@@ -1651,13 +1658,13 @@ Procédure:
                   </span>
                 ) : codeRagStatus ? (
                   <span
-                    className={`code-rag-badge code-rag-badge--${codeRagStatus.stale || codeRagStatus.status === "stale" ? "stale" : codeRagStatus.status === "absent" ? "absent" : "ready"}`}
+                    className={`code-rag-badge code-rag-badge--${codeRagBadgeVariant}`}
                     data-testid="studio-code-rag-badge"
                     title={codeRagBadgeTitle}
                   >
-                    {codeRagStatus.status === "absent"
+                    {codeRagBadgeVariant === "absent"
                       ? "Non indexé"
-                      : codeRagStatus.stale || codeRagStatus.status === "stale"
+                      : codeRagBadgeVariant === "stale"
                         ? "Index obsolète"
                         : "Indexé"}
                   </span>
