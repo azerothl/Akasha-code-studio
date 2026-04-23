@@ -3,6 +3,10 @@ import { test, expect, type Page } from "@playwright/test";
 const demoId = "00000000-0000-4000-8000-000000000001";
 
 test.beforeEach(async ({ page }) => {
+  const rawFiles: Record<string, string> = {
+    "index.html": "<!DOCTYPE html><html><body><h1>Studio</h1></body></html>",
+    "DESIGN.md": "---\nname: Demo\ncolors:\n  primary: \"#8b5cf6\"\ntypography:\n  body: {}\n---\n\n## Overview\nDemo.\n",
+  };
   await page.route("**/api/studio/projects", async (route) => {
     if (route.request().method() === "GET") {
       await route.fulfill({
@@ -69,11 +73,15 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.route(`**/api/studio/projects/${demoId}/raw**`, async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.searchParams.get("path") ?? "index.html";
     if (route.request().method() === "PUT") {
+      const body = route.request().postDataJSON() as { content?: string };
+      rawFiles[path] = body.content ?? "";
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ ok: true, path: "index.html" }),
+        body: JSON.stringify({ ok: true, path }),
       });
       return;
     }
@@ -81,7 +89,7 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ ok: true, path: "index.html" }),
+        body: JSON.stringify({ ok: true, path }),
       });
       return;
     }
@@ -89,9 +97,9 @@ test.beforeEach(async ({ page }) => {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        path: "index.html",
-        mime: "text/html",
-        content: "<!DOCTYPE html><html><body><h1>Studio</h1></body></html>",
+        path,
+        mime: path.endsWith(".md") ? "text/markdown" : "text/html",
+        content: rawFiles[path] ?? "",
       }),
     });
   });
@@ -158,6 +166,34 @@ test.beforeEach(async ({ page }) => {
     });
   });
 
+  await page.route(`**/api/studio/projects/${demoId}/code-rag/status`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ready",
+        files_indexed: 2,
+        chunks_indexed: 5,
+        built_at: "2020-01-02T00:00:00Z",
+        stale: false,
+      }),
+    });
+  });
+
+  await page.route(`**/api/studio/projects/${demoId}/code-rag/reindex`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ready",
+        files_indexed: 2,
+        chunks_indexed: 6,
+        built_at: "2020-01-03T00:00:00Z",
+        stale: false,
+      }),
+    });
+  });
+
   await page.route("**/api/message", async (route) => {
     await route.fulfill({
       status: 200,
@@ -196,6 +232,14 @@ test.beforeEach(async ({ page }) => {
         assigned_agent: "studio_scaffold",
         progress: [{ progress_pct: 100, message: "Mock — tâche terminée" }],
       }),
+    });
+  });
+
+  await page.route("**/api/pending-human-input", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ pending: [] }),
     });
   });
 });
@@ -256,6 +300,23 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
   await expect(page.locator(".bubble.assistant").getByText(/Mock — tâche terminée|La tâche est terminée/i)).toBeVisible({
     timeout: 10_000,
   });
+});
+
+test("opens Design tab and saves DESIGN.md", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("tab", { name: /^Design$/i }).click();
+  const area = page.getByLabel("Contenu de DESIGN.md");
+  await expect(area).toBeVisible();
+  await area.fill("---\nname: Updated\ncolors:\n  primary: \"#06b6d4\"\ntypography:\n  body: {}\n---\n\n## Overview\nUpdated\n");
+  const put = page.waitForRequest(
+    (r) =>
+      r.url().includes(`/api/studio/projects/${demoId}/raw`) &&
+      r.url().includes("path=DESIGN.md") &&
+      r.method() === "PUT",
+  );
+  await page.getByTestId("studio-save-design").click();
+  await put;
 });
 
 test("deletes file via DELETE /raw (mocked)", async ({ page }) => {

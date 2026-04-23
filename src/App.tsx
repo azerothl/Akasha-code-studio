@@ -11,9 +11,22 @@ import {
   composeStackString,
   emptyStackAddons,
 } from "./stackConfig";
+import { AgentCapabilitiesTable } from "./agentCapabilities";
 import { CodeEditor } from "./codeEditor";
 import { DevServerLogView } from "./devServerLogView";
+import { inferActionRisk, riskLabel, type ActionRiskLevel } from "./inferActionRisk";
 import { MarkdownBlock } from "./markdownBlock";
+import { CODE_MODE_OPTIONS, loadPersistedCodeMode, persistCodeMode } from "./studioConstants";
+import type { StudioCodeMode } from "./api";
+import {
+  buildDesignPolicyHint,
+  DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN,
+  DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN,
+  designTokensToCss,
+  designTokensToJson,
+  normalizeDesignDoc,
+  parseDesignDoc,
+} from "./designDoc";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -36,6 +49,11 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
     value: "studio_fullstack",
     label: "Full-stack",
     hint: "Frontend + backend cohérents dans un même passage.",
+  },
+  {
+    value: "studio_planner",
+    label: "Planification (lecture seule)",
+    hint: "Explorer le dépôt et mettre à jour CODE_STUDIO_PLAN.md uniquement — pas de code applicatif.",
   },
 ];
 
@@ -204,6 +222,18 @@ function looksLikeTimeoutMessage(msg: string): boolean {
   );
 }
 
+function looksLikeStructuredRefusal(text: string): boolean {
+  const t = text.trim();
+  if (/^refus\b/i.test(t)) return true;
+  if (/^acceptation\b/i.test(t)) return false;
+  return (
+    t.includes("Refus :") ||
+    t.includes("Refus collectif") ||
+    t.includes("merci d'arrêter") ||
+    t.includes("merci d'arrêter cette action")
+  );
+}
+
 /** Texte affiché dans le chat à la fin du suivi de tâche (préfère la dernière progression substantive renvoyée par le daemon). */
 function chatMessageForTerminalTask(
   status: string,
@@ -244,6 +274,12 @@ function chatMessageForTerminalTask(
   return `État : ${formatTaskStatusFr(status)}`;
 }
 
+function isMarkdownPath(path: string | null): boolean {
+  if (!path) return false;
+  const p = path.toLowerCase();
+  return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
+}
+
 export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -266,7 +302,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs">("editor");
+  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design">("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -274,6 +310,11 @@ export default function App() {
   const [depsInstallBusy, setDepsInstallBusy] = useState(false);
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
   const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
+  /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
+  const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
+  const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
+  const [codeRagStatusError, setCodeRagStatusError] = useState<string | null>(null);
+  const [codeRagReindexBusy, setCodeRagReindexBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
@@ -290,6 +331,8 @@ export default function App() {
     status: string;
     line: string;
     done: boolean;
+    /** Étiquettes courtes dérivées des progressions daemon. */
+    progressChips?: string[];
   } | null>(null);
   /** Réponse attendue par le daemon (`ask_user`, approbation, …) — alimenté par GET …/human-input. */
   const [pendingHumanInput, setPendingHumanInput] = useState<{
@@ -321,12 +364,35 @@ export default function App() {
     evolutions: false,
   });
 
+  const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
+  const [policyHintOneShot, setPolicyHintOneShot] = useState("");
+  const [delegateSingleLevel, setDelegateSingleLevel] = useState(false);
+  const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
+  const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  const [planDocText, setPlanDocText] = useState("");
+  const [planDocSnapshot, setPlanDocSnapshot] = useState("");
+  const [planDocLoading, setPlanDocLoading] = useState(false);
+  const [designDocText, setDesignDocText] = useState("");
+  const [designDocSnapshot, setDesignDocSnapshot] = useState("");
+  const [designDocLoading, setDesignDocLoading] = useState(false);
+  const [autoApplyDesign, setAutoApplyDesign] = useState(true);
+  const [editorMarkdownPreview, setEditorMarkdownPreview] = useState(false);
+  const [planMarkdownPreview, setPlanMarkdownPreview] = useState(false);
+  const [designMarkdownPreview, setDesignMarkdownPreview] = useState(false);
+  const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
+  const [showAgentMatrix, setShowAgentMatrix] = useState(false);
+  /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
+  const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
+
   const skipChatSaveOnce = useRef(false);
+  const appliedCssVarsRef = useRef<Set<string>>(new Set());
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
     [projects, selectedId],
   );
+  const parsedDesignDoc = useMemo(() => parseDesignDoc(designDocText), [designDocText]);
+  const designHint = useMemo(() => buildDesignPolicyHint(parsedDesignDoc), [parsedDesignDoc]);
 
   const composedStack = useMemo(
     () => composeStackString(stackPresetId, stackCustomText, stackAddons),
@@ -347,6 +413,40 @@ export default function App() {
   useEffect(() => {
     editorBinaryRef.current = editorBinary;
   }, [editorBinary]);
+  useEffect(() => {
+    if (!isMarkdownPath(filePath)) setEditorMarkdownPreview(false);
+  }, [filePath]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevKeys = appliedCssVarsRef.current;
+    const newKeys = new Set<string>();
+    for (const [k, v] of Object.entries(parsedDesignDoc.tokens.colors)) {
+      const varName = `--design-color-${k}`;
+      root.style.setProperty(varName, v);
+      newKeys.add(varName);
+    }
+    for (const [k, v] of Object.entries(parsedDesignDoc.tokens.spacing)) {
+      const varName = `--design-spacing-${k}`;
+      root.style.setProperty(varName, v);
+      newKeys.add(varName);
+    }
+    for (const [k, v] of Object.entries(parsedDesignDoc.tokens.rounded)) {
+      const varName = `--design-rounded-${k}`;
+      root.style.setProperty(varName, v);
+      newKeys.add(varName);
+    }
+    if (parsedDesignDoc.tokens.colors.primary) {
+      root.style.setProperty("--akasha-accent", parsedDesignDoc.tokens.colors.primary);
+      newKeys.add("--akasha-accent");
+    }
+    for (const key of prevKeys) {
+      if (!newKeys.has(key)) {
+        root.style.removeProperty(key);
+      }
+    }
+    appliedCssVarsRef.current = newKeys;
+  }, [parsedDesignDoc]);
 
   const newProjectComposedStack = useMemo(
     () => composeStackString(newStackPresetId, newStackCustomText, newStackAddons),
@@ -390,12 +490,20 @@ export default function App() {
   }, [selectedProject?.id, selectedProject?.name]);
 
   useEffect(() => {
+    setDesignDocText("");
+    setDesignDocSnapshot("");
+    setDesignMarkdownPreview(false);
+  }, [selectedId]);
+
+  useEffect(() => {
     if (!selectedId) {
       setStackPresetId(STACK_PRESET_NONE);
       setStackCustomText("");
       setStackAddons(emptyStackAddons());
       setGitHeadBranch(null);
       setGitWorktreeClean(null);
+      setEvolutionSummaryDraft("");
+      setPolicyNotesDraft("");
       return;
     }
     let cancelled = false;
@@ -405,6 +513,8 @@ export default function App() {
         if (cancelled) return;
         setGitHeadBranch(m.git_branch ?? null);
         setGitWorktreeClean(m.git_worktree_clean ?? null);
+        setEvolutionSummaryDraft((m.evolution_summary ?? "").trim());
+        setPolicyNotesDraft((m.policy_notes ?? "").trim());
         const raw = (m.tech_stack ?? "").trim();
         if (raw) {
           setStackPresetId(STACK_PRESET_CUSTOM);
@@ -423,12 +533,159 @@ export default function App() {
           setStackAddons(emptyStackAddons());
           setGitHeadBranch(null);
           setGitWorktreeClean(null);
+          setEvolutionSummaryDraft("");
+          setPolicyNotesDraft("");
         }
       });
     return () => {
       cancelled = true;
     };
   }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setCodeRagStatus(null);
+      setCodeRagStatusError(null);
+      setCodeRagStatusLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setCodeRagStatusLoading(true);
+    setCodeRagStatusError(null);
+    void api
+      .getCodeRagStatus(selectedId)
+      .then((s) => {
+        if (!cancelled) {
+          setCodeRagStatus(s);
+          setCodeRagStatusError(null);
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setCodeRagStatus(null);
+          setCodeRagStatusError(String(e));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCodeRagStatusLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  const onReindexCodeRag = useCallback(async () => {
+    if (!selectedId) return;
+    setCodeRagReindexBusy(true);
+    setCodeRagStatusError(null);
+    setError(null);
+    try {
+      const s = await api.reindexCodeRag(selectedId);
+      setCodeRagStatus(s);
+      setStatus(
+        `Index code mis à jour : ${s.files_indexed} fichier(s), ${s.chunks_indexed} bloc(s)${s.built_at ? ` (${s.built_at})` : ""}.`,
+      );
+    } catch (e) {
+      setCodeRagStatusError(String(e));
+    } finally {
+      setCodeRagReindexBusy(false);
+    }
+  }, [selectedId]);
+
+  useEffect(() => {
+    persistCodeMode(codeMode);
+  }, [codeMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const p = await api.listPendingHumanInput();
+        if (!cancelled) setPendingInbox(p);
+      } catch {
+        if (!cancelled) setPendingInbox([]);
+      }
+    };
+    void tick();
+    const id = window.setInterval(() => void tick(), 12000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "plan") return;
+    let cancelled = false;
+    setPlanDocLoading(true);
+    void api
+      .readRawFile(selectedId, "CODE_STUDIO_PLAN.md")
+      .then((raw) => {
+        if (cancelled) return;
+        const t = raw.content ?? "";
+        setPlanDocText(t);
+        try {
+          const snap = sessionStorage.getItem(`akasha-plan-snap-${selectedId}`);
+          if (snap !== null) {
+            setPlanDocSnapshot(snap);
+          } else {
+            setPlanDocSnapshot(t);
+            sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, t);
+          }
+        } catch {
+          setPlanDocSnapshot(t);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPlanDocText("");
+          setPlanDocSnapshot("");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPlanDocLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, centerTab]);
+
+  useEffect(() => {
+    const shouldLoadDesignDoc = centerTab === "design" || autoApplyDesign;
+    if (!selectedId || !shouldLoadDesignDoc) return;
+    let cancelled = false;
+    setDesignDocLoading(true);
+    void api
+      .readRawFile(selectedId, "DESIGN.md")
+      .then((raw) => {
+        if (cancelled) return;
+        const t = raw.content ?? "";
+        setDesignDocText(t);
+        try {
+          const snap = sessionStorage.getItem(`akasha-design-snap-${selectedId}`);
+          if (snap !== null) {
+            setDesignDocSnapshot(snap);
+          } else {
+            setDesignDocSnapshot(t);
+            sessionStorage.setItem(`akasha-design-snap-${selectedId}`, t);
+          }
+        } catch {
+          setDesignDocSnapshot(t);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDesignDocText("");
+          setDesignDocSnapshot("");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDesignDocLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, centerTab, autoApplyDesign]);
 
   const toggleStackAddon = useCallback((cat: StackAddonCategoryId, optId: string) => {
     setStackAddons((prev) => {
@@ -815,6 +1072,95 @@ export default function App() {
     }
   };
 
+  const onSaveEvolutionAndPolicy = async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.patchProjectSettings(selectedId, {
+        evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
+        policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+      });
+      setStatus("Résumé d’évolution et politique enregistrés (réinjectés dans les prochains messages)");
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const onSavePlanFromTab = async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.writeRawFile(selectedId, "CODE_STUDIO_PLAN.md", planDocText);
+      setPlanDocSnapshot(planDocText);
+      try {
+        sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+      } catch { /* quota / private mode — snapshot skipped */ }
+      setStatus("CODE_STUDIO_PLAN.md enregistré sur le disque projet");
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const downloadTextFile = useCallback((filename: string, content: string) => {
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const onSaveDesignFromTab = async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.writeRawFile(selectedId, "DESIGN.md", designDocText);
+      setDesignDocSnapshot(designDocText);
+      try {
+        sessionStorage.setItem(`akasha-design-snap-${selectedId}`, designDocText);
+      } catch { /* quota / private mode — snapshot skipped */ }
+      setStatus("DESIGN.md enregistré sur le disque projet");
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const onImportDesignFromDisk = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".md,.txt,text/markdown,text/plain";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const normalized = normalizeDesignDoc(text);
+      setDesignDocText(normalized);
+      const parsed = parseDesignDoc(normalized);
+      setStatus(
+        `Design importé depuis ${file.name} — statut: ${parsed.status}, diagnostics: ${parsed.diagnostics.length}`,
+      );
+    };
+    input.click();
+  }, []);
+
+  const onExportDesignDoc = useCallback(() => {
+    downloadTextFile("DESIGN.md", designDocText);
+    setStatus("Export DESIGN.md déclenché");
+  }, [designDocText, downloadTextFile]);
+
+  const onExportDesignTokens = useCallback(() => {
+    downloadTextFile("DESIGN.tokens.json", designTokensToJson(parsedDesignDoc));
+    setStatus("Export DESIGN.tokens.json déclenché");
+  }, [downloadTextFile, parsedDesignDoc]);
+
+  const onExportDesignCss = useCallback(() => {
+    downloadTextFile("DESIGN.css", designTokensToCss(parsedDesignDoc));
+    setStatus("Export DESIGN.css déclenché");
+  }, [downloadTextFile, parsedDesignDoc]);
+
   const onClone = async () => {
     if (!selectedId || !cloneUrl.trim()) return;
     setError(null);
@@ -901,6 +1247,7 @@ export default function App() {
               status: t.status,
               line: "L’agent attend votre réponse (champs ci-dessous).",
               done: true,
+              progressChips: undefined,
             });
             return;
           }
@@ -917,11 +1264,21 @@ export default function App() {
             : last
               ? `${last.progress_pct}% — ${last.message}`
               : formatTaskStatusFr(t.status);
+          const rawProgress = t.progress ?? [];
+          const progressChips = rawProgress
+            .filter((p) => p.message && !isStubProgressMessage(p.message))
+            .slice(-12)
+            .map((p) => {
+              const msg = p.message.trim();
+              const short = msg.length > 96 ? `${msg.slice(0, 96)}…` : msg;
+              return `${p.progress_pct}% ${short}`;
+            });
           setTaskTrace({
             id: taskId,
             status: t.status,
             line,
             done: api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status),
+            progressChips: progressChips.length ? progressChips : undefined,
           });
           if (api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status)) {
             if (studioProjectId && api.isTaskTerminal(t.status)) {
@@ -1057,7 +1414,13 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
+        studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
       });
+      setPolicyHintOneShot("");
       const ac = new AbortController();
       pollTaskAbortRef.current = ac;
       setTaskTrace({
@@ -1065,13 +1428,78 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         status: "queued",
         line: "Régénération du plan…",
         done: false,
+        progressChips: undefined,
       });
       saveActiveTask(selectedId, task_id);
       void pollTask(task_id, ac.signal, selectedId);
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask]);
+  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, autoApplyDesign, designHint, designDocText]);
+
+  const onRegenerateDesign = useCallback(async (forceRecreateFromProjectStyle = false) => {
+    if (!selectedId) return;
+    const msg = `[Tâche Code Studio — DESIGN.md (${forceRecreateFromProjectStyle ? "recréation depuis style projet" : "réinitialisation / complétion"})]
+Produire ou mettre à jour DESIGN.md pour qu'il respecte **exactement** le gabarit Code Studio ci-dessous (pas un article markdown générique ni un document de design “libre”).
+
+Language requirement: the DESIGN.md file MUST be written in English only (headings, rationale, component notes, and usage guidance).
+
+${DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN}
+
+Procédure:
+1) Lire \`workspace:/DESIGN.md\` si présent.
+2) Si DESIGN.md est absent ou recréation forcée depuis le dépôt: extraire **uniquement** ce qui est observable dans le code — en priorité \`index.css\`, \`*.css\`, \`tailwind.config.*\`, thème/tokens, variables CSS (\`--*\`), composants UI clés. Ne pas inventer de styles absents du code.
+3) Si DESIGN.md existe déjà (et pas de recréation forcée): fusionner sans perdre la prose utile ; conserver les tokens YAML valides ; réaligner la structure sur le gabarit si nécessaire.
+4) Vérifier cohérence: \`name\`, \`colors\`, \`typography\` (objets imbriqués YAML), \`rounded\`/\`spacing\` si présents dans le code, sections \`##\` canoniques dans l'ordre indiqué dans le bloc anglais.
+5) Écrire ou mettre à jour **uniquement** \`workspace:/DESIGN.md\` (pas d'autres fichiers pour cette tâche sauf lecture).`;
+    setChat((c) => [...c, { role: "user", text: msg }]);
+    setError(null);
+    pollTaskAbortRef.current?.abort();
+    setPendingHumanInput(null);
+    setHumanReplyDraft("");
+    setTaskTrace(null);
+    try {
+      const oneShotPolicy = [
+        policyHintOneShot.trim(),
+        forceRecreateFromProjectStyle
+          ? "Priorité: recréer DESIGN.md depuis les styles du dépôt actuel (pas de style inventé)."
+          : "",
+        "Règle obligatoire: DESIGN.md doit rester entièrement en anglais.",
+        "Structure obligatoire: suivre le bloc « Mandatory file shape (Code Studio DESIGN.md) » du message utilisateur (YAML + ordre des sections ##, titres acceptés inclus).",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      const regenerateDesignHint = [DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN, designHint.trim()]
+        .filter(Boolean)
+        .join("\n\n");
+      const { task_id } = await api.sendMessage({
+        message: msg,
+        studio_project_id: selectedId,
+        studio_assigned_agent: agent || undefined,
+        studio_evolution_id: selectedEvoId ?? undefined,
+        studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: oneShotPolicy || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: regenerateDesignHint || undefined,
+        studio_design_doc: designDocText.trim() || undefined,
+      });
+      setPolicyHintOneShot("");
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
+      setTaskTrace({
+        id: task_id,
+        status: "queued",
+        line: "Régénération du design…",
+        done: false,
+        progressChips: undefined,
+      });
+      saveActiveTask(selectedId, task_id);
+      void pollTask(task_id, ac.signal, selectedId);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, designDocText, autoApplyDesign, designHint]);
 
   const onSendChat = async () => {
     const text = chatInput.trim();
@@ -1090,7 +1518,13 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
+        studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
       });
+      setPolicyHintOneShot("");
       const ac = new AbortController();
       pollTaskAbortRef.current = ac;
       setTaskTrace({
@@ -1098,6 +1532,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         status: "queued",
         line: "Requête acceptée par le daemon — démarrage…",
         done: false,
+        progressChips: undefined,
       });
       saveActiveTask(selectedId, task_id);
       void pollTask(task_id, ac.signal, selectedId);
@@ -1108,8 +1543,15 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
 
   const onSubmitHumanReply = useCallback(async () => {
     if (!pendingHumanInput) return;
-    const text = humanReplyDraft.trim();
+    let text = humanReplyDraft.trim();
     if (!text) return;
+    const refusal = looksLikeStructuredRefusal(text);
+    let nextStreak = refusal ? humanRefusalStreak + 1 : 0;
+    if (refusal && nextStreak >= 3) {
+      text = `${text}\n\n[Note interface Code Studio] Refus répétés : merci de poser une question précise à l'utilisateur ou de proposer une marche alternative (ne pas réessayer la même action sans nouveau contexte).`;
+      nextStreak = 0;
+    }
+    setHumanRefusalStreak(nextStreak);
     setHumanReplyBusy(true);
     setError(null);
     try {
@@ -1131,7 +1573,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     } finally {
       setHumanReplyBusy(false);
     }
-  }, [pendingHumanInput, humanReplyDraft, pollTask, selectedId]);
+  }, [pendingHumanInput, humanReplyDraft, pollTask, selectedId, humanRefusalStreak]);
 
   const agentLabel = useMemo(
     () => AGENT_OPTIONS.find((o) => o.value === agent)?.label ?? "Agent",
@@ -1152,12 +1594,36 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     return opt.hint;
   }, [agent, composedStack]);
 
+  const humanInputRiskLevel = useMemo((): ActionRiskLevel | null => {
+    if (!pendingHumanInput) return null;
+    return inferActionRisk(`${pendingHumanInput.question}\n${pendingHumanInput.context}`);
+  }, [pendingHumanInput]);
+
+  useEffect(() => {
+    setHumanRefusalStreak(0);
+  }, [pendingHumanInput?.taskId]);
+
   const previewUrl = devPreviewUrl ?? staticPreviewBlobUrl;
 
   const openPreviewInNewWindow = useCallback(() => {
     if (!previewUrl) return;
     window.open(previewUrl, "_blank", "noopener,noreferrer");
   }, [previewUrl]);
+
+  const codeRagBadgeTitle = useMemo(() => {
+    if (codeRagStatusLoading) return "Chargement de l’état d’index…";
+    if (codeRagStatusError) return codeRagStatusError;
+    if (!codeRagStatus) return "";
+    const { files_indexed, chunks_indexed, built_at, status } = codeRagStatus;
+    return `État : ${status}. Fichiers indexés : ${files_indexed}, blocs : ${chunks_indexed}.${built_at ? ` Dernière construction : ${built_at}.` : ""}`;
+  }, [codeRagStatus, codeRagStatusError, codeRagStatusLoading]);
+
+  const codeRagBadgeVariant = useMemo(() => {
+    if (!codeRagStatus) return "ready" as const;
+    if (codeRagStatus.status === "absent") return "absent" as const;
+    if (codeRagStatus.stale || codeRagStatus.status === "stale") return "stale" as const;
+    return "ready" as const;
+  }, [codeRagStatus]);
 
   const appLayoutClass =
     "app" +
@@ -1176,6 +1642,43 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                 <code className="app-header-project-id" title={selectedProject.id}>
                   {selectedProject.id.slice(0, 8)}…
                 </code>
+              </span>
+              <span className="app-header-code-rag" aria-label="Index code du projet">
+                {codeRagStatusLoading ? (
+                  <span className="code-rag-badge code-rag-badge--loading" data-testid="studio-code-rag-badge">
+                    Index…
+                  </span>
+                ) : codeRagStatusError ? (
+                  <span
+                    className="code-rag-badge code-rag-badge--error"
+                    data-testid="studio-code-rag-badge"
+                    title={codeRagBadgeTitle}
+                  >
+                    Index indisponible
+                  </span>
+                ) : codeRagStatus ? (
+                  <span
+                    className={`code-rag-badge code-rag-badge--${codeRagBadgeVariant}`}
+                    data-testid="studio-code-rag-badge"
+                    title={codeRagBadgeTitle}
+                  >
+                    {codeRagBadgeVariant === "absent"
+                      ? "Non indexé"
+                      : codeRagBadgeVariant === "stale"
+                        ? "Index obsolète"
+                        : "Indexé"}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm app-header-reindex-btn"
+                  data-testid="studio-code-rag-reindex"
+                  disabled={codeRagReindexBusy || codeRagStatusLoading}
+                  title="Reconstruire l’index local des sources (recherche et contexte pour l’agent)"
+                  onClick={() => void onReindexCodeRag()}
+                >
+                  {codeRagReindexBusy ? "Réindexation…" : "Réindexer"}
+                </button>
               </span>
               <span className="app-header-branches">
                 <span className="app-header-branch" title="Branche Git courante (HEAD)">
@@ -1327,6 +1830,37 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                   Enregistrer la stack
                 </button>
               </div>
+              <div className="evolution-policy-box">
+                <p className="hint evolution-policy-intro">
+                  Résumé d’évolution et notes de politique : injectés dans les prochains messages (daemon), pour la session
+                  ou l’itération courante — utile après rechargement ou longue session.
+                </p>
+                <label className="field">
+                  <span>Résumé d’évolution / session</span>
+                  <textarea
+                    className="evolution-policy-textarea"
+                    rows={4}
+                    spellCheck={false}
+                    value={evolutionSummaryDraft}
+                    onChange={(e) => setEvolutionSummaryDraft(e.target.value)}
+                    placeholder="Ex. objectif de la branche, décisions déjà prises, ce qu’il reste à faire…"
+                  />
+                </label>
+                <label className="field">
+                  <span>Notes de politique (outils, périmètre)</span>
+                  <textarea
+                    className="evolution-policy-textarea"
+                    rows={4}
+                    spellCheck={false}
+                    value={policyNotesDraft}
+                    onChange={(e) => setPolicyNotesDraft(e.target.value)}
+                    placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
+                  />
+                </label>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
+                  Enregistrer résumé &amp; politique
+                </button>
+              </div>
             </div>
           </CollapsiblePanel>
         ) : null}
@@ -1423,7 +1957,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                 onClick={() => {
                   if (selectedId && selectedEvoId) {
                     void api
-                      .mergeEvolution(selectedId, selectedEvoId)
+                      .mergeEvolution(selectedId, selectedEvoId, { design_check: true })
                       .then(() => refreshEvolutions())
                       .catch((e) => setError(String(e)));
                   }
@@ -1471,7 +2005,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
       </div>
 
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu ou logs">
+        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design ou logs">
           <button
             type="button"
             role="tab"
@@ -1489,6 +2023,24 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
             onClick={() => setCenterTab("preview")}
           >
             Aperçu
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "plan"}
+            className={`center-tab ${centerTab === "plan" ? "active" : ""}`}
+            onClick={() => setCenterTab("plan")}
+          >
+            Plan
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "design"}
+            className={`center-tab ${centerTab === "design" ? "active" : ""}`}
+            onClick={() => setCenterTab("design")}
+          >
+            Design
           </button>
           <button
             type="button"
@@ -1519,8 +2071,23 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
               >
                 Enregistrer
               </button>
+              {isMarkdownPath(filePath) ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setEditorMarkdownPreview((v) => !v)}
+                >
+                  {editorMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
+                </button>
+              ) : null}
             </div>
-            <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
+            {editorMarkdownPreview && isMarkdownPath(filePath) ? (
+              <div className="markdown-doc-preview">
+                <MarkdownBlock text={editorText} className="md-content" />
+              </div>
+            ) : (
+              <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
+            )}
             <p className="hint editor-hint">
               Les fichiers texte peuvent être enregistrés sur le disque du projet (bouton ou Ctrl+S). Le chat reste
               utile pour des changements plus larges ou revus par l’agent.
@@ -1605,6 +2172,156 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
               </div>
             )}
           </div>
+        ) : centerTab === "plan" ? (
+          <div className="center-body plan-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">CODE_STUDIO_PLAN.md</span>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={!selectedId || planDocLoading}
+                onClick={() => void onSavePlanFromTab()}
+              >
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={!selectedId}
+                title="Mémorise la version courante pour comparer (session navigateur)"
+                onClick={() => {
+                  if (!selectedId) return;
+                  setPlanDocSnapshot(planDocText);
+                  try {
+                    sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
+                  } catch { /* quota / private mode — snapshot skipped */ }
+                  setStatus("Référence plan mise à jour pour comparaison");
+                }}
+              >
+                Référence (diff)
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={planDocLoading}
+                onClick={() => setPlanMarkdownPreview((v) => !v)}
+              >
+                {planMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
+              </button>
+            </div>
+            {planDocLoading ? (
+              <p className="hint">Chargement…</p>
+            ) : (
+              <>
+                <p className="hint plan-pane-hint">
+                  Édition directe du fichier à la racine du projet. La « référence » sert d’instantané local pour voir si
+                  le texte a changé depuis le dernier marquage.
+                </p>
+                <p className="plan-diff-stats">
+                  {planDocSnapshot && planDocSnapshot !== planDocText
+                    ? `Écart avec la référence : ${planDocText.length} vs ${planDocSnapshot.length} caractères.`
+                    : "Aucun écart avec la référence mémorisée (ou référence identique)."}
+                </p>
+                {planMarkdownPreview ? (
+                  <div className="markdown-doc-preview">
+                    <MarkdownBlock text={planDocText} className="md-content" />
+                  </div>
+                ) : (
+                  <textarea
+                    className="plan-doc-textarea"
+                    spellCheck={false}
+                    value={planDocText}
+                    onChange={(e) => setPlanDocText(e.target.value)}
+                    rows={28}
+                    aria-label="Contenu de CODE_STUDIO_PLAN.md"
+                  />
+                )}
+              </>
+            )}
+          </div>
+        ) : centerTab === "design" ? (
+          <div className="center-body plan-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">DESIGN.md</span>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                data-testid="studio-save-design"
+                disabled={!selectedId || designDocLoading}
+                onClick={() => void onSaveDesignFromTab()}
+              >
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={!selectedId}
+                onClick={() => onImportDesignFromDisk()}
+              >
+                Importer
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignDoc()}>
+                Export DESIGN.md
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignTokens()}>
+                Export tokens
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignCss()}>
+                Export CSS
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={designDocLoading}
+                onClick={() => setDesignMarkdownPreview((v) => !v)}
+              >
+                {designMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
+              </button>
+            </div>
+            {designDocLoading ? (
+              <p className="hint">Chargement…</p>
+            ) : (
+              <>
+                <p className="hint plan-pane-hint">
+                  Contrat design projet (source de vérité agent/UI). Statut: <strong>{parsedDesignDoc.status}</strong>.
+                </p>
+                {parsedDesignDoc.status === "absent" ? (
+                  <p className="hint plan-pane-hint">
+                    Aucun `DESIGN.md` détecté. Utilisez “Initialiser / régénérer le design” pour le recréer à partir des
+                    styles présents dans le projet.
+                  </p>
+                ) : null}
+                <p className="plan-diff-stats">
+                  {designDocSnapshot && designDocSnapshot !== designDocText
+                    ? `Écart avec la référence : ${designDocText.length} vs ${designDocSnapshot.length} caractères.`
+                    : "Aucun écart avec la référence mémorisée (ou référence identique)."}
+                </p>
+                {parsedDesignDoc.diagnostics.length > 0 ? (
+                  <ul className="design-diagnostics" aria-label="Diagnostics DESIGN.md">
+                    {parsedDesignDoc.diagnostics.map((d, idx) => (
+                      <li key={`${d.path}-${idx}`} className={`design-diagnostic design-diagnostic--${d.severity}`}>
+                        <strong>{d.severity.toUpperCase()}</strong> {d.path}: {d.message}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {designMarkdownPreview ? (
+                  <div className="markdown-doc-preview">
+                    <MarkdownBlock text={designDocText} className="md-content" />
+                  </div>
+                ) : (
+                  <textarea
+                    className="plan-doc-textarea"
+                    spellCheck={false}
+                    value={designDocText}
+                    onChange={(e) => setDesignDocText(e.target.value)}
+                    rows={28}
+                    aria-label="Contenu de DESIGN.md"
+                  />
+                )}
+              </>
+            )}
+          </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">
             <div className="preview-toolbar">
@@ -1624,6 +2341,18 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
       <div className={`chat-column${!sidebarRightVisible ? " chat-column--collapsed" : ""}`}>
         {sidebarRightVisible ? (
         <aside className="chat-panel">
+        {selectedId ? (
+          <div className="sandbox-reminder" role="status">
+            Sandbox disque : <code>{selectedId.slice(0, 8)}…</code> — les outils agent sont limités à ce dossier projet
+            (voir daemon / policy).
+          </div>
+        ) : null}
+        {pendingInbox.length > 1 ? (
+          <div className="pending-inbox-banner" role="status">
+            {pendingInbox.length} tâche(s) en attente de réponse (file globale — ouvrez la bonne dans l’UI principale
+            Akasha si besoin).
+          </div>
+        ) : null}
         <CollapsiblePanel
           className="chat-agent-role-wrap"
           title={`Rôle de l’agent — ${agentLabel}`}
@@ -1656,6 +2385,32 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
           >
             Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
           </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm btn-block"
+            disabled={!selectedId}
+            title="Envoie une consigne à l’agent pour créer ou compléter DESIGN.md"
+            onClick={() => void onRegenerateDesign()}
+          >
+            Initialiser / régénérer le design (DESIGN.md)
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-block"
+            disabled={!selectedId}
+            title="Force une recréation de DESIGN.md à partir des styles réellement présents dans le dépôt."
+            onClick={() => void onRegenerateDesign(true)}
+          >
+            Recréer DESIGN.md depuis le style du projet
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-block"
+            onClick={() => setShowAgentMatrix((v) => !v)}
+          >
+            {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
+          </button>
+          {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
         </CollapsiblePanel>
 
         <div className="chat-activity-area">
@@ -1694,8 +2449,25 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                     ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
                   </div>
                   <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
+                  {taskTrace.progressChips && taskTrace.progressChips.length > 0 ? (
+                    <ul className="task-progress-chips" aria-label="Étapes récentes">
+                      {taskTrace.progressChips.map((c, i) => (
+                        <li key={`${c}-${i}`} className="task-progress-chip">
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
                     <div className="task-human-input">
+                      {humanInputRiskLevel ? (
+                        <span
+                          className={`risk-badge risk-badge--${humanInputRiskLevel}`}
+                          title="Estimation locale (mots-clés) — pas une analyse serveur"
+                        >
+                          {riskLabel(humanInputRiskLevel)}
+                        </span>
+                      ) : null}
                       <p className="task-human-input-question">{pendingHumanInput.question}</p>
                       {pendingHumanInput.context ? (
                         <p className="task-human-input-context">{pendingHumanInput.context}</p>
@@ -1715,6 +2487,51 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
                           ))}
                         </div>
                       ) : null}
+                      {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
+                        <p className="denial-loop-hint" role="status">
+                          Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
+                          pour éviter que l’agent réessaie la même action. Au 3ᵉ refus structuré, une note est ajoutée
+                          automatiquement pour l’agent.
+                        </p>
+                      ) : null}
+                      <div className="task-human-input-quick">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={humanReplyBusy}
+                          onClick={() =>
+                            setHumanReplyDraft(
+                              "Acceptation : vous pouvez poursuivre avec cette approche, en restant dans le périmètre du plan.",
+                            )
+                          }
+                        >
+                          Accepter (modèle)
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={humanReplyBusy}
+                          onClick={() =>
+                            setHumanReplyDraft(
+                              "Refus : merci d’arrêter cette action et de proposer une alternative plus sûre ou conforme au plan.",
+                            )
+                          }
+                        >
+                          Refuser (modèle)
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={humanReplyBusy}
+                          onClick={() =>
+                            setHumanReplyDraft(
+                              "Refus collectif : toutes les actions en attente similaires doivent être annulées ; expliquez pourquoi et proposez la suite.",
+                            )
+                          }
+                        >
+                          Tout refuser (message type)
+                        </button>
+                      </div>
                       <textarea
                         className="task-human-input-textarea"
                         value={humanReplyDraft}
@@ -1759,6 +2576,50 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         </div>
 
         <div className="chat-panel-footer">
+          <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+            {CODE_MODE_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                title={o.hint}
+                onClick={() => setCodeMode(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <label className="field chat-policy-hint-field">
+            <span>Consigne ponctuelle (optionnel, un envoi)</span>
+            <input
+              type="text"
+              value={policyHintOneShot}
+              onChange={(e) => setPolicyHintOneShot(e.target.value)}
+              placeholder="Ex. ne pas toucher au dossier legacy/…"
+              spellCheck={false}
+            />
+          </label>
+          <label className="field-inline delegate-single">
+            <input
+              type="checkbox"
+              checked={delegateSingleLevel}
+              onChange={(e) => setDelegateSingleLevel(e.target.checked)}
+            />
+            <span>Délégation simple (préfixe anti sous-agent)</span>
+          </label>
+          <label className="field-inline delegate-single">
+            <input
+              type="checkbox"
+              checked={autoApplyDesign}
+              onChange={(e) => setAutoApplyDesign(e.target.checked)}
+            />
+            <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
+          </label>
+          {autoApplyDesign && designHint ? (
+            <p className="hint chat-design-hint" title={designHint}>
+              Design actif: {designHint}
+            </p>
+          ) : null}
           <div className="chat-form">
             <textarea
               value={chatInput}

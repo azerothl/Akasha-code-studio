@@ -11,6 +11,19 @@ export type Evolution = {
   root_task_id?: string | null;
 };
 
+/** État de l’index code-RAG du projet (recherche sémantique / contexte agent).
+ * - `absent` : aucun index n’existe encore
+ * - `stale`  : index présent mais obsolète (fichiers modifiés depuis)
+ * - `ready`  : index à jour
+ */
+export type CodeRagStatus = {
+  status: "absent" | "stale" | "ready";
+  files_indexed: number;
+  chunks_indexed: number;
+  built_at: string | null;
+  stale: boolean;
+};
+
 export type StudioProjectMeta = {
   id: string;
   name: string;
@@ -20,6 +33,10 @@ export type StudioProjectMeta = {
   verify_skip?: boolean;
   verify_argv?: string[] | null;
   verify_timeout_sec?: number | null;
+  /** Résumé évolution / session (réinjecté dans les messages). */
+  evolution_summary?: string | null;
+  /** Notes de politique outils / périmètre (réinjectées). */
+  policy_notes?: string | null;
   /** Branche Git courante (`git rev-parse --abbrev-ref HEAD`), si dépôt présent. */
   git_branch?: string | null;
   /** `true` si `git status --porcelain` est vide. */
@@ -33,7 +50,7 @@ export async function listProjects(): Promise<StudioProject[]> {
   return j.projects ?? [];
 }
 
-/** At least one of `name` or `tech_stack` must be set. Use `tech_stack: null` to clear the stack. */
+/** Patch project settings. Any subset of fields may be provided; `tech_stack: null` clears the stack. */
 export async function patchProjectSettings(
   projectId: string,
   body: {
@@ -42,6 +59,8 @@ export async function patchProjectSettings(
     verify_skip?: boolean;
     verify_argv?: string[] | null;
     verify_timeout_sec?: number | null;
+    evolution_summary?: string | null;
+    policy_notes?: string | null;
   },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
@@ -72,6 +91,29 @@ export async function getProjectMeta(projectId: string): Promise<StudioProjectMe
   const r = await fetch(api(`/api/studio/projects/${projectId}`));
   if (!r.ok) throw new Error(`getProjectMeta ${r.status}`);
   return r.json() as Promise<StudioProjectMeta>;
+}
+
+export async function getCodeRagStatus(projectId: string): Promise<CodeRagStatus> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/code-rag/status`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getCodeRagStatus ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<CodeRagStatus>;
+}
+
+/** Force une reconstruction complète de l’index (bloquant côté daemon, peut prendre du temps). */
+export async function reindexCodeRag(projectId: string): Promise<CodeRagStatus> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/code-rag/reindex`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`reindexCodeRag ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<CodeRagStatus>;
 }
 
 export async function listFiles(projectId: string): Promise<string[]> {
@@ -165,6 +207,28 @@ export async function installStudioDeps(
   throw new Error(`installStudioDeps ${r.status}: expected JSON response`);
 }
 
+export async function validateDesignDoc(
+  projectId: string,
+  content?: string,
+): Promise<{
+  findings: { severity: string; path: string; message: string }[];
+  summary: { errors: number; warnings: number; info: number };
+}> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/design/validate`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(content != null ? { content } : {}),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`validateDesignDoc ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<{
+    findings: { severity: string; path: string; message: string }[];
+    summary: { errors: number; warnings: number; info: number };
+  }>;
+}
+
 export async function readRawFile(
   projectId: string,
   path: string,
@@ -254,10 +318,18 @@ export async function createEvolution(projectId: string, label?: string): Promis
   return r.json() as Promise<{ evolution_id: string; branch: string }>;
 }
 
-export async function mergeEvolution(projectId: string, evolutionId: string): Promise<void> {
+export async function mergeEvolution(
+  projectId: string,
+  evolutionId: string,
+  opts?: { design_check?: boolean },
+): Promise<void> {
   const r = await fetch(
     api(`/api/studio/projects/${projectId}/evolutions/${evolutionId}/merge`),
-    { method: "POST" },
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ design_check: opts?.design_check ?? false }),
+    },
   );
   if (!r.ok) throw new Error(`mergeEvolution ${r.status}`);
 }
@@ -270,6 +342,9 @@ export async function abandonEvolution(projectId: string, evolutionId: string): 
   if (!r.ok) throw new Error(`abandonEvolution ${r.status}`);
 }
 
+/** Mode Code Studio injecté dans le message (daemon). */
+export type StudioCodeMode = "plan" | "implement" | "build" | "free";
+
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
@@ -277,6 +352,15 @@ export async function sendMessage(body: {
   studio_assigned_agent?: string;
   studio_evolution_branch?: string;
   studio_evolution_id?: string;
+  studio_code_mode?: StudioCodeMode;
+  /** Consigne ponctuelle pour cette requête uniquement. */
+  studio_policy_hint?: string;
+  /** Préfixe daemon : éviter sous-agents / délégations implicites. */
+  studio_delegate_single_level?: boolean;
+  /** Résumé design compact (tokens / intent). */
+  studio_design_hint?: string;
+  /** Contrat design complet (DESIGN.md), borné côté serveur. */
+  studio_design_doc?: string;
 }): Promise<{ task_id: string }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
@@ -288,6 +372,13 @@ export async function sendMessage(body: {
       ...(body.studio_assigned_agent ? { studio_assigned_agent: body.studio_assigned_agent } : {}),
       ...(body.studio_evolution_branch ? { studio_evolution_branch: body.studio_evolution_branch } : {}),
       ...(body.studio_evolution_id ? { studio_evolution_id: body.studio_evolution_id } : {}),
+      ...(body.studio_code_mode && body.studio_code_mode !== "free"
+        ? { studio_code_mode: body.studio_code_mode }
+        : {}),
+      ...(body.studio_policy_hint?.trim() ? { studio_policy_hint: body.studio_policy_hint.trim() } : {}),
+      ...(body.studio_delegate_single_level ? { studio_delegate_single_level: true } : {}),
+      ...(body.studio_design_hint?.trim() ? { studio_design_hint: body.studio_design_hint.trim() } : {}),
+      ...(body.studio_design_doc?.trim() ? { studio_design_doc: body.studio_design_doc } : {}),
     }),
   });
   if (!r.ok) {
@@ -326,6 +417,14 @@ export async function getTaskHumanInput(taskId: string): Promise<TaskHumanInputP
   if (r.status === 404) return null;
   if (!r.ok) throw new Error(`getTaskHumanInput ${r.status}`);
   return r.json() as Promise<TaskHumanInputPayload>;
+}
+
+/** Toutes les tâches en attente de réponse utilisateur (rechargement / file). */
+export async function listPendingHumanInput(): Promise<TaskHumanInputPayload[]> {
+  const r = await fetch(api("/api/pending-human-input"));
+  if (!r.ok) throw new Error(`listPendingHumanInput ${r.status}`);
+  const j = (await r.json()) as { pending: TaskHumanInputPayload[] };
+  return j.pending ?? [];
 }
 
 export async function postTaskHumanReply(taskId: string, response: string): Promise<void> {
