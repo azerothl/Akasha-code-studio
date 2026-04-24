@@ -2,18 +2,78 @@ import { useMemo, useState } from "react";
 import type { TaskEventEntry } from "./api";
 import { MarkdownBlock } from "./markdownBlock";
 
-/** Garde la dernière entrée pour chaque clé, ordre d’affichage = ordre chronologique de la dernière occurrence. */
-export function keepLastByKey<T>(items: T[], keyFn: (t: T) => string): T[] {
-  const last = new Map<string, T>();
-  const lastIdx = new Map<string, number>();
-  items.forEach((item, i) => {
-    const k = keyFn(item);
-    last.set(k, item);
-    lastIdx.set(k, i);
-  });
-  return [...last.entries()]
-    .sort((a, b) => (lastIdx.get(a[0]) ?? 0) - (lastIdx.get(b[0]) ?? 0))
-    .map(([, v]) => v);
+export type TaskProgressLine = {
+  progress_pct: number;
+  message: string;
+  task_id?: string | null;
+};
+
+/** Regroupe par `task_id` puis par `progress_pct` ; pour chaque couple on ne garde que le **dernier** message (stream). */
+export function groupProgressByTaskThenPct(
+  progress: TaskProgressLine[],
+  fallbackTaskId: string,
+): { taskId: string; pctGroups: { pct: number; line: TaskProgressLine }[] }[] {
+  const taskKey = (p: TaskProgressLine) => (p.task_id && String(p.task_id).trim()) || fallbackTaskId;
+
+  const taskOrder: string[] = [];
+  const perTask = new Map<string, TaskProgressLine[]>();
+  for (const line of progress) {
+    const k = taskKey(line);
+    if (!perTask.has(k)) {
+      perTask.set(k, []);
+      taskOrder.push(k);
+    }
+    perTask.get(k)!.push(line);
+  }
+
+  const out: { taskId: string; pctGroups: { pct: number; line: TaskProgressLine }[] }[] = [];
+  for (const taskId of taskOrder) {
+    const lines = perTask.get(taskId)!;
+    const byPct = new Map<number, TaskProgressLine>();
+    for (const line of lines) {
+      byPct.set(line.progress_pct, line);
+    }
+    const sortedPcts = [...byPct.keys()].sort((a, b) => a - b);
+    out.push({
+      taskId,
+      pctGroups: sortedPcts.map((pct) => ({ pct, line: byPct.get(pct)! })),
+    });
+  }
+  return out;
+}
+
+type TaskDetailProgressViewProps = {
+  progress: TaskProgressLine[];
+  rootTaskId: string;
+};
+
+export function TaskDetailProgressView({ progress, rootTaskId }: TaskDetailProgressViewProps) {
+  const grouped = useMemo(() => groupProgressByTaskThenPct(progress, rootTaskId), [progress, rootTaskId]);
+  if (grouped.length === 0) return null;
+  return (
+    <div className="task-detail-progress-root">
+      {grouped.map(({ taskId, pctGroups }) => (
+        <section key={taskId} className="task-detail-progress-task-block">
+          <div className="task-detail-progress-task-head">
+            <span className="task-detail-progress-task-label">Tâche</span>{" "}
+            <code className="task-detail-progress-taskid" title={taskId}>
+              {taskId.length > 24 ? `${taskId.slice(0, 12)}…${taskId.slice(-8)}` : taskId}
+            </code>
+          </div>
+          <div className="task-detail-progress-pct-blocks">
+            {pctGroups.map(({ pct, line }) => (
+              <div key={`${taskId}-${pct}`} className="task-detail-progress-pct-block">
+                <div className="task-detail-progress-pct-head">
+                  <span className="task-detail-progress-pct-value">{pct}%</span>
+                </div>
+                <div className="task-detail-progress-message-line">{line.message}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
 }
 
 function normalizeEventTypeSlug(t: string): string {
@@ -102,9 +162,80 @@ export function textLooksLikeMarkdown(s: string): boolean {
 
 type TaskDetailEventRowProps = {
   ev: TaskEventEntry;
+  /** Dans une section déjà titrée par le type d’événement, masquer le badge du type. */
+  hideTypeBadge?: boolean;
 };
 
-export function TaskDetailEventRow({ ev }: TaskDetailEventRowProps) {
+function eventTaskKey(ev: TaskEventEntry, rootTaskId: string): string {
+  return (ev.task_id && String(ev.task_id).trim()) || rootTaskId;
+}
+
+/** Une entrée par couple (`event_type`, `task_id`) : garde le dernier événement (ordre `at`), pour absorber le stream. */
+export function dedupeEventsLastPerTaskAndType(events: TaskEventEntry[], rootTaskId: string): TaskEventEntry[] {
+  const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
+  const last = new Map<string, TaskEventEntry>();
+  for (const ev of sorted) {
+    const k = `${ev.event_type}\0${eventTaskKey(ev, rootTaskId)}`;
+    last.set(k, ev);
+  }
+  return Array.from(last.values()).sort((a, b) => a.at.localeCompare(b.at));
+}
+
+/** Ordre des groupes = première apparition chronologique du type. */
+export function groupEventsByTypeInOrder(events: TaskEventEntry[]): { eventType: string; items: TaskEventEntry[] }[] {
+  const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
+  const typeOrder: string[] = [];
+  const byType = new Map<string, TaskEventEntry[]>();
+  for (const ev of sorted) {
+    if (!byType.has(ev.event_type)) {
+      byType.set(ev.event_type, []);
+      typeOrder.push(ev.event_type);
+    }
+    byType.get(ev.event_type)!.push(ev);
+  }
+  return typeOrder.map((eventType) => ({
+    eventType,
+    items: byType.get(eventType)!,
+  }));
+}
+
+type TaskDetailEventsGroupedProps = {
+  events: TaskEventEntry[];
+  rootTaskId: string;
+};
+
+export function TaskDetailEventsGrouped({ events, rootTaskId }: TaskDetailEventsGroupedProps) {
+  const groups = useMemo(() => {
+    const deduped = dedupeEventsLastPerTaskAndType(events, rootTaskId);
+    return groupEventsByTypeInOrder(deduped);
+  }, [events, rootTaskId]);
+  return (
+    <div className="task-detail-events-grouped">
+      {groups.map(({ eventType, items }) => {
+        const slug = eventTypeDataAttr(eventType);
+        return (
+          <section key={eventType} className="task-detail-event-group" data-event-type={slug}>
+            <header className="task-detail-event-group-head">
+              <span className="task-detail-event-group-title">{eventType}</span>
+              <span className="hint task-detail-event-group-count">{items.length}</span>
+            </header>
+            <ul className="task-detail-events task-detail-events--in-group">
+              {items.map((ev) => (
+                <TaskDetailEventRow
+                  key={`ev-${eventType}-${eventTaskKey(ev, rootTaskId)}-${ev.at}`}
+                  ev={ev}
+                  hideTypeBadge
+                />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+export function TaskDetailEventRow({ ev, hideTypeBadge }: TaskDetailEventRowProps) {
   const [jsonOpen, setJsonOpen] = useState(false);
   const slug = useMemo(() => eventTypeDataAttr(ev.event_type), [ev.event_type]);
   const displayMsg = useMemo(() => extractEventDisplayMessage(ev.payload), [ev.payload]);
@@ -113,9 +244,11 @@ export function TaskDetailEventRow({ ev }: TaskDetailEventRowProps) {
   return (
     <li className="task-detail-events-item">
       <div className="task-detail-event-head">
-        <span className="task-detail-event-badge" data-event-type={slug}>
-          {ev.event_type}
-        </span>
+        {hideTypeBadge ? null : (
+          <span className="task-detail-event-badge" data-event-type={slug}>
+            {ev.event_type}
+          </span>
+        )}
         {ev.task_id ? (
           <code className="task-detail-event-taskid" title={ev.task_id}>
             {ev.task_id.length > 14 ? `${ev.task_id.slice(0, 8)}…` : ev.task_id}

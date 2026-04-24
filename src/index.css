@@ -502,6 +502,220 @@ kbd {
   font-size: 0.78rem;
 }
 
+.task-detail-progress-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-detail-progress-task-block {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.55rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.task-detail-progress-task-head {
+  margin-bottom: 0.4rem;
+  font-size: 0.74rem;
+}
+
+.task-detail-progress-task-label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.task-detail-progress-pct-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.task-detail-progress-pct-block {
+  border-left: 3px solid rgba(34, 197, 94, 0.55);
+  padding: 0.25rem 0 0.15rem 0.5rem;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 0 4px 4px 0;
+}
+
+.task-detail-progress-pct-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.task-detail-progress-pct-value {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--akasha-text);
+}
+
+.task-detail-progress-message-line {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--akasha-text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.task-detail-events-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.task-detail-event-group {
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.task-detail-event-group .task-detail-event-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.38rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(148, 163, 184, 0.14);
+  border-bottom-color: rgba(148, 163, 184, 0.35);
+}
+
+.task-detail-event-group-title {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.68rem;
+  color: var(--akasha-text);
+}
+
+.task-detail-event-group-count {
+  font-size: 0.62rem;
+}
+
+.task-detail-events--in-group {
+  margin: 0;
+  padding: 0.4rem;
+}
+
+.task-detail-events--in-group .task-detail-events-item {
+  margin-bottom: 0.35rem;
+}
+
+.task-detail-events--in-group .task-detail-events-item:last-child {
+  margin-bottom: 0;
+}
+
+.task-detail-event-group[data-event-type^="message"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="assistant_message"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="user_message"] .task-detail-event-group-head {
+  background: rgba(59, 130, 246, 0.22);
+  border-bottom-color: rgba(59, 130, 246, 0.5);
+}
+
+.task-detail-event-group[data-event-type^="progress"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="progress_update"] .task-detail-event-group-head {
+  background: rgba(34, 197, 94, 0.18);
+  border-bottom-color: rgba(22, 163, 74, 0.45);
+}
+
+.task-detail-event-group[data-event-type^="tool"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="tool_call"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="tool_result"] .task-detail-event-group-head {
+  background: rgba(245, 158, 11, 0.2);
+  border-bottom-color: rgba(217, 119, 6, 0.5);
+}
+
+.task-detail-event-group[data-event-type^="complete"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="task_completed"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="subtask_completed"] .task-detail-event-group-head {
+  background: rgba(16, 185, 129, 0.2);
+  border-bottom-color: rgba(5, 150, 105, 0.5);
+}
+
+.task-detail-event-group[data-event-type^="milestone"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="plan_committed"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="plan_proposed"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type^="timeline"] .task-detail-event-group-head {
+  background: rgba(168, 85, 247, 0.22);
+  border-bottom-color: rgba(147, 51, 234, 0.45);
+}
+
+.task-detail-event-group[data-event-type^="fail"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="task_failed"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="error"] .task-detail-event-group-head {
+  background: rgba(239, 68, 68, 0.2);
+  border-bottom-color: rgba(220, 38, 38, 0.45);
+}
+
+.task-detail-event-group[data-event-type^="cancel"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="task_cancelled"] .task-detail-event-group-head {
+  background: rgba(107, 114, 128, 0.28);
+  border-bottom-color: rgba(75, 85, 99, 0.5);
+}
+
+.task-detail-event-group[data-event-type^="subagent"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="sub_agent_spawned"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="subtask_started"] .task-detail-event-group-head,
+.task-detail-event-group[data-event-type="task_created"] .task-detail-event-group-head {
+  background: rgba(14, 165, 233, 0.18);
+  border-bottom-color: rgba(2, 132, 199, 0.45);
+}
+
+.task-detail-event-group[data-event-type^="message"],
+.task-detail-event-group[data-event-type="assistant_message"],
+.task-detail-event-group[data-event-type="user_message"] {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.task-detail-event-group[data-event-type^="progress"],
+.task-detail-event-group[data-event-type="progress_update"] {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.task-detail-event-group[data-event-type^="tool"],
+.task-detail-event-group[data-event-type="tool_call"],
+.task-detail-event-group[data-event-type="tool_result"] {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.task-detail-event-group[data-event-type^="complete"],
+.task-detail-event-group[data-event-type="task_completed"],
+.task-detail-event-group[data-event-type="subtask_completed"] {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.task-detail-event-group[data-event-type^="milestone"],
+.task-detail-event-group[data-event-type="plan_committed"],
+.task-detail-event-group[data-event-type="plan_proposed"],
+.task-detail-event-group[data-event-type^="timeline"] {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.task-detail-event-group[data-event-type^="fail"],
+.task-detail-event-group[data-event-type="task_failed"],
+.task-detail-event-group[data-event-type="error"] {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.task-detail-event-group[data-event-type^="cancel"],
+.task-detail-event-group[data-event-type="task_cancelled"] {
+  border-color: rgba(107, 114, 128, 0.45);
+}
+
+.task-detail-event-group[data-event-type^="subagent"],
+.task-detail-event-group[data-event-type="sub_agent_spawned"],
+.task-detail-event-group[data-event-type="subtask_started"],
+.task-detail-event-group[data-event-type="task_created"] {
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
 .task-detail-events {
   list-style: none;
   margin: 0;

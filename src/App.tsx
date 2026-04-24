@@ -29,7 +29,7 @@ import {
 } from "./designDoc";
 import { DesignVisualBoard } from "./designVisualBoard";
 import { EditorFileTree } from "./editorFileTree";
-import { keepLastByKey, TaskDetailEventRow } from "./taskDetailUi";
+import { TaskDetailEventsGrouped, TaskDetailProgressView } from "./taskDetailUi";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -3072,24 +3072,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <section className="task-detail-section">
                     <h4>Progression</h4>
                     {taskDetailPayload.task.progress && taskDetailPayload.task.progress.length > 0 ? (
-                      <ol className="task-detail-progress-list">
-                        {keepLastByKey(taskDetailPayload.task.progress, (p) =>
-                          (p.task_id && String(p.task_id).trim()) || taskDetailPayload.task.task_id,
-                        ).map((p, idx) => (
-                          <li
-                            key={`${(p.task_id && String(p.task_id).trim()) || taskDetailPayload.task.task_id}-${idx}`}
-                          >
-                            {p.task_id && String(p.task_id).trim() ? (
-                              <>
-                                <code className="task-detail-progress-taskid" title={String(p.task_id)}>
-                                  {String(p.task_id).length > 20 ? `${String(p.task_id).slice(0, 10)}…` : p.task_id}
-                                </code>{" "}
-                              </>
-                            ) : null}
-                            <strong>{p.progress_pct}%</strong> — {p.message}
-                          </li>
-                        ))}
-                      </ol>
+                      <TaskDetailProgressView
+                        progress={taskDetailPayload.task.progress}
+                        rootTaskId={taskDetailPayload.task.task_id}
+                      />
                     ) : (
                       <p className="hint">Aucune entrée de progression.</p>
                     )}
@@ -3099,16 +3085,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     {taskDetailPayload.events.length === 0 ? (
                       <p className="hint">Aucun événement.</p>
                     ) : (
-                      <ul className="task-detail-events">
-                        {[...taskDetailPayload.events]
-                          .sort((a, b) => a.at.localeCompare(b.at))
-                          .map((ev, idx) => (
-                            <TaskDetailEventRow
-                              key={`ev-${idx}-${ev.at}-${ev.event_type}-${ev.task_id ?? ""}`}
-                              ev={ev}
-                            />
-                          ))}
-                      </ul>
+                      <TaskDetailEventsGrouped
+                        events={taskDetailPayload.events}
+                        rootTaskId={taskDetailPayload.task.task_id}
+                      />
                     )}
                   </section>
                 </>
