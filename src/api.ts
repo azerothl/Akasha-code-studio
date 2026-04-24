@@ -272,6 +272,19 @@ export async function deleteRawFile(projectId: string, path: string): Promise<vo
   }
 }
 
+/** Renomme ou déplace un fichier ou un répertoire sous le projet (chemins relatifs, `/`). */
+export async function renameStudioPath(projectId: string, from: string, to: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/fs/rename`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`renameStudioPath ${r.status}: ${t}`);
+  }
+}
+
 export async function gitClone(projectId: string, repoUrl: string, branch?: string): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/git/clone`), {
     method: "POST",
@@ -404,7 +417,7 @@ export type TaskStatusResponse = {
   task_id: string;
   status: string;
   assigned_agent?: string;
-  progress?: { progress_pct: number; message: string }[];
+  progress?: { progress_pct: number; message: string; task_id?: string | null }[];
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
   suggested_actions?: TaskSuggestedAction[];

@@ -28,6 +28,8 @@ import {
   parseDesignDoc,
 } from "./designDoc";
 import { DesignVisualBoard } from "./designVisualBoard";
+import { EditorFileTree } from "./editorFileTree";
+import { keepLastByKey, TaskDetailEventRow } from "./taskDetailUi";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -944,6 +946,58 @@ export default function App() {
       }
     },
     [selectedId, filePath, editorDirty],
+  );
+
+  const handleStudioRename = useCallback(
+    async (from: string, to: string) => {
+      if (!selectedId) return;
+      const opened = filePath;
+      if (
+        editorDirty &&
+        opened &&
+        (opened === from || opened.startsWith(`${from}/`))
+      ) {
+        if (
+          !window.confirm(
+            "Le fichier ouvert ou son dossier a des changements non enregistrés. Poursuivre le déplacement ou le renommage ?",
+          )
+        ) {
+          return;
+        }
+      }
+      setError(null);
+      try {
+        await api.renameStudioPath(selectedId, from, to);
+        let nextOpen = opened;
+        if (opened === from) nextOpen = to;
+        else if (opened?.startsWith(`${from}/`)) nextOpen = to + opened.slice(from.length);
+        if (nextOpen !== opened) setFilePath(nextOpen);
+        const fl = await api.listFiles(selectedId);
+        setFiles(fl);
+        if (nextOpen && fl.includes(nextOpen) && !editorBinary && !editorDirty) {
+          try {
+            const raw = await api.readRawFile(selectedId, nextOpen);
+            const text = raw.content ?? "";
+            setEditorText(text);
+            setSavedEditorText(text);
+            const ext = nextOpen.toLowerCase();
+            if (ext.endsWith(".html") || ext.endsWith(".htm")) {
+              const blob = new Blob([text], { type: "text/html" });
+              setStaticPreviewBlobUrl((prev) => {
+                if (prev) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(blob);
+              });
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+        setStatus(`Renommé ou déplacé : ${from} → ${to}`);
+      } catch (e) {
+        setError(String(e));
+      }
+    },
+    [selectedId, filePath, editorDirty, editorBinary],
   );
 
   const onDeleteFile = useCallback(
@@ -2327,29 +2381,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </p>
                 ) : (
                   <div className="file-list-scroll">
-                    <ul className="file-list">
-                      {files.map((f) => (
-                        <li key={f} className="file-list-row">
-                          <button
-                            type="button"
-                            className={f === filePath ? "active" : ""}
-                            onClick={() => void openFile(f)}
-                          >
-                            {f}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm file-list-delete"
-                            data-testid="studio-delete-file"
-                            title={`Supprimer ${f}`}
-                            aria-label={`Supprimer le fichier ${f}`}
-                            onClick={() => void onDeleteFile(f)}
-                          >
-                            Suppr.
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                    <EditorFileTree
+                      files={files}
+                      activePath={filePath}
+                      onOpenFile={(p) => void openFile(p)}
+                      onDeleteFile={(p) => void onDeleteFile(p)}
+                      onRenamePath={(from, to) => handleStudioRename(from, to)}
+                    />
                   </div>
                 )}
               </div>
@@ -3035,8 +3073,19 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <h4>Progression</h4>
                     {taskDetailPayload.task.progress && taskDetailPayload.task.progress.length > 0 ? (
                       <ol className="task-detail-progress-list">
-                        {taskDetailPayload.task.progress.map((p, idx) => (
-                          <li key={idx}>
+                        {keepLastByKey(taskDetailPayload.task.progress, (p) =>
+                          (p.task_id && String(p.task_id).trim()) || taskDetailPayload.task.task_id,
+                        ).map((p, idx) => (
+                          <li
+                            key={`${(p.task_id && String(p.task_id).trim()) || taskDetailPayload.task.task_id}-${idx}`}
+                          >
+                            {p.task_id && String(p.task_id).trim() ? (
+                              <>
+                                <code className="task-detail-progress-taskid" title={String(p.task_id)}>
+                                  {String(p.task_id).length > 20 ? `${String(p.task_id).slice(0, 10)}…` : p.task_id}
+                                </code>{" "}
+                              </>
+                            ) : null}
                             <strong>{p.progress_pct}%</strong> — {p.message}
                           </li>
                         ))}
@@ -3051,17 +3100,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <p className="hint">Aucun événement.</p>
                     ) : (
                       <ul className="task-detail-events">
-                        {taskDetailPayload.events.map((ev, idx) => (
-                          <li key={idx}>
-                            <div className="task-detail-event-head">
-                              <code>{ev.event_type}</code>
-                              <span className="hint">{ev.at}</span>
-                            </div>
-                            <pre className="task-detail-event-payload">
-                              {ev.payload !== undefined ? JSON.stringify(ev.payload, null, 2) : "—"}
-                            </pre>
-                          </li>
-                        ))}
+                        {[...taskDetailPayload.events]
+                          .sort((a, b) => a.at.localeCompare(b.at))
+                          .map((ev, idx) => (
+                            <TaskDetailEventRow
+                              key={`ev-${idx}-${ev.at}-${ev.event_type}-${ev.task_id ?? ""}`}
+                              ev={ev}
+                            />
+                          ))}
                       </ul>
                     )}
                   </section>
