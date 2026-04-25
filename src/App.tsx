@@ -29,7 +29,12 @@ import {
 } from "./designDoc";
 import { DesignVisualBoard } from "./designVisualBoard";
 import { EditorFileTree } from "./editorFileTree";
-import { TaskDetailEventsGrouped, TaskDetailProgressView } from "./taskDetailUi";
+import {
+  TaskDetailEventsGrouped,
+  TaskDetailProgressView,
+  TaskDetailWorkflowView,
+  mergeProgressWithEventProgress,
+} from "./taskDetailUi";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
@@ -353,6 +358,7 @@ export default function App() {
   const editorDirtyRef = useRef(false);
   const filePathRef = useRef<string | null>(null);
   const editorBinaryRef = useRef(false);
+  const selectedIdRef = useRef<string | null>(null);
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
@@ -562,7 +568,7 @@ export default function App() {
     setCodeRagStatusLoading(true);
     setCodeRagStatusError(null);
     void api
-      .getCodeRagStatus(selectedId)
+      .reindexCodeRag(selectedId, false)
       .then((s) => {
         if (!cancelled) {
           setCodeRagStatus(s);
@@ -599,6 +605,23 @@ export default function App() {
     } finally {
       setCodeRagReindexBusy(false);
     }
+  }, [selectedId]);
+
+  const syncCodeRagAfterFileChange = useCallback((projectId: string) => {
+    void api
+      .reindexCodeRag(projectId, false)
+      .then((s) => {
+        if (selectedIdRef.current !== projectId) return;
+        setCodeRagStatus(s);
+        setCodeRagStatusError(null);
+      })
+      .catch((e) => {
+        if (selectedIdRef.current === projectId) setCodeRagStatusError(String(e));
+      });
+  }, []);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
   }, [selectedId]);
 
   useEffect(() => {
@@ -974,6 +997,7 @@ export default function App() {
         if (nextOpen !== opened) setFilePath(nextOpen);
         const fl = await api.listFiles(selectedId);
         setFiles(fl);
+        syncCodeRagAfterFileChange(selectedId);
         if (nextOpen && fl.includes(nextOpen) && !editorBinary && !editorDirty) {
           try {
             const raw = await api.readRawFile(selectedId, nextOpen);
@@ -997,7 +1021,7 @@ export default function App() {
         setError(String(e));
       }
     },
-    [selectedId, filePath, editorDirty, editorBinary],
+    [selectedId, filePath, editorDirty, editorBinary, syncCodeRagAfterFileChange],
   );
 
   const onDeleteFile = useCallback(
@@ -1025,12 +1049,13 @@ export default function App() {
         }
         const fl = await api.listFiles(selectedId);
         setFiles(fl);
+        syncCodeRagAfterFileChange(selectedId);
         setStatus(`Fichier supprimé : ${path}`);
       } catch (e) {
         setError(String(e));
       }
     },
-    [selectedId, filePath],
+    [selectedId, filePath, syncCodeRagAfterFileChange],
   );
 
   const saveEditor = useCallback(async () => {
@@ -1039,6 +1064,7 @@ export default function App() {
     try {
       await api.writeRawFile(selectedId, filePath, editorText);
       setSavedEditorText(editorText);
+      syncCodeRagAfterFileChange(selectedId);
       const ext = filePath.toLowerCase();
       if (ext.endsWith(".html") || ext.endsWith(".htm")) {
         const blob = new Blob([editorText], { type: "text/html" });
@@ -1051,7 +1077,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, filePath, editorBinary, editorDirty, editorText]);
+  }, [selectedId, filePath, editorBinary, editorDirty, editorText, syncCodeRagAfterFileChange]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1154,6 +1180,7 @@ export default function App() {
     try {
       await api.writeRawFile(selectedId, "CODE_STUDIO_PLAN.md", planDocText);
       setPlanDocSnapshot(planDocText);
+      syncCodeRagAfterFileChange(selectedId);
       try {
         sessionStorage.setItem(`akasha-plan-snap-${selectedId}`, planDocText);
       } catch { /* quota / private mode — snapshot skipped */ }
@@ -1181,6 +1208,7 @@ export default function App() {
     try {
       await api.writeRawFile(selectedId, "DESIGN.md", designDocText);
       setDesignDocSnapshot(designDocText);
+      syncCodeRagAfterFileChange(selectedId);
       try {
         sessionStorage.setItem(`akasha-design-snap-${selectedId}`, designDocText);
       } catch { /* quota / private mode — snapshot skipped */ }
@@ -1350,6 +1378,7 @@ export default function App() {
               try {
                 const fl = await api.listFiles(selectedId);
                 setFiles(fl);
+                syncCodeRagAfterFileChange(selectedId);
                 const fp = filePathRef.current;
                 if (
                   fp
@@ -1399,7 +1428,7 @@ export default function App() {
         );
       }
     },
-    [selectedId],
+    [selectedId, syncCodeRagAfterFileChange],
   );
 
   /** Au chargement / changement de projet : reprendre le polling si une tâche non terminale était en cours. */
@@ -3070,10 +3099,25 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     ) : null}
                   </section>
                   <section className="task-detail-section">
+                    <h4>Workflow / sous-agents</h4>
+                    <TaskDetailWorkflowView
+                      events={taskDetailPayload.events}
+                      rootTaskId={taskDetailPayload.task.task_id}
+                    />
+                  </section>
+                  <section className="task-detail-section">
                     <h4>Progression</h4>
-                    {taskDetailPayload.task.progress && taskDetailPayload.task.progress.length > 0 ? (
+                    {mergeProgressWithEventProgress(
+                      taskDetailPayload.task.progress ?? [],
+                      taskDetailPayload.events,
+                      taskDetailPayload.task.task_id,
+                    ).length > 0 ? (
                       <TaskDetailProgressView
-                        progress={taskDetailPayload.task.progress}
+                        progress={mergeProgressWithEventProgress(
+                          taskDetailPayload.task.progress ?? [],
+                          taskDetailPayload.events,
+                          taskDetailPayload.task.task_id,
+                        )}
                         rootTaskId={taskDetailPayload.task.task_id}
                       />
                     ) : (

@@ -104,12 +104,12 @@ export async function getCodeRagStatus(projectId: string): Promise<CodeRagStatus
   return r.json() as Promise<CodeRagStatus>;
 }
 
-/** Force une reconstruction complète de l’index (bloquant côté daemon, peut prendre du temps). */
-export async function reindexCodeRag(projectId: string): Promise<CodeRagStatus> {
+/** Reconstruit / synchronise l’index code-RAG (force=true = rebuild complet ; false = reuse des fichiers inchangés). */
+export async function reindexCodeRag(projectId: string, force = true): Promise<CodeRagStatus> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/code-rag/reindex`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: "{}",
+    body: JSON.stringify({ force }),
   });
   if (!r.ok) {
     const t = await r.text();

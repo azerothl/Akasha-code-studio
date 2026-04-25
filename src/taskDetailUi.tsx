@@ -8,6 +8,68 @@ export type TaskProgressLine = {
   task_id?: string | null;
 };
 
+function payloadObject(payload: unknown): Record<string, unknown> | null {
+  return payload && typeof payload === "object" && !Array.isArray(payload)
+    ? (payload as Record<string, unknown>)
+    : null;
+}
+
+function payloadString(payload: unknown, key: string): string | null {
+  const o = payloadObject(payload);
+  const v = o?.[key];
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+function payloadNumber(payload: unknown, key: string): number | null {
+  const o = payloadObject(payload);
+  const v = o?.[key];
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function shortTaskId(taskId: string): string {
+  return taskId.length > 24 ? `${taskId.slice(0, 12)}…${taskId.slice(-8)}` : taskId;
+}
+
+function eventTaskKey(ev: TaskEventEntry, rootTaskId: string): string {
+  return (ev.task_id && String(ev.task_id).trim()) || rootTaskId;
+}
+
+export function progressLinesFromEvents(events: TaskEventEntry[], rootTaskId: string): TaskProgressLine[] {
+  const out: TaskProgressLine[] = [];
+  for (const ev of events) {
+    if (ev.event_type !== "progress_update") continue;
+    const pct = payloadNumber(ev.payload, "progress_pct");
+    const message = payloadString(ev.payload, "message");
+    const payloadTaskId = payloadString(ev.payload, "task_id");
+    if (pct == null || !message) continue;
+    out.push({
+      progress_pct: pct,
+      message,
+      task_id: payloadTaskId ?? eventTaskKey(ev, rootTaskId),
+    });
+  }
+  return out;
+}
+
+export function mergeProgressWithEventProgress(
+  progress: TaskProgressLine[],
+  events: TaskEventEntry[],
+  rootTaskId: string,
+): TaskProgressLine[] {
+  const out = [...progress];
+  const seen = new Set(
+    out.map((p) => `${p.task_id ?? rootTaskId}\0${p.progress_pct}\0${p.message}`),
+  );
+  for (const p of progressLinesFromEvents(events, rootTaskId)) {
+    const k = `${p.task_id ?? rootTaskId}\0${p.progress_pct}\0${p.message}`;
+    if (!seen.has(k)) {
+      seen.add(k);
+      out.push(p);
+    }
+  }
+  return out;
+}
+
 /** Regroupe par `task_id` puis par `progress_pct` ; pour chaque couple on ne garde que le **dernier** message (stream). */
 export function groupProgressByTaskThenPct(
   progress: TaskProgressLine[],
@@ -55,9 +117,11 @@ export function TaskDetailProgressView({ progress, rootTaskId }: TaskDetailProgr
       {grouped.map(({ taskId, pctGroups }) => (
         <section key={taskId} className="task-detail-progress-task-block">
           <div className="task-detail-progress-task-head">
-            <span className="task-detail-progress-task-label">Tâche</span>{" "}
+            <span className="task-detail-progress-task-label">
+              {taskId === rootTaskId ? "Tâche racine" : "Sous-agent"}
+            </span>{" "}
             <code className="task-detail-progress-taskid" title={taskId}>
-              {taskId.length > 24 ? `${taskId.slice(0, 12)}…${taskId.slice(-8)}` : taskId}
+              {shortTaskId(taskId)}
             </code>
           </div>
           <div className="task-detail-progress-pct-blocks">
@@ -166,10 +230,6 @@ type TaskDetailEventRowProps = {
   hideTypeBadge?: boolean;
 };
 
-function eventTaskKey(ev: TaskEventEntry, rootTaskId: string): string {
-  return (ev.task_id && String(ev.task_id).trim()) || rootTaskId;
-}
-
 /** Une entrée par couple (`event_type`, `task_id`) : garde le dernier événement (ordre `at`), pour absorber le stream. */
 export function dedupeEventsLastPerTaskAndType(events: TaskEventEntry[], rootTaskId: string): TaskEventEntry[] {
   const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
@@ -203,6 +263,203 @@ type TaskDetailEventsGroupedProps = {
   events: TaskEventEntry[];
   rootTaskId: string;
 };
+
+type WorkflowStep = {
+  id: string;
+  taskId?: string;
+  stepId?: string;
+  agent?: string;
+  title: string;
+  status: "planned" | "running" | "completed" | "failed" | "info";
+  at: string;
+  details?: string[];
+  progress: TaskProgressLine[];
+};
+
+function statusLabel(s: WorkflowStep["status"]): string {
+  switch (s) {
+    case "planned":
+      return "planifié";
+    case "running":
+      return "en cours";
+    case "completed":
+      return "terminé";
+    case "failed":
+      return "échec";
+    default:
+      return "info";
+  }
+}
+
+function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
+  if (ev.event_type === "subtask_completed" || ev.event_type === "task_completed") return "completed";
+  if (ev.event_type === "task_failed" || ev.event_type === "task_cancelled") return "failed";
+  if (ev.event_type === "subtask_started" || ev.event_type === "sub_agent_spawned") return "running";
+  return "info";
+}
+
+function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
+  const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
+  const progressByTask = new Map<string, TaskProgressLine[]>();
+  for (const p of progressLinesFromEvents(sorted, rootTaskId)) {
+    const k = p.task_id || rootTaskId;
+    const arr = progressByTask.get(k) ?? [];
+    arr.push(p);
+    progressByTask.set(k, arr);
+  }
+
+  const steps = new Map<string, WorkflowStep>();
+  const ensure = (key: string, seed: Omit<WorkflowStep, "progress">): WorkflowStep => {
+    const existing = steps.get(key);
+    if (existing) return existing;
+    const next: WorkflowStep = { ...seed, progress: [] };
+    steps.set(key, next);
+    return next;
+  };
+
+  for (const ev of sorted) {
+    if (ev.event_type === "plan_proposed") {
+      const o = payloadObject(ev.payload);
+      const rawSteps = Array.isArray(o?.steps) ? o?.steps : [];
+      rawSteps.forEach((raw, idx) => {
+        const step = payloadObject(raw);
+        const stepId = typeof step?.step_id === "string" ? step.step_id : `plan-${idx + 1}`;
+        const agent = typeof step?.agent_type === "string" ? step.agent_type : undefined;
+        const intent = typeof step?.intent_preview === "string" ? step.intent_preview : undefined;
+        const deliverables = Array.isArray(step?.deliverables)
+          ? step?.deliverables.map(String).filter(Boolean)
+          : [];
+        ensure(`step:${stepId}`, {
+          id: `step:${stepId}`,
+          stepId,
+          agent,
+          title: `Étape ${idx + 1}${agent ? ` · ${agent}` : ""}`,
+          status: "planned",
+          at: ev.at,
+          details: [
+            intent ? `Objectif: ${intent}` : "",
+            deliverables.length ? `Livrables: ${deliverables.join(", ")}` : "",
+          ].filter(Boolean),
+        });
+      });
+      continue;
+    }
+
+    if (ev.event_type === "task_decomposed") {
+      const count = payloadNumber(ev.payload, "subtask_count");
+      const agentsRaw = payloadObject(ev.payload)?.agents;
+      const agents = Array.isArray(agentsRaw) ? agentsRaw.map(String).join(", ") : "";
+      ensure(`decomposed:${ev.at}`, {
+        id: `decomposed:${ev.at}`,
+        taskId: rootTaskId,
+        title: `Décomposition${count != null ? ` · ${count} sous-tâche(s)` : ""}`,
+        status: "info",
+        at: ev.at,
+        details: agents ? [`Agents: ${agents}`] : undefined,
+      });
+      continue;
+    }
+
+    if (ev.event_type === "sub_agent_spawned" || ev.event_type === "subtask_started") {
+      const taskId = payloadString(ev.payload, "task_id") ?? payloadString(ev.payload, "subtask_id") ?? eventTaskKey(ev, rootTaskId);
+      const stepId = payloadString(ev.payload, "step_id") ?? undefined;
+      const agent = payloadString(ev.payload, "agent") ?? payloadString(ev.payload, "agent_type") ?? undefined;
+      const key = taskId ? `task:${taskId}` : `event:${ev.at}`;
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        stepId,
+        agent,
+        title: `${agent ? `Sous-agent ${agent}` : "Sous-agent"}${stepId ? ` · ${stepId}` : ""}`,
+        status: "running",
+        at: ev.at,
+        details: taskId ? [`Tâche: ${taskId}`] : undefined,
+      });
+      step.status = "running";
+      step.at = step.at < ev.at ? step.at : ev.at;
+      if (agent && !step.agent) step.agent = agent;
+      if (stepId && !step.stepId) step.stepId = stepId;
+      continue;
+    }
+
+    if (ev.event_type === "subtask_completed") {
+      const taskId = payloadString(ev.payload, "subtask_id") ?? payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
+      const stepId = payloadString(ev.payload, "step_id") ?? undefined;
+      const key = taskId ? `task:${taskId}` : `event:${ev.at}`;
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        stepId,
+        title: `Sous-tâche${stepId ? ` · ${stepId}` : ""}`,
+        status: "completed",
+        at: ev.at,
+      });
+      step.status = workflowStatusFromEvent(ev);
+      step.details = [
+        ...(step.details ?? []),
+        payloadString(ev.payload, "content_preview") ? `Résultat: ${payloadString(ev.payload, "content_preview")}` : "",
+        payloadString(ev.payload, "status") ? `Statut: ${payloadString(ev.payload, "status")}` : "",
+      ].filter(Boolean);
+      continue;
+    }
+  }
+
+  for (const step of steps.values()) {
+    if (step.taskId) step.progress = progressByTask.get(step.taskId) ?? [];
+  }
+  return [...steps.values()].sort((a, b) => a.at.localeCompare(b.at));
+}
+
+export function TaskDetailWorkflowView({
+  events,
+  rootTaskId,
+}: {
+  events: TaskEventEntry[];
+  rootTaskId: string;
+}) {
+  const steps = useMemo(() => buildWorkflowSteps(events, rootTaskId), [events, rootTaskId]);
+  if (steps.length === 0) {
+    return <p className="hint">Aucun sous-agent ou plan d’orchestration détecté pour cette tâche.</p>;
+  }
+  return (
+    <ol className="task-detail-workflow" aria-label="Workflow de la tâche">
+      {steps.map((step, idx) => (
+        <li key={step.id} className="task-detail-workflow-item" data-status={step.status}>
+          <div className="task-detail-workflow-marker">{idx + 1}</div>
+          <div className="task-detail-workflow-card">
+            <div className="task-detail-workflow-head">
+              <span className="task-detail-workflow-title">{step.title}</span>
+              <span className="task-detail-workflow-status">{statusLabel(step.status)}</span>
+            </div>
+            <div className="task-detail-workflow-meta">
+              {step.taskId ? (
+                <code title={step.taskId}>{shortTaskId(step.taskId)}</code>
+              ) : null}
+              {step.stepId ? <span>step: {step.stepId}</span> : null}
+              <span>{step.at}</span>
+            </div>
+            {step.details?.length ? (
+              <ul className="task-detail-workflow-details">
+                {step.details.slice(0, 4).map((d, i) => (
+                  <li key={`${step.id}-d-${i}`}>{d.length > 500 ? `${d.slice(0, 500)}…` : d}</li>
+                ))}
+              </ul>
+            ) : null}
+            {step.progress.length ? (
+              <ul className="task-detail-workflow-progress">
+                {step.progress.slice(-4).map((p, i) => (
+                  <li key={`${step.id}-p-${i}`}>
+                    <strong>{p.progress_pct}%</strong> {p.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 export function TaskDetailEventsGrouped({ events, rootTaskId }: TaskDetailEventsGroupedProps) {
   const groups = useMemo(() => {
