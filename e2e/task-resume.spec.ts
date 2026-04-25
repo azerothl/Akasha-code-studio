@@ -136,6 +136,15 @@ test.beforeEach(async ({ page }) => {
       await route.continue();
       return;
     }
+    const url = route.request().url();
+    if (url.includes("/studio-diff")) {
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "no_snapshot", task_id: runTaskId }),
+      });
+      return;
+    }
     taskGetCount += 1;
     const running = taskGetCount < 5;
     await route.fulfill({

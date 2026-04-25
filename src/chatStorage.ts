@@ -1,4 +1,4 @@
-import type { TaskSuggestedAction } from "./api";
+import type { TaskStudioDiffPayload, TaskSuggestedAction } from "./api";
 
 /** Persistance locale de l’historique de chat par projet (navigateur). */
 const PREFIX = "akasha-code-studio-chat-v2:";
@@ -8,6 +8,8 @@ export type ChatMessage = {
   text: string;
   task_id?: string;
   suggested_actions?: TaskSuggestedAction[];
+  /** Diff fichiers / snapshot de tâche (assistant uniquement). */
+  studio_diff?: TaskStudioDiffPayload | null;
 };
 
 function normalizeMessage(m: unknown): ChatMessage | null {
@@ -26,7 +28,35 @@ function normalizeMessage(m: unknown): ChatMessage | null {
           ((a as TaskSuggestedAction).kind === "message" || (a as TaskSuggestedAction).kind === "ui"),
       )
     : undefined;
-  return { role: o.role, text: o.text, task_id, suggested_actions };
+  let studio_diff: TaskStudioDiffPayload | null | undefined;
+  const sd = o.studio_diff;
+  if (sd && typeof sd === "object" && typeof (sd as TaskStudioDiffPayload).task_id === "string") {
+    const files = (sd as TaskStudioDiffPayload).files;
+    if (Array.isArray(files)) {
+      const rawFiles = files.filter(
+        (f) =>
+          f &&
+          typeof f === "object" &&
+          typeof (f as { path: string }).path === "string" &&
+          typeof (f as { status: string }).status === "string" &&
+          typeof (f as { diff: string }).diff === "string",
+      );
+      studio_diff = {
+        task_id: (sd as TaskStudioDiffPayload).task_id,
+        captured_at: String((sd as TaskStudioDiffPayload).captured_at ?? ""),
+        files: rawFiles.map((f) => {
+          const row = f as { path: string; status: string; diff: string; truncated?: boolean };
+          return {
+            path: row.path,
+            status: row.status,
+            diff: row.diff,
+            truncated: Boolean(row.truncated),
+          };
+        }),
+      };
+    }
+  }
+  return { role: o.role, text: o.text, task_id, suggested_actions, studio_diff };
 }
 
 export function loadChatMessages(projectId: string): ChatMessage[] {

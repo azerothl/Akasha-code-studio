@@ -2,6 +2,15 @@ import type { ReactNode } from "react";
 
 const ROWS: { agent: string; can: string[]; cannot: string[] }[] = [
   {
+    agent: "studio_project_manager",
+    can: [
+      "Orchestrer chaque demande Code Studio (racine)",
+      "Créer des plans dans specs/ pour les évolutions",
+      "delegate_to_agent vers les agents studio / qa / code",
+    ],
+    cannot: ["Délégation depuis les sous-tâches (réservé au manager)"],
+  },
+  {
     agent: "studio_planner",
     can: ["Lire le dépôt", "Mettre à jour CODE_STUDIO_PLAN.md", "git/diagnostic en lecture seule"],
     cannot: ["Modifier le code applicatif", "run_command mutateur", "Installer des paquets"],

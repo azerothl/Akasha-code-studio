@@ -237,6 +237,14 @@ test.beforeEach(async ({ page }) => {
       });
       return;
     }
+    if (url.includes("/studio-diff")) {
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "no_snapshot", task_id: demoId }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",

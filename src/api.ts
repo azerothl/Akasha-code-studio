@@ -429,6 +429,31 @@ export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   return r.json() as Promise<TaskStatusResponse>;
 }
 
+/** Une entrée de diff fichier ↔ snapshot de début de tâche Code Studio. */
+export type StudioDiffFileEntry = {
+  path: string;
+  status: string;
+  diff: string;
+  truncated: boolean;
+};
+
+export type TaskStudioDiffPayload = {
+  task_id: string;
+  captured_at: string;
+  files: StudioDiffFileEntry[];
+};
+
+/** Diff texte depuis le snapshot de tâche ; `null` si pas de snapshot (404). */
+export async function getTaskStudioDiff(taskId: string): Promise<TaskStudioDiffPayload | null> {
+  const r = await fetch(api(`/api/tasks/${taskId}/studio-diff`));
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getTaskStudioDiff ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<TaskStudioDiffPayload>;
+}
+
 export type TaskEventEntry = {
   event_type: string;
   at: string;

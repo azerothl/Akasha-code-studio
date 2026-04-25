@@ -35,33 +35,38 @@ import {
   TaskDetailWorkflowView,
   mergeProgressWithEventProgress,
 } from "./taskDetailUi";
+import { ChatStudioDiffPanel } from "./chatStudioDiff";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
-  { value: "", label: "Automatique", hint: "Le daemon choisit l’agent (peut ignorer le mode studio)." },
+  {
+    value: "",
+    label: "Automatique",
+    hint: "Le daemon route vers le chef de projet Code Studio ; la liste ci-dessous sert de préférence pour les sous-agents délégués.",
+  },
   {
     value: "studio_scaffold",
     label: "Squelette d’app",
-    hint: "Structure minimale (README, manifeste, entrées) selon la stack du projet ou le message utilisateur.",
+    hint: "Préférence sous-agent : structure minimale (README, manifeste, entrées) selon la stack du projet.",
   },
   {
     value: "studio_frontend",
     label: "Frontend",
-    hint: "Composants UI, styles, accessibilité, routing client.",
+    hint: "Préférence sous-agent : composants UI, styles, accessibilité, routing client.",
   },
   {
     value: "studio_backend",
     label: "Backend",
-    hint: "API, persistance légère, CORS, configuration.",
+    hint: "Préférence sous-agent : API, persistance légère, CORS, configuration.",
   },
   {
     value: "studio_fullstack",
     label: "Full-stack",
-    hint: "Frontend + backend cohérents dans un même passage.",
+    hint: "Préférence sous-agent : frontend + backend cohérents dans un même passage.",
   },
   {
     value: "studio_planner",
     label: "Planification (lecture seule)",
-    hint: "Explorer le dépôt et mettre à jour CODE_STUDIO_PLAN.md uniquement — pas de code applicatif.",
+    hint: "Préférence sous-agent : explorer le dépôt et mettre à jour CODE_STUDIO_PLAN.md uniquement.",
   },
 ];
 
@@ -1417,6 +1422,25 @@ export default function App() {
                 suggested_actions: t.suggested_actions,
               },
             ]);
+            void (async () => {
+              try {
+                const sd = await api.getTaskStudioDiff(taskId);
+                if (!sd?.files?.length) return;
+                setChat((c) => {
+                  const next = [...c];
+                  for (let i = next.length - 1; i >= 0; i--) {
+                    const row = next[i];
+                    if (row.role === "assistant" && row.task_id === taskId) {
+                      next[i] = { ...row, studio_diff: sd };
+                      break;
+                    }
+                  }
+                  return next;
+                });
+              } catch {
+                /* snapshot absent ou erreur réseau */
+              }
+            })();
             return;
           }
           await sleep(1500);
@@ -2961,6 +2985,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       >
                         ℹ
                       </button>
+                    ) : null}
+                    {m.role === "assistant" && m.studio_diff?.files?.length ? (
+                      <ChatStudioDiffPanel diff={m.studio_diff} />
                     ) : null}
                   </div>
                 </div>

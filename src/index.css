@@ -2192,6 +2192,105 @@ textarea.editor {
   background: rgba(139, 92, 246, 0.2);
 }
 
+.chat-studio-diff {
+  margin-top: 0.45rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed var(--border);
+}
+
+.chat-studio-diff-toggle {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.35rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--akasha-bg);
+  color: var(--akasha-text);
+  cursor: pointer;
+}
+
+.chat-studio-diff-toggle:hover {
+  border-color: var(--accent);
+  color: var(--akasha-accent-light);
+}
+
+.chat-studio-diff-body {
+  margin-top: 0.35rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.chat-studio-diff-file {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--akasha-bg);
+  padding: 0.15rem 0.35rem;
+}
+
+.chat-studio-diff-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+}
+
+.chat-studio-diff-summary::-webkit-details-marker {
+  display: none;
+}
+
+.chat-studio-diff-path {
+  font-size: 0.74rem;
+}
+
+.chat-studio-diff-status {
+  font-size: 0.68rem;
+  text-transform: lowercase;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.chat-studio-diff-status--added {
+  background: rgba(34, 197, 94, 0.18);
+}
+
+.chat-studio-diff-status--deleted {
+  background: rgba(248, 113, 113, 0.2);
+}
+
+.chat-studio-diff-status--modified {
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.chat-studio-diff-trunc {
+  font-size: 0.65rem;
+  color: var(--akasha-text-muted);
+}
+
+.chat-studio-diff-pre {
+  margin: 0.25rem 0 0.15rem;
+  padding: 0.35rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  max-height: 10rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--akasha-bg-surface);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
 .chat-panel-footer {
   flex-shrink: 0;
   display: flex;

@@ -62,7 +62,7 @@ Champs JSON utiles Code Studio (en plus de `message`, `session_id`, etc.) :
 | Champ | Type | Description |
 |-------|------|-------------|
 | `studio_project_id` | string (UUID) | Répertoire projet sous `studio-projects/` |
-| `studio_assigned_agent` | string | `studio_scaffold` \| `studio_frontend` \| `studio_backend` \| `studio_fullstack` |
+| `studio_assigned_agent` | string | Préférence de **sous-agent** (`studio_scaffold`, `studio_frontend`, …) ; avec `studio_project_id`, le daemon route la tâche racine vers **`studio_project_manager`** (chef de projet) qui peut déléguer selon cette préférence. |
 | `studio_evolution_branch` | string | Branche Git (injectée dans le contexte message) |
 | `studio_evolution_id` | string | Si présent avec `studio_project_id`, résolution de la branche via `.akasha-studio.json` |
 | `studio_design_hint` | string | Résumé design compact (tokens/intention) |
@@ -75,7 +75,7 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 | Méthode | Chemin | Description |
 |---------|--------|-------------|
 | GET | `/api/studio/projects` | Liste `{ projects: [{ id, name, path }] }` (`name` depuis `.akasha-studio.json` ou repli `Projet xxxxxxxx`) |
-| POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` |
+| POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` ; initialise `CODE_STUDIO_PLAN.md`, le dossier **`specs/`**, `git init` si absent |
 | PATCH | `/api/studio/projects/:id` | Corps : `name`, `tech_stack`, et/ou options de vérif post-tâche : `verify_skip` (bool), `verify_argv` (tableau de chaînes ou `null`), `verify_timeout_sec` (nombre 1–3600 ou `null`) |
 | GET | `/api/studio/projects/:id` | Lit méta + évolutions (`tech_stack`, champs `verify_*`). Ajoute `git_branch`, `git_worktree_clean` et **`git_worktree_lines`** (tableau borné, max 200 entrées `{ "status": string, "path": string }` dérivées de `git status --porcelain`, même source que « propre » / indicateur dirty) lorsque le dépôt Git est valide. |
 | POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, installed?, install? }`. **Windows** : `npm` est invoqué via `cmd.exe /c` (même logique que le build). Les sorties du serveur dev sont capturées pour `GET .../preview/logs`. |
@@ -113,6 +113,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 |---------|--------|-------------|
 | GET | `/api/tasks/:id` | Statut tâche : `task_id`, `status`, `assigned_agent`, `progress[]`, `failure_detail`, et **`suggested_actions`** (optionnel, tableau stable) : `{ "id": string, "label": string, "kind": "message" \| "ui", "message"?: string, "ui_action"?: string }`. Les `ui_action` réservés côté UI incluent au minimum `open_editor`, `open_preview`, `open_design`, `refresh_files` (les ids inconnus sont ignorés pour compatibilité avant). |
 | GET | `/api/tasks/:id/events` | `{ "events": [ { "event_type": string, "at": string, "task_id"?: string, "payload"?: any } ] }` — journal d’événements bus (délégations, outils, etc.), charge utile bornée côté daemon. |
+| GET | `/api/tasks/:id/studio-diff` | `{ "task_id", "captured_at", "files": [ { "path", "status", "diff", "truncated" } ] }` — diff texte depuis un **snapshot** pris au démarrage des tâches Code Studio **racine** ; `404` `{ "error":"no_snapshot" }` sinon (sous-tâches, tâche hors studio, etc.). |
 
 ### Évolutions (workflow branche)
 
@@ -137,7 +138,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Éditeur | **Monaco Editor** (`@monaco-editor/react`) + liste fichiers à gauche ; thème sombre ; sauvegarde via `PUT .../raw`. Workers Monaco depuis jsDelivr (`monaco-editor@0.52.2`). |
 | Aperçu | **▶ Lancer la prévisualisation** : `POST .../preview/start` — serveur dev sur `127.0.0.1` ; **Arrêter le serveur** : `POST .../preview/stop`. Sinon, fichier `.html` ouvert : aperçu statique (blob + iframe `sandbox`). Priorité : URL serveur dev si actif, sinon blob. |
 | Barre ops | Menus **Import & build** : clone HTTPS, build argv, merge / abandon évolution |
-| Chat | `POST /api/message` avec `studio_project_id`, agent, évolution ; bulles assistant avec `task_id` → icône **détail tâche** (modal `GET /api/tasks/:id` + `GET /api/tasks/:id/events`) ; **chips** « Suggestions » alimentées par `suggested_actions` du daemon sur la dernière bulle assistant. |
+| Chat | `POST /api/message` avec `studio_project_id`, agent, évolution ; bulles assistant avec `task_id` → icône **détail tâche** (modal `GET /api/tasks/:id` + `GET /api/tasks/:id/events`) ; **chips** « Suggestions » alimentées par `suggested_actions` du daemon sur la dernière bulle assistant ; après fin de tâche, bloc pliable **fichiers modifiés** (`GET /api/tasks/:id/studio-diff`) sous la bulle concernée. |
 | Design | Édition `DESIGN.md`, planche visuelle (tokens), mode d’affichage **Les deux / Visuel / Source**, diagnostics, bouton **Demander à l’agent de corriger** (errors/warnings), import/export, export artefacts, auto-apply contexte design |
 | Stack projet | Menu **Projet** : `<select>` de préréglages + « Personnalisé » ; cases à cocher ; enregistrement `PATCH` (`tech_stack`) |
 | Git worktree | Bouton **Git Δ** dans l’en-tête : tableau `git_worktree_lines` (popover). |
