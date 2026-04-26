@@ -36,6 +36,7 @@ import {
   mergeProgressWithEventProgress,
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
+import { HermesOpsPanel } from "./hermesOpsPanel";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -398,6 +399,7 @@ export default function App() {
   const [designMarkdownPreview, setDesignMarkdownPreview] = useState(false);
   const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
   const [showAgentMatrix, setShowAgentMatrix] = useState(false);
+  const [showHermesOps, setShowHermesOps] = useState(false);
   /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
   const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
 
@@ -2317,6 +2319,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
               </button>
               {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
+              <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => setShowHermesOps((v) => !v)}>
+                {showHermesOps ? "Masquer" : "Afficher"} le cockpit daemon (schedules, runs, tools…)
+              </button>
+              {showHermesOps ? <HermesOpsPanel /> : null}
             </div>
           ) : null}
         </div>

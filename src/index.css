@@ -3425,3 +3425,36 @@ textarea.editor {
   max-height: 8rem;
   overflow: auto;
 }
+
+.hermes-ops-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  max-height: min(70vh, 28rem);
+  overflow: auto;
+}
+
+.hermes-ops-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.hermes-ops-blocks details {
+  margin-bottom: 0.5rem;
+}
+
+.hermes-ops-pre {
+  margin: 0.35rem 0 0;
+  padding: 0.5rem;
+  font-size: 0.65rem;
+  max-height: 10rem;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}

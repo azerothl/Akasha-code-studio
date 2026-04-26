@@ -510,3 +510,35 @@ export function isTaskTerminal(status: string): boolean {
 export function isTaskNeedsUser(status: string): boolean {
   return status === "waiting_user_input";
 }
+
+/** --- Hermes / operator cockpit (daemon HTTP) --- */
+
+export async function fetchSchedulesPayload(): Promise<unknown> {
+  const r = await fetch(api("/api/schedules"));
+  if (!r.ok) throw new Error(`GET /api/schedules → ${r.status}`);
+  return r.json();
+}
+
+export async function fetchTaskRunsPayload(): Promise<unknown> {
+  const r = await fetch(api("/api/task_runs"));
+  if (!r.ok) throw new Error(`GET /api/task_runs → ${r.status}`);
+  return r.json();
+}
+
+export async function fetchProcessWatchRecent(limit = 20): Promise<unknown> {
+  const r = await fetch(api(`/api/process/watch/recent?limit=${encodeURIComponent(String(limit))}`));
+  if (!r.ok) throw new Error(`GET /api/process/watch/recent → ${r.status}`);
+  return r.json();
+}
+
+export async function fetchTerminalCapabilities(): Promise<unknown> {
+  const r = await fetch(api("/api/terminal/capabilities"));
+  if (!r.ok) throw new Error(`GET /api/terminal/capabilities → ${r.status}`);
+  return r.json();
+}
+
+export async function fetchToolsEffective(): Promise<unknown> {
+  const r = await fetch(api("/api/tools/effective"));
+  if (!r.ok) throw new Error(`GET /api/tools/effective → ${r.status}`);
+  return r.json();
+}
