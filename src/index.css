@@ -101,16 +101,17 @@ kbd {
 .app {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   height: 100%;
   max-height: 100%;
   min-height: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .app-main {
   grid-column: 1;
-  grid-row: 3;
+  grid-row: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 0;
@@ -147,6 +148,7 @@ kbd {
 .app-header--compact {
   padding: 0.4rem 0.75rem;
   background: var(--akasha-bg-card);
+  min-height: 2.45rem;
 }
 
 .app-header-row {
@@ -306,15 +308,16 @@ kbd {
 
 /* Menus header (remplace l’ancienne sidebar gauche) */
 .app-header-nav {
-  grid-column: 1;
-  grid-row: 2;
+  position: absolute;
+  top: 0.43rem;
+  left: 7.4rem;
+  z-index: 30;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem 0.5rem;
-  padding: 0.25rem 0.65rem 0.45rem;
-  background: var(--akasha-bg-elevated);
-  border-bottom: 1px solid var(--border);
+  padding: 0;
+  background: transparent;
 }
 
 .header-menu-wrap {

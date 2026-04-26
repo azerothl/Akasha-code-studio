@@ -1878,19 +1878,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
-          <div className="app-header-studio-actions">
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              data-testid="studio-load-project"
-              onClick={() => setModalLoadOpen(true)}
-            >
-              Charger un projet
-            </button>
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setModalCreateOpen(true)}>
-              Créer un projet
-            </button>
-          </div>
           {selectedProject ? (
             <div className="app-header-meta" aria-label="Projet et branches Git">
               <span className="app-header-project">
@@ -2046,10 +2033,25 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           {openHeaderMenu === "project" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               <div className="project-actions-row">
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setModalCreateOpen(true)}>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    setOpenHeaderMenu(null);
+                    setModalCreateOpen(true);
+                  }}
+                >
                   Créer un projet
                 </button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalLoadOpen(true)}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  data-testid="studio-load-project"
+                  onClick={() => {
+                    setOpenHeaderMenu(null);
+                    setModalLoadOpen(true);
+                  }}
+                >
                   Charger un projet
                 </button>
               </div>
@@ -2058,7 +2060,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   Projet actif : nom, identifiant court et branches dans l’en-tête.
                 </p>
               ) : (
-                <p className="hint">Aucun projet chargé — utilisez les boutons ci-dessus.</p>
+                <p className="hint">Aucun projet chargé — utilisez les actions ci-dessus.</p>
               )}
               {selectedId ? (
                 <div className="project-settings">

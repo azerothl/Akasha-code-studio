@@ -311,6 +311,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function selectDemoProject(page: Page) {
+  await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
   await page.getByRole("button", { name: /Démo E2E/i }).click();
 }
@@ -318,6 +319,7 @@ async function selectDemoProject(page: Page) {
 test("loads layout and lists mocked project", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Code Studio/i })).toBeVisible();
+  await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
   await expect(page.getByRole("button", { name: /Démo E2E/i })).toBeVisible();
 });
