@@ -268,6 +268,46 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ pending: [] }),
     });
   });
+
+  await page.route("**/api/schedules", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ schedules: [] }),
+    });
+  });
+
+  await page.route("**/api/task_runs", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ task_runs: [] }),
+    });
+  });
+
+  await page.route("**/api/process/watch/recent**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ events: [] }),
+    });
+  });
+
+  await page.route("**/api/terminal/capabilities", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ shells: ["bash"] }),
+    });
+  });
+
+  await page.route("**/api/tools/effective", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ tools: [] }),
+    });
+  });
 });
 
 async function selectDemoProject(page: Page) {
@@ -389,4 +429,15 @@ test("shows suggested action chips and clicking message chip fills input", async
   await expect(messageChip).toBeVisible();
   await messageChip.click();
   await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
+});
+
+test("opens Hermes cockpit panel and shows endpoint blocks", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("button", { name: /Agent \/ actions/i }).click();
+  await page.getByRole("button", { name: /Afficher le cockpit daemon/i }).click();
+  const panel = page.locator(".hermes-ops-panel");
+  await expect(panel).toBeVisible({ timeout: 5_000 });
+  await expect(panel.locator("details").filter({ hasText: "GET /api/schedules" })).toBeVisible({ timeout: 8_000 });
+  await expect(panel.locator("details").filter({ hasText: "GET /api/tools/effective" })).toBeVisible();
 });

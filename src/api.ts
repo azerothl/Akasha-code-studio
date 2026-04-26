@@ -513,32 +513,43 @@ export function isTaskNeedsUser(status: string): boolean {
 
 /** --- Hermes / operator cockpit (daemon HTTP) --- */
 
+async function buildHttpError(method: string, path: string, r: Response): Promise<Error> {
+  let details = "";
+  try {
+    const body = (await r.text()).trim();
+    if (body) details = ` — ${body}`;
+  } catch {
+    // Ignore body read failures and fall back to status-only error details.
+  }
+  return new Error(`${method} ${path} → ${r.status}${details}`);
+}
+
 export async function fetchSchedulesPayload(): Promise<unknown> {
   const r = await fetch(api("/api/schedules"));
-  if (!r.ok) throw new Error(`GET /api/schedules → ${r.status}`);
+  if (!r.ok) throw await buildHttpError("GET", "/api/schedules", r);
   return r.json();
 }
 
 export async function fetchTaskRunsPayload(): Promise<unknown> {
   const r = await fetch(api("/api/task_runs"));
-  if (!r.ok) throw new Error(`GET /api/task_runs → ${r.status}`);
+  if (!r.ok) throw await buildHttpError("GET", "/api/task_runs", r);
   return r.json();
 }
 
 export async function fetchProcessWatchRecent(limit = 20): Promise<unknown> {
   const r = await fetch(api(`/api/process/watch/recent?limit=${encodeURIComponent(String(limit))}`));
-  if (!r.ok) throw new Error(`GET /api/process/watch/recent → ${r.status}`);
+  if (!r.ok) throw await buildHttpError("GET", "/api/process/watch/recent", r);
   return r.json();
 }
 
 export async function fetchTerminalCapabilities(): Promise<unknown> {
   const r = await fetch(api("/api/terminal/capabilities"));
-  if (!r.ok) throw new Error(`GET /api/terminal/capabilities → ${r.status}`);
+  if (!r.ok) throw await buildHttpError("GET", "/api/terminal/capabilities", r);
   return r.json();
 }
 
 export async function fetchToolsEffective(): Promise<unknown> {
   const r = await fetch(api("/api/tools/effective"));
-  if (!r.ok) throw new Error(`GET /api/tools/effective → ${r.status}`);
+  if (!r.ok) throw await buildHttpError("GET", "/api/tools/effective", r);
   return r.json();
 }
