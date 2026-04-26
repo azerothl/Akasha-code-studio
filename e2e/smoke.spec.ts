@@ -375,7 +375,7 @@ test("opens task detail modal and shows mocked event", async ({ page }) => {
   await detailBtn.click();
   const modal = page.getByRole("dialog", { name: /Détail de la tâche/i });
   await expect(modal).toBeVisible();
-  await expect(modal.locator(".task-detail-events code").filter({ hasText: /^mock$/ })).toBeVisible({ timeout: 5_000 });
+  await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^mock$/ })).toBeVisible({ timeout: 5_000 });
 });
 
 test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {

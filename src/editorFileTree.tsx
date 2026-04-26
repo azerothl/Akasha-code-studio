@@ -95,7 +95,7 @@ export function EditorFileTree({ files, activePath, onOpenFile, onDeleteFile, on
     async (nodePath: string) => {
       if (submittingRename.current) return;
       const name = editValue.trim();
-      if (!name || name.includes("/") || name.includes("\\")) {
+      if (!name || name.includes("/") || name.includes("\\") || name === "." || name === "..") {
         cancelRename();
         return;
       }

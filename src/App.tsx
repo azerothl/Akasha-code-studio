@@ -573,7 +573,7 @@ export default function App() {
     setCodeRagStatusLoading(true);
     setCodeRagStatusError(null);
     void api
-      .reindexCodeRag(selectedId, false)
+      .getCodeRagStatus(selectedId)
       .then((s) => {
         if (!cancelled) {
           setCodeRagStatus(s);
@@ -3134,22 +3134,21 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </section>
                   <section className="task-detail-section">
                     <h4>Progression</h4>
-                    {mergeProgressWithEventProgress(
-                      taskDetailPayload.task.progress ?? [],
-                      taskDetailPayload.events,
-                      taskDetailPayload.task.task_id,
-                    ).length > 0 ? (
-                      <TaskDetailProgressView
-                        progress={mergeProgressWithEventProgress(
-                          taskDetailPayload.task.progress ?? [],
-                          taskDetailPayload.events,
-                          taskDetailPayload.task.task_id,
-                        )}
-                        rootTaskId={taskDetailPayload.task.task_id}
-                      />
-                    ) : (
-                      <p className="hint">Aucune entrée de progression.</p>
-                    )}
+                    {(() => {
+                      const mergedProgress = mergeProgressWithEventProgress(
+                        taskDetailPayload.task.progress ?? [],
+                        taskDetailPayload.events,
+                        taskDetailPayload.task.task_id,
+                      );
+                      return mergedProgress.length > 0 ? (
+                        <TaskDetailProgressView
+                          progress={mergedProgress}
+                          rootTaskId={taskDetailPayload.task.task_id}
+                        />
+                      ) : (
+                        <p className="hint">Aucune entrée de progression.</p>
+                      );
+                    })()}
                   </section>
                   <section className="task-detail-section">
                     <h4>Événements</h4>
