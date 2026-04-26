@@ -553,3 +553,32 @@ export async function fetchToolsEffective(): Promise<unknown> {
   if (!r.ok) throw await buildHttpError("GET", "/api/tools/effective", r);
   return r.json();
 }
+
+export async function fetchMemoryRecallMetrics(): Promise<unknown> {
+  const r = await fetch(api("/api/memory/recall-metrics"));
+  if (!r.ok) throw await buildHttpError("GET", "/api/memory/recall-metrics", r);
+  return r.json();
+}
+
+export async function fetchMcpStatus(): Promise<unknown> {
+  const r = await fetch(api("/api/mcp/status"));
+  if (!r.ok) throw await buildHttpError("GET", "/api/mcp/status", r);
+  return r.json();
+}
+
+export async function fetchLifecycleHooks(): Promise<unknown> {
+  const r = await fetch(api("/api/lifecycle/hooks"));
+  if (!r.ok) throw await buildHttpError("GET", "/api/lifecycle/hooks", r);
+  return r.json();
+}
+
+/** Pause / resume / run-now — `POST /api/schedules/{id}/{pause|resume|run_now}` (daemon Hermes parity). */
+export async function postScheduleControl(
+  scheduleId: string,
+  action: "pause" | "resume" | "run_now",
+): Promise<unknown> {
+  const path = `/api/schedules/${encodeURIComponent(scheduleId)}/${action}`;
+  const r = await fetch(api(path), { method: "POST" });
+  if (!r.ok) throw await buildHttpError("POST", path, r);
+  return r.json();
+}

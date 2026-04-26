@@ -3461,3 +3461,33 @@ textarea.editor {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
 }
+
+.hermes-ops-schedules-title {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.hermes-ops-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.hermes-ops-schedule-table th,
+.hermes-ops-schedule-table td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.hermes-ops-schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.hermes-ops-schedule-msg {
+  margin-top: 0.35rem;
+}

@@ -12,10 +12,12 @@ Goal: surface **long-running jobs**, **logs**, **RAG status**, **worktrees**, an
 | Tools | `GET /api/tools/effective` | Badge politique par session |
 | Webhooks (doc) | `docs/automation-webhooks.md` (core) | Lien doc opérateur |
 | Memory | `GET /api/memory/recall-metrics` | Sparkline recall |
+| MCP (statut disque) | `GET /api/mcp/status` | Résumé `mcp.json` + validité schéma |
+| Lifecycle hooks | `GET /api/lifecycle/hooks` | Résumé `lifecycle_hooks.json` |
 
 ## Implémenté (cockpit brut)
 
-Dans l’UI Code Studio : menu **Agent / actions** → **Afficher le cockpit daemon** — appelle en lecture les cinq endpoints ci-dessus (schedules, task_runs, process watch, terminal capabilities, tools effective) et affiche le JSON (voir `src/hermesOpsPanel.tsx`).
+Dans l’UI Code Studio : menu **Agent / actions** → **Afficher le cockpit daemon** — appelle en lecture les endpoints ci-dessus (schedules, task_runs, process watch, terminal capabilities, tools effective, recall-metrics, mcp/status, lifecycle/hooks), affiche le JSON et propose un **tableau d’actions** pause / reprise / exécution immédiate par planning lorsque `GET /api/schedules` renvoie des entrées (voir `src/hermesOpsPanel.tsx`).
 
 ## Existing Code Studio docs
 

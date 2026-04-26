@@ -308,6 +308,36 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ tools: [] }),
     });
   });
+
+  await page.route("**/api/memory/recall-metrics", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ hits: 0, empty: 0 }),
+    });
+  });
+
+  await page.route("**/api/mcp/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        config_present: false,
+        config_path: "/tmp/mcp.json",
+        valid: null,
+        server_count: 0,
+        runtime: "stdio_probe_and_validate_only",
+      }),
+    });
+  });
+
+  await page.route("**/api/lifecycle/hooks", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ present: false, executed_phases: ["on_schedule_fire"] }),
+    });
+  });
 });
 
 async function selectDemoProject(page: Page) {
@@ -442,4 +472,6 @@ test("opens Hermes cockpit panel and shows endpoint blocks", async ({ page }) =>
   await expect(panel).toBeVisible({ timeout: 5_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/schedules" })).toBeVisible({ timeout: 8_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/tools/effective" })).toBeVisible();
+  await expect(panel.locator("details").filter({ hasText: "GET /api/memory/recall-metrics" })).toBeVisible();
+  await expect(panel.locator("details").filter({ hasText: "GET /api/mcp/status" })).toBeVisible();
 });
