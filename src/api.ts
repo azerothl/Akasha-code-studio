@@ -41,6 +41,8 @@ export type StudioProjectMeta = {
   git_branch?: string | null;
   /** `true` si `git status --porcelain` est vide. */
   git_worktree_clean?: boolean | null;
+  /** Lignes `git status --porcelain` (codes + chemin), renvoyées par le daemon (plafonnées). */
+  git_worktree_lines?: { status: string; path: string }[];
 };
 
 export async function listProjects(): Promise<StudioProject[]> {
@@ -102,12 +104,12 @@ export async function getCodeRagStatus(projectId: string): Promise<CodeRagStatus
   return r.json() as Promise<CodeRagStatus>;
 }
 
-/** Force une reconstruction complète de l’index (bloquant côté daemon, peut prendre du temps). */
-export async function reindexCodeRag(projectId: string): Promise<CodeRagStatus> {
+/** Reconstruit / synchronise l’index code-RAG (force=true = rebuild complet ; false = reuse des fichiers inchangés). */
+export async function reindexCodeRag(projectId: string, force = true): Promise<CodeRagStatus> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/code-rag/reindex`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: "{}",
+    body: JSON.stringify({ force }),
   });
   if (!r.ok) {
     const t = await r.text();
@@ -270,6 +272,19 @@ export async function deleteRawFile(projectId: string, path: string): Promise<vo
   }
 }
 
+/** Renomme ou déplace un fichier ou un répertoire sous le projet (chemins relatifs, `/`). */
+export async function renameStudioPath(projectId: string, from: string, to: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/fs/rename`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`renameStudioPath ${r.status}: ${t}`);
+  }
+}
+
 export async function gitClone(projectId: string, repoUrl: string, branch?: string): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/git/clone`), {
     method: "POST",
@@ -389,19 +404,68 @@ export async function sendMessage(body: {
   return j;
 }
 
+/** Suggestion « prochaine action » (Code Studio + daemon). */
+export type TaskSuggestedAction = {
+  id: string;
+  label: string;
+  kind: "message" | "ui";
+  message?: string;
+  ui_action?: string;
+};
+
 export type TaskStatusResponse = {
   task_id: string;
   status: string;
   assigned_agent?: string;
-  progress?: { progress_pct: number; message: string }[];
+  progress?: { progress_pct: number; message: string; task_id?: string | null }[];
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
+  suggested_actions?: TaskSuggestedAction[];
 };
 
 export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   const r = await fetch(api(`/api/tasks/${taskId}`));
   if (!r.ok) throw new Error(`getTask ${r.status}`);
   return r.json() as Promise<TaskStatusResponse>;
+}
+
+/** Une entrée de diff fichier ↔ snapshot de début de tâche Code Studio. */
+export type StudioDiffFileEntry = {
+  path: string;
+  status: string;
+  diff: string;
+  truncated: boolean;
+};
+
+export type TaskStudioDiffPayload = {
+  task_id: string;
+  captured_at: string;
+  files: StudioDiffFileEntry[];
+};
+
+/** Diff texte depuis le snapshot de tâche ; `null` si pas de snapshot (404). */
+export async function getTaskStudioDiff(taskId: string): Promise<TaskStudioDiffPayload | null> {
+  const r = await fetch(api(`/api/tasks/${taskId}/studio-diff`));
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getTaskStudioDiff ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<TaskStudioDiffPayload>;
+}
+
+export type TaskEventEntry = {
+  event_type: string;
+  at: string;
+  task_id?: string | null;
+  payload?: unknown;
+};
+
+export async function getTaskEvents(taskId: string): Promise<TaskEventEntry[]> {
+  const r = await fetch(api(`/api/tasks/${taskId}/events`));
+  if (!r.ok) throw new Error(`getTaskEvents ${r.status}`);
+  const j = (await r.json()) as { events?: TaskEventEntry[] };
+  return j.events ?? [];
 }
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */

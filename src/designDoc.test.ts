@@ -103,9 +103,11 @@ describe("reference DESIGN.md sample (Atmospheric Glass)", () => {
     expect(r.tokens.name).toBe("Atmospheric Glass");
     expect(r.tokens.colors.primary).toBe("#ffffff");
     expect(r.tokens.typographyKeys).toContain("display-lg");
-    expect(r.tokens.components["button-primary"]).toEqual(
+    const btn = r.tokens.components["button-primary"];
+    expect(Object.keys(btn)).toEqual(
       expect.arrayContaining(["backgroundColor", "textColor", "typography", "rounded", "height", "padding"]),
     );
+    expect(btn.backgroundColor).toContain("colors");
   });
 });
 

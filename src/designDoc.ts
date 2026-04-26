@@ -13,9 +13,12 @@ export type DesignTokenState = {
   colors: Record<string, string>;
   typographyKeys: string[];
   typographyShape: Record<string, { hasObject: boolean }>;
+  /** Champs feuille par rôle typo (fontSize, fontWeight, …) pour preview UI. */
+  typographyDetails: Record<string, Record<string, string>>;
   spacing: Record<string, string>;
   rounded: Record<string, string>;
-  components: Record<string, string[]>;
+  /** Nom de composant YAML → paires propriété → valeur brute (résolution des refs côté UI). */
+  components: Record<string, Record<string, string>>;
 };
 
 export type DesignParseResult = {
@@ -149,6 +152,7 @@ function parseSimpleYamlMap(frontMatter: string): DesignTokenState {
     colors: {},
     typographyKeys: [],
     typographyShape: {},
+    typographyDetails: {},
     spacing: {},
     rounded: {},
     components: {},
@@ -193,17 +197,20 @@ function parseSimpleYamlMap(frontMatter: string): DesignTokenState {
         if (!tokens.typographyKeys.includes(key)) tokens.typographyKeys.push(key);
         const hasObject = value === "{" || value === "{}" || value === "" || value.startsWith("{");
         tokens.typographyShape[key] = { hasObject };
-      } else if (indent >= 4 && currentTypographyToken) {
+        tokens.typographyDetails[key] ??= {};
+      } else if (indent >= 4 && currentTypographyToken && value) {
         tokens.typographyShape[currentTypographyToken] = { hasObject: true };
+        tokens.typographyDetails[currentTypographyToken] ??= {};
+        tokens.typographyDetails[currentTypographyToken][key] = value;
       }
     }
     if (section === "components" && key) {
       if (indent === 2) {
         currentComponent = key;
-        if (!tokens.components[currentComponent]) tokens.components[currentComponent] = [];
-      } else if (indent >= 4 && currentComponent) {
-        tokens.components[currentComponent] ??= [];
-        tokens.components[currentComponent].push(key);
+        tokens.components[currentComponent] ??= {};
+      } else if (indent >= 4 && currentComponent && value) {
+        tokens.components[currentComponent] ??= {};
+        tokens.components[currentComponent][key] = value;
       }
     }
   }
@@ -262,7 +269,15 @@ export function parseDesignDoc(raw: string): DesignParseResult {
       raw,
       frontMatter: null,
       body: "",
-      tokens: { colors: {}, typographyKeys: [], typographyShape: {}, spacing: {}, rounded: {}, components: {} },
+      tokens: {
+        colors: {},
+        typographyKeys: [],
+        typographyShape: {},
+        typographyDetails: {},
+        spacing: {},
+        rounded: {},
+        components: {},
+      },
       diagnostics: [{ severity: "info", path: "root", message: "DESIGN.md est vide." }],
       status: "absent",
     };
@@ -272,7 +287,15 @@ export function parseDesignDoc(raw: string): DesignParseResult {
   const diagnostics: DesignDiagnostic[] = [];
   const tokens = fm
     ? parseSimpleYamlMap(fm)
-    : { colors: {}, typographyKeys: [], typographyShape: {}, spacing: {}, rounded: {}, components: {} };
+    : {
+        colors: {},
+        typographyKeys: [],
+        typographyShape: {},
+        typographyDetails: {},
+        spacing: {},
+        rounded: {},
+        components: {},
+      };
   if (!fm) diagnostics.push({ severity: "error", path: "frontmatter", message: "Front matter YAML manquant." });
   if (tokens.version && tokens.version !== "alpha") {
     diagnostics.push({
@@ -329,7 +352,7 @@ export function parseDesignDoc(raw: string): DesignParseResult {
     }
   }
   for (const [componentName, props] of Object.entries(tokens.components)) {
-    for (const prop of props) {
+    for (const prop of Object.keys(props)) {
       if (!VALID_COMPONENT_PROPERTIES.has(prop)) {
         diagnostics.push({
           severity: "warning",

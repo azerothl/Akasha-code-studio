@@ -52,6 +52,7 @@ test.beforeEach(async ({ page }) => {
             tech_stack: "React + Vite",
             git_branch: "main",
             git_worktree_clean: true,
+            git_worktree_lines: [],
           }),
         });
         return;
@@ -219,8 +220,29 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.route("**/api/tasks/**", async (route) => {
+    const url = route.request().url();
+    if (url.endsWith("/human-input") || url.endsWith("/human-reply")) {
+      await route.continue();
+      return;
+    }
     if (route.request().method() !== "GET") {
       await route.continue();
+      return;
+    }
+    if (url.includes("/events")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ events: [{ event_type: "mock", at: "2020-01-01T00:00:00Z", payload: { ok: true } }] }),
+      });
+      return;
+    }
+    if (url.includes("/studio-diff")) {
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "no_snapshot", task_id: demoId }),
+      });
       return;
     }
     await route.fulfill({
@@ -231,6 +253,10 @@ test.beforeEach(async ({ page }) => {
         status: "completed",
         assigned_agent: "studio_scaffold",
         progress: [{ progress_pct: 100, message: "Mock — tâche terminée" }],
+        suggested_actions: [
+          { id: "open-ed", label: "Ouvrir l’éditeur", kind: "ui", ui_action: "open_editor" },
+          { id: "msg-1", label: "Continuer", kind: "message", message: "Poursuivre le scaffold" },
+        ],
       }),
     });
   });
@@ -259,7 +285,7 @@ test("loads layout and lists mocked project", async ({ page }) => {
 test("loads project tech stack from metadata", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("button", { name: /Paramètres du projet/i }).click();
+  await page.getByTestId("studio-project-settings-menu").click();
   const stackArea = page.locator(".stack-textarea");
   await expect(stackArea).toBeVisible();
   await expect(stackArea).toHaveValue("React + Vite");
@@ -328,4 +354,39 @@ test("deletes file via DELETE /raw (mocked)", async ({ page }) => {
   page.once("dialog", (d) => d.accept());
   await page.getByTestId("studio-delete-file").click();
   await del;
+});
+
+test("opens Git worktree popover (empty state)", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-git-worktree-toggle").click();
+  const popover = page.getByRole("dialog", { name: /État du worktree Git/i });
+  await expect(popover).toBeVisible();
+  await expect(popover.getByText(/Aucune modification détectée/i)).toBeVisible();
+});
+
+test("opens task detail modal and shows mocked event", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const detailBtn = page.locator(".bubble.assistant").getByRole("button", { name: /Détails de la tâche/i });
+  await expect(detailBtn).toBeVisible({ timeout: 10_000 });
+  await detailBtn.click();
+  const modal = page.getByRole("dialog", { name: /Détail de la tâche/i });
+  await expect(modal).toBeVisible();
+  await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^mock$/ })).toBeVisible({ timeout: 5_000 });
+});
+
+test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const suggestionsArea = page.locator(".chat-suggestions");
+  await expect(suggestionsArea).toBeVisible({ timeout: 10_000 });
+  const messageChip = suggestionsArea.getByRole("button", { name: /Continuer/i });
+  await expect(messageChip).toBeVisible();
+  await messageChip.click();
+  await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
 });
