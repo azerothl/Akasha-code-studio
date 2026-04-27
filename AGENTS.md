@@ -27,4 +27,4 @@ Les tests Playwright **mockent** `/api/*` pour ne pas exiger un daemon réel.
 
 ## Dépôt Rust
 
-Les changements daemon vivent dans le monorepo **Akasha** (`crates/akasha-daemon` : `api_studio.rs`, `studio.rs`, `api.rs`).
+Les changements daemon vivent dans le monorepo **Akasha** (`crates/akasha-daemon` : dossier `api_studio/`, `studio.rs`, `api.rs`).
