@@ -118,6 +118,13 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | GET | `/api/tasks/:id` | Statut tâche : `task_id`, `status`, `assigned_agent`, `progress[]`, `failure_detail`, et **`suggested_actions`** (optionnel, tableau stable) : `{ "id": string, "label": string, "kind": "message" \| "ui", "message"?: string, "ui_action"?: string }`. Les `ui_action` réservés côté UI incluent au minimum `open_editor`, `open_preview`, `open_design`, `refresh_files` (les ids inconnus sont ignorés pour compatibilité avant). |
 | GET | `/api/tasks/:id/events` | `{ "events": [ { "event_type": string, "at": string, "task_id"?: string, "payload"?: any } ] }` — journal d’événements bus (délégations, outils, etc.), charge utile bornée côté daemon. |
 | GET | `/api/tasks/:id/studio-diff` | `{ "task_id", "captured_at", "files": [ { "path", "status", "diff", "truncated" } ] }` — diff texte depuis un **snapshot** pris au démarrage des tâches Code Studio **racine** ; `404` `{ "error":"no_snapshot" }` sinon (sous-tâches, tâche hors studio, etc.). |
+| GET/POST | `/api/permissions/decisions` | Centre de permissions : lister et créer des décisions persistantes (`allow_persistent` / `deny_persistent`) pour les outils sensibles. |
+| DELETE | `/api/permissions/decisions/:id` | Supprimer une décision persistante du centre de permissions. |
+| GET/POST | `/api/memory/second-brain/settings` | Contrôles mémoire (activer, pause/reprise). |
+| GET | `/api/memory/second-brain/overview` | Vue d’ensemble mémoire typée (identity/preference/goal/project/...). |
+| POST | `/api/memory/second-brain/clear` | Réinitialiser la mémoire long-terme. |
+| GET/POST | `/api/budget` | Budget tokens/coût : limite journalière, seuil d’alerte, mode auto-concis, usage courant. |
+| POST | `/api/budget/reset-session` | Reset des compteurs de budget pour une session donnée. |
 
 ### Évolutions (workflow branche)
 
