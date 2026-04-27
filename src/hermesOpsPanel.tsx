@@ -27,6 +27,7 @@ export function HermesOpsPanel() {
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [scheduleBusy, setScheduleBusy] = useState<string | null>(null);
   const [scheduleMsg, setScheduleMsg] = useState<string | null>(null);
+  const [opsHealth, setOpsHealth] = useState<string>("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,6 +64,8 @@ export function HermesOpsPanel() {
         run("GET /api/lifecycle/hooks", () => api.fetchLifecycleHooks()),
       ]);
       setBlocks(out);
+      const okCount = out.filter((x) => x.ok).length;
+      setOpsHealth(`${okCount}/${out.length} endpoints OK`);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -111,6 +114,9 @@ export function HermesOpsPanel() {
           docs/HERMES_COCKPIT.md
         </a>
         .
+      </p>
+      <p className="hint" style={{ marginBottom: "0.75rem" }}>
+        État cockpit: <strong>{opsHealth || "…"}</strong>
       </p>
 
       {schedules.length > 0 ? (
