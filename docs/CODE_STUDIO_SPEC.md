@@ -45,6 +45,10 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-DESIGN-002 | 2 | `POST /api/studio/projects/:id/design/validate` retourne findings + summary lint DESIGN.md | Fait |
 | STU-DESIGN-003 | 2 | `POST /api/message` accepte `studio_design_hint` et `studio_design_doc` (préfixes design) | Fait |
 | STU-DESIGN-004 | 3 | Merge évolution : option `design_check` bloque si lint DESIGN.md régresse | Fait |
+| STU-OPS-001 | 3 | Cockpit Hermes structuré (sections opérateur: scheduler, task runs, process watch, terminal, tools, MCP, lifecycle) avec fallback raw JSON | Fait |
+| STU-OPS-002 | 3 | Cockpit: refresh manuel + auto-refresh léger ciblé (`task_runs` + `process_watch`) | Fait |
+| STU-GIT-001 | 1 | Création projet Studio initialise automatiquement un repo Git local avec branche primaire `main` | Fait |
+| STU-GIT-002 | 1 | Reprise projet garantit l’existence d’une branche primaire (`main` ou `master`, création si absente) | Fait |
 | STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Reporté (utiliser `run_in_container` côté agent + policy) |
 | STU-012 | 3 | Proxy preview dev server | Reporté |
 | STU-013 | 8 | Application de patchs par hunk dans l’UI | Reporté |
@@ -75,9 +79,9 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 | Méthode | Chemin | Description |
 |---------|--------|-------------|
 | GET | `/api/studio/projects` | Liste `{ projects: [{ id, name, path }] }` (`name` depuis `.akasha-studio.json` ou repli `Projet xxxxxxxx`) |
-| POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` ; initialise `CODE_STUDIO_PLAN.md`, le dossier **`specs/`**, `git init` si absent |
+| POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` ; initialise `CODE_STUDIO_PLAN.md`, le dossier **`specs/`**, repo Git local et branche primaire `main` (fallback `master` selon environnement) |
 | PATCH | `/api/studio/projects/:id` | Corps : `name`, `tech_stack`, et/ou options de vérif post-tâche : `verify_skip` (bool), `verify_argv` (tableau de chaînes ou `null`), `verify_timeout_sec` (nombre 1–3600 ou `null`) |
-| GET | `/api/studio/projects/:id` | Lit méta + évolutions (`tech_stack`, champs `verify_*`). Ajoute `git_branch`, `git_worktree_clean` et **`git_worktree_lines`** (tableau borné, max 200 entrées `{ "status": string, "path": string }` dérivées de `git status --porcelain`, même source que « propre » / indicateur dirty) lorsque le dépôt Git est valide. |
+| GET | `/api/studio/projects/:id` | Lit méta + évolutions (`tech_stack`, champs `verify_*`). Garantit une branche primaire (`main`/`master`) au moment de la reprise si le dépôt Git existe. Ajoute `git_branch`, `git_worktree_clean` et **`git_worktree_lines`** (tableau borné, max 200 entrées `{ "status": string, "path": string }` dérivées de `git status --porcelain`, même source que « propre » / indicateur dirty) lorsque le dépôt Git est valide. |
 | POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, installed?, install? }`. **Windows** : `npm` est invoqué via `cmd.exe /c` (même logique que le build). Les sorties du serveur dev sont capturées pour `GET .../preview/logs`. |
 | POST | `/api/studio/projects/:id/preview/stop` | Arrête le processus dev enregistré pour ce projet (`{ ok, stopped }`). |
 | GET | `/api/studio/projects/:id/preview/logs` | `{ running, log, preview_inactive? }` — tampon borné des stdout/stderr du `npm run dev`. |
@@ -133,13 +137,14 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 |------|----------------------|
 | Liste projets | Création `POST /projects`, sélection charge fichiers + évolutions |
 | Arbre fichiers | **Uniquement dans l’onglet Éditeur** (colonne fichiers) : `GET /files` ; clic → `GET /raw` |
-| Zone centrale | Grille **50/50** (éditeur/onglets \| chat) avec modes **plein éditeur** / **plein chat** ; pas de colonne latérale gauche historique. |
-| Menus en-tête | **Projet** (créer/charger, paramètres stack & politique), **Évolutions Git**, **Import & build**, **Agent / actions** (plan, design, matrice) ; sélecteur d’agent compact dans la barre de navigation. |
+| Zone centrale | Grille **50/50** (éditeur/onglets \| chat) avec modes **plein éditeur** / **plein chat** ; pas de colonne latérale gauche historique. Onglets: **Éditeur / Aperçu / Plan / Design / Logs serveur / Cockpit**. |
+| Menus en-tête | **Projet** (créer/charger, paramètres stack & politique), **Évolutions Git**, **Import & build**, **Agent / actions** (plan, design, matrice) ; sélecteur d’agent compact + badge de statut daemon dans la barre de navigation. |
 | Éditeur | **Monaco Editor** (`@monaco-editor/react`) + liste fichiers à gauche ; thème sombre ; sauvegarde via `PUT .../raw`. Workers Monaco depuis jsDelivr (`monaco-editor@0.52.2`). |
 | Aperçu | **▶ Lancer la prévisualisation** : `POST .../preview/start` — serveur dev sur `127.0.0.1` ; **Arrêter le serveur** : `POST .../preview/stop`. Sinon, fichier `.html` ouvert : aperçu statique (blob + iframe `sandbox`). Priorité : URL serveur dev si actif, sinon blob. |
 | Barre ops | Menus **Import & build** : clone HTTPS, build argv, merge / abandon évolution |
 | Chat | `POST /api/message` avec `studio_project_id`, agent, évolution ; bulles assistant avec `task_id` → icône **détail tâche** (modal `GET /api/tasks/:id` + `GET /api/tasks/:id/events`) ; **chips** « Suggestions » alimentées par `suggested_actions` du daemon sur la dernière bulle assistant ; après fin de tâche, bloc pliable **fichiers modifiés** (`GET /api/tasks/:id/studio-diff`) sous la bulle concernée. |
 | Design | Édition `DESIGN.md`, planche visuelle (tokens), mode d’affichage **Les deux / Visuel / Source**, diagnostics, bouton **Demander à l’agent de corriger** (errors/warnings), import/export, export artefacts, auto-apply contexte design |
+| Cockpit | Vue opérateur structurée (scheduler actions, task runs, process watch, terminal, tools, MCP, lifecycle), raw JSON repliable par section, refresh manuel + auto-refresh ciblé runs/process |
 | Stack projet | Menu **Projet** : `<select>` de préréglages + « Personnalisé » ; cases à cocher ; enregistrement `PATCH` (`tech_stack`) |
 | Git worktree | Bouton **Git Δ** dans l’en-tête : tableau `git_worktree_lines` (popover). |
 | Logs build | Résultat `POST .../build` |
@@ -164,6 +169,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Liste / création projet | Playwright (mock) | Fait `e2e/smoke.spec.ts` |
 | Ouverture fichier + preview HTML | Playwright (mock) | Fait |
 | Envoi message (mock `/api/message`) | Playwright | Fait |
+| Cockpit structuré + action scheduler | Playwright (mock) | Fait |
 | Clone réel HTTPS | Manuel | À faire |
 | Build `npm` sur template | Manuel / CI optionnel | À faire |
 | Évolution + merge sans conflit | Manuel | À faire |
