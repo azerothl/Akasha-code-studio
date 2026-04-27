@@ -152,6 +152,8 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Chat | `POST /api/message` avec `studio_project_id`, agent, évolution ; bulles assistant avec `task_id` → icône **détail tâche** (modal `GET /api/tasks/:id` + `GET /api/tasks/:id/events`) ; **chips** « Suggestions » alimentées par `suggested_actions` du daemon sur la dernière bulle assistant ; après fin de tâche, bloc pliable **fichiers modifiés** (`GET /api/tasks/:id/studio-diff`) sous la bulle concernée. |
 | Design | Édition `DESIGN.md`, planche visuelle (tokens), mode d’affichage **Les deux / Visuel / Source**, diagnostics, bouton **Demander à l’agent de corriger** (errors/warnings), import/export, export artefacts, auto-apply contexte design |
 | Cockpit | Vue opérateur structurée (scheduler actions, task runs, process watch, terminal, tools, MCP, lifecycle), raw JSON repliable par section, refresh manuel + auto-refresh ciblé runs/process |
+| Trust & Access | Section opérateur pour gouvernance canal et contrôles de confiance : mode permissions (`ask_me`/`allow_all`), décisions persistantes, utilisateurs Telegram approuvés/pending et actions promote/demote/remove/reset. |
+| Skills & Plugins Trust | Afficher les métadonnées de confiance (`trust_level`, `compat_status`, `signature_status`) sur les catalogues et détails, avec fallback sûr si absent. |
 | Stack projet | Menu **Projet** : `<select>` de préréglages + « Personnalisé » ; cases à cocher ; enregistrement `PATCH` (`tech_stack`) |
 | Git worktree | Bouton **Git Δ** dans l’en-tête : tableau `git_worktree_lines` (popover). |
 | Logs build | Résultat `POST .../build` |
