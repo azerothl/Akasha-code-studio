@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
+import { clearLastProjectId, getLastProjectId, setLastProjectId } from "./lastProjectStorage";
 import {
   BASE_STACK_PRESETS,
   STACK_ADDON_GROUPS,
@@ -294,6 +295,24 @@ function isMarkdownPath(path: string | null): boolean {
   return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
 }
 
+function normalizeTraceMessage(message: string): string {
+  return message.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function dedupeProgressForTrace(
+  progress: { progress_pct: number; message: string; task_id?: string | null }[],
+  taskId: string,
+): { progress_pct: number; message: string; task_id?: string | null }[] {
+  const deduped = new Map<string, { progress_pct: number; message: string; task_id?: string | null }>();
+  for (const p of progress) {
+    const raw = (p.message ?? "").trim();
+    if (!raw) continue;
+    const k = `${p.task_id ?? taskId}\0${p.progress_pct}\0${normalizeTraceMessage(raw)}`;
+    deduped.set(k, p);
+  }
+  return Array.from(deduped.values()).sort((a, b) => a.progress_pct - b.progress_pct);
+}
+
 export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -399,12 +418,15 @@ export default function App() {
   const [designMarkdownPreview, setDesignMarkdownPreview] = useState(false);
   const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
   const [showAgentMatrix, setShowAgentMatrix] = useState(false);
-  const [showHermesOps, setShowHermesOps] = useState(false);
+  const [cockpitSectionOpen, setCockpitSectionOpen] = useState(true);
   /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
   const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
+  const chatLogRef = useRef<HTMLDivElement | null>(null);
+  const chatPinnedByUserRef = useRef(false);
+  const [chatHasUnseen, setChatHasUnseen] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
@@ -487,6 +509,29 @@ export default function App() {
   }, [refreshProjects]);
 
   useEffect(() => {
+    if (projects.length === 0) {
+      if (selectedId !== null) setSelectedId(null);
+      clearLastProjectId();
+      return;
+    }
+    if (selectedId && projects.some((p) => p.id === selectedId)) {
+      return;
+    }
+    const lastId = getLastProjectId();
+    const restoredId = lastId && projects.some((p) => p.id === lastId) ? lastId : projects[0]?.id ?? null;
+    setSelectedId(restoredId);
+    if (restoredId) setLastProjectId(restoredId);
+  }, [projects, selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      clearLastProjectId();
+      return;
+    }
+    setLastProjectId(selectedId);
+  }, [selectedId]);
+
+  useEffect(() => {
     if (!selectedId) {
       setChat([]);
       return;
@@ -494,6 +539,30 @@ export default function App() {
     skipChatSaveOnce.current = true;
     setChat(loadChatMessages(selectedId));
   }, [selectedId]);
+
+  useEffect(() => {
+    const el = chatLogRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+      chatPinnedByUserRef.current = false;
+      setChatHasUnseen(false);
+    });
+  }, [selectedId]);
+
+  useEffect(() => {
+    const el = chatLogRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
+    if (nearBottom || !chatPinnedByUserRef.current) {
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+      setChatHasUnseen(false);
+      return;
+    }
+    setChatHasUnseen(true);
+  }, [chat, taskTrace?.line]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -1349,7 +1418,8 @@ export default function App() {
             return;
           }
 
-          const last = t.progress?.length ? t.progress[t.progress.length - 1] : undefined;
+          const traceProgress = dedupeProgressForTrace(t.progress ?? [], taskId);
+          const last = traceProgress.length ? traceProgress[traceProgress.length - 1] : undefined;
           const lastMsg = last?.message?.trim() ?? "";
           const fd = (t.failure_detail ?? "").trim();
           const useFailureDetail =
@@ -1361,8 +1431,7 @@ export default function App() {
             : last
               ? `${last.progress_pct}% — ${last.message}`
               : formatTaskStatusFr(t.status);
-          const rawProgress = t.progress ?? [];
-          const progressChips = rawProgress
+          const progressChips = traceProgress
             .filter((p) => p.message && !isStubProgressMessage(p.message))
             .slice(-12)
             .map((p) => {
@@ -2321,10 +2390,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
               </button>
               {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
-              <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => setShowHermesOps((v) => !v)}>
-                {showHermesOps ? "Masquer" : "Afficher"} le cockpit daemon (schedules, runs, tools…)
-              </button>
-              {showHermesOps ? <HermesOpsPanel /> : null}
             </div>
           ) : null}
         </div>
@@ -2370,6 +2435,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
       <div className={appMainClass}>
       <div className="center">
+        <CollapsiblePanel
+          className="cockpit-dedicated-panel"
+          title="Cockpit Hermes"
+          open={cockpitSectionOpen}
+          onToggle={() => setCockpitSectionOpen((v) => !v)}
+        >
+          <p className="hint">
+            Vue opérateur dédiée: scheduler, task runs, outils effectifs, terminal/PTy, mémoire, MCP et lifecycle.
+          </p>
+          <HermesOpsPanel />
+        </CollapsiblePanel>
 
         <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design ou logs">
           <button
@@ -2978,7 +3054,32 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="pane-title pane-title--compact">Conversation</div>
-            <div className="chat-log">
+            {chatHasUnseen ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm chat-unseen-btn"
+                onClick={() => {
+                  const el = chatLogRef.current;
+                  if (!el) return;
+                  el.scrollTop = el.scrollHeight;
+                  chatPinnedByUserRef.current = false;
+                  setChatHasUnseen(false);
+                }}
+              >
+                Nouveaux messages — aller en bas
+              </button>
+            ) : null}
+            <div
+              className="chat-log"
+              ref={chatLogRef}
+              onScroll={() => {
+                const el = chatLogRef.current;
+                if (!el) return;
+                const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
+                chatPinnedByUserRef.current = !nearBottom;
+                if (nearBottom) setChatHasUnseen(false);
+              }}
+            >
               {chat.map((m, i) => (
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">

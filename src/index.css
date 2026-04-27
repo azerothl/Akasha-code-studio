@@ -138,6 +138,15 @@ kbd {
   display: none;
 }
 
+.cockpit-dedicated-panel {
+  margin: 0.65rem 0.65rem 0.25rem;
+}
+
+.chat-unseen-btn {
+  align-self: flex-end;
+  margin: 0 0.45rem 0.45rem auto;
+}
+
 .app-header {
   grid-column: 1 / -1;
   padding: 0.85rem 1.25rem;
@@ -660,6 +669,30 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+}
+
+.task-detail-events-category {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.task-detail-events-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-detail-events-category-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.task-detail-events-category-count {
+  font-size: 0.76rem;
 }
 
 .task-detail-event-group {
