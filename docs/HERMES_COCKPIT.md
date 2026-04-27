@@ -6,7 +6,7 @@ Goal: surface **long-running jobs**, **logs**, **RAG status**, **worktrees**, an
 
 | Area | HTTP (examples) | UI idea |
 |------|-----------------|--------|
-| Jobs / scheduler | `GET /api/schedules`, `GET /api/task_runs`, `POST .../run-now` | Panel liste + actions pause/resume |
+| Jobs / scheduler | `GET /api/schedules`, `GET /api/task_runs`, `POST /api/schedules/{id}/run_now` | Panel liste + actions pause/resume |
 | Process watch | `GET /api/process/watch/recent?limit=50` | Toast / liste fins de commandes background |
 | Terminal | `GET /api/terminal/capabilities` | Afficher mode actuel vs PTY planifié |
 | Tools | `GET /api/tools/effective` | Badge politique par session |

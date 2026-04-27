@@ -53,14 +53,36 @@ export function HermesOpsPanel() {
     setLoading(true);
     setErr(null);
     try {
-      const schedulesPayload = await api.fetchSchedulesPayload().catch(() => ({ schedules: [] }));
-      const taskRunsPayload = await api.fetchTaskRunsPayload().catch(() => ({ task_runs: [] }));
-      const processPayload = await api.fetchProcessWatchRecent(30).catch(() => ({ events: [] }));
-      const terminalPayload = await api.fetchTerminalCapabilities().catch(() => ({}));
-      const toolsPayload = await api.fetchToolsEffective().catch(() => ({}));
-      const mcpStatusPayload = await api.fetchMcpStatus().catch(() => ({}));
-      const mcpRuntimePayload = await api.fetchMcpRuntime().catch(() => ({}));
-      const lifecyclePayload = await api.fetchLifecycleHooks().catch(() => ({}));
+      const [
+        schedulesSection,
+        taskRunsSection,
+        processSection,
+        terminalSection,
+        toolsSection,
+        memorySection,
+        mcpStatusSection,
+        mcpRuntimeSection,
+        lifecycleSection,
+      ] = await Promise.all([
+        fetchSection("GET /api/schedules", () => api.fetchSchedulesPayload()),
+        fetchSection("GET /api/task_runs", () => api.fetchTaskRunsPayload()),
+        fetchSection("GET /api/process/watch/recent", () => api.fetchProcessWatchRecent(30)),
+        fetchSection("GET /api/terminal/capabilities", () => api.fetchTerminalCapabilities()),
+        fetchSection("GET /api/tools/effective", () => api.fetchToolsEffective()),
+        fetchSection("GET /api/memory/recall-metrics", () => api.fetchMemoryRecallMetrics()),
+        fetchSection("GET /api/mcp/status", () => api.fetchMcpStatus()),
+        fetchSection("GET /api/mcp/runtime", () => api.fetchMcpRuntime()),
+        fetchSection("GET /api/lifecycle/hooks", () => api.fetchLifecycleHooks()),
+      ]);
+
+      const schedulesPayload = schedulesSection.ok ? schedulesSection.payload : { schedules: [] };
+      const taskRunsPayload = taskRunsSection.ok ? taskRunsSection.payload : { task_runs: [] };
+      const processPayload = processSection.ok ? processSection.payload : { events: [] };
+      const terminalPayload = terminalSection.ok ? terminalSection.payload : {};
+      const toolsPayload = toolsSection.ok ? toolsSection.payload : {};
+      const mcpStatusPayload = mcpStatusSection.ok ? mcpStatusSection.payload : {};
+      const mcpRuntimePayload = mcpRuntimeSection.ok ? mcpRuntimeSection.payload : {};
+      const lifecyclePayload = lifecycleSection.ok ? lifecycleSection.payload : {};
 
       setSchedules(api.parseSchedulesPayload(schedulesPayload));
       setTaskRuns(api.parseTaskRunsPayload(taskRunsPayload));
@@ -70,17 +92,17 @@ export function HermesOpsPanel() {
       setMcp(api.parseMcpSummary(mcpStatusPayload, mcpRuntimePayload));
       setLifecycle(api.parseLifecycleHooksPayload(lifecyclePayload));
 
-      const out = await Promise.all([
-        fetchSection("GET /api/schedules", async () => schedulesPayload),
-        fetchSection("GET /api/task_runs", async () => taskRunsPayload),
-        fetchSection("GET /api/process/watch/recent", async () => processPayload),
-        fetchSection("GET /api/terminal/capabilities", async () => terminalPayload),
-        fetchSection("GET /api/tools/effective", async () => toolsPayload),
-        fetchSection("GET /api/memory/recall-metrics", () => api.fetchMemoryRecallMetrics()),
-        fetchSection("GET /api/mcp/status", async () => mcpStatusPayload),
-        fetchSection("GET /api/mcp/runtime", async () => mcpRuntimePayload),
-        fetchSection("GET /api/lifecycle/hooks", async () => lifecyclePayload),
-      ]);
+      const out = [
+        schedulesSection,
+        taskRunsSection,
+        processSection,
+        terminalSection,
+        toolsSection,
+        memorySection,
+        mcpStatusSection,
+        mcpRuntimeSection,
+        lifecycleSection,
+      ];
       setRawSections(out);
       const okCount = out.filter((x) => x.ok).length;
       setOpsHealth(`${okCount}/${out.length} endpoints OK`);
