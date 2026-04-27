@@ -527,7 +527,6 @@ export default function App() {
   useEffect(() => {
     if (projects.length === 0) {
       if (selectedId !== null) setSelectedId(null);
-      clearLastProjectId();
       return;
     }
     if (selectedId && projects.some((p) => p.id === selectedId)) {
