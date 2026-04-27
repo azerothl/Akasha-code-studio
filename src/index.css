@@ -138,10 +138,6 @@ kbd {
   display: none;
 }
 
-.cockpit-dedicated-panel {
-  margin: 0.65rem 0.65rem 0.25rem;
-}
-
 .chat-unseen-btn {
   align-self: flex-end;
   margin: 0 0.45rem 0.45rem auto;
@@ -166,6 +162,46 @@ kbd {
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.daemon-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.18rem 0.52rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.daemon-status-badge::before {
+  content: "";
+  width: 0.46rem;
+  height: 0.46rem;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.daemon-status-badge--up {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.daemon-status-badge--up::before {
+  background: #10b981;
+}
+
+.daemon-status-badge--down {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.42);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.daemon-status-badge--down::before {
+  background: #ef4444;
 }
 
 .app-header-studio-actions {
@@ -374,8 +410,53 @@ kbd {
 }
 
 .header-agent-select {
-  font-size: 0.72rem;
-  max-width: 12rem;
+  font-size: 0.74rem;
+  max-width: 13rem;
+  width: clamp(8.2rem, 16vw, 13rem);
+  min-height: 1.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--akasha-btn-secondary-border);
+  background: var(--akasha-bg-elevated);
+  color: var(--akasha-text);
+  padding: 0.24rem 1.8rem 0.24rem 0.55rem;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--akasha-text-muted) 50%),
+    linear-gradient(135deg, var(--akasha-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 13px) calc(50% - 2px),
+    calc(100% - 8px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.header-agent-select:hover,
+.header-agent-select:focus {
+  border-color: var(--akasha-accent);
+  outline: none;
+}
+
+.header-agent-inline {
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.header-agent-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--akasha-text-muted);
+}
+
+.header-daemon-status {
+  margin-left: 0.1rem;
+}
+
+@media (max-width: 1100px) {
+  .header-agent-select {
+    width: clamp(7.2rem, 14vw, 10.5rem);
+    max-width: 10.5rem;
+  }
 }
 
 .split-toolbar {

@@ -125,6 +125,14 @@ async function mockStudioBase(page: Page) {
       body: JSON.stringify({ pending: [] }),
     });
   });
+
+  await page.route("**/api/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok", version: "0.0.0-e2e" }),
+    });
+  });
 }
 
 test.beforeEach(async ({ page }) => {

@@ -335,7 +335,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design">("editor");
+  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design" | "cockpit">("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -418,9 +418,9 @@ export default function App() {
   const [designMarkdownPreview, setDesignMarkdownPreview] = useState(false);
   const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
   const [showAgentMatrix, setShowAgentMatrix] = useState(false);
-  const [cockpitSectionOpen, setCockpitSectionOpen] = useState(true);
   /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
   const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
+  const [daemonStatus, setDaemonStatus] = useState<api.DaemonStatus>({ ok: false, label: "Vérification…" });
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
@@ -507,6 +507,22 @@ export default function App() {
   useEffect(() => {
     void refreshProjects();
   }, [refreshProjects]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      const next = await api.fetchDaemonStatus();
+      if (!cancelled) setDaemonStatus(next);
+    };
+    void refresh();
+    const timer = window.setInterval(() => {
+      void refresh();
+    }, 10_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     if (projects.length === 0) {
@@ -2118,7 +2134,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   data-testid="studio-load-project"
                   onClick={() => {
                     setOpenHeaderMenu(null);
-                    setModalLoadOpen(true);
+                    void (async () => {
+                      await refreshProjects();
+                      setModalLoadOpen(true);
+                    })();
                   }}
                 >
                   Charger un projet
@@ -2395,7 +2414,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <label className="field-inline header-agent-inline">
-          <span>Rôle</span>
+          <span className="header-agent-label">Rôle agent</span>
           <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
             {AGENT_OPTIONS.map((o) => (
               <option key={o.value || "auto"} value={o.value}>
@@ -2404,6 +2423,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             ))}
           </select>
         </label>
+        <span
+          className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
+          title={daemonStatus.detail ?? "Statut du daemon Akasha"}
+          aria-label="Statut du daemon"
+        >
+          Daemon {daemonStatus.label}
+        </span>
 
         <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
           <button
@@ -2435,19 +2461,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
       <div className={appMainClass}>
       <div className="center">
-        <CollapsiblePanel
-          className="cockpit-dedicated-panel"
-          title="Cockpit Hermes"
-          open={cockpitSectionOpen}
-          onToggle={() => setCockpitSectionOpen((v) => !v)}
-        >
-          <p className="hint">
-            Vue opérateur dédiée: scheduler, task runs, outils effectifs, terminal/PTy, mémoire, MCP et lifecycle.
-          </p>
-          <HermesOpsPanel />
-        </CollapsiblePanel>
-
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design ou logs">
+        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design, cockpit ou logs">
           <button
             type="button"
             role="tab"
@@ -2492,6 +2506,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             onClick={() => setCenterTab("logs")}
           >
             Logs serveur
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "cockpit"}
+            className={`center-tab ${centerTab === "cockpit" ? "active" : ""}`}
+            onClick={() => setCenterTab("cockpit")}
+          >
+            Cockpit
           </button>
         </div>
         {centerTab === "editor" ? (
@@ -2870,6 +2893,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 )}
               </>
             )}
+          </div>
+        ) : centerTab === "cockpit" ? (
+          <div className="center-body preview-pane preview-pane--cockpit">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Cockpit Hermes</span>
+              <p className="hint preview-logs-hint">
+                Vue opérateur: scheduler, task runs, process watch, terminal/PTy, outils, mémoire, MCP et lifecycle.
+              </p>
+            </div>
+            <HermesOpsPanel />
           </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">

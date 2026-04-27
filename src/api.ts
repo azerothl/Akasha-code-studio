@@ -578,6 +578,32 @@ export async function fetchLifecycleHooks(): Promise<unknown> {
   return r.json();
 }
 
+export type DaemonStatus = {
+  ok: boolean;
+  label: string;
+  detail?: string;
+};
+
+/** Lightweight daemon health probe for header badge. */
+export async function fetchDaemonStatus(): Promise<DaemonStatus> {
+  try {
+    const r = await fetch(api("/api/status"));
+    if (!r.ok) return { ok: false, label: "Hors ligne", detail: `HTTP ${r.status}` };
+    const text = (await r.text()).trim();
+    if (!text) return { ok: true, label: "En ligne" };
+    try {
+      const j = JSON.parse(text) as Record<string, unknown>;
+      const status = typeof j.status === "string" ? j.status : "ok";
+      const version = typeof j.version === "string" ? j.version : null;
+      return { ok: true, label: "En ligne", detail: version ? `${status} · v${version}` : status };
+    } catch {
+      return { ok: true, label: "En ligne", detail: text.slice(0, 80) };
+    }
+  } catch (e) {
+    return { ok: false, label: "Hors ligne", detail: String(e) };
+  }
+}
+
 /** Pause / resume / run-now — `POST /api/schedules/{id}/{pause|resume|run_now}` (daemon Hermes parity). */
 export async function postScheduleControl(
   scheduleId: string,

@@ -372,6 +372,14 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ present: false, executed_phases: ["on_schedule_fire"] }),
     });
   });
+
+  await page.route("**/api/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok", version: "0.0.0-e2e" }),
+    });
+  });
 });
 
 async function selectDemoProject(page: Page) {
@@ -504,7 +512,8 @@ test("shows suggested action chips and clicking message chip fills input", async
 test("shows Hermes cockpit in dedicated section and endpoint blocks", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  const panel = page.locator(".cockpit-dedicated-panel .hermes-ops-panel");
+  await page.getByRole("tab", { name: /^Cockpit$/i }).click();
+  const panel = page.locator(".preview-pane--cockpit .hermes-ops-panel");
   await expect(panel).toBeVisible({ timeout: 5_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/schedules" })).toBeVisible({ timeout: 8_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/tools/effective" })).toBeVisible();
