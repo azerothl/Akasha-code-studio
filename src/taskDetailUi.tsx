@@ -153,6 +153,47 @@ export function eventTypeDataAttr(eventType: string): string {
   return normalizeEventTypeSlug(eventType);
 }
 
+function normalizeSemanticText(text: string): string {
+  return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function semanticEventPayloadKey(ev: TaskEventEntry): string {
+  const o = payloadObject(ev.payload);
+  const direct = [
+    payloadString(ev.payload, "tool_call_id"),
+    payloadString(ev.payload, "tool_name"),
+    payloadString(ev.payload, "tool"),
+    payloadString(ev.payload, "name"),
+    payloadString(ev.payload, "agent"),
+    payloadString(ev.payload, "agent_type"),
+    payloadString(ev.payload, "subtask_id"),
+    payloadString(ev.payload, "task_id"),
+    payloadString(ev.payload, "step_id"),
+    payloadString(ev.payload, "command"),
+    payloadString(ev.payload, "path"),
+    payloadString(ev.payload, "status"),
+  ]
+    .filter(Boolean)
+    .join("|");
+  if (direct) return direct;
+  const display = extractEventDisplayMessage(ev.payload);
+  if (display) return normalizeSemanticText(display).slice(0, 220);
+  if (!o) return "";
+  const stable = JSON.stringify(o);
+  return stable.length > 280 ? stable.slice(0, 280) : stable;
+}
+
+type EventCategory = "subagents" | "tools" | "other";
+
+function categoryForEventType(eventType: string): EventCategory {
+  const t = eventType.toLowerCase();
+  if (t.includes("tool")) return "tools";
+  if (t.includes("sub_agent") || t.includes("subtask") || t.includes("task_decomposed") || t.includes("task_created")) {
+    return "subagents";
+  }
+  return "other";
+}
+
 function extractFromContentArray(content: unknown): string | null {
   if (!Array.isArray(content)) return null;
   const parts: string[] = [];
@@ -230,12 +271,12 @@ type TaskDetailEventRowProps = {
   hideTypeBadge?: boolean;
 };
 
-/** Une entrée par couple (`event_type`, `task_id`) : garde le dernier événement (ordre `at`), pour absorber le stream. */
+/** Une entrée par couple (`event_type`, `task_id`, clé sémantique payload) : garde le dernier événement (ordre `at`). */
 export function dedupeEventsLastPerTaskAndType(events: TaskEventEntry[], rootTaskId: string): TaskEventEntry[] {
   const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
   const last = new Map<string, TaskEventEntry>();
   for (const ev of sorted) {
-    const k = `${ev.event_type}\0${eventTaskKey(ev, rootTaskId)}`;
+    const k = `${ev.event_type}\0${eventTaskKey(ev, rootTaskId)}\0${semanticEventPayloadKey(ev)}`;
     last.set(k, ev);
   }
   return Array.from(last.values()).sort((a, b) => a.at.localeCompare(b.at));
@@ -462,29 +503,50 @@ export function TaskDetailWorkflowView({
 }
 
 export function TaskDetailEventsGrouped({ events, rootTaskId }: TaskDetailEventsGroupedProps) {
-  const groups = useMemo(() => {
+  const categories = useMemo(() => {
     const deduped = dedupeEventsLastPerTaskAndType(events, rootTaskId);
-    return groupEventsByTypeInOrder(deduped);
+    const groupedByType = groupEventsByTypeInOrder(deduped);
+    const entries: { key: EventCategory; title: string; groups: { eventType: string; items: TaskEventEntry[] }[] }[] = [
+      { key: "subagents", title: "Sous-agents", groups: [] },
+      { key: "tools", title: "Outils", groups: [] },
+      { key: "other", title: "Autres événements", groups: [] },
+    ];
+    for (const g of groupedByType) {
+      const cat = categoryForEventType(g.eventType);
+      entries.find((e) => e.key === cat)?.groups.push(g);
+    }
+    return entries.filter((e) => e.groups.length > 0);
   }, [events, rootTaskId]);
   return (
     <div className="task-detail-events-grouped">
-      {groups.map(({ eventType, items }) => {
-        const slug = eventTypeDataAttr(eventType);
+      {categories.map((category) => {
+        const total = category.groups.reduce((sum, g) => sum + g.items.length, 0);
         return (
-          <section key={eventType} className="task-detail-event-group" data-event-type={slug}>
-            <header className="task-detail-event-group-head">
-              <span className="task-detail-event-group-title">{eventType}</span>
-              <span className="hint task-detail-event-group-count">{items.length}</span>
+          <section key={category.key} className="task-detail-events-category" data-event-category={category.key}>
+            <header className="task-detail-events-category-head">
+              <span className="task-detail-events-category-title">{category.title}</span>
+              <span className="hint task-detail-events-category-count">{total}</span>
             </header>
-            <ul className="task-detail-events task-detail-events--in-group">
-              {items.map((ev) => (
-                <TaskDetailEventRow
-                  key={`ev-${eventType}-${eventTaskKey(ev, rootTaskId)}-${ev.at}`}
-                  ev={ev}
-                  hideTypeBadge
-                />
-              ))}
-            </ul>
+            {category.groups.map(({ eventType, items }) => {
+              const slug = eventTypeDataAttr(eventType);
+              return (
+                <section key={eventType} className="task-detail-event-group" data-event-type={slug}>
+                  <header className="task-detail-event-group-head">
+                    <span className="task-detail-event-group-title">{eventType}</span>
+                    <span className="hint task-detail-event-group-count">{items.length}</span>
+                  </header>
+                  <ul className="task-detail-events task-detail-events--in-group">
+                    {items.map((ev) => (
+                      <TaskDetailEventRow
+                        key={`ev-${eventType}-${eventTaskKey(ev, rootTaskId)}-${semanticEventPayloadKey(ev)}-${ev.at}`}
+                        ev={ev}
+                        hideTypeBadge
+                      />
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
           </section>
         );
       })}
