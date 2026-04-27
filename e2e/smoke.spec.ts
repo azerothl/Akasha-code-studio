@@ -431,6 +431,15 @@ test("loads layout and lists mocked project", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Démo E2E/i })).toBeVisible();
 });
 
+test("opens integrated documentation tab", async ({ page }) => {
+  await page.goto("/");
+  const docTab = page.getByTestId("studio-doc-tab");
+  await expect(docTab).toBeVisible();
+  await docTab.click();
+  await expect(page.getByTestId("studio-doc-tab")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("studio-doc-content")).toContainText("Akasha Code Studio");
+});
+
 test("loads project tech stack from metadata", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);

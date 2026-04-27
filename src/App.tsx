@@ -335,7 +335,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design" | "cockpit">("editor");
+  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design" | "cockpit" | "docs">("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -421,6 +421,9 @@ export default function App() {
   /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
   const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
   const [daemonStatus, setDaemonStatus] = useState<api.DaemonStatus>({ ok: false, label: "Vérification…" });
+  const [userGuideDoc, setUserGuideDoc] = useState("");
+  const [userGuideLoading, setUserGuideLoading] = useState(false);
+  const [userGuideError, setUserGuideError] = useState<string | null>(null);
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
@@ -434,6 +437,28 @@ export default function App() {
   );
   const parsedDesignDoc = useMemo(() => parseDesignDoc(designDocText), [designDocText]);
   const designHint = useMemo(() => buildDesignPolicyHint(parsedDesignDoc), [parsedDesignDoc]);
+  const userGuideToc = useMemo(() => {
+    if (!userGuideDoc) return [];
+    return userGuideDoc
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => /^#{1,3}\s+/.test(line))
+      .map((line) => {
+        const match = /^(#{1,3})\s+(.+)$/.exec(line);
+        if (!match) return null;
+        const level = match[1].length;
+        const label = match[2].trim();
+        const id = label
+          .toLowerCase()
+          .replace(/[`*_~()[\]{}<>]/g, "")
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+        return { level, label, id };
+      })
+      .filter((item): item is { level: number; label: string; id: string } => Boolean(item?.id));
+  }, [userGuideDoc]);
 
   const composedStack = useMemo(
     () => composeStackString(stackPresetId, stackCustomText, stackAddons),
@@ -1608,6 +1633,33 @@ export default function App() {
     };
   }, [selectedId, centerTab]);
 
+  useEffect(() => {
+    if (centerTab !== "docs") return;
+    if (userGuideDoc.trim()) return;
+    let cancelled = false;
+    setUserGuideLoading(true);
+    setUserGuideError(null);
+    void fetch("/docs/USER_GUIDE.md")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Unable to load documentation (${res.status})`);
+        return res.text();
+      })
+      .then((text) => {
+        if (cancelled) return;
+        setUserGuideDoc(text);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setUserGuideError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setUserGuideLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [centerTab, userGuideDoc]);
+
   const onRegeneratePlan = useCallback(async () => {
     if (!selectedId) return;
     const msg = `[Tâche Code Studio — plan projet (réinitialisation / complétion)]
@@ -2472,7 +2524,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
       <div className={appMainClass}>
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design, cockpit ou logs">
+        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design, cockpit, documentation ou logs">
           <button
             type="button"
             role="tab"
@@ -2526,6 +2578,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             onClick={() => setCenterTab("cockpit")}
           >
             Cockpit
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={centerTab === "docs"}
+            className={`center-tab ${centerTab === "docs" ? "active" : ""}`}
+            onClick={() => setCenterTab("docs")}
+            data-testid="studio-doc-tab"
+          >
+            Documentation
           </button>
         </div>
         {centerTab === "editor" ? (
@@ -2914,6 +2976,49 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </p>
             </div>
             <HermesOpsPanel />
+          </div>
+        ) : centerTab === "docs" ? (
+          <div className="center-body plan-pane docs-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">User documentation</span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => void window.open("/docs/USER_GUIDE.md", "_blank", "noopener,noreferrer")}
+              >
+                Open raw markdown
+              </button>
+            </div>
+            <p className="hint plan-pane-hint">
+              End-user guide rendered directly inside Code Studio, with the application visual theme.
+            </p>
+            {userGuideLoading ? (
+              <p className="hint">Loading documentation…</p>
+            ) : userGuideError ? (
+              <div className="banner banner-error" role="alert">
+                Failed to load documentation: {userGuideError}
+              </div>
+            ) : (
+              <div className="docs-pane-layout">
+                <aside className="docs-pane-toc" aria-label="Documentation table of contents">
+                  <h3>On this page</h3>
+                  {userGuideToc.length > 0 ? (
+                    <ul className="docs-pane-toc-list">
+                      {userGuideToc.map((item) => (
+                        <li key={`${item.id}-${item.level}`} data-level={item.level}>
+                          <a href={`#${item.id}`}>{item.label}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="hint">No sections found.</p>
+                  )}
+                </aside>
+                <div className="docs-pane-content markdown-doc-preview" data-testid="studio-doc-content">
+                  <MarkdownBlock text={userGuideDoc} className="md-content" />
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">
