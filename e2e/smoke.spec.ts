@@ -233,7 +233,28 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ events: [{ event_type: "mock", at: "2020-01-01T00:00:00Z", payload: { ok: true } }] }),
+        body: JSON.stringify({
+          events: [
+            {
+              event_type: "sub_agent_spawned",
+              at: "2020-01-01T00:00:00Z",
+              task_id: `${demoId}-sub-1`,
+              payload: { task_id: `${demoId}-sub-1`, agent_type: "studio_frontend", step_id: "1" },
+            },
+            {
+              event_type: "tool_call",
+              at: "2020-01-01T00:00:01Z",
+              task_id: `${demoId}-sub-1`,
+              payload: { tool_name: "read_file", path: "index.html" },
+            },
+            {
+              event_type: "tool_call",
+              at: "2020-01-01T00:00:02Z",
+              task_id: `${demoId}-sub-1`,
+              payload: { tool_name: "read_file", path: "index.html" },
+            },
+          ],
+        }),
       });
       return;
     }
@@ -252,7 +273,12 @@ test.beforeEach(async ({ page }) => {
         task_id: demoId,
         status: "completed",
         assigned_agent: "studio_scaffold",
-        progress: [{ progress_pct: 100, message: "Mock — tâche terminée" }],
+        progress: [
+          { progress_pct: 60, message: "Analyse du dépôt", task_id: demoId },
+          { progress_pct: 60, message: "Analyse du dépôt", task_id: demoId },
+          { progress_pct: 100, message: "Mock — tâche terminée", task_id: demoId },
+          { progress_pct: 100, message: "Mock — tâche terminée", task_id: demoId },
+        ],
         suggested_actions: [
           { id: "open-ed", label: "Ouvrir l’éditeur", kind: "ui", ui_action: "open_editor" },
           { id: "msg-1", label: "Continuer", kind: "message", message: "Poursuivre le scaffold" },
@@ -455,7 +481,11 @@ test("opens task detail modal and shows mocked event", async ({ page }) => {
   await detailBtn.click();
   const modal = page.getByRole("dialog", { name: /Détail de la tâche/i });
   await expect(modal).toBeVisible();
-  await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^mock$/ })).toBeVisible({ timeout: 5_000 });
+  await expect(modal.locator(".task-detail-events-category-title").filter({ hasText: /^Sous-agents$/ })).toBeVisible({
+    timeout: 5_000,
+  });
+  await expect(modal.locator(".task-detail-events-category-title").filter({ hasText: /^Outils$/ })).toBeVisible();
+  await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^tool_call$/ })).toBeVisible();
 });
 
 test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {
@@ -471,16 +501,22 @@ test("shows suggested action chips and clicking message chip fills input", async
   await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
 });
 
-test("opens Hermes cockpit panel and shows endpoint blocks", async ({ page }) => {
+test("shows Hermes cockpit in dedicated section and endpoint blocks", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("button", { name: /Agent \/ actions/i }).click();
-  await page.getByRole("button", { name: /Afficher le cockpit daemon/i }).click();
-  const panel = page.locator(".hermes-ops-panel");
+  const panel = page.locator(".cockpit-dedicated-panel .hermes-ops-panel");
   await expect(panel).toBeVisible({ timeout: 5_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/schedules" })).toBeVisible({ timeout: 8_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/tools/effective" })).toBeVisible();
   await expect(panel.locator("details").filter({ hasText: "GET /api/memory/recall-metrics" })).toBeVisible();
   await expect(panel.locator("details").filter({ hasText: "GET /api/mcp/status" })).toBeVisible();
   await expect(panel.locator("details").filter({ hasText: "GET /api/mcp/runtime" })).toBeVisible();
+});
+
+test("restores last selected project from localStorage", async ({ page }) => {
+  await page.addInitScript((id) => {
+    localStorage.setItem("akasha-code-studio:last-project-id", id as string);
+  }, demoId);
+  await page.goto("/");
+  await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
 });

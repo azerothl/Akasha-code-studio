@@ -15,9 +15,17 @@ Goal: surface **long-running jobs**, **logs**, **RAG status**, **worktrees**, an
 | MCP (statut disque) | `GET /api/mcp/status` | Résumé `mcp.json` + validité schéma |
 | Lifecycle hooks | `GET /api/lifecycle/hooks` | Résumé `lifecycle_hooks.json` |
 
-## Implémenté (cockpit brut)
+## Implémenté (cockpit dédié)
 
-Dans l’UI Code Studio : menu **Agent / actions** → **Afficher le cockpit daemon** — appelle en lecture les endpoints ci-dessus (schedules, task_runs, process watch, terminal capabilities, tools effective, recall-metrics, mcp/status, lifecycle/hooks), affiche le JSON et propose un **tableau d’actions** pause / reprise / exécution immédiate par planning lorsque `GET /api/schedules` renvoie des entrées (voir `src/hermesOpsPanel.tsx`).
+Dans l’UI Code Studio, le cockpit Hermes est maintenant affiché dans une **section dédiée** du layout principal (panneau "Cockpit Hermes", repliable localement).  
+Cette section appelle en lecture les endpoints ci-dessus (schedules, task_runs, process watch, terminal capabilities, tools effective, recall-metrics, mcp/status, lifecycle/hooks), affiche le JSON et propose un **tableau d’actions** pause / reprise / exécution immédiate par planning lorsque `GET /api/schedules` renvoie des entrées (voir `src/hermesOpsPanel.tsx`).
+
+## UX complémentaires alignées Hermes
+
+- **Reprise du dernier projet**: l’ID du dernier projet sélectionné est persisté localement et réappliqué au démarrage si le projet existe encore.
+- **Conversation**: le panneau chat s’ouvre en bas (dernier message visible), avec garde-fou si l’utilisateur scrolle manuellement (bouton "Nouveaux messages — aller en bas").
+- **Détail tâche**: les événements sont regroupés explicitement en sections **Sous-agents**, **Outils** et **Autres événements**.
+- **Anti-dup streaming**: les répétitions d’événements et de progressions dues au streaming sont dédupliquées sur clé sémantique pour éviter des bulles redondantes.
 
 ## Existing Code Studio docs
 

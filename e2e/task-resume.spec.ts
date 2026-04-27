@@ -164,15 +164,12 @@ test.beforeEach(async ({ page }) => {
 
 test("reload resumes polling until task completes", async ({ page }) => {
   await page.goto("/");
-  await page.getByTestId("studio-load-project").click();
-  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
   await page.locator(".chat-form textarea").fill("resume e2e");
   await page.getByRole("button", { name: "Envoyer" }).click();
   await expect(page.getByText(/Requête acceptée|Tâche en cours|en cours/i).first()).toBeVisible({ timeout: 8000 });
   await page.reload();
-  // L’UI ne persiste pas encore le projet sélectionné : même flux qu’un utilisateur qui rouvre le projet.
-  await page.getByTestId("studio-load-project").click();
-  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
   await expect(page.getByText(/reprise après rechargement|Mock — en cours|terminé/i).first()).toBeVisible({
     timeout: 12_000,
   });
