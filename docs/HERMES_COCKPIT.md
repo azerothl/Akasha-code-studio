@@ -15,10 +15,25 @@ Goal: surface **long-running jobs**, **logs**, **RAG status**, **worktrees**, an
 | MCP (statut disque) | `GET /api/mcp/status` | Résumé `mcp.json` + validité schéma |
 | Lifecycle hooks | `GET /api/lifecycle/hooks` | Résumé `lifecycle_hooks.json` |
 
-## Implémenté (cockpit dédié)
+## Implémenté (cockpit structuré)
 
-Dans l’UI Code Studio, le cockpit Hermes est maintenant affiché dans une **section dédiée** du layout principal (panneau "Cockpit Hermes", repliable localement).  
-Cette section appelle en lecture les endpoints ci-dessus (schedules, task_runs, process watch, terminal capabilities, tools effective, recall-metrics, mcp/status, lifecycle/hooks), affiche le JSON et propose un **tableau d’actions** pause / reprise / exécution immédiate par planning lorsque `GET /api/schedules` renvoie des entrées (voir `src/hermesOpsPanel.tsx`).
+Dans l’UI Code Studio, le cockpit Hermes est affiché dans l’onglet central **Cockpit**.  
+La vue est maintenant structurée en sections opérateur actionnables:
+
+- **Task runs** (`GET /api/task_runs`) — liste condensée des exécutions récentes.
+- **Process watch** (`GET /api/process/watch/recent`) — flux récent avec état succès/erreur.
+- **Terminal** (`GET /api/terminal/capabilities`) — résumé mode courant / PTY / shells.
+- **Tools effective** (`GET /api/tools/effective`) — profil actif + compteurs allow/approval/deny.
+- **MCP** (`GET /api/mcp/status` + `GET /api/mcp/runtime`) — statut config/runtime + OAuth mode.
+- **Lifecycle hooks** (`GET /api/lifecycle/hooks`) — sandbox, timeout, phases exécutées.
+- **Scheduler actions** (`GET /api/schedules` + `POST /api/schedules/{id}/{pause|resume|run_now}`).
+
+Chaque section conserve un **fallback Raw JSON** repliable pour diagnostic.
+
+Le cockpit inclut aussi:
+
+- un bouton **Rafraîchir** (rechargement complet),
+- un mode **auto-refresh léger** (runs + process watch uniquement).
 
 ## UX complémentaires alignées Hermes
 
@@ -26,6 +41,13 @@ Cette section appelle en lecture les endpoints ci-dessus (schedules, task_runs, 
 - **Conversation**: le panneau chat s’ouvre en bas (dernier message visible), avec garde-fou si l’utilisateur scrolle manuellement (bouton "Nouveaux messages — aller en bas").
 - **Détail tâche**: les événements sont regroupés explicitement en sections **Sous-agents**, **Outils** et **Autres événements**.
 - **Anti-dup streaming**: les répétitions d’événements et de progressions dues au streaming sont dédupliquées sur clé sémantique pour éviter des bulles redondantes.
+
+## Recette manuelle minimale
+
+1. Ouvrir un projet puis l’onglet **Cockpit**.
+2. Vérifier que les cartes **Task runs** et **Process watch** affichent des lignes structurées (pas seulement du JSON).
+3. Déclencher une action scheduler (`Pause`, `Reprendre` ou `Exécuter maintenant`) et vérifier le feedback.
+4. Ouvrir les sections `Raw JSON` pour confirmer la donnée brute de chaque endpoint.
 
 ## Existing Code Studio docs
 
