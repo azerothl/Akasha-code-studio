@@ -329,7 +329,10 @@ export async function createEvolution(projectId: string, label?: string): Promis
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(label ? { label } : {}),
   });
-  if (!r.ok) throw new Error(`createEvolution ${r.status}`);
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`createEvolution ${r.status}${t ? `: ${t}` : ""}`);
+  }
   return r.json() as Promise<{ evolution_id: string; branch: string }>;
 }
 

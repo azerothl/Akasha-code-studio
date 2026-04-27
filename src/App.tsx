@@ -1384,16 +1384,22 @@ export default function App() {
   };
 
   const onNewEvolution = async () => {
-    if (!selectedId) return;
+    if (!selectedId) {
+      setError("Sélectionnez d’abord un projet avant de créer une branche d’évolution.");
+      return;
+    }
     setError(null);
+    setStatus("Création de la branche d’évolution…");
     try {
       const r = await api.createEvolution(selectedId, evoLabel || undefined);
       setSelectedEvoId(r.evolution_id);
       const evo = await api.listEvolutions(selectedId);
       setEvolutions(evo);
+      setEvoLabel("");
       setStatus(`Branche créée : ${r.branch}`);
     } catch (e) {
       setError(String(e));
+      setStatus("");
     }
   };
 
@@ -2244,7 +2250,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   placeholder="ex. auth-login"
                 />
               </label>
-              <button type="button" className="btn btn-secondary btn-block" onClick={() => void onNewEvolution()}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-block"
+                disabled={!selectedId}
+                title={!selectedId ? "Chargez un projet pour créer une branche d’évolution." : undefined}
+                onClick={() => void onNewEvolution()}
+              >
                 Créer une branche studio/…
               </button>
               <ul className="evo-list">
