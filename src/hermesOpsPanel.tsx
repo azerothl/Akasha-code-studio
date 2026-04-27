@@ -59,6 +59,7 @@ export function HermesOpsPanel() {
         run("GET /api/tools/effective", () => api.fetchToolsEffective()),
         run("GET /api/memory/recall-metrics", () => api.fetchMemoryRecallMetrics()),
         run("GET /api/mcp/status", () => api.fetchMcpStatus()),
+        run("GET /api/mcp/runtime", () => api.fetchMcpRuntime()),
         run("GET /api/lifecycle/hooks", () => api.fetchLifecycleHooks()),
       ]);
       setBlocks(out);

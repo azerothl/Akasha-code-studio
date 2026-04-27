@@ -326,8 +326,16 @@ test.beforeEach(async ({ page }) => {
         config_path: "/tmp/mcp.json",
         valid: null,
         server_count: 0,
-        runtime: "stdio_probe_and_validate_only",
+        runtime: "stdio_probe_validate_and_optional_long_lived",
       }),
+    });
+  });
+
+  await page.route("**/api/mcp/runtime", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ stdio_server: null, oauth: { mode: "documented_vault_reserved" } }),
     });
   });
 
@@ -474,4 +482,5 @@ test("opens Hermes cockpit panel and shows endpoint blocks", async ({ page }) =>
   await expect(panel.locator("details").filter({ hasText: "GET /api/tools/effective" })).toBeVisible();
   await expect(panel.locator("details").filter({ hasText: "GET /api/memory/recall-metrics" })).toBeVisible();
   await expect(panel.locator("details").filter({ hasText: "GET /api/mcp/status" })).toBeVisible();
+  await expect(panel.locator("details").filter({ hasText: "GET /api/mcp/runtime" })).toBeVisible();
 });

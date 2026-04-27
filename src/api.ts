@@ -566,6 +566,12 @@ export async function fetchMcpStatus(): Promise<unknown> {
   return r.json();
 }
 
+export async function fetchMcpRuntime(): Promise<unknown> {
+  const r = await fetch(api("/api/mcp/runtime"));
+  if (!r.ok) throw await buildHttpError("GET", "/api/mcp/runtime", r);
+  return r.json();
+}
+
 export async function fetchLifecycleHooks(): Promise<unknown> {
   const r = await fetch(api("/api/lifecycle/hooks"));
   if (!r.ok) throw await buildHttpError("GET", "/api/lifecycle/hooks", r);
