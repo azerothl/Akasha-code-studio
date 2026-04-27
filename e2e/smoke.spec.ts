@@ -3,6 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 const demoId = "00000000-0000-4000-8000-000000000001";
 
 test.beforeEach(async ({ page }) => {
+  let scheduleEnabled = true;
   const rawFiles: Record<string, string> = {
     "index.html": "<!DOCTYPE html><html><body><h1>Studio</h1></body></html>",
     "DESIGN.md": "---\nname: Demo\ncolors:\n  primary: \"#8b5cf6\"\ntypography:\n  body: {}\n---\n\n## Overview\nDemo.\n",
@@ -296,10 +297,31 @@ test.beforeEach(async ({ page }) => {
   });
 
   await page.route("**/api/schedules", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          schedules: [{ id: "sched-1", name: "Nightly eval", enabled: scheduleEnabled }],
+        }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route("**/api/schedules/*/*", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.continue();
+      return;
+    }
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("/pause")) scheduleEnabled = false;
+    if (path.endsWith("/resume")) scheduleEnabled = true;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ schedules: [] }),
+      body: JSON.stringify({ ok: true, action: path.split("/").pop() }),
     });
   });
 
@@ -307,7 +329,18 @@ test.beforeEach(async ({ page }) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ task_runs: [] }),
+      body: JSON.stringify({
+        task_runs: [
+          {
+            id: "run-1",
+            task_id: "task-42",
+            status: "completed",
+            started_at: "2020-01-02T10:00:00Z",
+            ended_at: "2020-01-02T10:01:00Z",
+            summary: "Build + tests",
+          },
+        ],
+      }),
     });
   });
 
@@ -315,7 +348,9 @@ test.beforeEach(async ({ page }) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ events: [] }),
+      body: JSON.stringify({
+        events: [{ at: "2020-01-02T10:00:00Z", command: "npm run build", exit_code: 0 }],
+      }),
     });
   });
 
@@ -515,6 +550,14 @@ test("shows Hermes cockpit in dedicated section and endpoint blocks", async ({ p
   await page.getByRole("tab", { name: /^Cockpit$/i }).click();
   const panel = page.locator(".preview-pane--cockpit .hermes-ops-panel");
   await expect(panel).toBeVisible({ timeout: 5_000 });
+  await expect(panel.getByTestId("ops-task-runs-card")).toContainText(/run-1|Build \+ tests/i);
+  await expect(panel.getByTestId("ops-process-watch-card")).toContainText(/npm run build|ok/i);
+  await expect(panel.getByTestId("ops-terminal-card")).toBeVisible();
+  await expect(panel.getByTestId("ops-tools-card")).toBeVisible();
+  await expect(panel.getByTestId("ops-mcp-card")).toBeVisible();
+  await expect(panel.getByTestId("ops-lifecycle-card")).toBeVisible();
+  await panel.getByRole("button", { name: /Pause/i }).first().click();
+  await expect(panel).toContainText(/pause → OK/i);
   await expect(panel.locator("details").filter({ hasText: "GET /api/schedules" })).toBeVisible({ timeout: 8_000 });
   await expect(panel.locator("details").filter({ hasText: "GET /api/tools/effective" })).toBeVisible();
   await expect(panel.locator("details").filter({ hasText: "GET /api/memory/recall-metrics" })).toBeVisible();
