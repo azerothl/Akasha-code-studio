@@ -516,7 +516,7 @@ export function isTaskNeedsUser(status: string): boolean {
 
 /** --- Hermes / operator cockpit (daemon HTTP) --- */
 
-async function buildHttpError(method: string, path: string, r: Response): Promise<Error> {
+export async function normalizeHttpError(method: string, path: string, r: Response): Promise<Error> {
   let details = "";
   try {
     const body = (await r.text()).trim();
@@ -529,55 +529,55 @@ async function buildHttpError(method: string, path: string, r: Response): Promis
 
 export async function fetchSchedulesPayload(): Promise<unknown> {
   const r = await fetch(api("/api/schedules"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/schedules", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/schedules", r);
   return r.json();
 }
 
 export async function fetchTaskRunsPayload(): Promise<unknown> {
   const r = await fetch(api("/api/task_runs"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/task_runs", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/task_runs", r);
   return r.json();
 }
 
 export async function fetchProcessWatchRecent(limit = 20): Promise<unknown> {
   const r = await fetch(api(`/api/process/watch/recent?limit=${encodeURIComponent(String(limit))}`));
-  if (!r.ok) throw await buildHttpError("GET", "/api/process/watch/recent", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/process/watch/recent", r);
   return r.json();
 }
 
 export async function fetchTerminalCapabilities(): Promise<unknown> {
   const r = await fetch(api("/api/terminal/capabilities"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/terminal/capabilities", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/terminal/capabilities", r);
   return r.json();
 }
 
 export async function fetchToolsEffective(): Promise<unknown> {
   const r = await fetch(api("/api/tools/effective"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/tools/effective", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/tools/effective", r);
   return r.json();
 }
 
 export async function fetchMemoryRecallMetrics(): Promise<unknown> {
   const r = await fetch(api("/api/memory/recall-metrics"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/memory/recall-metrics", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/memory/recall-metrics", r);
   return r.json();
 }
 
 export async function fetchMcpStatus(): Promise<unknown> {
   const r = await fetch(api("/api/mcp/status"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/mcp/status", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/mcp/status", r);
   return r.json();
 }
 
 export async function fetchMcpRuntime(): Promise<unknown> {
   const r = await fetch(api("/api/mcp/runtime"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/mcp/runtime", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/mcp/runtime", r);
   return r.json();
 }
 
 export async function fetchLifecycleHooks(): Promise<unknown> {
   const r = await fetch(api("/api/lifecycle/hooks"));
-  if (!r.ok) throw await buildHttpError("GET", "/api/lifecycle/hooks", r);
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/lifecycle/hooks", r);
   return r.json();
 }
 
@@ -614,6 +614,143 @@ export async function postScheduleControl(
 ): Promise<unknown> {
   const path = `/api/schedules/${encodeURIComponent(scheduleId)}/${action}`;
   const r = await fetch(api(path), { method: "POST" });
-  if (!r.ok) throw await buildHttpError("POST", path, r);
+  if (!r.ok) throw await normalizeHttpError("POST", path, r);
   return r.json();
+}
+
+function asRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+function asBool(v: unknown): boolean | undefined {
+  return typeof v === "boolean" ? v : undefined;
+}
+
+function asNum(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+function asStr(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() ? v.trim() : undefined;
+}
+
+function asStrArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x) => (typeof x === "string" ? x.trim() : "")).filter(Boolean);
+}
+
+export type OpsSchedule = { id: string; name: string; enabled: boolean };
+export type OpsTaskRun = { id: string; task: string; status: string; startedAt: string; endedAt: string; summary: string };
+export type OpsProcessEvent = { at: string; status: string; command: string; detail: string };
+export type OpsTerminalSummary = { current: string; interactivePty: boolean; ptyApi: string[]; shells: string[] };
+export type OpsToolsSummary = { profile: string; allow: number; deny: number; approval: number };
+export type OpsMcpSummary = { configPresent: boolean; serverCount: number; runtime: string; oauthMode: string };
+export type OpsLifecycleSummary = { present: boolean; timeoutSec: number; sandbox: string; phases: string[] };
+
+export function parseSchedulesPayload(data: unknown): OpsSchedule[] {
+  const o = asRecord(data);
+  const rows = Array.isArray(o?.schedules) ? o?.schedules : [];
+  const out: OpsSchedule[] = [];
+  for (const row of rows) {
+    const r = asRecord(row);
+    const id = asStr(r?.id);
+    if (!id) continue;
+    out.push({
+      id,
+      name: asStr(r?.name) ?? id,
+      enabled: asBool(r?.enabled) ?? true,
+    });
+  }
+  return out;
+}
+
+export function parseTaskRunsPayload(data: unknown): OpsTaskRun[] {
+  const o = asRecord(data);
+  const rows = Array.isArray(o?.task_runs) ? o?.task_runs : [];
+  return rows
+    .map((row) => {
+      const r = asRecord(row);
+      const id = asStr(r?.id) ?? asStr(r?.run_id) ?? "";
+      if (!id) return null;
+      return {
+        id,
+        task: asStr(r?.task_id) ?? asStr(r?.task_name) ?? "—",
+        status: asStr(r?.status) ?? "unknown",
+        startedAt: asStr(r?.started_at) ?? "—",
+        endedAt: asStr(r?.ended_at) ?? "—",
+        summary: asStr(r?.summary) ?? asStr(r?.message) ?? "",
+      };
+    })
+    .filter((x): x is OpsTaskRun => Boolean(x));
+}
+
+export function parseProcessWatchPayload(data: unknown): OpsProcessEvent[] {
+  const o = asRecord(data);
+  const rows = Array.isArray(o?.events) ? o?.events : [];
+  return rows
+    .map((row) => {
+      const r = asRecord(row);
+      if (!r) return null;
+      const exit = asNum(r.exit_code);
+      return {
+        at: asStr(r.at) ?? asStr(r.ended_at) ?? "—",
+        status: exit == null ? "running" : exit === 0 ? "ok" : "error",
+        command: asStr(r.command) ?? asStr(r.cmd) ?? "—",
+        detail: exit == null ? "en cours" : `exit ${exit}`,
+      };
+    })
+    .filter((x): x is OpsProcessEvent => Boolean(x));
+}
+
+export function parseTerminalCapabilitiesPayload(data: unknown): OpsTerminalSummary {
+  const o = asRecord(data) ?? {};
+  return {
+    current: asStr(o.current) ?? "unknown",
+    interactivePty: asBool(o.interactive_pty) ?? false,
+    ptyApi: asStrArray(o.pty_api),
+    shells: asStrArray(o.shells),
+  };
+}
+
+export function parseToolsEffectivePayload(data: unknown): OpsToolsSummary {
+  const o = asRecord(data) ?? {};
+  const tools = Array.isArray(o.tools) ? o.tools : [];
+  let allow = 0;
+  let deny = 0;
+  let approval = 0;
+  for (const tool of tools) {
+    const t = asRecord(tool);
+    const p = asStr(t?.policy)?.toLowerCase() ?? "";
+    if (p.includes("deny")) deny += 1;
+    else if (p.includes("approval")) approval += 1;
+    else allow += 1;
+  }
+  return {
+    profile: asStr(o.profile) ?? asStr(o.active_profile) ?? "default",
+    allow,
+    deny,
+    approval,
+  };
+}
+
+export function parseMcpSummary(statusPayload: unknown, runtimePayload: unknown): OpsMcpSummary {
+  const s = asRecord(statusPayload) ?? {};
+  const r = asRecord(runtimePayload) ?? {};
+  const oauth = asRecord(r.oauth);
+  return {
+    configPresent: asBool(s.config_present) ?? false,
+    serverCount: asNum(s.server_count) ?? 0,
+    runtime: asStr(s.runtime) ?? "unknown",
+    oauthMode: asStr(oauth?.mode) ?? "unknown",
+  };
+}
+
+export function parseLifecycleHooksPayload(data: unknown): OpsLifecycleSummary {
+  const o = asRecord(data) ?? {};
+  return {
+    present: asBool(o.present) ?? false,
+    timeoutSec: asNum(o.timeout_sec) ?? 0,
+    sandbox: asStr(o.sandbox) ?? "none",
+    phases: asStrArray(o.executed_phases),
+  };
 }
