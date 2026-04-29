@@ -359,6 +359,13 @@ export default function App() {
   const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [forkDialog, setForkDialog] = useState<{
+    open: boolean;
+    index: number;
+    parentTaskId: string;
+    sourceText: string;
+  } | null>(null);
+  const [forkInitialInstruction, setForkInitialInstruction] = useState("");
   const [agent, setAgent] = useState<string>("studio_scaffold");
   const [taskTrace, setTaskTrace] = useState<{
     id: string;
@@ -1808,6 +1815,82 @@ Procédure:
     }
   };
 
+  const onOpenForkDialog = useCallback((index: number, msg: ChatMessage) => {
+    if (!msg.task_id) return;
+    setForkDialog({
+      open: true,
+      index,
+      parentTaskId: msg.task_id,
+      sourceText: msg.text,
+    });
+    setForkInitialInstruction(msg.text);
+  }, []);
+
+  const onCreateFork = useCallback(async () => {
+    if (!selectedId || !forkDialog) return;
+    const text = forkInitialInstruction.trim();
+    if (!text) return;
+    setError(null);
+    pollTaskAbortRef.current?.abort();
+    setPendingHumanInput(null);
+    setHumanReplyDraft("");
+    setTaskTrace(null);
+    try {
+      const { task_id } = await api.sendMessage({
+        message: text,
+        session_id: "code-studio",
+        studio_project_id: selectedId,
+        studio_assigned_agent: agent || undefined,
+        studio_evolution_id: selectedEvoId ?? undefined,
+        studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
+        studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        fork_from_task_id: forkDialog.parentTaskId,
+        fork_after_message_index: forkDialog.index,
+      });
+      setChat((c) => [
+        ...c,
+        {
+          role: "user",
+          text: `[Fork depuis #${forkDialog.index + 1}] ${text}`,
+          task_id,
+        },
+      ]);
+      setForkDialog(null);
+      setForkInitialInstruction("");
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
+      setTaskTrace({
+        id: task_id,
+        status: "queued",
+        line: `Nouvelle branche créée depuis #${forkDialog.index + 1} — démarrage…`,
+        done: false,
+        progressChips: undefined,
+      });
+      saveActiveTask(selectedId, task_id);
+      void pollTask(task_id, ac.signal, selectedId);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [
+    selectedId,
+    forkDialog,
+    forkInitialInstruction,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    autoApplyDesign,
+    designHint,
+    designDocText,
+  ]);
+
   const onSubmitHumanReply = useCallback(async () => {
     if (!pendingHumanInput) return;
     let text = humanReplyDraft.trim();
@@ -3233,6 +3316,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "user" && m.task_id ? (
+                      <button
+                        type="button"
+                        className="bubble-task-detail-btn"
+                        aria-label="Fork à partir de ce message"
+                        title="Fork à partir d’ici"
+                        onClick={() => onOpenForkDialog(i, m)}
+                      >
+                        ⎇
+                      </button>
+                    ) : null}
                     {m.role === "assistant" && m.task_id ? (
                       <button
                         type="button"
@@ -3421,6 +3515,51 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </section>
                 </>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {forkDialog?.open ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setForkDialog(null)}
+          onKeyDown={(e) => e.key === "Escape" && setForkDialog(null)}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-fork-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="modal-fork-title">Nouvelle branche de conversation</h3>
+            <p className="hint">
+              Point de fork: message #{forkDialog.index + 1}. Une nouvelle tâche sera créée avec un contexte
+              tronqué jusqu’à ce point.
+            </p>
+            <label className="field">
+              <span>Instruction initiale</span>
+              <textarea
+                value={forkInitialInstruction}
+                onChange={(e) => setForkInitialInstruction(e.target.value)}
+                rows={5}
+                spellCheck={false}
+              />
+            </label>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setForkDialog(null)}>
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!forkInitialInstruction.trim()}
+                onClick={() => void onCreateFork()}
+              >
+                Créer la branche
+              </button>
             </div>
           </div>
         </div>
