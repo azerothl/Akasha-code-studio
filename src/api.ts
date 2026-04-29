@@ -366,10 +366,13 @@ export type StudioCodeMode = "plan" | "implement" | "build" | "free";
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
+  message_delivery_mode?: "immediate" | "steering" | "follow_up";
   studio_project_id?: string;
   studio_assigned_agent?: string;
   studio_evolution_branch?: string;
   studio_evolution_id?: string;
+  fork_from_task_id?: string;
+  fork_after_message_index?: number;
   studio_code_mode?: StudioCodeMode;
   /** Consigne ponctuelle pour cette requête uniquement. */
   studio_policy_hint?: string;
@@ -386,10 +389,15 @@ export async function sendMessage(body: {
     body: JSON.stringify({
       session_id: body.session_id ?? "code-studio",
       message: body.message,
+      ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
       ...(body.studio_project_id ? { studio_project_id: body.studio_project_id } : {}),
       ...(body.studio_assigned_agent ? { studio_assigned_agent: body.studio_assigned_agent } : {}),
       ...(body.studio_evolution_branch ? { studio_evolution_branch: body.studio_evolution_branch } : {}),
       ...(body.studio_evolution_id ? { studio_evolution_id: body.studio_evolution_id } : {}),
+      ...(body.fork_from_task_id ? { fork_from_task_id: body.fork_from_task_id } : {}),
+      ...(Number.isFinite(body.fork_after_message_index)
+        ? { fork_after_message_index: body.fork_after_message_index }
+        : {}),
       ...(body.studio_code_mode && body.studio_code_mode !== "free"
         ? { studio_code_mode: body.studio_code_mode }
         : {}),
@@ -421,6 +429,11 @@ export type TaskStatusResponse = {
   status: string;
   assigned_agent?: string;
   progress?: { progress_pct: number; message: string; task_id?: string | null }[];
+  tokens_used?: number;
+  cost_usd?: number;
+  last_turn_tokens_in?: number;
+  last_turn_tokens_out?: number;
+  last_turn_cost_usd?: number;
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
   suggested_actions?: TaskSuggestedAction[];
@@ -458,6 +471,8 @@ export async function getTaskStudioDiff(taskId: string): Promise<TaskStudioDiffP
 }
 
 export type TaskEventEntry = {
+  schema_version?: number;
+  kind?: string;
   event_type: string;
   at: string;
   task_id?: string | null;
@@ -468,7 +483,11 @@ export async function getTaskEvents(taskId: string): Promise<TaskEventEntry[]> {
   const r = await fetch(api(`/api/tasks/${taskId}/events`));
   if (!r.ok) throw new Error(`getTaskEvents ${r.status}`);
   const j = (await r.json()) as { events?: TaskEventEntry[] };
-  return j.events ?? [];
+  return (j.events ?? []).map((ev) => ({
+    ...ev,
+    event_type: ev.event_type || ev.kind || "unknown",
+    kind: ev.kind || ev.event_type || "unknown",
+  }));
 }
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */
