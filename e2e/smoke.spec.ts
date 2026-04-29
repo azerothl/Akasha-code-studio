@@ -254,6 +254,46 @@ test.beforeEach(async ({ page }) => {
               task_id: `${demoId}-sub-1`,
               payload: { tool_name: "read_file", path: "index.html" },
             },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:03Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:04Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build en créant les fichiers manquants",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:05Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build en créant les fichiers manquants et en alignant les conventions de nommage.",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:06Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 80,
+                message: "Je vérifie ensuite les imports et les chemins.",
+              },
+            },
           ],
         }),
       });
@@ -538,6 +578,17 @@ test("opens task detail modal and shows mocked event", async ({ page }) => {
   });
   await expect(modal.locator(".task-detail-events-category-title").filter({ hasText: /^Outils$/ })).toBeVisible();
   await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^tool_call$/ })).toBeVisible();
+  const subAgentWorkflowCard = modal
+    .locator(".task-detail-workflow-item")
+    .filter({ hasText: /Sous-agent/i })
+    .first();
+  await expect(subAgentWorkflowCard).toBeVisible();
+  const progressRows = subAgentWorkflowCard.locator(".task-detail-workflow-progress li");
+  await expect(progressRows).toHaveCount(2);
+  await expect(subAgentWorkflowCard).toContainText(
+    "Je corrige le build en créant les fichiers manquants et en alignant les conventions de nommage.",
+  );
+  await expect(subAgentWorkflowCard).toContainText("Je vérifie ensuite les imports et les chemins.");
 });
 
 test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {

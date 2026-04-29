@@ -8,6 +8,16 @@ export type TaskProgressLine = {
   task_id?: string | null;
 };
 
+function collapseStreamedProgressLines(progress: TaskProgressLine[], fallbackTaskId: string): TaskProgressLine[] {
+  const lastByTaskPct = new Map<string, TaskProgressLine>();
+  for (const line of progress) {
+    const taskId = (line.task_id && String(line.task_id).trim()) || fallbackTaskId;
+    const key = `${taskId}\0${line.progress_pct}`;
+    lastByTaskPct.set(key, { ...line, task_id: taskId });
+  }
+  return Array.from(lastByTaskPct.values());
+}
+
 function payloadObject(payload: unknown): Record<string, unknown> | null {
   return payload && typeof payload === "object" && !Array.isArray(payload)
     ? (payload as Record<string, unknown>)
@@ -490,7 +500,10 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
   }
 
   for (const step of steps.values()) {
-    if (step.taskId) step.progress = progressByTask.get(step.taskId) ?? [];
+    if (step.taskId) {
+      const taskProgress = progressByTask.get(step.taskId) ?? [];
+      step.progress = collapseStreamedProgressLines(taskProgress, rootTaskId);
+    }
   }
   return [...steps.values()].sort((a, b) => a.at.localeCompare(b.at));
 }
