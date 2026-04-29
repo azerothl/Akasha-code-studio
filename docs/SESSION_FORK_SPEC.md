@@ -14,6 +14,12 @@ Objectif : permettre un comportement **proche** de Pi (`/fork`, sessions arbores
 3. Après validation : **nouvelle tâche** (nouveau `task_id`) avec indicateur visuel « fork de Tâche X / message #n ».
 4. L’historique affiché dans l’UI peut soit **recharger** le transcript depuis le point de fork, soit afficher un **onglet** « Branche A / Branche B » (hors périmètre v1 minimal — v1 = une seule ligne de temps remplacée par la nouvelle branche, avec lien « Voir la conversation d’origine »).
 
+Statut implémentation v1:
+- [x] Action UI « Fork à partir d’ici » sur message utilisateur.
+- [x] Dialogue de confirmation avec instruction initiale modifiable.
+- [x] Création d’une nouvelle tâche et nouveau `session_id` fille côté daemon.
+- [x] Traçabilité événementielle (`session_fork_created`) incluant parent/cut.
+
 ### Maquette textuelle (layout)
 
 ```text
@@ -60,6 +66,8 @@ Les champs existants `POST /api/message` incluent déjà `session_id`, `studio_p
 1. Ouvrir un projet studio, envoyer deux tours de conversation.
 2. Fork depuis le **premier** message utilisateur ; vérifier que la nouvelle tâche ne contient pas la réponse postérieure au point de coupure.
 3. Vérifier que l’ancienne tâche reste consultable via son `task_id`.
+
+Résultat actuel: recette validée sur le flux v1 (fork UI + cut de contexte serveur + trace parent/cut).
 
 ## Références
 

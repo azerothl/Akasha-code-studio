@@ -3339,7 +3339,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       </button>
                     ) : null}
                     {m.role === "assistant" && m.studio_diff?.files?.length ? (
-                      <ChatStudioDiffPanel diff={m.studio_diff} />
+                      <ChatStudioDiffPanel diff={m.studio_diff} projectId={selectedId} />
                     ) : null}
                   </div>
                 </div>

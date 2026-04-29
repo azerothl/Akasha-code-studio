@@ -47,15 +47,15 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-DESIGN-004 | 3 | Merge évolution : option `design_check` bloque si lint DESIGN.md régresse | Fait |
 | STU-OPS-001 | 3 | Cockpit Hermes structuré (sections opérateur: scheduler, task runs, process watch, terminal, tools, MCP, lifecycle) avec fallback raw JSON | Fait |
 | STU-OPS-002 | 3 | Cockpit: refresh manuel + auto-refresh léger ciblé (`task_runs` + `process_watch`) | Fait |
-| STU-SWARM-001 | 4 | Mode swarm studio **opt-in**: un coordinateur (`studio_project_manager`) peut déléguer à plusieurs workers bornés selon `AKASHA_STUDIO_MAX_PARALLEL_OPS` | Planifié |
-| STU-SWARM-002 | 4 | États worker normalisés (`spawned`, `ready`, `running`, `blocked`, `completed`, `failed`, `stopped`) exposés via events tâche | Planifié |
-| STU-SWARM-003 | 4 | Cockpit: vue graphe des sous-tâches studio + transitions d’état en quasi temps réel | Planifié |
-| STU-SWARM-004 | 4 | Événement de conflit non bloquant (`studio_conflict_notice`) quand deux workers touchent les mêmes fichiers | Planifié |
+| STU-SWARM-001 | 4 | Mode swarm studio **opt-in**: un coordinateur (`studio_project_manager`) peut déléguer à plusieurs workers bornés selon `AKASHA_STUDIO_MAX_PARALLEL_OPS` | Fait (MVP) |
+| STU-SWARM-002 | 4 | États worker normalisés (`spawned`, `ready`, `running`, `blocked`, `completed`, `failed`, `stopped`) exposés via events tâche | Fait (MVP) |
+| STU-SWARM-003 | 4 | Cockpit: vue graphe des sous-tâches studio + transitions d’état en quasi temps réel | Fait (MVP) |
+| STU-SWARM-004 | 4 | Événement de conflit non bloquant (`studio_conflict_notice`) quand deux workers touchent les mêmes fichiers | Fait (MVP) |
 | STU-GIT-001 | 1 | Création projet Studio initialise automatiquement un repo Git local avec branche primaire `main` | Fait |
 | STU-GIT-002 | 1 | Reprise projet garantit l’existence d’une branche primaire (`main` ou `master`, création si absente) | Fait |
-| STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Reporté (utiliser `run_in_container` côté agent + policy) |
-| STU-012 | 3 | Proxy preview dev server | Reporté |
-| STU-013 | 8 | Application de patchs par hunk dans l’UI | Reporté |
+| STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Fait (MVP, fallback hôte explicite) |
+| STU-012 | 3 | Proxy preview dev server | Fait (URL signée courte TTL) |
+| STU-013 | 8 | Application de patchs par hunk dans l’UI | Fait (MVP) |
 
 ---
 
@@ -86,7 +86,8 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 | POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` ; initialise `CODE_STUDIO_PLAN.md`, le dossier **`specs/`**, repo Git local et branche primaire `main` (fallback `master` selon environnement) |
 | PATCH | `/api/studio/projects/:id` | Corps : `name`, `tech_stack`, et/ou options de vérif post-tâche : `verify_skip` (bool), `verify_argv` (tableau de chaînes ou `null`), `verify_timeout_sec` (nombre 1–3600 ou `null`) |
 | GET | `/api/studio/projects/:id` | Lit méta + évolutions (`tech_stack`, champs `verify_*`). Garantit une branche primaire (`main`/`master`) au moment de la reprise si le dépôt Git existe. Ajoute `git_branch`, `git_worktree_clean` et **`git_worktree_lines`** (tableau borné, max 200 entrées `{ "status": string, "path": string }` dérivées de `git status --porcelain`, même source que « propre » / indicateur dirty) lorsque le dépôt Git est valide. |
-| POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, installed?, install? }`. **Windows** : `npm` est invoqué via `cmd.exe /c` (même logique que le build). Les sorties du serveur dev sont capturées pour `GET .../preview/logs`. |
+| POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, proxy_signed, installed?, install? }` où `url` pointe vers `/preview/proxy` signé (TTL court). **Windows** : `npm` est invoqué via `cmd.exe /c` (même logique que le build). Les sorties du serveur dev sont capturées pour `GET .../preview/logs`. |
+| GET | `/api/studio/projects/:id/preview/proxy?token=...` | Vérifie un jeton signé court TTL et redirige vers `http://127.0.0.1:<port>` du projet. Scope projet strict. |
 | POST | `/api/studio/projects/:id/preview/stop` | Arrête le processus dev enregistré pour ce projet (`{ ok, stopped }`). |
 | GET | `/api/studio/projects/:id/preview/logs` | `{ running, log, preview_inactive? }` — tampon borné des stdout/stderr du `npm run dev`. |
 | POST | `/api/studio/projects/:id/preview/install` | Corps `{ "force": bool }`. Exécute `npm install` sans lancer le serveur ; si `force` est faux et `node_modules` existe, `{ ok, skipped, reason }`. |
@@ -109,7 +110,7 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 
 | Méthode | Chemin | Corps | Description |
 |---------|--------|-------|-------------|
-| POST | `/api/studio/projects/:id/build` | `{ "argv": ["npm","run","build"], "timeout_sec"?: number }` | Exécute sur l’**hôte** avec `cwd` = projet ; sortie tronquée. Sous **Windows**, les commandes `npm`, `npx`, `pnpm`, `yarn`, `corepack` passent par `cmd.exe /c` pour éviter « program not found » (shims `.cmd`). |
+| POST | `/api/studio/projects/:id/build` | `{ "argv": ["npm","run","build"], "timeout_sec"?: number, "containerized"?: boolean, "allow_host_fallback"?: boolean }` | Exécution **conteneurisée par défaut** (`containerized=true`) ; fallback hôte uniquement si `allow_host_fallback=true`. Réponse inclut `execution_mode` (`container`, `host_fallback`, `host`) + sorties tronquées. Sous **Windows**, exécution hôte des commandes `npm`, `npx`, `pnpm`, `yarn`, `corepack` via `cmd.exe /c` pour éviter « program not found » (shims `.cmd`). |
 
 Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "timeout"`.
 
@@ -176,8 +177,9 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 - **Disque** : IDs projet = UUID validés ; `raw` refuse `..` et chemins hors racine canonique.
 - **Build API** : arguments filtrés (pas de `|`, `;`, `&`, retours ligne, `..`).
 - **Hôte** : `npm install` / scripts post-install sur le poste = risque résiduel — **STU-011** reporté vers conteneur.
+- **Builds** : mode conteneur actif par défaut ; fallback hôte autorisé explicitement pour compatibilité.
 - **Réseau** : non restreint par le daemon pour les commandes build (contrairement à un runner conteneurisé idéal).
-- **Prévisualisation** : le daemon lance `npm run dev` sur l’hôte (`127.0.0.1:<port>`) ; l’UI charge les workers Monaco depuis un CDN (accès Internet requis pour l’éditeur en production build).
+- **Prévisualisation** : accès UI via URL proxy signée courte durée ; le daemon lance toujours `npm run dev` sur l’hôte (`127.0.0.1:<port>`). L’UI charge les workers Monaco depuis un CDN (accès Internet requis pour l’éditeur en production build).
 
 ---
 
@@ -189,9 +191,11 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Ouverture fichier + preview HTML | Playwright (mock) | Fait |
 | Envoi message (mock `/api/message`) | Playwright | Fait |
 | Cockpit structuré + action scheduler | Playwright (mock) | Fait |
-| Clone réel HTTPS | Manuel | À faire |
-| Build `npm` sur template | Manuel / CI optionnel | À faire |
-| Évolution + merge sans conflit | Manuel | À faire |
+| Clone réel HTTPS | Manuel | Fait |
+| Build `npm` sur template | Manuel / CI optionnel | Fait |
+| Évolution + merge sans conflit | Manuel | Fait |
+| Recette fork (`SESSION_FORK_SPEC`) | Manuel | Fait |
+| Scénarios swarm (succès + conflit) | Manuel | Fait (MVP) |
 | `studio_evolution_id` résolu → branche | Intégration | Fait (daemon) |
 
 ### Given / When / Then (exemple)
@@ -203,7 +207,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 
 ## Checklist de recette (avant clôture phase)
 
-- [ ] Spec mise à jour (tableaux statuts + exigences).
+- [x] Spec mise à jour (tableaux statuts + exigences).
 - [ ] `cargo check -p akasha-daemon` (ou features Windows `embeddings-tract` si besoin).
 - [ ] `npm run build` + `npm run test:e2e` dans ce dépôt.
 - [ ] Manuel : créer projet, message agent `studio_scaffold`, vérifier tâche dans UI Akasha principale si besoin.

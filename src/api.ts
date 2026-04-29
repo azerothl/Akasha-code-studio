@@ -129,6 +129,7 @@ export type StudioPreviewStartResponse = {
   ok: boolean;
   url: string;
   port: number;
+  proxy_signed?: boolean;
   installed?: boolean;
   install?: { exit_code: number | null; stdout?: string; stderr?: string };
 };
@@ -468,6 +469,25 @@ export async function getTaskStudioDiff(taskId: string): Promise<TaskStudioDiffP
     throw new Error(`getTaskStudioDiff ${r.status}: ${t}`);
   }
   return r.json() as Promise<TaskStudioDiffPayload>;
+}
+
+export async function applyStudioPatchHunks(
+  projectId: string,
+  body: { patches: string[]; dry_run?: boolean },
+): Promise<{ ok: boolean; dry_run: boolean; requested: number; applied: number; errors: string[] }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/patch/hunks`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = (await r.json()) as { ok: boolean; dry_run: boolean; requested: number; applied: number; errors?: string[] };
+  return {
+    ok: payload.ok,
+    dry_run: payload.dry_run,
+    requested: payload.requested,
+    applied: payload.applied,
+    errors: payload.errors ?? [],
+  };
 }
 
 export type TaskEventEntry = {

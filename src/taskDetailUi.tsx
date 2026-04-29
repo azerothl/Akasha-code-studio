@@ -333,6 +333,13 @@ function statusLabel(s: WorkflowStep["status"]): string {
 }
 
 function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
+  if (ev.event_type === "studio_worker_state_changed") {
+    const state = payloadString(ev.payload, "state");
+    if (state === "completed") return "completed";
+    if (state === "failed" || state === "blocked" || state === "stopped") return "failed";
+    if (state === "spawned" || state === "ready" || state === "running") return "running";
+    return "info";
+  }
   if (ev.event_type === "subtask_completed" || ev.event_type === "task_completed") return "completed";
   if (ev.event_type === "task_failed" || ev.event_type === "task_cancelled") return "failed";
   if (ev.event_type === "subtask_started" || ev.event_type === "sub_agent_spawned") return "running";
@@ -441,6 +448,43 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
         payloadString(ev.payload, "content_preview") ? `Résultat: ${payloadString(ev.payload, "content_preview")}` : "",
         payloadString(ev.payload, "status") ? `Statut: ${payloadString(ev.payload, "status")}` : "",
       ].filter(Boolean);
+      continue;
+    }
+
+    if (ev.event_type === "studio_worker_state_changed") {
+      const taskId = payloadString(ev.payload, "worker_task_id") ?? payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
+      const agent = payloadString(ev.payload, "assigned_agent") ?? undefined;
+      const state = payloadString(ev.payload, "state") ?? "unknown";
+      const key = taskId ? `worker:${taskId}` : `worker:${ev.at}`;
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        agent,
+        title: `Worker ${agent ?? "studio"} · ${state}`,
+        status: workflowStatusFromEvent(ev),
+        at: ev.at,
+        details: taskId ? [`Worker task: ${taskId}`] : undefined,
+      });
+      step.status = workflowStatusFromEvent(ev);
+      step.details = [...(step.details ?? []), `State: ${state}`];
+      continue;
+    }
+
+    if (ev.event_type === "studio_conflict_notice") {
+      const key = `conflict:${ev.at}`;
+      const filesRaw = payloadObject(ev.payload)?.files;
+      const files = Array.isArray(filesRaw) ? filesRaw.map(String).join(", ") : "";
+      ensure(key, {
+        id: key,
+        taskId: eventTaskKey(ev, rootTaskId),
+        title: "Conflit détecté",
+        status: "failed",
+        at: ev.at,
+        details: [
+          payloadString(ev.payload, "reason") ?? "Touches concurrentes détectées",
+          files ? `Fichiers: ${files}` : "",
+        ].filter(Boolean),
+      });
       continue;
     }
   }
