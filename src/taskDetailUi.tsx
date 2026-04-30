@@ -66,18 +66,16 @@ export function mergeProgressWithEventProgress(
   events: TaskEventEntry[],
   rootTaskId: string,
 ): TaskProgressLine[] {
-  const out = [...progress];
-  const seen = new Set(
-    out.map((p) => `${p.task_id ?? rootTaskId}\0${p.progress_pct}\0${p.message}`),
-  );
-  for (const p of progressLinesFromEvents(events, rootTaskId)) {
-    const k = `${p.task_id ?? rootTaskId}\0${p.progress_pct}\0${p.message}`;
-    if (!seen.has(k)) {
-      seen.add(k);
-      out.push(p);
-    }
+  const byTaskPct = new Map<string, TaskProgressLine>();
+  for (const p of progress) {
+    const key = `${p.task_id ?? rootTaskId}\0${p.progress_pct}`;
+    byTaskPct.set(key, p);
   }
-  return out;
+  for (const p of progressLinesFromEvents(events, rootTaskId)) {
+    const key = `${p.task_id ?? rootTaskId}\0${p.progress_pct}`;
+    byTaskPct.set(key, p);
+  }
+  return Array.from(byTaskPct.values()).sort((a, b) => a.progress_pct - b.progress_pct);
 }
 
 /** Regroupe par `task_id` puis par `progress_pct` ; pour chaque couple on ne garde que le **dernier** message (stream). */

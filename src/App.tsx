@@ -307,7 +307,9 @@ function dedupeProgressForTrace(
   for (const p of progress) {
     const raw = (p.message ?? "").trim();
     if (!raw) continue;
-    const k = `${p.task_id ?? taskId}\0${p.progress_pct}\0${normalizeTraceMessage(raw)}`;
+    // Streamed progress emits many near-identical updates for the same percentage.
+    // Keep only the latest message per (task_id, progress_pct).
+    const k = `${p.task_id ?? taskId}\0${p.progress_pct}`;
     deduped.set(k, p);
   }
   return Array.from(deduped.values()).sort((a, b) => a.progress_pct - b.progress_pct);
