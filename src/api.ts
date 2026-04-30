@@ -364,6 +364,32 @@ export async function abandonEvolution(projectId: string, evolutionId: string): 
 /** Mode Code Studio injecté dans le message (daemon). */
 export type StudioCodeMode = "plan" | "implement" | "build" | "free";
 
+export type StudioAcceptanceCriterion = {
+  id?: string;
+  text: string;
+  kind: "manual" | "file_exists" | "command_ok";
+  path?: string;
+  argv?: string[];
+};
+
+export type StudioAcceptancePayload = { criteria: StudioAcceptanceCriterion[] };
+
+/** Texte libre (critères manuels) ou JSON `{ "criteria": [...] }` / tableau de critères. */
+export function parseStudioAcceptanceCriteriaInput(
+  raw: string,
+): string | StudioAcceptancePayload | StudioAcceptanceCriterion[] | undefined {
+  const t = raw.trim();
+  if (!t) return undefined;
+  if ((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))) {
+    try {
+      return JSON.parse(t) as StudioAcceptancePayload | StudioAcceptanceCriterion[];
+    } catch {
+      return t;
+    }
+  }
+  return t;
+}
+
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
@@ -383,6 +409,8 @@ export async function sendMessage(body: {
   studio_design_hint?: string;
   /** Contrat design complet (DESIGN.md), borné côté serveur. */
   studio_design_doc?: string;
+  /** Definition of Done : texte ou critères structurés (voir spec daemon). */
+  studio_acceptance_criteria?: string | StudioAcceptancePayload | StudioAcceptanceCriterion[];
 }): Promise<{ task_id: string }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
@@ -406,6 +434,9 @@ export async function sendMessage(body: {
       ...(body.studio_delegate_single_level ? { studio_delegate_single_level: true } : {}),
       ...(body.studio_design_hint?.trim() ? { studio_design_hint: body.studio_design_hint.trim() } : {}),
       ...(body.studio_design_doc?.trim() ? { studio_design_doc: body.studio_design_doc } : {}),
+      ...(body.studio_acceptance_criteria !== undefined && body.studio_acceptance_criteria !== null
+        ? { studio_acceptance_criteria: body.studio_acceptance_criteria }
+        : {}),
     }),
   });
   if (!r.ok) {
@@ -437,6 +468,8 @@ export type TaskStatusResponse = {
   last_turn_cost_usd?: number;
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
+  /** Revue critères post-tâche (optionnel, tâche terminée avec points manuels signalés). */
+  acceptance_review?: { missing?: string[] } | null;
   suggested_actions?: TaskSuggestedAction[];
 };
 
@@ -508,6 +541,110 @@ export async function getTaskEvents(taskId: string): Promise<TaskEventEntry[]> {
     event_type: ev.event_type || ev.kind || "unknown",
     kind: ev.kind || ev.event_type || "unknown",
   }));
+}
+
+export type TaskEventsLiveSubscription = {
+  close: () => void;
+  mode: "sse" | "polling";
+};
+
+function asLiveEventRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+/**
+ * Live task events stream:
+ * - preferred: SSE over `/api/events` (global bus, filtered by `correlation_id`)
+ * - fallback: polling `GET /api/tasks/:id/events`
+ */
+export function subscribeTaskEventsLive(
+  taskId: string,
+  onSnapshot: (events: TaskEventEntry[]) => void,
+  opts?: { pollIntervalMs?: number; preferSse?: boolean },
+): TaskEventsLiveSubscription {
+  const pollIntervalMs = Math.max(800, opts?.pollIntervalMs ?? 2000);
+  const preferSse = opts?.preferSse ?? true;
+  let closed = false;
+  let timer: number | null = null;
+  let es: EventSource | null = null;
+  let pollInFlight = false;
+
+  const close = () => {
+    closed = true;
+    if (timer != null) {
+      window.clearTimeout(timer);
+      timer = null;
+    }
+    if (es) {
+      es.close();
+      es = null;
+    }
+  };
+
+  const startPolling = () => {
+    const tick = async () => {
+      if (closed || pollInFlight) return;
+      pollInFlight = true;
+      try {
+        const rows = await getTaskEvents(taskId);
+        if (!closed) onSnapshot(rows);
+      } catch {
+        // keep previous snapshot; next tick may recover
+      } finally {
+        pollInFlight = false;
+        if (!closed) timer = window.setTimeout(() => void tick(), pollIntervalMs);
+      }
+    };
+    void tick();
+  };
+
+  if (!preferSse || typeof window === "undefined" || typeof EventSource === "undefined") {
+    startPolling();
+    return { close, mode: "polling" };
+  }
+
+  try {
+    const nextByKey = new Map<string, TaskEventEntry>();
+    es = new EventSource(api("/api/events"));
+    es.onmessage = (ev) => {
+      if (closed) return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      const o = asLiveEventRecord(parsed);
+      const correlationId = typeof o?.correlation_id === "string" ? o.correlation_id : "";
+      if (correlationId !== taskId) return;
+      const at = typeof o?.timestamp === "string" ? o.timestamp : new Date().toISOString();
+      const eventType = typeof o?.event_type === "string" ? o.event_type : "unknown";
+      const key = `${eventType}\0${at}\0${typeof o?.id === "string" ? o.id : ""}`;
+      nextByKey.set(key, {
+        schema_version: 1,
+        kind: eventType,
+        event_type: eventType,
+        at,
+        task_id: taskId,
+        payload: o?.payload,
+      });
+      onSnapshot(
+        Array.from(nextByKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
+      );
+    };
+    es.onerror = () => {
+      if (closed) return;
+      if (es) {
+        es.close();
+        es = null;
+      }
+      startPolling();
+    };
+    return { close, mode: "sse" };
+  } catch {
+    startPolling();
+    return { close, mode: "polling" };
+  }
 }
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */

@@ -407,12 +407,15 @@ export default function App() {
     task: api.TaskStatusResponse;
     events: api.TaskEventEntry[];
   } | null>(null);
+  const [taskDetailLiveMode, setTaskDetailLiveMode] = useState<"sse" | "polling" | null>(null);
 
   const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
   const [policyHintOneShot, setPolicyHintOneShot] = useState("");
   const [delegateSingleLevel, setDelegateSingleLevel] = useState(false);
   const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
   const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  /** Definition of Done : texte libre ou JSON critères (réutilisé pour chaque envoi tant que non vide). */
+  const [acceptanceCriteriaDraft, setAcceptanceCriteriaDraft] = useState("");
   const [planDocText, setPlanDocText] = useState("");
   const [planDocSnapshot, setPlanDocSnapshot] = useState("");
   const [planDocLoading, setPlanDocLoading] = useState(false);
@@ -1681,6 +1684,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1692,6 +1696,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1709,7 +1714,20 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, autoApplyDesign, designHint, designDocText]);
+  }, [
+    selectedId,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    autoApplyDesign,
+    designHint,
+    designDocText,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onRegenerateDesign = useCallback(async (forceRecreateFromProjectStyle = false) => {
     if (!selectedId) return;
@@ -1745,6 +1763,7 @@ Procédure:
       const regenerateDesignHint = [DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN, designHint.trim()]
         .filter(Boolean)
         .join("\n\n");
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1756,6 +1775,7 @@ Procédure:
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: regenerateDesignHint || undefined,
         studio_design_doc: designDocText.trim() || undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1773,7 +1793,20 @@ Procédure:
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, designDocText, autoApplyDesign, designHint]);
+  }, [
+    selectedId,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    designDocText,
+    autoApplyDesign,
+    designHint,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onSendChat = async () => {
     const text = chatInput.trim();
@@ -1785,6 +1818,7 @@ Procédure:
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: text,
         studio_project_id: selectedId,
@@ -1796,6 +1830,7 @@ Procédure:
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
@@ -1836,6 +1871,7 @@ Procédure:
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: text,
         session_id: "code-studio",
@@ -1850,6 +1886,7 @@ Procédure:
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         fork_from_task_id: forkDialog.parentTaskId,
         fork_after_message_index: forkDialog.index,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [
         ...c,
@@ -1889,6 +1926,7 @@ Procédure:
     autoApplyDesign,
     designHint,
     designDocText,
+    acceptanceCriteriaDraft,
   ]);
 
   const onSubmitHumanReply = useCallback(async () => {
@@ -1986,6 +2024,7 @@ Procédure:
     setTaskDetailLoading(true);
     setTaskDetailError(null);
     setTaskDetailPayload(null);
+    setTaskDetailLiveMode(null);
     try {
       const [task, events] = await Promise.all([api.getTask(taskId), api.getTaskEvents(taskId)]);
       setTaskDetailPayload({ task, events });
@@ -1995,6 +2034,43 @@ Procédure:
       setTaskDetailLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!taskDetailForId) {
+      setTaskDetailLiveMode(null);
+      return;
+    }
+    let closed = false;
+    const sub = api.subscribeTaskEventsLive(
+      taskDetailForId,
+      (events) => {
+        if (closed) return;
+        setTaskDetailPayload((prev) => (prev ? { ...prev, events } : prev));
+      },
+      { pollIntervalMs: 1800, preferSse: true },
+    );
+    setTaskDetailLiveMode(sub.mode);
+
+    const statusTimer = window.setInterval(() => {
+      void api
+        .getTask(taskDetailForId)
+        .then((task) => {
+          if (closed) return;
+          setTaskDetailPayload((prev) =>
+            prev ? { ...prev, task } : { task, events: [] },
+          );
+        })
+        .catch(() => {
+          /* keep current detail snapshot */
+        });
+    }, 1800);
+
+    return () => {
+      closed = true;
+      sub.close();
+      window.clearInterval(statusTimer);
+    };
+  }, [taskDetailForId]);
 
   const onFixDesignDiagnostics = useCallback(async () => {
     if (!selectedId) return;
@@ -2014,6 +2090,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -2025,6 +2102,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2055,6 +2133,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     designHint,
     designDocText,
     parsedDesignDoc.diagnostics,
+    acceptanceCriteriaDraft,
   ]);
 
   const codeRagBadgeTitle = useMemo(() => {
@@ -2354,6 +2433,29 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
                       Enregistrer résumé &amp; politique
                     </button>
+                  </div>
+                  <div className="evolution-policy-box">
+                    <p className="hint evolution-policy-intro">
+                      Critères de fin (Definition of Done) : texte libre ou JSON <code>criteria</code> avec{" "}
+                      <code>manual</code>, <code>file_exists</code>, <code>command_ok</code> — envoyés avec chaque message
+                      agent tant que le champ n’est pas vide (voir spec Code Studio).
+                    </p>
+                    <label className="field" htmlFor="acceptance-criteria-draft">
+                      <span>Critères d&apos;acceptation (optionnel)</span>
+                      <textarea
+                        id="acceptance-criteria-draft"
+                        className="evolution-policy-textarea"
+                        rows={5}
+                        spellCheck={false}
+                        aria-label="Critères d'acceptation Code Studio"
+                        data-testid="acceptance-criteria-draft"
+                        value={acceptanceCriteriaDraft}
+                        onChange={(e) => setAcceptanceCriteriaDraft(e.target.value)}
+                        placeholder={
+                          'Ex. liste en texte libre, ou JSON : {"criteria":[{"id":"1","text":"…","kind":"manual"},{"id":"2","text":"…","kind":"file_exists","path":"src/x.ts"}]}'
+                        }
+                      />
+                    </label>
                   </div>
                 </div>
               ) : null}
@@ -3470,6 +3572,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <p>
                       <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                     </p>
+                    {taskDetailLiveMode ? (
+                      <p className="hint">
+                        Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                      </p>
+                    ) : null}
                     {taskDetailPayload.task.assigned_agent ? (
                       <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
                     ) : null}

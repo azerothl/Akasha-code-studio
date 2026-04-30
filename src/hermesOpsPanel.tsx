@@ -151,6 +151,14 @@ export function HermesOpsPanel() {
 
   const processTop = useMemo(() => [...processEvents].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10), [processEvents]);
   const runsTop = useMemo(() => taskRuns.slice(0, 10), [taskRuns]);
+  const runStatusSummary = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const run of taskRuns) {
+      const key = (run.status || "unknown").toLowerCase();
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [taskRuns]);
   const swarmGraphRows = useMemo(() => {
     return taskRuns.slice(0, 12).map((r, idx) => ({
       id: r.id,
@@ -197,11 +205,17 @@ export function HermesOpsPanel() {
       <section className="hermes-ops-structured-grid">
         <div className="hermes-ops-card" data-testid="ops-task-runs-card">
           <h4>Task runs</h4>
+          {runStatusSummary.length > 0 ? (
+            <p className="hint">
+              Répartition: {runStatusSummary.map(([s, n]) => `${s}=${n}`).join(" · ")}
+            </p>
+          ) : null}
           {runsTop.length === 0 ? <p className="hint">Aucun run récent.</p> : (
             <ul className="hermes-ops-mini-list">
               {runsTop.map((r) => (
                 <li key={r.id}>
                   <strong>{r.id.slice(0, 8)}…</strong> · {r.status} · {r.summary || r.task}
+                  <span className="hint"> · start {r.startedAt}</span>
                 </li>
               ))}
             </ul>

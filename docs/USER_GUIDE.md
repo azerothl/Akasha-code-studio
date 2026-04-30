@@ -168,6 +168,9 @@ This section lists the most useful daemon-side options for Code Studio users and
 - `AKASHA_STUDIO_MAX_PARALLEL_OPS`
   - Limits concurrent studio operations.
   - Useful to prevent CPU/disk saturation on busy hosts.
+- `AKASHA_STUDIO_CODE_RAG_DISABLED`
+  - When set to `1`, `true`, `yes`, or `on`, the daemon **does not** prepend indexed code excerpts to studio LLM prompts.
+  - If unset (default) or any other value, Code RAG prefix injection stays **enabled**.
 
 ### 11.2 Code Studio Frontend Daemon Target
 

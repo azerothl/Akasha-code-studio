@@ -56,6 +56,9 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-011 | 2 | Exécution builds **conteneurisée** par défaut | Fait (MVP, fallback hôte explicite) |
 | STU-012 | 3 | Proxy preview dev server | Fait (URL signée courte TTL) |
 | STU-013 | 8 | Application de patchs par hunk dans l’UI | Fait (MVP) |
+| STU-020 | 1 | `POST /api/message` accepte `studio_acceptance_criteria` (texte ou JSON `criteria` avec `manual` / `file_exists` / `command_ok`) ; préfixe « Definition of Done » + bloc embarqué retiré avant LLM ; vérifications mécaniques après build | Fait |
+| STU-021 | 1 | Revue sémantique optionnelle des critères **manual** (1 appel LLM sans outils ; `AKASHA_STUDIO_SEMANTIC_VERIFY=0` pour désactiver) ; événement `studio_acceptance_review` + champ `acceptance_review` sur `GET /api/tasks/:id` si points manquants | Fait |
+| STU-022 | 1 | Garde-fou tours d’outils **lecture seule** Code Studio (`AKASHA_STUDIO_READ_ONLY_STREAK_MAX`, défaut 4) + `ProgressUpdate` étape garde-fou | Fait |
 
 ---
 
@@ -75,6 +78,7 @@ Champs JSON utiles Code Studio (en plus de `message`, `session_id`, etc.) :
 | `studio_evolution_id` | string | Si présent avec `studio_project_id`, résolution de la branche via `.akasha-studio.json` |
 | `studio_design_hint` | string | Résumé design compact (tokens/intention) |
 | `studio_design_doc` | string | Contenu DESIGN.md (tronqué/sanitisé côté daemon) |
+| `studio_acceptance_criteria` | string \| objet \| tableau | Definition of Done : chaîne (critères manuels) **ou** `{ "criteria": [ { "id"?, "text", "kind": "manual" \| "file_exists" \| "command_ok", "path"?, "argv"? } ] }` **ou** tableau de critères. Les entrées `command_ok` utilisent les mêmes règles de sécurité que `verify_argv`. |
 
 Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "message": "…" }`.
 
@@ -116,11 +120,13 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 
 **Vérification post-tâche (agents Code Studio)** : après une tâche dont le disque outil est sous `studio-projects/`, le daemon lance une commande de vérif si `verify_skip` est faux dans `.akasha-studio.json` : `verify_argv` si défini, sinon `npm run build` si `package.json` existe, sinon `cargo check` si `Cargo.toml` existe. En cas d’échec, la tâche est marquée **failed** et un `ProgressUpdate` contient la sortie tronquée.
 
+**Orchestration « aller au bout » (variables d’environnement daemon, optionnelles)** : `AKASHA_MAX_TOOL_ROUNDS`, `AKASHA_STUDIO_VERIFY_MAX_PASSES`, `AKASHA_STUDIO_VERIFY_AUTOFIX_LLM_ROUNDS` (déjà documentées côté ops) ; en complément : `AKASHA_STUDIO_SEMANTIC_VERIFY=0` désactive la revue LLM des critères **manual** ; `AKASHA_STUDIO_READ_ONLY_STREAK_MAX` (défaut 4) borne le garde-fou « tours d’affilée en lecture seule » sur les tâches disque `studio-projects/`.
+
 ### Tâches (statut & suggestions Code Studio)
 
 | Méthode | Chemin | Description |
 |---------|--------|-------------|
-| GET | `/api/tasks/:id` | Statut tâche : `task_id`, `status`, `assigned_agent`, `progress[]`, `failure_detail`, et **`suggested_actions`** (optionnel, tableau stable) : `{ "id": string, "label": string, "kind": "message" \| "ui", "message"?: string, "ui_action"?: string }`. Les `ui_action` réservés côté UI incluent au minimum `open_editor`, `open_preview`, `open_design`, `refresh_files` (les ids inconnus sont ignorés pour compatibilité avant). |
+| GET | `/api/tasks/:id` | Statut tâche : `task_id`, `status`, `assigned_agent`, `progress[]`, `failure_detail`, **`acceptance_review`** (optionnel, objet `{ "missing": string[] }` après revue non bloquante), et **`suggested_actions`** (optionnel, tableau stable) : `{ "id": string, "label": string, "kind": "message" \| "ui", "message"?: string, "ui_action"?: string }`. Les `ui_action` réservés côté UI incluent au minimum `open_editor`, `open_preview`, `open_design`, `refresh_files` (les ids inconnus sont ignorés pour compatibilité avant). |
 | GET | `/api/tasks/:id/events` | `{ "events": [ { "event_type": string, "at": string, "task_id"?: string, "payload"?: any } ] }` — journal d’événements bus (délégations, outils, etc.), charge utile bornée côté daemon. |
 | GET | `/api/tasks/:id/report` | Rapport opérateur compact de fin de tâche: `{ "done": string[], "needs_review": string[], "failed": string[], "next_steps": string[] }` et lien éventuel vers transcript. |
 | GET | `/api/tasks/:id/studio-diff` | `{ "task_id", "captured_at", "files": [ { "path", "status", "diff", "truncated" } ] }` — diff texte depuis un **snapshot** pris au démarrage des tâches Code Studio **racine** ; `404` `{ "error":"no_snapshot" }` sinon (sous-tâches, tâche hors studio, etc.). |
@@ -165,7 +171,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Cockpit (swarm studio) | Quand le mode swarm est actif: graphe coordinateur/workers/sous-tâches + états (`running`, `blocked`, etc.) + événements de conflit et reprise |
 | Trust & Access | Section opérateur pour gouvernance canal et contrôles de confiance : mode permissions (`ask_me`/`allow_all`), décisions persistantes, utilisateurs Telegram approuvés/pending et actions promote/demote/remove/reset. **Contrats daemon attendus pour l'UI** : `GET /api/trust-access` → `{ channel_permissions_mode, trust_decisions, telegram_users: { approved: TelegramUser[], pending: TelegramUser[] } }`; `PATCH /api/trust-access/channel-permissions` avec body `{ mode: "ask_me" \| "allow_all" }`; `GET /api/trust-access/decisions` / `POST /api/trust-access/decisions/reset`; `POST /api/trust-access/telegram-users/:telegram_user_id/promote`; `POST /api/trust-access/telegram-users/:telegram_user_id/demote`; `DELETE /api/trust-access/telegram-users/:telegram_user_id`; `POST /api/trust-access/telegram-users/:telegram_user_id/reset`. Objet minimal `TelegramUser`: `{ telegram_user_id, username?, display_name?, status: "approved" \| "pending", role?, promoted_at?, decided_at? }`. |
 | Skills & Plugins Trust | Afficher les métadonnées de confiance (`trust_level`, `compat_status`, `signature_status`) sur les catalogues et détails, avec fallback sûr si absent. |
-| Stack projet | Menu **Projet** : `<select>` de préréglages + « Personnalisé » ; cases à cocher ; enregistrement `PATCH` (`tech_stack`) |
+| Stack projet | Menu **Projet** : `<select>` de préréglages + « Personnalisé » ; cases à cocher ; enregistrement `PATCH` (`tech_stack`) ; zone **Critères d’acceptation** (texte ou JSON) envoyée avec chaque message agent tant qu’elle n’est pas vide |
 | Git worktree | Bouton **Git Δ** dans l’en-tête : tableau `git_worktree_lines` (popover). |
 | Logs build | Résultat `POST .../build` |
 | Indicateur sandbox | L’UI affiche que le périmètre disque est le dossier projet ; l’isolation réseau/conteneur dépend de la policy et de `run_in_container` |
@@ -190,6 +196,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Liste / création projet | Playwright (mock) | Fait `e2e/smoke.spec.ts` |
 | Ouverture fichier + preview HTML | Playwright (mock) | Fait |
 | Envoi message (mock `/api/message`) | Playwright | Fait |
+| `studio_acceptance_criteria` dans le corps `POST /api/message` (UI Projet) | Playwright (mock) | Fait `e2e/smoke.spec.ts` |
 | Cockpit structuré + action scheduler | Playwright (mock) | Fait |
 | Clone réel HTTPS | Manuel | Fait |
 | Build `npm` sur template | Manuel / CI optionnel | Fait |

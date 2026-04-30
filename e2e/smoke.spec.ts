@@ -526,6 +526,22 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
   });
 });
 
+test("POST /api/message includes studio_acceptance_criteria when draft is set", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-project-settings-menu").click();
+  await page.getByTestId("acceptance-criteria-draft").fill("README doit mentionner E2E");
+  await page.locator(".header-menu-backdrop").click({ force: true });
+  const post = page.waitForRequest(
+    (r) => r.url().includes("/api/message") && r.method() === "POST",
+  );
+  await page.locator(".chat-form textarea").fill("ping");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const req = await post;
+  const body = req.postDataJSON() as { studio_acceptance_criteria?: string };
+  expect(body.studio_acceptance_criteria).toBe("README doit mentionner E2E");
+});
+
 test("opens Design tab and saves DESIGN.md", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);

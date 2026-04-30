@@ -625,6 +625,11 @@ export function TaskDetailEventRow({ ev, hideTypeBadge }: TaskDetailEventRowProp
             {ev.event_type}
           </span>
         )}
+        {typeof ev.schema_version === "number" ? (
+          <span className="hint" title="Version du schéma événement">
+            v{ev.schema_version}
+          </span>
+        ) : null}
         {ev.task_id ? (
           <code className="task-detail-event-taskid" title={ev.task_id}>
             {ev.task_id.length > 14 ? `${ev.task_id.slice(0, 8)}…` : ev.task_id}
