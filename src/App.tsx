@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
@@ -164,32 +164,6 @@ function StackFields({
   );
 }
 
-function CollapsiblePanel({
-  title,
-  open,
-  onToggle,
-  children,
-  className,
-}: {
-  title: string;
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={["panel", "panel-collapsible", className].filter(Boolean).join(" ")}>
-      <button type="button" className="panel-collapse-trigger" onClick={onToggle} aria-expanded={open}>
-        <span className="panel-collapse-chevron" aria-hidden>
-          {open ? "▼" : "▶"}
-        </span>
-        <h2>{title}</h2>
-      </button>
-      {open ? <div className="panel-collapse-inner">{children}</div> : null}
-    </section>
-  );
-}
-
 function formatTaskStatusFr(status: string): string {
   const m: Record<string, string> = {
     pending: "En attente",
@@ -295,10 +269,6 @@ function isMarkdownPath(path: string | null): boolean {
   return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
 }
 
-function normalizeTraceMessage(message: string): string {
-  return message.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
 function dedupeProgressForTrace(
   progress: { progress_pct: number; message: string; task_id?: string | null }[],
   taskId: string,
@@ -386,7 +356,6 @@ export default function App() {
   } | null>(null);
   const [humanReplyDraft, setHumanReplyDraft] = useState("");
   const [humanReplyBusy, setHumanReplyBusy] = useState(false);
-  const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
   /** Annule le polling en cours (nouveau message ou démontage du composant). */
   const pollTaskAbortRef = useRef<AbortController | null>(null);
   const editorDirtyRef = useRef(false);
@@ -3239,154 +3208,67 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="chat-activity-area">
-          <CollapsiblePanel
-            className="chat-task-trace-wrap"
-            title="Suivi de la dernière tâche"
-            open={taskTraceSectionOpen}
-            onToggle={() => setTaskTraceSectionOpen((v) => !v)}
-          >
-            <div className="task-trace-scroll">
-              {taskTrace ? (
-                <div
-                  className={`task-trace ${taskTrace.done ? "done" : "running"}`}
-                  data-task-status={
-                    pendingHumanInput?.taskId === taskTrace.id ? "waiting_user_input" : taskTrace.status
-                  }
+          {taskTrace ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => void onOpenTaskDetailModal(taskTrace.id)}
+              title="Ouvrir la modale de détail de la tâche"
+            >
+              Tâche en cours
+            </button>
+          ) : null}
+          {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
+            <div className="task-human-input">
+              {humanInputRiskLevel ? (
+                <span
+                  className={`risk-badge risk-badge--${humanInputRiskLevel}`}
+                  title="Estimation locale (mots-clés) — pas une analyse serveur"
                 >
-                  <div className="task-trace-header-row">
-                    <span
-                      className={`task-trace-badge task-trace-badge--${
-                        pendingHumanInput?.taskId === taskTrace.id
-                          ? "human"
-                          : taskTrace.done
-                            ? "final"
-                            : "live"
-                      }`}
+                  {riskLabel(humanInputRiskLevel)}
+                </span>
+              ) : null}
+              <p className="task-human-input-question">{pendingHumanInput.question}</p>
+              {pendingHumanInput.context ? <p className="task-human-input-context">{pendingHumanInput.context}</p> : null}
+              {pendingHumanInput.choices?.length ? (
+                <div className="task-human-input-choices">
+                  {pendingHumanInput.choices.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={humanReplyBusy}
+                      onClick={() => setHumanReplyDraft(c)}
                     >
-                      {pendingHumanInput?.taskId === taskTrace.id
-                        ? "Réponse requise"
-                        : taskTrace.done
-                          ? "État final"
-                          : "En cours"}
-                    </span>
-                  </div>
-                  <div className="task-trace-id">
-                    ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
-                  </div>
-                  <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
-                  {taskTrace.progressChips && taskTrace.progressChips.length > 0 ? (
-                    <ul className="task-progress-chips" aria-label="Étapes récentes">
-                      {taskTrace.progressChips.map((c, i) => (
-                        <li key={`${c}-${i}`} className="task-progress-chip">
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
-                    <div className="task-human-input">
-                      {humanInputRiskLevel ? (
-                        <span
-                          className={`risk-badge risk-badge--${humanInputRiskLevel}`}
-                          title="Estimation locale (mots-clés) — pas une analyse serveur"
-                        >
-                          {riskLabel(humanInputRiskLevel)}
-                        </span>
-                      ) : null}
-                      <p className="task-human-input-question">{pendingHumanInput.question}</p>
-                      {pendingHumanInput.context ? (
-                        <p className="task-human-input-context">{pendingHumanInput.context}</p>
-                      ) : null}
-                      {pendingHumanInput.choices?.length ? (
-                        <div className="task-human-input-choices">
-                          {pendingHumanInput.choices.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              disabled={humanReplyBusy}
-                              onClick={() => setHumanReplyDraft(c)}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                      {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
-                        <p className="denial-loop-hint" role="status">
-                          Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
-                          pour éviter que l’agent réessaie la même action. Au 3ᵉ refus structuré, une note est ajoutée
-                          automatiquement pour l’agent.
-                        </p>
-                      ) : null}
-                      <div className="task-human-input-quick">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Acceptation : vous pouvez poursuivre avec cette approche, en restant dans le périmètre du plan.",
-                            )
-                          }
-                        >
-                          Accepter (modèle)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Refus : merci d’arrêter cette action et de proposer une alternative plus sûre ou conforme au plan.",
-                            )
-                          }
-                        >
-                          Refuser (modèle)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Refus collectif : toutes les actions en attente similaires doivent être annulées ; expliquez pourquoi et proposez la suite.",
-                            )
-                          }
-                        >
-                          Tout refuser (message type)
-                        </button>
-                      </div>
-                      <textarea
-                        className="task-human-input-textarea"
-                        value={humanReplyDraft}
-                        onChange={(e) => setHumanReplyDraft(e.target.value)}
-                        placeholder="Saisissez votre réponse (ou choisissez un bouton ci-dessus)…"
-                        rows={3}
-                        disabled={humanReplyBusy}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm task-human-input-submit"
-                        disabled={humanReplyBusy || !humanReplyDraft.trim()}
-                        onClick={() => void onSubmitHumanReply()}
-                      >
-                        {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
-                      </button>
-                    </div>
-                  ) : null}
-                  {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
+                      {c}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <div className="task-trace idle">
-                  <p className="hint task-trace-idle-hint">
-                    Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s) jusqu’à un état final ou une attente
-                    utilisateur.
-                  </p>
-                </div>
-              )}
+              ) : null}
+              {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
+                <p className="denial-loop-hint" role="status">
+                  Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
+                  pour éviter que l’agent réessaie la même action.
+                </p>
+              ) : null}
+              <textarea
+                className="task-human-input-textarea"
+                value={humanReplyDraft}
+                onChange={(e) => setHumanReplyDraft(e.target.value)}
+                placeholder="Réponse pour débloquer la tâche…"
+                rows={3}
+                disabled={humanReplyBusy}
+              />
+              <button
+                type="button"
+                className="btn btn-primary btn-sm task-human-input-submit"
+                disabled={humanReplyBusy || !humanReplyDraft.trim()}
+                onClick={() => void onSubmitHumanReply()}
+              >
+                {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
+              </button>
             </div>
-          </CollapsiblePanel>
+          ) : null}
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="pane-title pane-title--compact">Conversation</div>
