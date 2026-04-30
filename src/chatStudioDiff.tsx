@@ -54,6 +54,9 @@ export function ChatStudioDiffPanel({ diff, projectId }: Props) {
       }
     }
     if (current.length > 0) hunks.push(current.join("\n"));
+    if (hunks.length === 0) {
+      return { preamble: [], hunks: [patch] };
+    }
     return { preamble, hunks };
   };
 

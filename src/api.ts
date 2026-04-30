@@ -513,6 +513,10 @@ export async function applyStudioPatchHunks(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`applyStudioPatchHunks ${r.status}: ${t}`);
+  }
   const payload = (await r.json()) as { ok: boolean; dry_run: boolean; requested: number; applied: number; errors?: string[] };
   return {
     ok: payload.ok,

@@ -3634,14 +3634,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           className="modal-backdrop"
           role="presentation"
           onClick={() => setForkDialog(null)}
-          onKeyDown={(e) => e.key === "Escape" && setForkDialog(null)}
         >
           <div
             className="modal-card"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-fork-title"
+            tabIndex={-1}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.key === "Escape" && setForkDialog(null)}
           >
             <h3 id="modal-fork-title">Nouvelle branche de conversation</h3>
             <p className="hint">

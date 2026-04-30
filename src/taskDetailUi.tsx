@@ -13,6 +13,7 @@ function collapseStreamedProgressLines(progress: TaskProgressLine[], fallbackTas
   for (const line of progress) {
     const taskId = (line.task_id && String(line.task_id).trim()) || fallbackTaskId;
     const key = `${taskId}\0${line.progress_pct}`;
+    lastByTaskPct.delete(key);
     lastByTaskPct.set(key, { ...line, task_id: taskId });
   }
   return Array.from(lastByTaskPct.values());
