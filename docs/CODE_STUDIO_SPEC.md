@@ -59,6 +59,8 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-020 | 1 | `POST /api/message` accepte `studio_acceptance_criteria` (texte ou JSON `criteria` avec `manual` / `file_exists` / `command_ok`) ; préfixe « Definition of Done » + bloc embarqué retiré avant LLM ; vérifications mécaniques après build | Fait |
 | STU-021 | 1 | Revue sémantique optionnelle des critères **manual** (1 appel LLM sans outils ; `AKASHA_STUDIO_SEMANTIC_VERIFY=0` pour désactiver) ; événement `studio_acceptance_review` + champ `acceptance_review` sur `GET /api/tasks/:id` si points manquants | Fait |
 | STU-022 | 1 | Garde-fou tours d’outils **lecture seule** Code Studio (`AKASHA_STUDIO_READ_ONLY_STREAK_MAX`, défaut 4) + `ProgressUpdate` étape garde-fou | Fait |
+| STU-023 | 1 | Audit LLM des garde-fous **prose sans exécution** / **promesse sans `TOOL:`** lorsque les heuristiques déclenchent ; **activé par défaut** — `AKASHA_STUDIO_LLM_RESPONSE_AUDITOR=0` pour n’utiliser que les heuristiques ; `AKASHA_STUDIO_LLM_RESPONSE_AUDITOR_TIMEOUT_SEC` (défaut 22, plage 8–60) borne l’appel classifieur | Fait |
+| STU-024 | 1 | Outil **`write_code`** (même protocole que `write_file`) : réservé aux extensions source listées côté daemon ; validation `studio_reject_polluted_code_content` sur **tout** chemin (pas seulement sous `studio-projects/`) ; permissions **`tools_policy`** : équivalence **`write_file`** (profil qui liste `write_file` autorise `write_code` sans dupliquer la ligne) | Fait |
 
 ---
 
@@ -120,7 +122,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 
 **Vérification post-tâche (agents Code Studio)** : après une tâche dont le disque outil est sous `studio-projects/`, le daemon lance une commande de vérif si `verify_skip` est faux dans `.akasha-studio.json` : `verify_argv` si défini, sinon `npm run build` si `package.json` existe, sinon `cargo check` si `Cargo.toml` existe. En cas d’échec, la tâche est marquée **failed** et un `ProgressUpdate` contient la sortie tronquée.
 
-**Orchestration « aller au bout » (variables d’environnement daemon, optionnelles)** : `AKASHA_MAX_TOOL_ROUNDS`, `AKASHA_STUDIO_VERIFY_MAX_PASSES`, `AKASHA_STUDIO_VERIFY_AUTOFIX_LLM_ROUNDS` (déjà documentées côté ops) ; en complément : `AKASHA_STUDIO_SEMANTIC_VERIFY=0` désactive la revue LLM des critères **manual** ; `AKASHA_STUDIO_READ_ONLY_STREAK_MAX` (défaut 4) borne le garde-fou « tours d’affilée en lecture seule » sur les tâches disque `studio-projects/`.
+**Orchestration « aller au bout » (variables d’environnement daemon, optionnelles)** : `AKASHA_MAX_TOOL_ROUNDS`, `AKASHA_STUDIO_VERIFY_MAX_PASSES`, `AKASHA_STUDIO_VERIFY_AUTOFIX_LLM_ROUNDS` (déjà documentées côté ops) ; en complément : `AKASHA_STUDIO_SEMANTIC_VERIFY=0` désactive la revue LLM des critères **manual** ; `AKASHA_STUDIO_READ_ONLY_STREAK_MAX` (défaut 4) borne le garde-fou « tours d’affilée en lecture seule » sur les tâches disque `studio-projects/` ; `AKASHA_STUDIO_LLM_RESPONSE_AUDITOR=0` désactive l’audit LLM qui confirme ou infirme les heuristiques « prose d’implémentation » / « promesse sans outil » (voir STU-023).
 
 ### Tâches (statut & suggestions Code Studio)
 
