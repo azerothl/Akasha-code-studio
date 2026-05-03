@@ -65,8 +65,6 @@ The daemon status badge in the header should report that the daemon is up.
 - **Agent / actions**
   - Trigger plan/design regeneration helpers.
   - Show agent capabilities matrix.
-- **Documentation**
-  - Opens this user guide.
 
 ### Center Tabs
 
@@ -76,6 +74,7 @@ The daemon status badge in the header should report that the daemon is up.
 - **Design**: edit/preview `DESIGN.md`, diagnostics, exports.
 - **Logs serveur**: backend/runtime logs view.
 - **Cockpit**: operational panel (scheduler/task runs/process watch/tools/MCP/lifecycle).
+- **Documentation**: integrated user guide (this document).
 
 ### Chat Area
 

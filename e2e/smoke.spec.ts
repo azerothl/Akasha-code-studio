@@ -460,6 +460,18 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/api/events", async (route) => {
     await route.fulfill({ status: 404, body: "" });
   });
+
+  await page.route(`**/api/studio/projects/${demoId}/patch/hunks`, async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, dry_run: false, requested: 1, applied: 1, errors: [] }),
+      });
+      return;
+    }
+    await route.continue();
+  });
 });
 
 async function selectDemoProject(page: Page) {
@@ -652,4 +664,96 @@ test("restores last selected project from localStorage", async ({ page }) => {
   }, demoId);
   await page.goto("/");
   await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
+});
+
+test("fork dialog sends fork_from_task_id and fork_after_message_index", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+
+  // Send a message so a user bubble with task_id is created.
+  await page.locator(".chat-form textarea").fill("Implement feature X");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+
+  // The fork button (⎇) appears on the user bubble once task_id is set.
+  const forkBtn = page.locator(".bubble.user").getByRole("button", { name: /Fork à partir de ce message/i });
+  await expect(forkBtn).toBeVisible({ timeout: 5_000 });
+
+  // Capture the next POST /api/message to inspect its body.
+  const forkRequest = page.waitForRequest(
+    (r) => r.url().includes("/api/message") && r.method() === "POST",
+  );
+
+  await forkBtn.click();
+  const modal = page.getByRole("dialog", { name: /Nouvelle branche de conversation/i });
+  await expect(modal).toBeVisible();
+
+  // Replace the default pre-filled instruction and submit.
+  const instructionArea = modal.locator("textarea");
+  await instructionArea.fill("Continue from a different angle");
+  await modal.getByRole("button", { name: /Créer la branche/i }).click();
+
+  const req = await forkRequest;
+  const body = req.postDataJSON() as Record<string, unknown>;
+  expect(body.fork_from_task_id).toBe(demoId);
+  expect(typeof body.fork_after_message_index).toBe("number");
+});
+
+test("hunk selection applies selected hunks via POST /patch/hunks", async ({ page }) => {
+  // Override studio-diff to return an actual diff with one hunk.
+  await page.route(`**/api/tasks/${demoId}/studio-diff`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        task_id: demoId,
+        captured_at: "2020-01-01T00:00:00Z",
+        files: [
+          {
+            path: "src/index.ts",
+            status: "M",
+            truncated: false,
+            diff: [
+              "diff --git a/src/index.ts b/src/index.ts",
+              "--- a/src/index.ts",
+              "+++ b/src/index.ts",
+              "@@ -1,3 +1,4 @@",
+              " const x = 1;",
+              "+const y = 2;",
+              " export { x };",
+            ].join("\n"),
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await selectDemoProject(page);
+
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+
+  // Wait for task to complete and the diff panel toggle to appear.
+  const diffToggle = page.locator(".chat-studio-diff-toggle");
+  await expect(diffToggle).toBeVisible({ timeout: 10_000 });
+  await diffToggle.click();
+
+  // Select the hunk checkbox (expand the file details first).
+  const fileDetails = page.locator(".chat-studio-diff-file").first();
+  await expect(fileDetails).toBeVisible();
+  await fileDetails.locator("summary").click();
+  const hunkCheckbox = page.locator(".chat-studio-diff-hunk input[type=checkbox]").first();
+  await expect(hunkCheckbox).toBeVisible();
+  await hunkCheckbox.check();
+
+  // Capture the POST to /patch/hunks.
+  const patchRequest = page.waitForRequest(
+    (r) => r.url().includes("/patch/hunks") && r.method() === "POST",
+  );
+  await page.getByRole("button", { name: /Appliquer sélection/i }).click();
+  const req = await patchRequest;
+  const body = req.postDataJSON() as { patches: string[]; dry_run?: boolean };
+  expect(body.patches.length).toBeGreaterThan(0);
+  expect(body.dry_run).not.toBe(true);
+  await expect(page.locator(".hint").filter({ hasText: /Patch OK/i })).toBeVisible({ timeout: 5_000 });
 });

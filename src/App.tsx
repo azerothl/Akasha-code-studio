@@ -410,6 +410,8 @@ export default function App() {
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
   const chatLogRef = useRef<HTMLDivElement | null>(null);
   const chatPinnedByUserRef = useRef(false);
+  /** Buffers live events received before the initial task-detail fetch completes. */
+  const taskDetailLiveSnapshotRef = useRef<api.TaskEventEntry[] | null>(null);
   const [chatHasUnseen, setChatHasUnseen] = useState(false);
 
   const selectedProject = useMemo(
@@ -1996,9 +1998,24 @@ Procédure:
     setTaskDetailError(null);
     setTaskDetailPayload(null);
     setTaskDetailLiveMode(null);
+    taskDetailLiveSnapshotRef.current = null;
     try {
       const [task, events] = await Promise.all([api.getTask(taskId), api.getTaskEvents(taskId)]);
-      setTaskDetailPayload({ task, events });
+      // Merge with any live events that arrived while the initial fetch was in flight.
+      const liveSnapshot = taskDetailLiveSnapshotRef.current;
+      taskDetailLiveSnapshotRef.current = null;
+      if (liveSnapshot && liveSnapshot.length > 0) {
+        const byKey = new Map<string, api.TaskEventEntry>();
+        for (const ev of [...events, ...liveSnapshot]) {
+          byKey.set(`${ev.event_type}\0${ev.at}`, ev);
+        }
+        setTaskDetailPayload({
+          task,
+          events: Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
+        });
+      } else {
+        setTaskDetailPayload({ task, events });
+      }
     } catch (e) {
       setTaskDetailError(String(e));
     } finally {
@@ -2014,9 +2031,24 @@ Procédure:
     let closed = false;
     const sub = api.subscribeTaskEventsLive(
       taskDetailForId,
-      (events) => {
+      (liveEvents) => {
         if (closed) return;
-        setTaskDetailPayload((prev) => (prev ? { ...prev, events } : prev));
+        setTaskDetailPayload((prev) => {
+          if (!prev) {
+            // Initial fetch not yet complete — buffer so it can be merged on arrival.
+            taskDetailLiveSnapshotRef.current = liveEvents;
+            return prev;
+          }
+          // Merge: keep all prior events plus new live events, deduplicating by type+timestamp.
+          const byKey = new Map<string, api.TaskEventEntry>();
+          for (const ev of [...prev.events, ...liveEvents]) {
+            byKey.set(`${ev.event_type}\0${ev.at}`, ev);
+          }
+          return {
+            ...prev,
+            events: Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
+          };
+        });
       },
       { pollIntervalMs: 1800, preferSse: true, onModeChange: (m) => setTaskDetailLiveMode(m) },
     );

@@ -320,7 +320,7 @@ type WorkflowStep = {
   stepId?: string;
   agent?: string;
   title: string;
-  status: "planned" | "running" | "completed" | "failed" | "info";
+  status: "planned" | "running" | "completed" | "failed" | "blocked" | "info";
   at: string;
   details?: string[];
   progress: TaskProgressLine[];
@@ -336,6 +336,8 @@ function statusLabel(s: WorkflowStep["status"]): string {
       return "terminé";
     case "failed":
       return "échec";
+    case "blocked":
+      return "bloqué";
     default:
       return "info";
   }
@@ -345,7 +347,8 @@ function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
   if (ev.event_type === "studio_worker_state_changed") {
     const state = payloadString(ev.payload, "state");
     if (state === "completed") return "completed";
-    if (state === "failed" || state === "blocked" || state === "stopped") return "failed";
+    if (state === "failed" || state === "stopped") return "failed";
+    if (state === "blocked") return "blocked";
     if (state === "spawned" || state === "ready" || state === "running") return "running";
     return "info";
   }
