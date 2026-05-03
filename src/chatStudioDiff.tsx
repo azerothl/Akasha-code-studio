@@ -5,6 +5,7 @@ import type { TaskStudioDiffPayload } from "./api";
 type Props = {
   diff: TaskStudioDiffPayload;
   projectId: string | null;
+  onApplied?: () => void;
 };
 
 const STATUS_SLUG_MAP: Record<string, string> = {
@@ -27,7 +28,7 @@ function diffStatusSlug(status: string): string {
 }
 
 /** Bloc pliable sous une réponse assistant : fichiers modifiés + diff unifié. */
-export function ChatStudioDiffPanel({ diff, projectId }: Props) {
+export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
   const [open, setOpen] = useState(false);
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
@@ -87,6 +88,7 @@ export function ChatStudioDiffPanel({ diff, projectId }: Props) {
       const r = await api.applyStudioPatchHunks(projectId, { patches, dry_run: dryRun });
       if (r.ok) {
         setResultMsg(`${dryRun ? "Dry-run" : "Patch"} OK (${r.applied}/${r.requested}).`);
+        if (!dryRun) onApplied?.();
       } else {
         setResultMsg(`Partiel: ${r.applied}/${r.requested}. ${r.errors.join(" | ")}`);
       }

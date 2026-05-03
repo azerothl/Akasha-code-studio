@@ -532,6 +532,7 @@ export type TaskEventEntry = {
   kind?: string;
   event_type: string;
   at: string;
+  id?: string;
   task_id?: string | null;
   payload?: unknown;
 };
@@ -631,11 +632,12 @@ export function subscribeTaskEventsLive(
         if (firstKey !== undefined) nextByKey.delete(firstKey);
       }
       nextByKey.set(key, {
-        schema_version: 1,
+        schema_version: typeof o?.schema_version === "number" ? o.schema_version : 1,
         kind: eventType,
         event_type: eventType,
         at,
-        task_id: taskId,
+        id: typeof o?.id === "string" && o.id ? o.id : undefined,
+        task_id: typeof o?.task_id === "string" && o.task_id ? o.task_id : taskId,
         payload: o?.payload,
       });
       onSnapshot(

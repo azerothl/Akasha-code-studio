@@ -757,3 +757,45 @@ test("hunk selection applies selected hunks via POST /patch/hunks", async ({ pag
   expect(body.dry_run).not.toBe(true);
   await expect(page.locator(".hint").filter({ hasText: /Patch OK/i })).toBeVisible({ timeout: 5_000 });
 });
+
+test("SSE success path delivers live events to task detail modal", async ({ page }) => {
+  const sseAt = "2020-06-01T12:00:00Z";
+  // Override /api/events to return a real SSE stream with one event.
+  await page.route("**/api/events", async (route) => {
+    const sseEvent = JSON.stringify({
+      id: "sse-test-event-1",
+      event_type: "progress_update",
+      correlation_id: demoId,
+      task_id: `${demoId}-sse-sub`,
+      schema_version: 2,
+      timestamp: sseAt,
+      payload: { message: "SSE live progress" },
+    });
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      headers: { "Cache-Control": "no-cache", "Connection": "keep-alive" },
+      // Single SSE message followed by a blank line (end of stream)
+      body: `data: ${sseEvent}\n\n`,
+    });
+  });
+
+  await page.goto("/");
+  await selectDemoProject(page);
+
+  // Send a task and open the task-detail modal.
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const detailBtn = page.locator(".bubble.assistant").getByRole("button", { name: /Détails de la tâche/i });
+  await expect(detailBtn).toBeVisible({ timeout: 10_000 });
+  await detailBtn.click();
+
+  const modal = page.getByRole("dialog", { name: /Détail de la tâche/i });
+  await expect(modal).toBeVisible();
+
+  // The SSE event (progress_update at sseAt) should appear in the modal.
+  // The task-detail panel groups events by type; progress_update should be visible.
+  await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /progress_update/i })).toBeVisible({
+    timeout: 5_000,
+  });
+});

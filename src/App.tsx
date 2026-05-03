@@ -557,10 +557,12 @@ export default function App() {
   useEffect(() => {
     if (!selectedId) {
       setChat([]);
+      setAcceptanceCriteriaDraft("");
       return;
     }
     skipChatSaveOnce.current = true;
     setChat(loadChatMessages(selectedId));
+    setAcceptanceCriteriaDraft("");
   }, [selectedId]);
 
   useEffect(() => {
@@ -1619,6 +1621,7 @@ export default function App() {
   useEffect(() => {
     if (centerTab !== "docs") return;
     if (userGuideDoc.trim()) return;
+    if (userGuideError) return;  // don't retry after a fetch failure
     let cancelled = false;
     setUserGuideLoading(true);
     setUserGuideError(null);
@@ -1641,7 +1644,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [centerTab, userGuideDoc]);
+  }, [centerTab, userGuideDoc, userGuideError]);
 
   const onRegeneratePlan = useCallback(async () => {
     if (!selectedId) return;
@@ -1992,9 +1995,10 @@ Procédure:
     [refreshFiles],
   );
 
-  /** Deduplication key for a task-event entry (event_type + timestamp). */
+  /** Deduplication key for a task-event entry — includes id, task_id to handle same-second events. */
   const taskEventKey = useCallback(
-    (ev: api.TaskEventEntry) => `${ev.event_type}::${ev.at}`,
+    (ev: api.TaskEventEntry) =>
+      `${ev.event_type}::${ev.at}::${ev.id ?? ""}::${ev.task_id ?? ""}`,
     [],
   );
 
@@ -3357,7 +3361,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       </button>
                     ) : null}
                     {m.role === "assistant" && m.studio_diff?.files?.length ? (
-                      <ChatStudioDiffPanel diff={m.studio_diff} projectId={selectedId} />
+                      <ChatStudioDiffPanel
+                        diff={m.studio_diff}
+                        projectId={selectedId}
+                        onApplied={() => void refreshFiles()}
+                      />
                     ) : null}
                   </div>
                 </div>
