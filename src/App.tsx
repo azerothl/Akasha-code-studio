@@ -1992,6 +1992,24 @@ Procédure:
     [refreshFiles],
   );
 
+  /** Deduplication key for a task-event entry (event_type + timestamp). */
+  const taskEventKey = useCallback(
+    (ev: api.TaskEventEntry) => `${ev.event_type}::${ev.at}`,
+    [],
+  );
+
+  /** Merges two event arrays, deduplicating by event_type + timestamp, sorted chronologically. */
+  const mergeTaskEvents = useCallback(
+    (base: api.TaskEventEntry[], incoming: api.TaskEventEntry[]): api.TaskEventEntry[] => {
+      const byKey = new Map<string, api.TaskEventEntry>();
+      for (const ev of [...base, ...incoming]) {
+        byKey.set(taskEventKey(ev), ev);
+      }
+      return Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at));
+    },
+    [taskEventKey],
+  );
+
   const onOpenTaskDetailModal = useCallback(async (taskId: string) => {
     setTaskDetailForId(taskId);
     setTaskDetailLoading(true);
@@ -2002,20 +2020,10 @@ Procédure:
     try {
       const [task, events] = await Promise.all([api.getTask(taskId), api.getTaskEvents(taskId)]);
       // Merge with any live events that arrived while the initial fetch was in flight.
-      const liveSnapshot = taskDetailLiveSnapshotRef.current;
+      const liveSnapshot: api.TaskEventEntry[] | null = taskDetailLiveSnapshotRef.current;
       taskDetailLiveSnapshotRef.current = null;
-      if (liveSnapshot && liveSnapshot.length > 0) {
-        const byKey = new Map<string, api.TaskEventEntry>();
-        for (const ev of [...events, ...liveSnapshot]) {
-          byKey.set(`${ev.event_type}\0${ev.at}`, ev);
-        }
-        setTaskDetailPayload({
-          task,
-          events: Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
-        });
-      } else {
-        setTaskDetailPayload({ task, events });
-      }
+      const merged = liveSnapshot ? mergeTaskEvents(events, liveSnapshot) : events;
+      setTaskDetailPayload({ task, events: merged });
     } catch (e) {
       setTaskDetailError(String(e));
     } finally {
@@ -2040,14 +2048,7 @@ Procédure:
             return prev;
           }
           // Merge: keep all prior events plus new live events, deduplicating by type+timestamp.
-          const byKey = new Map<string, api.TaskEventEntry>();
-          for (const ev of [...prev.events, ...liveEvents]) {
-            byKey.set(`${ev.event_type}\0${ev.at}`, ev);
-          }
-          return {
-            ...prev,
-            events: Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
-          };
+          return { ...prev, events: mergeTaskEvents(prev.events, liveEvents) };
         });
       },
       { pollIntervalMs: 1800, preferSse: true, onModeChange: (m) => setTaskDetailLiveMode(m) },

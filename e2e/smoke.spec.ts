@@ -675,7 +675,7 @@ test("fork dialog sends fork_from_task_id and fork_after_message_index", async (
   await page.getByRole("button", { name: "Envoyer" }).click();
 
   // The fork button (⎇) appears on the user bubble once task_id is set.
-  const forkBtn = page.locator(".bubble.user").getByRole("button", { name: /Fork à partir de ce message/i });
+  const forkBtn = page.locator(".bubble.user").last().getByRole("button", { name: /Fork à partir de ce message/i });
   await expect(forkBtn).toBeVisible({ timeout: 5_000 });
 
   // Capture the next POST /api/message to inspect its body.
