@@ -254,6 +254,46 @@ test.beforeEach(async ({ page }) => {
               task_id: `${demoId}-sub-1`,
               payload: { tool_name: "read_file", path: "index.html" },
             },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:03Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:04Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build en créant les fichiers manquants",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:05Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build en créant les fichiers manquants et en alignant les conventions de nommage.",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:06Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 80,
+                message: "Je vérifie ensuite les imports et les chemins.",
+              },
+            },
           ],
         }),
       });
@@ -415,6 +455,11 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ status: "ok", version: "0.0.0-e2e" }),
     });
   });
+
+  // Return 404 so EventSource fires onerror and falls back to the already-mocked polling endpoint.
+  await page.route("**/api/events", async (route) => {
+    await route.fulfill({ status: 404, body: "" });
+  });
 });
 
 async function selectDemoProject(page: Page) {
@@ -486,6 +531,22 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
   });
 });
 
+test("POST /api/message includes studio_acceptance_criteria when draft is set", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-project-settings-menu").click();
+  await page.getByTestId("acceptance-criteria-draft").fill("README doit mentionner E2E");
+  await page.locator(".header-menu-backdrop").click({ force: true });
+  const post = page.waitForRequest(
+    (r) => r.url().includes("/api/message") && r.method() === "POST",
+  );
+  await page.locator(".chat-form textarea").fill("ping");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const req = await post;
+  const body = req.postDataJSON() as { studio_acceptance_criteria?: string };
+  expect(body.studio_acceptance_criteria).toBe("README doit mentionner E2E");
+});
+
 test("opens Design tab and saves DESIGN.md", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
@@ -538,6 +599,17 @@ test("opens task detail modal and shows mocked event", async ({ page }) => {
   });
   await expect(modal.locator(".task-detail-events-category-title").filter({ hasText: /^Outils$/ })).toBeVisible();
   await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^tool_call$/ })).toBeVisible();
+  const subAgentWorkflowCard = modal
+    .locator(".task-detail-workflow-item")
+    .filter({ hasText: /Sous-agent/i })
+    .first();
+  await expect(subAgentWorkflowCard).toBeVisible();
+  const progressRows = subAgentWorkflowCard.locator(".task-detail-workflow-progress li");
+  await expect(progressRows).toHaveCount(2);
+  await expect(subAgentWorkflowCard).toContainText(
+    "Je corrige le build en créant les fichiers manquants et en alignant les conventions de nommage.",
+  );
+  await expect(subAgentWorkflowCard).toContainText("Je vérifie ensuite les imports et les chemins.");
 });
 
 test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {

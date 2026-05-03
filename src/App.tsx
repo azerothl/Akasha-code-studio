@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
@@ -164,32 +164,6 @@ function StackFields({
   );
 }
 
-function CollapsiblePanel({
-  title,
-  open,
-  onToggle,
-  children,
-  className,
-}: {
-  title: string;
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={["panel", "panel-collapsible", className].filter(Boolean).join(" ")}>
-      <button type="button" className="panel-collapse-trigger" onClick={onToggle} aria-expanded={open}>
-        <span className="panel-collapse-chevron" aria-hidden>
-          {open ? "▼" : "▶"}
-        </span>
-        <h2>{title}</h2>
-      </button>
-      {open ? <div className="panel-collapse-inner">{children}</div> : null}
-    </section>
-  );
-}
-
 function formatTaskStatusFr(status: string): string {
   const m: Record<string, string> = {
     pending: "En attente",
@@ -295,10 +269,6 @@ function isMarkdownPath(path: string | null): boolean {
   return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
 }
 
-function normalizeTraceMessage(message: string): string {
-  return message.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
 function dedupeProgressForTrace(
   progress: { progress_pct: number; message: string; task_id?: string | null }[],
   taskId: string,
@@ -307,7 +277,9 @@ function dedupeProgressForTrace(
   for (const p of progress) {
     const raw = (p.message ?? "").trim();
     if (!raw) continue;
-    const k = `${p.task_id ?? taskId}\0${p.progress_pct}\0${normalizeTraceMessage(raw)}`;
+    // Streamed progress emits many near-identical updates for the same percentage.
+    // Keep only the latest message per (task_id, progress_pct).
+    const k = `${p.task_id ?? taskId}\0${p.progress_pct}`;
     deduped.set(k, p);
   }
   return Array.from(deduped.values()).sort((a, b) => a.progress_pct - b.progress_pct);
@@ -359,6 +331,13 @@ export default function App() {
   const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [forkDialog, setForkDialog] = useState<{
+    open: boolean;
+    index: number;
+    parentTaskId: string;
+    sourceText: string;
+  } | null>(null);
+  const [forkInitialInstruction, setForkInitialInstruction] = useState("");
   const [agent, setAgent] = useState<string>("studio_scaffold");
   const [taskTrace, setTaskTrace] = useState<{
     id: string;
@@ -377,7 +356,6 @@ export default function App() {
   } | null>(null);
   const [humanReplyDraft, setHumanReplyDraft] = useState("");
   const [humanReplyBusy, setHumanReplyBusy] = useState(false);
-  const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
   /** Annule le polling en cours (nouveau message ou démontage du composant). */
   const pollTaskAbortRef = useRef<AbortController | null>(null);
   const editorDirtyRef = useRef(false);
@@ -400,12 +378,15 @@ export default function App() {
     task: api.TaskStatusResponse;
     events: api.TaskEventEntry[];
   } | null>(null);
+  const [taskDetailLiveMode, setTaskDetailLiveMode] = useState<"sse" | "polling" | null>(null);
 
   const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
   const [policyHintOneShot, setPolicyHintOneShot] = useState("");
   const [delegateSingleLevel, setDelegateSingleLevel] = useState(false);
   const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
   const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  /** Definition of Done : texte libre ou JSON critères (réutilisé pour chaque envoi tant que non vide). */
+  const [acceptanceCriteriaDraft, setAcceptanceCriteriaDraft] = useState("");
   const [planDocText, setPlanDocText] = useState("");
   const [planDocSnapshot, setPlanDocSnapshot] = useState("");
   const [planDocLoading, setPlanDocLoading] = useState(false);
@@ -1674,6 +1655,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1685,6 +1667,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1702,7 +1685,20 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, autoApplyDesign, designHint, designDocText]);
+  }, [
+    selectedId,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    autoApplyDesign,
+    designHint,
+    designDocText,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onRegenerateDesign = useCallback(async (forceRecreateFromProjectStyle = false) => {
     if (!selectedId) return;
@@ -1738,6 +1734,7 @@ Procédure:
       const regenerateDesignHint = [DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN, designHint.trim()]
         .filter(Boolean)
         .join("\n\n");
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1749,6 +1746,7 @@ Procédure:
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: regenerateDesignHint || undefined,
         studio_design_doc: designDocText.trim() || undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1766,7 +1764,20 @@ Procédure:
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, designDocText, autoApplyDesign, designHint]);
+  }, [
+    selectedId,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    designDocText,
+    autoApplyDesign,
+    designHint,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onSendChat = async () => {
     const text = chatInput.trim();
@@ -1778,6 +1789,7 @@ Procédure:
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: text,
         studio_project_id: selectedId,
@@ -1789,6 +1801,7 @@ Procédure:
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
@@ -1807,6 +1820,85 @@ Procédure:
       setError(String(e));
     }
   };
+
+  const onOpenForkDialog = useCallback((index: number, msg: ChatMessage) => {
+    if (!msg.task_id) return;
+    setForkDialog({
+      open: true,
+      index,
+      parentTaskId: msg.task_id,
+      sourceText: msg.text,
+    });
+    setForkInitialInstruction(msg.text);
+  }, []);
+
+  const onCreateFork = useCallback(async () => {
+    if (!selectedId || !forkDialog) return;
+    const text = forkInitialInstruction.trim();
+    if (!text) return;
+    setError(null);
+    pollTaskAbortRef.current?.abort();
+    setPendingHumanInput(null);
+    setHumanReplyDraft("");
+    setTaskTrace(null);
+    try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
+      const { task_id } = await api.sendMessage({
+        message: text,
+        session_id: "code-studio",
+        studio_project_id: selectedId,
+        studio_assigned_agent: agent || undefined,
+        studio_evolution_id: selectedEvoId ?? undefined,
+        studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
+        studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        fork_from_task_id: forkDialog.parentTaskId,
+        fork_after_message_index: forkDialog.index,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+      });
+      setChat((c) => [
+        ...c,
+        {
+          role: "user",
+          text: `[Fork depuis #${forkDialog.index + 1}] ${text}`,
+          task_id,
+        },
+      ]);
+      setForkDialog(null);
+      setForkInitialInstruction("");
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
+      setTaskTrace({
+        id: task_id,
+        status: "queued",
+        line: `Nouvelle branche créée depuis #${forkDialog.index + 1} — démarrage…`,
+        done: false,
+        progressChips: undefined,
+      });
+      saveActiveTask(selectedId, task_id);
+      void pollTask(task_id, ac.signal, selectedId);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [
+    selectedId,
+    forkDialog,
+    forkInitialInstruction,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    autoApplyDesign,
+    designHint,
+    designDocText,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onSubmitHumanReply = useCallback(async () => {
     if (!pendingHumanInput) return;
@@ -1903,6 +1995,7 @@ Procédure:
     setTaskDetailLoading(true);
     setTaskDetailError(null);
     setTaskDetailPayload(null);
+    setTaskDetailLiveMode(null);
     try {
       const [task, events] = await Promise.all([api.getTask(taskId), api.getTaskEvents(taskId)]);
       setTaskDetailPayload({ task, events });
@@ -1912,6 +2005,43 @@ Procédure:
       setTaskDetailLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!taskDetailForId) {
+      setTaskDetailLiveMode(null);
+      return;
+    }
+    let closed = false;
+    const sub = api.subscribeTaskEventsLive(
+      taskDetailForId,
+      (events) => {
+        if (closed) return;
+        setTaskDetailPayload((prev) => (prev ? { ...prev, events } : prev));
+      },
+      { pollIntervalMs: 1800, preferSse: true, onModeChange: (m) => setTaskDetailLiveMode(m) },
+    );
+    setTaskDetailLiveMode(sub.mode);
+
+    const statusTimer = window.setInterval(() => {
+      void api
+        .getTask(taskDetailForId)
+        .then((task) => {
+          if (closed) return;
+          setTaskDetailPayload((prev) =>
+            prev ? { ...prev, task } : { task, events: [] },
+          );
+        })
+        .catch(() => {
+          /* keep current detail snapshot */
+        });
+    }, 1800);
+
+    return () => {
+      closed = true;
+      sub.close();
+      window.clearInterval(statusTimer);
+    };
+  }, [taskDetailForId]);
 
   const onFixDesignDiagnostics = useCallback(async () => {
     if (!selectedId) return;
@@ -1931,6 +2061,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1942,6 +2073,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1972,6 +2104,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     designHint,
     designDocText,
     parsedDesignDoc.diagnostics,
+    acceptanceCriteriaDraft,
   ]);
 
   const codeRagBadgeTitle = useMemo(() => {
@@ -2271,6 +2404,29 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
                       Enregistrer résumé &amp; politique
                     </button>
+                  </div>
+                  <div className="evolution-policy-box">
+                    <p className="hint evolution-policy-intro">
+                      Critères de fin (Definition of Done) : texte libre ou JSON <code>criteria</code> avec{" "}
+                      <code>manual</code>, <code>file_exists</code>, <code>command_ok</code> — envoyés avec chaque message
+                      agent tant que le champ n’est pas vide (voir spec Code Studio).
+                    </p>
+                    <label className="field" htmlFor="acceptance-criteria-draft">
+                      <span>Critères d&apos;acceptation (optionnel)</span>
+                      <textarea
+                        id="acceptance-criteria-draft"
+                        className="evolution-policy-textarea"
+                        rows={5}
+                        spellCheck={false}
+                        aria-label="Critères d'acceptation Code Studio"
+                        data-testid="acceptance-criteria-draft"
+                        value={acceptanceCriteriaDraft}
+                        onChange={(e) => setAcceptanceCriteriaDraft(e.target.value)}
+                        placeholder={
+                          'Ex. liste en texte libre, ou JSON : {"criteria":[{"id":"1","text":"…","kind":"manual"},{"id":"2","text":"…","kind":"file_exists","path":"src/x.ts"}]}'
+                        }
+                      />
+                    </label>
                   </div>
                 </div>
               ) : null}
@@ -3052,154 +3208,67 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="chat-activity-area">
-          <CollapsiblePanel
-            className="chat-task-trace-wrap"
-            title="Suivi de la dernière tâche"
-            open={taskTraceSectionOpen}
-            onToggle={() => setTaskTraceSectionOpen((v) => !v)}
-          >
-            <div className="task-trace-scroll">
-              {taskTrace ? (
-                <div
-                  className={`task-trace ${taskTrace.done ? "done" : "running"}`}
-                  data-task-status={
-                    pendingHumanInput?.taskId === taskTrace.id ? "waiting_user_input" : taskTrace.status
-                  }
+          {taskTrace ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => void onOpenTaskDetailModal(taskTrace.id)}
+              title="Ouvrir la modale de détail de la tâche"
+            >
+              Tâche en cours
+            </button>
+          ) : null}
+          {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
+            <div className="task-human-input">
+              {humanInputRiskLevel ? (
+                <span
+                  className={`risk-badge risk-badge--${humanInputRiskLevel}`}
+                  title="Estimation locale (mots-clés) — pas une analyse serveur"
                 >
-                  <div className="task-trace-header-row">
-                    <span
-                      className={`task-trace-badge task-trace-badge--${
-                        pendingHumanInput?.taskId === taskTrace.id
-                          ? "human"
-                          : taskTrace.done
-                            ? "final"
-                            : "live"
-                      }`}
+                  {riskLabel(humanInputRiskLevel)}
+                </span>
+              ) : null}
+              <p className="task-human-input-question">{pendingHumanInput.question}</p>
+              {pendingHumanInput.context ? <p className="task-human-input-context">{pendingHumanInput.context}</p> : null}
+              {pendingHumanInput.choices?.length ? (
+                <div className="task-human-input-choices">
+                  {pendingHumanInput.choices.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={humanReplyBusy}
+                      onClick={() => setHumanReplyDraft(c)}
                     >
-                      {pendingHumanInput?.taskId === taskTrace.id
-                        ? "Réponse requise"
-                        : taskTrace.done
-                          ? "État final"
-                          : "En cours"}
-                    </span>
-                  </div>
-                  <div className="task-trace-id">
-                    ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
-                  </div>
-                  <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
-                  {taskTrace.progressChips && taskTrace.progressChips.length > 0 ? (
-                    <ul className="task-progress-chips" aria-label="Étapes récentes">
-                      {taskTrace.progressChips.map((c, i) => (
-                        <li key={`${c}-${i}`} className="task-progress-chip">
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
-                    <div className="task-human-input">
-                      {humanInputRiskLevel ? (
-                        <span
-                          className={`risk-badge risk-badge--${humanInputRiskLevel}`}
-                          title="Estimation locale (mots-clés) — pas une analyse serveur"
-                        >
-                          {riskLabel(humanInputRiskLevel)}
-                        </span>
-                      ) : null}
-                      <p className="task-human-input-question">{pendingHumanInput.question}</p>
-                      {pendingHumanInput.context ? (
-                        <p className="task-human-input-context">{pendingHumanInput.context}</p>
-                      ) : null}
-                      {pendingHumanInput.choices?.length ? (
-                        <div className="task-human-input-choices">
-                          {pendingHumanInput.choices.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              disabled={humanReplyBusy}
-                              onClick={() => setHumanReplyDraft(c)}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                      {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
-                        <p className="denial-loop-hint" role="status">
-                          Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
-                          pour éviter que l’agent réessaie la même action. Au 3ᵉ refus structuré, une note est ajoutée
-                          automatiquement pour l’agent.
-                        </p>
-                      ) : null}
-                      <div className="task-human-input-quick">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Acceptation : vous pouvez poursuivre avec cette approche, en restant dans le périmètre du plan.",
-                            )
-                          }
-                        >
-                          Accepter (modèle)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Refus : merci d’arrêter cette action et de proposer une alternative plus sûre ou conforme au plan.",
-                            )
-                          }
-                        >
-                          Refuser (modèle)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Refus collectif : toutes les actions en attente similaires doivent être annulées ; expliquez pourquoi et proposez la suite.",
-                            )
-                          }
-                        >
-                          Tout refuser (message type)
-                        </button>
-                      </div>
-                      <textarea
-                        className="task-human-input-textarea"
-                        value={humanReplyDraft}
-                        onChange={(e) => setHumanReplyDraft(e.target.value)}
-                        placeholder="Saisissez votre réponse (ou choisissez un bouton ci-dessus)…"
-                        rows={3}
-                        disabled={humanReplyBusy}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm task-human-input-submit"
-                        disabled={humanReplyBusy || !humanReplyDraft.trim()}
-                        onClick={() => void onSubmitHumanReply()}
-                      >
-                        {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
-                      </button>
-                    </div>
-                  ) : null}
-                  {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
+                      {c}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <div className="task-trace idle">
-                  <p className="hint task-trace-idle-hint">
-                    Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s) jusqu’à un état final ou une attente
-                    utilisateur.
-                  </p>
-                </div>
-              )}
+              ) : null}
+              {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
+                <p className="denial-loop-hint" role="status">
+                  Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
+                  pour éviter que l’agent réessaie la même action.
+                </p>
+              ) : null}
+              <textarea
+                className="task-human-input-textarea"
+                value={humanReplyDraft}
+                onChange={(e) => setHumanReplyDraft(e.target.value)}
+                placeholder="Réponse pour débloquer la tâche…"
+                rows={3}
+                disabled={humanReplyBusy}
+              />
+              <button
+                type="button"
+                className="btn btn-primary btn-sm task-human-input-submit"
+                disabled={humanReplyBusy || !humanReplyDraft.trim()}
+                onClick={() => void onSubmitHumanReply()}
+              >
+                {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
+              </button>
             </div>
-          </CollapsiblePanel>
+          ) : null}
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="pane-title pane-title--compact">Conversation</div>
@@ -3233,6 +3302,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "user" && m.task_id ? (
+                      <button
+                        type="button"
+                        className="bubble-task-detail-btn"
+                        aria-label="Fork à partir de ce message"
+                        title="Fork à partir d’ici"
+                        onClick={() => onOpenForkDialog(i, m)}
+                      >
+                        ⎇
+                      </button>
+                    ) : null}
                     {m.role === "assistant" && m.task_id ? (
                       <button
                         type="button"
@@ -3245,7 +3325,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       </button>
                     ) : null}
                     {m.role === "assistant" && m.studio_diff?.files?.length ? (
-                      <ChatStudioDiffPanel diff={m.studio_diff} />
+                      <ChatStudioDiffPanel diff={m.studio_diff} projectId={selectedId} />
                     ) : null}
                   </div>
                 </div>
@@ -3376,6 +3456,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <p>
                       <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                     </p>
+                    {taskDetailLiveMode ? (
+                      <p className="hint">
+                        Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                      </p>
+                    ) : null}
                     {taskDetailPayload.task.assigned_agent ? (
                       <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
                     ) : null}
@@ -3421,6 +3506,54 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </section>
                 </>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {forkDialog?.open ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setForkDialog(null)}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-fork-title"
+            tabIndex={-1}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.key === "Escape" && setForkDialog(null)}
+          >
+            <h3 id="modal-fork-title">Nouvelle branche de conversation</h3>
+            <p className="hint">
+              Point de fork: message #{forkDialog.index + 1}. Une nouvelle tâche sera créée avec un contexte
+              tronqué jusqu’à ce point.
+            </p>
+            <label className="field">
+              <span>Instruction initiale</span>
+              <textarea
+                value={forkInitialInstruction}
+                onChange={(e) => setForkInitialInstruction(e.target.value)}
+                rows={5}
+                spellCheck={false}
+              />
+            </label>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setForkDialog(null)}>
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!forkInitialInstruction.trim()}
+                onClick={() => void onCreateFork()}
+              >
+                Créer la branche
+              </button>
             </div>
           </div>
         </div>

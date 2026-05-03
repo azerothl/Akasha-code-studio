@@ -129,6 +129,7 @@ export type StudioPreviewStartResponse = {
   ok: boolean;
   url: string;
   port: number;
+  proxy_signed?: boolean;
   installed?: boolean;
   install?: { exit_code: number | null; stdout?: string; stderr?: string };
 };
@@ -363,13 +364,42 @@ export async function abandonEvolution(projectId: string, evolutionId: string): 
 /** Mode Code Studio injecté dans le message (daemon). */
 export type StudioCodeMode = "plan" | "implement" | "build" | "free";
 
+export type StudioAcceptanceCriterion = {
+  id?: string;
+  text: string;
+  kind: "manual" | "file_exists" | "command_ok";
+  path?: string;
+  argv?: string[];
+};
+
+export type StudioAcceptancePayload = { criteria: StudioAcceptanceCriterion[] };
+
+/** Texte libre (critères manuels) ou JSON `{ "criteria": [...] }` / tableau de critères. */
+export function parseStudioAcceptanceCriteriaInput(
+  raw: string,
+): string | StudioAcceptancePayload | StudioAcceptanceCriterion[] | undefined {
+  const t = raw.trim();
+  if (!t) return undefined;
+  if ((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))) {
+    try {
+      return JSON.parse(t) as StudioAcceptancePayload | StudioAcceptanceCriterion[];
+    } catch {
+      return t;
+    }
+  }
+  return t;
+}
+
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
+  message_delivery_mode?: "immediate" | "steering" | "follow_up";
   studio_project_id?: string;
   studio_assigned_agent?: string;
   studio_evolution_branch?: string;
   studio_evolution_id?: string;
+  fork_from_task_id?: string;
+  fork_after_message_index?: number;
   studio_code_mode?: StudioCodeMode;
   /** Consigne ponctuelle pour cette requête uniquement. */
   studio_policy_hint?: string;
@@ -379,6 +409,8 @@ export async function sendMessage(body: {
   studio_design_hint?: string;
   /** Contrat design complet (DESIGN.md), borné côté serveur. */
   studio_design_doc?: string;
+  /** Definition of Done : texte ou critères structurés (voir spec daemon). */
+  studio_acceptance_criteria?: string | StudioAcceptancePayload | StudioAcceptanceCriterion[];
 }): Promise<{ task_id: string }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
@@ -386,10 +418,15 @@ export async function sendMessage(body: {
     body: JSON.stringify({
       session_id: body.session_id ?? "code-studio",
       message: body.message,
+      ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
       ...(body.studio_project_id ? { studio_project_id: body.studio_project_id } : {}),
       ...(body.studio_assigned_agent ? { studio_assigned_agent: body.studio_assigned_agent } : {}),
       ...(body.studio_evolution_branch ? { studio_evolution_branch: body.studio_evolution_branch } : {}),
       ...(body.studio_evolution_id ? { studio_evolution_id: body.studio_evolution_id } : {}),
+      ...(body.fork_from_task_id ? { fork_from_task_id: body.fork_from_task_id } : {}),
+      ...(Number.isFinite(body.fork_after_message_index)
+        ? { fork_after_message_index: body.fork_after_message_index }
+        : {}),
       ...(body.studio_code_mode && body.studio_code_mode !== "free"
         ? { studio_code_mode: body.studio_code_mode }
         : {}),
@@ -397,6 +434,9 @@ export async function sendMessage(body: {
       ...(body.studio_delegate_single_level ? { studio_delegate_single_level: true } : {}),
       ...(body.studio_design_hint?.trim() ? { studio_design_hint: body.studio_design_hint.trim() } : {}),
       ...(body.studio_design_doc?.trim() ? { studio_design_doc: body.studio_design_doc } : {}),
+      ...(body.studio_acceptance_criteria !== undefined && body.studio_acceptance_criteria !== null
+        ? { studio_acceptance_criteria: body.studio_acceptance_criteria }
+        : {}),
     }),
   });
   if (!r.ok) {
@@ -421,8 +461,15 @@ export type TaskStatusResponse = {
   status: string;
   assigned_agent?: string;
   progress?: { progress_pct: number; message: string; task_id?: string | null }[];
+  tokens_used?: number;
+  cost_usd?: number;
+  last_turn_tokens_in?: number;
+  last_turn_tokens_out?: number;
+  last_turn_cost_usd?: number;
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
+  /** Revue critères post-tâche (optionnel, tâche terminée avec points manuels signalés). */
+  acceptance_review?: { missing?: string[] } | null;
   suggested_actions?: TaskSuggestedAction[];
 };
 
@@ -457,7 +504,32 @@ export async function getTaskStudioDiff(taskId: string): Promise<TaskStudioDiffP
   return r.json() as Promise<TaskStudioDiffPayload>;
 }
 
+export async function applyStudioPatchHunks(
+  projectId: string,
+  body: { patches: string[]; dry_run?: boolean },
+): Promise<{ ok: boolean; dry_run: boolean; requested: number; applied: number; errors: string[] }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/patch/hunks`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`applyStudioPatchHunks ${r.status}: ${t}`);
+  }
+  const payload = (await r.json()) as { ok: boolean; dry_run: boolean; requested: number; applied: number; errors?: string[] };
+  return {
+    ok: payload.ok,
+    dry_run: payload.dry_run,
+    requested: payload.requested,
+    applied: payload.applied,
+    errors: payload.errors ?? [],
+  };
+}
+
 export type TaskEventEntry = {
+  schema_version?: number;
+  kind?: string;
   event_type: string;
   at: string;
   task_id?: string | null;
@@ -468,7 +540,123 @@ export async function getTaskEvents(taskId: string): Promise<TaskEventEntry[]> {
   const r = await fetch(api(`/api/tasks/${taskId}/events`));
   if (!r.ok) throw new Error(`getTaskEvents ${r.status}`);
   const j = (await r.json()) as { events?: TaskEventEntry[] };
-  return j.events ?? [];
+  return (j.events ?? []).map((ev) => ({
+    ...ev,
+    event_type: ev.event_type || ev.kind || "unknown",
+    kind: ev.kind || ev.event_type || "unknown",
+  }));
+}
+
+export type TaskEventsLiveSubscription = {
+  close: () => void;
+  mode: "sse" | "polling";
+};
+
+function asLiveEventRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+/**
+ * Live task events stream:
+ * - preferred: SSE over `/api/events` (global bus, filtered by `correlation_id`)
+ * - fallback: polling `GET /api/tasks/:id/events`
+ */
+export function subscribeTaskEventsLive(
+  taskId: string,
+  onSnapshot: (events: TaskEventEntry[]) => void,
+  opts?: { pollIntervalMs?: number; preferSse?: boolean; onModeChange?: (mode: "sse" | "polling") => void },
+): TaskEventsLiveSubscription {
+  const pollIntervalMs = Math.max(800, opts?.pollIntervalMs ?? 2000);
+  const preferSse = opts?.preferSse ?? true;
+  let closed = false;
+  let timer: number | null = null;
+  let es: EventSource | null = null;
+  let pollInFlight = false;
+
+  const close = () => {
+    closed = true;
+    if (timer != null) {
+      window.clearTimeout(timer);
+      timer = null;
+    }
+    if (es) {
+      es.close();
+      es = null;
+    }
+  };
+
+  const startPolling = () => {
+    const tick = async () => {
+      if (closed || pollInFlight) return;
+      pollInFlight = true;
+      try {
+        const rows = await getTaskEvents(taskId);
+        if (!closed) onSnapshot(rows);
+      } catch {
+        // keep previous snapshot; next tick may recover
+      } finally {
+        pollInFlight = false;
+        if (!closed) timer = window.setTimeout(() => void tick(), pollIntervalMs);
+      }
+    };
+    void tick();
+  };
+
+  if (!preferSse || typeof window === "undefined" || typeof EventSource === "undefined") {
+    startPolling();
+    return { close, mode: "polling" };
+  }
+
+  try {
+    const MAX_SSE_EVENTS = 2000;
+    const nextByKey = new Map<string, TaskEventEntry>();
+    es = new EventSource(api("/api/events"));
+    es.onmessage = (ev) => {
+      if (closed) return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      const o = asLiveEventRecord(parsed);
+      const correlationId = typeof o?.correlation_id === "string" ? o.correlation_id : "";
+      if (correlationId !== taskId) return;
+      const at = typeof o?.timestamp === "string" ? o.timestamp : new Date().toISOString();
+      const eventType = typeof o?.event_type === "string" ? o.event_type : "unknown";
+      const key = `${eventType}\0${at}\0${typeof o?.id === "string" ? o.id : ""}`;
+      if (nextByKey.size >= MAX_SSE_EVENTS && !nextByKey.has(key)) {
+        // Evict the oldest inserted entry to keep memory bounded
+        const firstKey = nextByKey.keys().next().value;
+        if (firstKey !== undefined) nextByKey.delete(firstKey);
+      }
+      nextByKey.set(key, {
+        schema_version: 1,
+        kind: eventType,
+        event_type: eventType,
+        at,
+        task_id: taskId,
+        payload: o?.payload,
+      });
+      onSnapshot(
+        Array.from(nextByKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
+      );
+    };
+    es.onerror = () => {
+      if (closed) return;
+      if (es) {
+        es.close();
+        es = null;
+      }
+      opts?.onModeChange?.("polling");
+      startPolling();
+    };
+    return { close, mode: "sse" };
+  } catch {
+    opts?.onModeChange?.("polling");
+    startPolling();
+    return { close, mode: "polling" };
+  }
 }
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */

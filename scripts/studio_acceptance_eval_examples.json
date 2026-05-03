@@ -1,0 +1,28 @@
+{
+  "description": "Exemples de payloads studio_acceptance_criteria pour tests manuels ou harness (non exécuté par défaut).",
+  "examples": [
+    {
+      "label": "manuel seul",
+      "studio_acceptance_criteria": "L'utilisateur peut se connecter avec email + mot de passe."
+    },
+    {
+      "label": "fichier + commande",
+      "studio_acceptance_criteria": {
+        "criteria": [
+          {
+            "id": "readme",
+            "text": "README présent",
+            "kind": "file_exists",
+            "path": "README.md"
+          },
+          {
+            "id": "lint",
+            "text": "eslint sans erreur",
+            "kind": "command_ok",
+            "argv": ["npm", "run", "lint"]
+          }
+        ]
+      }
+    }
+  ]
+}
