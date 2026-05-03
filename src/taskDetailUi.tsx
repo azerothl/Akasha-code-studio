@@ -475,7 +475,7 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
         details: taskId ? [`Worker task: ${taskId}`] : undefined,
       });
       step.status = workflowStatusFromEvent(ev);
-      step.details = [...(step.details ?? []), `State: ${state}`];
+      step.details = [...(step.details ?? []), `State: ${state}`].slice(-20);
       continue;
     }
 

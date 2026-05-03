@@ -455,6 +455,11 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ status: "ok", version: "0.0.0-e2e" }),
     });
   });
+
+  // Return 404 so EventSource fires onerror and falls back to the already-mocked polling endpoint.
+  await page.route("**/api/events", async (route) => {
+    await route.fulfill({ status: 404, body: "" });
+  });
 });
 
 async function selectDemoProject(page: Page) {

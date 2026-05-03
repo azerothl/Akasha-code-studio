@@ -564,7 +564,7 @@ function asLiveEventRecord(v: unknown): Record<string, unknown> | null {
 export function subscribeTaskEventsLive(
   taskId: string,
   onSnapshot: (events: TaskEventEntry[]) => void,
-  opts?: { pollIntervalMs?: number; preferSse?: boolean },
+  opts?: { pollIntervalMs?: number; preferSse?: boolean; onModeChange?: (mode: "sse" | "polling") => void },
 ): TaskEventsLiveSubscription {
   const pollIntervalMs = Math.max(800, opts?.pollIntervalMs ?? 2000);
   const preferSse = opts?.preferSse ?? true;
@@ -608,6 +608,7 @@ export function subscribeTaskEventsLive(
   }
 
   try {
+    const MAX_SSE_EVENTS = 2000;
     const nextByKey = new Map<string, TaskEventEntry>();
     es = new EventSource(api("/api/events"));
     es.onmessage = (ev) => {
@@ -624,6 +625,11 @@ export function subscribeTaskEventsLive(
       const at = typeof o?.timestamp === "string" ? o.timestamp : new Date().toISOString();
       const eventType = typeof o?.event_type === "string" ? o.event_type : "unknown";
       const key = `${eventType}\0${at}\0${typeof o?.id === "string" ? o.id : ""}`;
+      if (nextByKey.size >= MAX_SSE_EVENTS && !nextByKey.has(key)) {
+        // Evict the oldest inserted entry to keep memory bounded
+        const firstKey = nextByKey.keys().next().value;
+        if (firstKey !== undefined) nextByKey.delete(firstKey);
+      }
       nextByKey.set(key, {
         schema_version: 1,
         kind: eventType,
@@ -642,10 +648,12 @@ export function subscribeTaskEventsLive(
         es.close();
         es = null;
       }
+      opts?.onModeChange?.("polling");
       startPolling();
     };
     return { close, mode: "sse" };
   } catch {
+    opts?.onModeChange?.("polling");
     startPolling();
     return { close, mode: "polling" };
   }

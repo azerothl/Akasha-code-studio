@@ -2018,7 +2018,7 @@ Procédure:
         if (closed) return;
         setTaskDetailPayload((prev) => (prev ? { ...prev, events } : prev));
       },
-      { pollIntervalMs: 1800, preferSse: true },
+      { pollIntervalMs: 1800, preferSse: true, onModeChange: (m) => setTaskDetailLiveMode(m) },
     );
     setTaskDetailLiveMode(sub.mode);
 
