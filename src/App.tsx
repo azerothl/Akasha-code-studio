@@ -2002,9 +2002,8 @@ Procédure:
   const mergeTaskEvents = useCallback(
     (base: api.TaskEventEntry[], incoming: api.TaskEventEntry[]): api.TaskEventEntry[] => {
       const byKey = new Map<string, api.TaskEventEntry>();
-      for (const ev of [...base, ...incoming]) {
-        byKey.set(taskEventKey(ev), ev);
-      }
+      for (const ev of base) byKey.set(taskEventKey(ev), ev);
+      for (const ev of incoming) byKey.set(taskEventKey(ev), ev);
       return Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at));
     },
     [taskEventKey],
