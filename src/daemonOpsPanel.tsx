@@ -3,8 +3,8 @@ import * as api from "./api";
 
 type RawSection = { title: string; ok: boolean; payload: unknown; error?: string };
 
-/** Cockpit opérateur : endpoints documentés dans `docs/HERMES_COCKPIT.md` (parité Hermes / daemon). */
-export function HermesOpsPanel() {
+/** Cockpit opérateur : endpoints documentés dans `docs/OPERATOR_COCKPIT.md`. */
+export function DaemonOpsPanel() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -169,10 +169,10 @@ export function HermesOpsPanel() {
   }, [taskRuns]);
 
   return (
-    <div className="hermes-ops-panel">
-      <div className="hermes-ops-header">
-        <strong>Cockpit daemon (Hermes parity)</strong>
-        <div className="hermes-ops-header-actions">
+    <div className="daemon-ops-panel">
+      <div className="daemon-ops-header">
+        <strong>Cockpit opérateur (daemon)</strong>
+        <div className="daemon-ops-header-actions">
           <label className="field-inline" style={{ fontSize: "0.72rem" }}>
             <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
             <span>Auto-refresh runs/process</span>
@@ -193,8 +193,8 @@ export function HermesOpsPanel() {
           automation-webhooks.md
         </a>
         . Voir aussi{" "}
-        <a href="/docs/HERMES_COCKPIT.md" target="_blank" rel="noopener">
-          docs/HERMES_COCKPIT.md
+        <a href="/docs/OPERATOR_COCKPIT.md" target="_blank" rel="noopener">
+          docs/OPERATOR_COCKPIT.md
         </a>
         .
       </p>
@@ -202,8 +202,8 @@ export function HermesOpsPanel() {
         État cockpit: <strong>{opsHealth || "…"}</strong>
       </p>
 
-      <section className="hermes-ops-structured-grid">
-        <div className="hermes-ops-card" data-testid="ops-task-runs-card">
+      <section className="daemon-ops-structured-grid">
+        <div className="daemon-ops-card" data-testid="ops-task-runs-card">
           <h4>Task runs</h4>
           {runStatusSummary.length > 0 ? (
             <p className="hint">
@@ -211,7 +211,7 @@ export function HermesOpsPanel() {
             </p>
           ) : null}
           {runsTop.length === 0 ? <p className="hint">Aucun run récent.</p> : (
-            <ul className="hermes-ops-mini-list">
+            <ul className="daemon-ops-mini-list">
               {runsTop.map((r) => (
                 <li key={r.id}>
                   <strong>{r.id.slice(0, 8)}…</strong> · {r.status} · {r.summary || r.task}
@@ -222,16 +222,16 @@ export function HermesOpsPanel() {
           )}
           <details>
             <summary>Raw JSON</summary>
-            <pre className="hermes-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/task_runs"))?.payload, null, 2)}</pre>
+            <pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/task_runs"))?.payload, null, 2)}</pre>
           </details>
         </div>
 
-        <div className="hermes-ops-card" data-testid="ops-swarm-graph-card">
+        <div className="daemon-ops-card" data-testid="ops-swarm-graph-card">
           <h4>Swarm graph (MVP)</h4>
           {swarmGraphRows.length === 0 ? (
             <p className="hint">Aucun worker/runs récents.</p>
           ) : (
-            <ol className="hermes-ops-mini-list">
+            <ol className="daemon-ops-mini-list">
               {swarmGraphRows.map((row) => (
                 <li key={row.id}>
                   <strong>#{row.order}</strong> · <code>{row.id.slice(0, 8)}…</code> · {row.status} · {row.label}
@@ -242,10 +242,10 @@ export function HermesOpsPanel() {
           <p className="hint">Vue graphe simplifiée basée sur les derniers task runs (coordination swarm opt-in).</p>
         </div>
 
-        <div className="hermes-ops-card" data-testid="ops-process-watch-card">
+        <div className="daemon-ops-card" data-testid="ops-process-watch-card">
           <h4>Process watch</h4>
           {processTop.length === 0 ? <p className="hint">Aucun événement.</p> : (
-            <ul className="hermes-ops-mini-list">
+            <ul className="daemon-ops-mini-list">
               {processTop.map((e, idx) => (
                 <li key={`${e.at}-${idx}`}>
                   <strong>{e.status}</strong> · {e.command} · {e.detail}
@@ -255,46 +255,46 @@ export function HermesOpsPanel() {
           )}
           <details>
             <summary>Raw JSON</summary>
-            <pre className="hermes-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/process/watch/recent"))?.payload, null, 2)}</pre>
+            <pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/process/watch/recent"))?.payload, null, 2)}</pre>
           </details>
         </div>
 
-        <div className="hermes-ops-card" data-testid="ops-terminal-card">
+        <div className="daemon-ops-card" data-testid="ops-terminal-card">
           <h4>Terminal</h4>
           <p className="hint">Mode: <strong>{terminal.current}</strong> · PTY interactif: <strong>{terminal.interactivePty ? "oui" : "non"}</strong></p>
           <p className="hint">API PTY: {terminal.ptyApi.join(", ") || "—"}</p>
-          <details><summary>Raw JSON</summary><pre className="hermes-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/terminal/capabilities"))?.payload, null, 2)}</pre></details>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/terminal/capabilities"))?.payload, null, 2)}</pre></details>
         </div>
 
-        <div className="hermes-ops-card" data-testid="ops-tools-card">
+        <div className="daemon-ops-card" data-testid="ops-tools-card">
           <h4>Tools effective</h4>
           <p className="hint">Profil: <strong>{tools.profile}</strong></p>
           <p className="hint">Allow: {tools.allow} · Approval: {tools.approval} · Deny: {tools.deny}</p>
-          <details><summary>Raw JSON</summary><pre className="hermes-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/tools/effective"))?.payload, null, 2)}</pre></details>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/tools/effective"))?.payload, null, 2)}</pre></details>
         </div>
 
-        <div className="hermes-ops-card" data-testid="ops-mcp-card">
+        <div className="daemon-ops-card" data-testid="ops-mcp-card">
           <h4>MCP</h4>
           <p className="hint">Config: <strong>{mcp.configPresent ? "présente" : "absente"}</strong> · Servers: <strong>{mcp.serverCount}</strong></p>
           <p className="hint">Runtime: {mcp.runtime} · OAuth: {mcp.oauthMode}</p>
-          <details><summary>Raw JSON status/runtime</summary><pre className="hermes-ops-pre">{JSON.stringify({
+          <details><summary>Raw JSON status/runtime</summary><pre className="daemon-ops-pre">{JSON.stringify({
             status: rawSections.find((s) => s.title.includes("/api/mcp/status"))?.payload,
             runtime: rawSections.find((s) => s.title.includes("/api/mcp/runtime"))?.payload,
           }, null, 2)}</pre></details>
         </div>
 
-        <div className="hermes-ops-card" data-testid="ops-lifecycle-card">
+        <div className="daemon-ops-card" data-testid="ops-lifecycle-card">
           <h4>Lifecycle hooks</h4>
           <p className="hint">Présent: <strong>{lifecycle.present ? "oui" : "non"}</strong> · Sandbox: <strong>{lifecycle.sandbox}</strong> · Timeout: <strong>{lifecycle.timeoutSec}s</strong></p>
           <p className="hint">Phases: {lifecycle.phases.join(", ") || "—"}</p>
-          <details><summary>Raw JSON</summary><pre className="hermes-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/lifecycle/hooks"))?.payload, null, 2)}</pre></details>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/lifecycle/hooks"))?.payload, null, 2)}</pre></details>
         </div>
       </section>
 
       {schedules.length > 0 ? (
-        <div className="hermes-ops-schedules" style={{ marginBottom: "1rem" }}>
-          <strong className="hermes-ops-schedules-title">Actions planificateur</strong>
-          <table className="hermes-ops-schedule-table">
+        <div className="daemon-ops-schedules" style={{ marginBottom: "1rem" }}>
+          <strong className="daemon-ops-schedules-title">Actions planificateur</strong>
+          <table className="daemon-ops-schedule-table">
             <thead>
               <tr>
                 <th>Nom</th>
@@ -311,7 +311,7 @@ export function HermesOpsPanel() {
                     <code title={s.id}>{s.id.slice(0, 8)}…</code>
                   </td>
                   <td>{s.enabled === false ? "non" : "oui"}</td>
-                  <td className="hermes-ops-schedule-actions">
+                  <td className="daemon-ops-schedule-actions">
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"
@@ -341,7 +341,7 @@ export function HermesOpsPanel() {
               ))}
             </tbody>
           </table>
-          {scheduleMsg ? <p className="hint hermes-ops-schedule-msg">{scheduleMsg}</p> : null}
+          {scheduleMsg ? <p className="hint daemon-ops-schedule-msg">{scheduleMsg}</p> : null}
         </div>
       ) : (
         <p className="hint" style={{ marginBottom: "1rem" }}>
@@ -350,13 +350,13 @@ export function HermesOpsPanel() {
         </p>
       )}
 
-      <div className="hermes-ops-blocks">
+      <div className="daemon-ops-blocks">
         {rawSections.map((b) => (
           <details key={b.title} open={!b.ok}>
             <summary>
               {b.ok ? "OK" : "Erreur"} — {b.title}
             </summary>
-            <pre className="hermes-ops-pre">
+            <pre className="daemon-ops-pre">
               {b.ok ? JSON.stringify(b.payload, null, 2).slice(0, 12_000) : b.error}
             </pre>
           </details>

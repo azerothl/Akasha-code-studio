@@ -37,7 +37,7 @@ import {
   mergeProgressWithEventProgress,
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
-import { HermesOpsPanel } from "./hermesOpsPanel";
+import { DaemonOpsPanel } from "./daemonOpsPanel";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -3158,12 +3158,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : centerTab === "cockpit" ? (
           <div className="center-body preview-pane preview-pane--cockpit">
             <div className="preview-toolbar">
-              <span className="pane-title-inline">Cockpit Hermes</span>
+              <span className="pane-title-inline">Cockpit opérateur</span>
               <p className="hint preview-logs-hint">
                 Vue opérateur: scheduler, task runs, process watch, terminal/PTy, outils, mémoire, MCP et lifecycle.
               </p>
             </div>
-            <HermesOpsPanel />
+            <DaemonOpsPanel />
           </div>
         ) : centerTab === "docs" ? (
           <div className="center-body plan-pane docs-pane">

@@ -637,11 +637,11 @@ test("shows suggested action chips and clicking message chip fills input", async
   await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
 });
 
-test("shows Hermes cockpit in dedicated section and endpoint blocks", async ({ page }) => {
+test("shows operator cockpit in dedicated section and endpoint blocks", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
   await page.getByRole("tab", { name: /^Cockpit$/i }).click();
-  const panel = page.locator(".preview-pane--cockpit .hermes-ops-panel");
+  const panel = page.locator(".preview-pane--cockpit .daemon-ops-panel");
   await expect(panel).toBeVisible({ timeout: 5_000 });
   await expect(panel.getByTestId("ops-task-runs-card")).toContainText(/run-1|Build \+ tests/i);
   await expect(panel.getByTestId("ops-process-watch-card")).toContainText(/npm run build|ok/i);

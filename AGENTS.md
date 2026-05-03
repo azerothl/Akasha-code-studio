@@ -15,11 +15,12 @@ npm run dev
 ## Tests
 
 ```bash
+npm run test
 npm run test:e2e:install
 npm run test:e2e
 ```
 
-Les tests Playwright **mockent** `/api/*` pour ne pas exiger un daemon réel.
+`npm run test` exécute les tests unitaires (Vitest), alias de `test:unit`. Les tests Playwright **mockent** `/api/*` pour ne pas exiger un daemon réel.
 
 ## Spécification
 

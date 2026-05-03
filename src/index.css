@@ -3688,7 +3688,7 @@ textarea.editor {
   overflow: auto;
 }
 
-.hermes-ops-panel {
+.daemon-ops-panel {
   margin-top: 0.75rem;
   padding: 0.75rem;
   border-radius: 8px;
@@ -3698,7 +3698,7 @@ textarea.editor {
   overflow: auto;
 }
 
-.hermes-ops-header {
+.daemon-ops-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3706,42 +3706,42 @@ textarea.editor {
   margin-bottom: 0.35rem;
 }
 
-.hermes-ops-header-actions {
+.daemon-ops-header-actions {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
 }
 
-.hermes-ops-structured-grid {
+.daemon-ops-structured-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
 
-.hermes-ops-card {
+.daemon-ops-card {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.5rem;
   background: var(--bg-elevated);
 }
 
-.hermes-ops-card h4 {
+.daemon-ops-card h4 {
   margin: 0 0 0.35rem;
   font-size: 0.82rem;
 }
 
-.hermes-ops-mini-list {
+.daemon-ops-mini-list {
   margin: 0;
   padding-left: 1rem;
   font-size: 0.72rem;
 }
 
-.hermes-ops-blocks details {
+.daemon-ops-blocks details {
   margin-bottom: 0.5rem;
 }
 
-.hermes-ops-pre {
+.daemon-ops-pre {
   margin: 0.35rem 0 0;
   padding: 0.5rem;
   font-size: 0.65rem;
@@ -3752,32 +3752,32 @@ textarea.editor {
   border: 1px solid var(--border);
 }
 
-.hermes-ops-schedules-title {
+.daemon-ops-schedules-title {
   display: block;
   margin-bottom: 0.35rem;
   font-size: 0.85rem;
 }
 
-.hermes-ops-schedule-table {
+.daemon-ops-schedule-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.72rem;
 }
 
-.hermes-ops-schedule-table th,
-.hermes-ops-schedule-table td {
+.daemon-ops-schedule-table th,
+.daemon-ops-schedule-table td {
   border: 1px solid var(--border);
   padding: 0.35rem 0.45rem;
   text-align: left;
   vertical-align: middle;
 }
 
-.hermes-ops-schedule-actions {
+.daemon-ops-schedule-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
 }
 
-.hermes-ops-schedule-msg {
+.daemon-ops-schedule-msg {
   margin-top: 0.35rem;
 }

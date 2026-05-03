@@ -45,7 +45,7 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-DESIGN-002 | 2 | `POST /api/studio/projects/:id/design/validate` retourne findings + summary lint DESIGN.md | Fait |
 | STU-DESIGN-003 | 2 | `POST /api/message` accepte `studio_design_hint` et `studio_design_doc` (préfixes design) | Fait |
 | STU-DESIGN-004 | 3 | Merge évolution : option `design_check` bloque si lint DESIGN.md régresse | Fait |
-| STU-OPS-001 | 3 | Cockpit Hermes structuré (sections opérateur: scheduler, task runs, process watch, terminal, tools, MCP, lifecycle) avec fallback raw JSON | Fait |
+| STU-OPS-001 | 3 | Cockpit opérateur structuré (sections opérateur: scheduler, task runs, process watch, terminal, tools, MCP, lifecycle) avec fallback raw JSON | Fait |
 | STU-OPS-002 | 3 | Cockpit: refresh manuel + auto-refresh léger ciblé (`task_runs` + `process_watch`) | Fait |
 | STU-SWARM-001 | 4 | Mode swarm studio **opt-in**: un coordinateur (`studio_project_manager`) peut déléguer à plusieurs workers bornés selon `AKASHA_STUDIO_MAX_PARALLEL_OPS` | Fait (MVP) |
 | STU-SWARM-002 | 4 | États worker normalisés (`spawned`, `ready`, `running`, `blocked`, `completed`, `failed`, `stopped`) exposés via events tâche | Fait (MVP) |

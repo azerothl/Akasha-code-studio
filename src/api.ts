@@ -702,7 +702,7 @@ export function isTaskNeedsUser(status: string): boolean {
   return status === "waiting_user_input";
 }
 
-/** --- Hermes / operator cockpit (daemon HTTP) --- */
+/** --- Operator cockpit (daemon HTTP) --- */
 
 export async function normalizeHttpError(method: string, path: string, r: Response): Promise<Error> {
   let details = "";
@@ -795,7 +795,7 @@ export async function fetchDaemonStatus(): Promise<DaemonStatus> {
   }
 }
 
-/** Pause / resume / run-now — `POST /api/schedules/{id}/{pause|resume|run_now}` (daemon Hermes parity). */
+/** Pause / resume / run-now — `POST /api/schedules/{id}/{pause|resume|run_now}`. */
 export async function postScheduleControl(
   scheduleId: string,
   action: "pause" | "resume" | "run_now",
