@@ -37,6 +37,8 @@ export type StudioProjectMeta = {
   evolution_summary?: string | null;
   /** Notes de politique outils / périmètre (réinjectées). */
   policy_notes?: string | null;
+  /** Résumé produit (intention à la création — réinjecté pour le plan / périmètre). */
+  project_summary?: string | null;
   /** Branche Git courante (`git rev-parse --abbrev-ref HEAD`), si dépôt présent. */
   git_branch?: string | null;
   /** `true` si `git status --porcelain` est vide. */
@@ -63,6 +65,7 @@ export async function patchProjectSettings(
     verify_timeout_sec?: number | null;
     evolution_summary?: string | null;
     policy_notes?: string | null;
+    project_summary?: string | null;
   },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
@@ -79,11 +82,14 @@ export async function patchProjectSettings(
 export async function createProject(opts?: {
   name?: string;
   tech_stack?: string;
+  project_summary?: string;
 }): Promise<{ id: string; path: string }> {
   const r = await fetch(api("/api/studio/projects"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(opts && (opts.name || opts.tech_stack) ? { ...opts } : {}),
+    body: JSON.stringify(
+      opts && (opts.name || opts.tech_stack || opts.project_summary) ? { ...opts } : {},
+    ),
   });
   if (!r.ok) throw new Error(`createProject ${r.status}`);
   return r.json() as Promise<{ id: string; path: string }>;
@@ -93,6 +99,39 @@ export async function getProjectMeta(projectId: string): Promise<StudioProjectMe
   const r = await fetch(api(`/api/studio/projects/${projectId}`));
   if (!r.ok) throw new Error(`getProjectMeta ${r.status}`);
   return r.json() as Promise<StudioProjectMeta>;
+}
+
+/** Analyse Git avant suppression (daemon). */
+export type StudioDeletePrecheck = {
+  has_git: boolean;
+  worktree_dirty: boolean;
+  has_upstream: boolean;
+  commits_ahead_of_upstream: number | null;
+  requires_force: boolean;
+  note_no_upstream: boolean;
+};
+
+export async function getDeletePrecheck(projectId: string): Promise<StudioDeletePrecheck> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/delete-check`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getDeletePrecheck ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<StudioDeletePrecheck>;
+}
+
+/** Supprime le répertoire projet. Utiliser `force` après avertissement si le daemon renvoie `requires_force`. */
+export async function deleteProject(projectId: string, force = false): Promise<void> {
+  const q = force ? "?force=1" : "";
+  const r = await fetch(api(`/api/studio/projects/${projectId}${q}`), { method: "DELETE" });
+  if (r.status === 409) {
+    const t = await r.text();
+    throw new Error(`deleteProject 409: ${t}`);
+  }
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`deleteProject ${r.status}: ${t}`);
+  }
 }
 
 export async function getCodeRagStatus(projectId: string): Promise<CodeRagStatus> {

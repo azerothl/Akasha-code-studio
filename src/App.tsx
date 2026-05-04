@@ -289,6 +289,7 @@ export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("Mon application");
+  const [newProjectSummary, setNewProjectSummary] = useState("");
   const [newStackPresetId, setNewStackPresetId] = useState(STACK_PRESET_NONE);
   const [newStackCustomText, setNewStackCustomText] = useState("");
   const [newStackAddons, setNewStackAddons] = useState(() => emptyStackAddons());
@@ -365,6 +366,10 @@ export default function App() {
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
+  const [deleteProjectDialog, setDeleteProjectDialog] = useState<api.StudioProject | null>(null);
+  const [deletePrecheck, setDeletePrecheck] = useState<api.StudioDeletePrecheck | null>(null);
+  const [deletePrecheckLoading, setDeletePrecheckLoading] = useState(false);
+  const [deleteProjectBusy, setDeleteProjectBusy] = useState(false);
   /** Répartition centre / chat : équilibré, plein centre, plein chat. */
   const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("balanced");
   /** Menu header ouvert : null ou id section. */
@@ -384,6 +389,7 @@ export default function App() {
   const [policyHintOneShot, setPolicyHintOneShot] = useState("");
   const [delegateSingleLevel, setDelegateSingleLevel] = useState(false);
   const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
+  const [projectSummaryDraft, setProjectSummaryDraft] = useState("");
   const [policyNotesDraft, setPolicyNotesDraft] = useState("");
   /** Definition of Done : texte libre ou JSON critères (réutilisé pour chaque envoi tant que non vide). */
   const [acceptanceCriteriaDraft, setAcceptanceCriteriaDraft] = useState("");
@@ -512,6 +518,61 @@ export default function App() {
     }
   }, []);
 
+  const clearSessionSnapsForProject = useCallback((id: string) => {
+    try {
+      sessionStorage.removeItem(`akasha-plan-snap-${id}`);
+      sessionStorage.removeItem(`akasha-design-snap-${id}`);
+    } catch {
+      /* private mode / quota */
+    }
+  }, []);
+
+  const openDeleteProjectDialog = useCallback((p: api.StudioProject) => {
+    setOpenHeaderMenu(null);
+    setModalLoadOpen(false);
+    setDeleteProjectDialog(p);
+    setDeletePrecheck(null);
+    setDeletePrecheckLoading(true);
+    void api
+      .getDeletePrecheck(p.id)
+      .then((c) => setDeletePrecheck(c))
+      .catch((e) => {
+        setError(String(e));
+        setDeleteProjectDialog(null);
+      })
+      .finally(() => setDeletePrecheckLoading(false));
+  }, []);
+
+  const onConfirmDeleteProject = useCallback(
+    async (force: boolean) => {
+      if (!deleteProjectDialog) return;
+      setError(null);
+      setDeleteProjectBusy(true);
+      const id = deleteProjectDialog.id;
+      try {
+        try {
+          await api.stopStudioPreview(id);
+        } catch {
+          /* déjà arrêté ou indisponible */
+        }
+        await api.deleteProject(id, force);
+        clearSessionSnapsForProject(id);
+        if (selectedId === id) {
+          setSelectedId(null);
+        }
+        setDeleteProjectDialog(null);
+        setDeletePrecheck(null);
+        await refreshProjects();
+        setStatus("Projet supprimé");
+      } catch (e) {
+        setError(String(e));
+      } finally {
+        setDeleteProjectBusy(false);
+      }
+    },
+    [deleteProjectDialog, selectedId, refreshProjects, clearSessionSnapsForProject],
+  );
+
   useEffect(() => {
     void refreshProjects();
   }, [refreshProjects]);
@@ -617,6 +678,7 @@ export default function App() {
       setGitWorktreeClean(null);
       setGitWorktreeLines([]);
       setEvolutionSummaryDraft("");
+      setProjectSummaryDraft("");
       setPolicyNotesDraft("");
       return;
     }
@@ -628,6 +690,7 @@ export default function App() {
         setGitHeadBranch(m.git_branch ?? null);
         setGitWorktreeClean(m.git_worktree_clean ?? null);
         setGitWorktreeLines(m.git_worktree_lines ?? []);
+        setProjectSummaryDraft((m.project_summary ?? "").trim());
         setEvolutionSummaryDraft((m.evolution_summary ?? "").trim());
         setPolicyNotesDraft((m.policy_notes ?? "").trim());
         const raw = (m.tech_stack ?? "").trim();
@@ -649,6 +712,7 @@ export default function App() {
           setGitHeadBranch(null);
           setGitWorktreeClean(null);
           setGitWorktreeLines([]);
+          setProjectSummaryDraft("");
           setEvolutionSummaryDraft("");
           setPolicyNotesDraft("");
         }
@@ -1215,12 +1279,15 @@ export default function App() {
     try {
       const name = newProjectName.trim() || "Nouveau projet";
       const stack = newProjectComposedStack.trim();
+      const summary = newProjectSummary.trim();
       const p = await api.createProject({
         name,
         ...(stack ? { tech_stack: stack } : {}),
+        ...(summary ? { project_summary: summary } : {}),
       });
       await refreshProjects();
       setSelectedId(p.id);
+      setNewProjectSummary("");
       setNewStackPresetId(STACK_PRESET_NONE);
       setNewStackCustomText("");
       setNewStackAddons(emptyStackAddons());
@@ -1266,10 +1333,11 @@ export default function App() {
     setError(null);
     try {
       await api.patchProjectSettings(selectedId, {
+        project_summary: projectSummaryDraft.trim() ? projectSummaryDraft.trim() : null,
         evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
         policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
       });
-      setStatus("Résumé d’évolution et politique enregistrés (réinjectés dans les prochains messages)");
+      setStatus("Résumés produit / évolution et politique enregistrés (réinjectés dans les prochains messages)");
     } catch (e) {
       setError(String(e));
     }
@@ -2412,9 +2480,21 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </div>
                   <div className="evolution-policy-box">
                     <p className="hint evolution-policy-intro">
-                      Résumé d’évolution et notes de politique : injectés dans les prochains messages (daemon), pour la session
-                      ou l’itération courante — utile après rechargement ou longue session.
+                      Résumé produit (périmètre initial), résumé d’évolution et notes de politique : injectés dans les prochains
+                      messages (daemon). Le résumé produit sert surtout au plan et au périmètre ; le résumé d’évolution à la
+                      session ou à la branche courante.
                     </p>
+                    <label className="field">
+                      <span>Résumé produit (objectif de l’application)</span>
+                      <textarea
+                        className="evolution-policy-textarea"
+                        rows={4}
+                        spellCheck={false}
+                        value={projectSummaryDraft}
+                        onChange={(e) => setProjectSummaryDraft(e.target.value)}
+                        placeholder="Ex. application à réaliser, utilisateurs cibles, fonctionnalités clés, contraintes…"
+                      />
+                    </label>
                     <label className="field">
                       <span>Résumé d’évolution / session</span>
                       <textarea
@@ -2438,7 +2518,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       />
                     </label>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
-                      Enregistrer résumé &amp; politique
+                      Enregistrer résumés &amp; politique
                     </button>
                   </div>
                   <div className="evolution-policy-box">
@@ -2463,6 +2543,21 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         }
                       />
                     </label>
+                  </div>
+                  <div className="studio-danger-zone">
+                    <h3 className="header-menu-section-title">Zone de danger</h3>
+                    <p className="hint">
+                      Supprime définitivement le dossier du projet sur ce poste (fichiers et dépôt Git locaux, index code du
+                      daemon).
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      data-testid="studio-delete-project-settings"
+                      onClick={() => selectedProject && openDeleteProjectDialog(selectedProject)}
+                    >
+                      Supprimer ce projet…
+                    </button>
                   </div>
                 </div>
               ) : null}
@@ -3620,7 +3715,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             ) : (
               <ul className="project-list modal-project-list">
                 {projects.map((p) => (
-                  <li key={p.id}>
+                  <li key={p.id} className="project-list-row">
                     <button
                       type="button"
                       className={`project-item ${p.id === selectedId ? "active" : ""}`}
@@ -3632,6 +3727,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     >
                       <span className="project-name">{p.name}</span>
                       <span className="project-id">{p.id.slice(0, 8)}…</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm project-delete-btn"
+                      aria-label={`Supprimer le projet ${p.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteProjectDialog(p);
+                      }}
+                    >
+                      Supprimer
                     </button>
                   </li>
                 ))}
@@ -3683,6 +3789,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 composedStack={newProjectComposedStack}
               />
             </div>
+            <label className="field">
+              <span>Résumé de l’application (recommandé)</span>
+              <textarea
+                value={newProjectSummary}
+                onChange={(e) => setNewProjectSummary(e.target.value)}
+                placeholder="Décrivez ce que l’application doit faire : public, fonctionnalités, contraintes. Sert de base au plan (CODE_STUDIO_PLAN.md), au DESIGN.md et au contexte agent."
+                rows={5}
+                spellCheck={false}
+              />
+            </label>
             <div className="modal-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setModalCreateOpen(false)}>
                 Annuler
@@ -3690,6 +3806,96 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               <button type="button" className="btn btn-primary" onClick={() => void onCreateProject()}>
                 Créer
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteProjectDialog ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => !deleteProjectBusy && setDeleteProjectDialog(null)}
+          onKeyDown={(e) => e.key === "Escape" && !deleteProjectBusy && setDeleteProjectDialog(null)}
+        >
+          <div
+            className="modal-card modal-card--wide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-delete-project-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="modal-delete-project-title">Supprimer le projet</h3>
+            <p>
+              <strong>{deleteProjectDialog.name}</strong>
+              <code className="studio-delete-id">{deleteProjectDialog.id.slice(0, 8)}…</code>
+            </p>
+            <p className="hint">Le dossier du projet sur ce poste sera effacé (y compris le dépôt Git local).</p>
+            {deletePrecheckLoading ? (
+              <p className="hint">Analyse Git…</p>
+            ) : deletePrecheck ? (
+              <>
+                {deletePrecheck.note_no_upstream ? (
+                  <p className="hint studio-delete-note">
+                    Branche locale sans suivi distant — impossible de vérifier si des commits ont été poussés. Si vous utilisez
+                    un dépôt distant, configurez le suivi puis <code>git push</code> avant de supprimer.
+                  </p>
+                ) : null}
+                {deletePrecheck.worktree_dirty ? (
+                  <p className="hint studio-delete-warn">
+                    <strong>Attention :</strong> des fichiers ne sont pas commités. Vous perdrez ces modifications si vous
+                    supprimez sans sauvegarder.
+                  </p>
+                ) : null}
+                {deletePrecheck.has_upstream &&
+                deletePrecheck.commits_ahead_of_upstream != null &&
+                deletePrecheck.commits_ahead_of_upstream > 0 ? (
+                  <p className="hint studio-delete-warn">
+                    <strong>Attention :</strong> {deletePrecheck.commits_ahead_of_upstream} commit(s) ne sont pas encore
+                    poussés vers le distant.
+                  </p>
+                ) : null}
+                {deletePrecheck.requires_force ? (
+                  <>
+                    <p className="hint">Pour sauvegarder dans Git avant suppression, dans un terminal à la racine du projet :</p>
+                    <pre className="studio-delete-git-help">
+                      {`git add -A
+git status
+git commit -m "Sauvegarde avant suppression"
+git push`}
+                    </pre>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={deleteProjectBusy}
+                onClick={() => setDeleteProjectDialog(null)}
+              >
+                Annuler
+              </button>
+              {!deletePrecheckLoading && deletePrecheck?.requires_force ? (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  disabled={deleteProjectBusy || !deletePrecheck}
+                  onClick={() => void onConfirmDeleteProject(true)}
+                >
+                  {deleteProjectBusy ? "Suppression…" : "Supprimer quand même"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  disabled={deleteProjectBusy || deletePrecheckLoading || !deletePrecheck}
+                  onClick={() => void onConfirmDeleteProject(false)}
+                >
+                  {deleteProjectBusy ? "Suppression…" : "Supprimer"}
+                </button>
+              )}
             </div>
           </div>
         </div>

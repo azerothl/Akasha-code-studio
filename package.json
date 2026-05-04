@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
+    "test:daemon": "vitest run --config vitest.daemon.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium"
   },

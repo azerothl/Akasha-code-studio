@@ -22,6 +22,16 @@ npm run test:e2e
 
 `npm run test` exécute les tests unitaires (Vitest), alias de `test:unit`. Les tests Playwright **mockent** `/api/*` pour ne pas exiger un daemon réel.
 
+### Intégration daemon (réel)
+
+Le daemon Akasha doit être **démarré** (par défaut `http://127.0.0.1:3876`). Variable optionnelle : `CODE_STUDIO_DAEMON_URL` ou `VITE_DAEMON_URL`.
+
+```bash
+npm run test:daemon
+```
+
+Vérifie `POST /api/studio/projects` (fichiers initiaux, Git sur `main`/`master`, arbre propre après commit initial). Crée puis supprime un projet sous le répertoire données du daemon.
+
 ## Spécification
 
 `docs/CODE_STUDIO_SPEC.md` — contrats API, exigences `STU-*`, phases.

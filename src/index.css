@@ -1350,6 +1350,51 @@ kbd {
   background: var(--akasha-btn-secondary-bg-hover, transparent);
 }
 
+.btn-danger {
+  background: rgba(185, 28, 28, 0.2);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(185, 28, 28, 0.35);
+  color: #fff;
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.studio-danger-zone {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(248, 113, 113, 0.35);
+}
+
+.studio-delete-warn {
+  color: #fecaca !important;
+  border-left: 3px solid rgba(248, 113, 113, 0.55);
+  padding-left: 0.5rem;
+}
+
+.studio-delete-note {
+  border-left: 3px solid var(--border);
+  padding-left: 0.5rem;
+}
+
+.studio-delete-git-help {
+  font-size: 0.78rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  margin: 0.35rem 0 0;
+}
+
+.studio-delete-id {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
@@ -1384,6 +1429,22 @@ kbd {
 .file-list li,
 .evo-list li {
   margin: 0.2rem 0;
+}
+
+.project-list-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.project-list-row .project-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-delete-btn {
+  flex: 0 0 auto;
+  align-self: stretch;
 }
 
 .file-list-row {
