@@ -429,6 +429,18 @@ export function parseStudioAcceptanceCriteriaInput(
   return t;
 }
 
+/** Session state / budget / compaction: one id per Code Studio project (not a global `code-studio` bucket). */
+function defaultCodeStudioSessionId(
+  explicit: string | undefined,
+  studioProjectId: string | undefined,
+): string {
+  const e = explicit?.trim();
+  if (e) return e;
+  const pid = studioProjectId?.trim();
+  if (pid) return `code-studio-${pid}`;
+  return "code-studio";
+}
+
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
@@ -455,7 +467,7 @@ export async function sendMessage(body: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      session_id: body.session_id ?? "code-studio",
+      session_id: defaultCodeStudioSessionId(body.session_id, body.studio_project_id),
       message: body.message,
       ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
       ...(body.studio_project_id ? { studio_project_id: body.studio_project_id } : {}),

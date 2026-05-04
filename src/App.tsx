@@ -1918,7 +1918,6 @@ Procédure:
       const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: text,
-        session_id: "code-studio",
         studio_project_id: selectedId,
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
