@@ -490,7 +490,7 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
         id: key,
         taskId: eventTaskKey(ev, rootTaskId),
         title: "Conflit détecté",
-        status: "failed",
+        status: "blocked",
         at: ev.at,
         details: [
           payloadString(ev.payload, "reason") ?? "Touches concurrentes détectées",

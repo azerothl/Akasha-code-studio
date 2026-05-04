@@ -1687,9 +1687,13 @@ export default function App() {
   }, [selectedId, centerTab]);
 
   useEffect(() => {
-    if (centerTab !== "docs") return;
+    if (centerTab !== "docs") {
+      // Clear any prior fetch error so navigating back will retry.
+      setUserGuideError(null);
+      return;
+    }
     if (userGuideDoc.trim()) return;
-    if (userGuideError) return;  // don't retry after a fetch failure
+    if (userGuideError) return;  // fetch already failed this session; guard cleared on tab exit
     let cancelled = false;
     setUserGuideLoading(true);
     setUserGuideError(null);
@@ -2062,22 +2066,29 @@ Procédure:
     [refreshFiles],
   );
 
-  /** Deduplication key for a task-event entry — includes id, task_id to handle same-second events. */
-  const taskEventKey = useCallback(
-    (ev: api.TaskEventEntry) =>
-      `${ev.event_type}::${ev.at}::${ev.id ?? ""}::${ev.task_id ?? ""}`,
-    [],
-  );
-
-  /** Merges two event arrays, deduplicating by event_type + timestamp, sorted chronologically. */
+  /** Merges two event arrays: deduplicates by id when available; otherwise keeps all events using positional keys. */
   const mergeTaskEvents = useCallback(
     (base: api.TaskEventEntry[], incoming: api.TaskEventEntry[]): api.TaskEventEntry[] => {
       const byKey = new Map<string, api.TaskEventEntry>();
-      for (const ev of base) byKey.set(taskEventKey(ev), ev);
-      for (const ev of incoming) byKey.set(taskEventKey(ev), ev);
+      // Base (polling snapshot): preserve all events. Use id as key when available so SSE can dedup against it.
+      for (let i = 0; i < base.length; i++) {
+        const ev = base[i];
+        const k = ev.id
+          ? `id:${ev.id}::${ev.task_id ?? ""}`
+          : `base:${i}::${ev.event_type}::${ev.at}::${ev.task_id ?? ""}`;
+        byKey.set(k, ev);
+      }
+      // Incoming (SSE snapshot): dedup by id against base; otherwise keep all positionally.
+      for (let i = 0; i < incoming.length; i++) {
+        const ev = incoming[i];
+        const k = ev.id
+          ? `id:${ev.id}::${ev.task_id ?? ""}`
+          : `sse:${i}::${ev.event_type}::${ev.at}::${ev.task_id ?? ""}`;
+        byKey.set(k, ev);
+      }
       return Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at));
     },
-    [taskEventKey],
+    [],
   );
 
   const onOpenTaskDetailModal = useCallback(async (taskId: string) => {
