@@ -3523,13 +3523,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               spellCheck={false}
             />
           </label>
-          <label className="field-inline delegate-single">
+          <label
+            className="field-inline delegate-single"
+            title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
+          >
             <input
               type="checkbox"
               checked={delegateSingleLevel}
               onChange={(e) => setDelegateSingleLevel(e.target.checked)}
             />
-            <span>Délégation simple (préfixe anti sous-agent)</span>
+            <span>Délégation simple (sans sous-agents)</span>
           </label>
           <label className="field-inline delegate-single">
             <input
