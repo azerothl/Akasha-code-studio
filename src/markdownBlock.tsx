@@ -68,12 +68,13 @@ function withHeadingId(
   return ({ children, ...rest }) => {
     const raw = flattenNodeText(children);
     const base = slugifyHeading(raw);
-    let id: string | undefined;
-    if (base) {
-      const count = seen.get(base) ?? 0;
-      seen.set(base, count + 1);
-      id = count === 0 ? base : `${base}-${count}`;
-    }
+    const id = base
+      ? (() => {
+          const count = seen.get(base) ?? 0;
+          seen.set(base, count + 1);
+          return count === 0 ? base : `${base}-${count}`;
+        })()
+      : undefined;
     const Tag = level;
     return (
       <Tag id={id} {...rest}>

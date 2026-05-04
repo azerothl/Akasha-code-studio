@@ -1693,7 +1693,7 @@ export default function App() {
       return;
     }
     if (userGuideDoc.trim()) return;
-    if (userGuideError) return;  // fetch already failed this session; guard cleared on tab exit
+    if (userGuideError) return;  // fetch already failed this tab visit; guard cleared on tab exit
     let cancelled = false;
     setUserGuideLoading(true);
     setUserGuideError(null);
