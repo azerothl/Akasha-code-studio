@@ -1,4 +1,4 @@
-# Code Studio ↔ Hermes-style cockpit
+# Code Studio — cockpit opérateur (daemon)
 
 Goal: surface **long-running jobs**, **logs**, **RAG status**, **worktrees**, and **terminal/backends** from the Akasha daemon in this UI.
 
@@ -17,7 +17,7 @@ Goal: surface **long-running jobs**, **logs**, **RAG status**, **worktrees**, an
 
 ## Implémenté (cockpit structuré)
 
-Dans l’UI Code Studio, le cockpit Hermes est affiché dans l’onglet central **Cockpit**.  
+Dans l’UI Code Studio, le **cockpit opérateur** est affiché dans l’onglet central **Cockpit**.  
 La vue est maintenant structurée en sections opérateur actionnables:
 
 - **Task runs** (`GET /api/task_runs`) — liste condensée des exécutions récentes.
@@ -35,7 +35,7 @@ Le cockpit inclut aussi:
 - un bouton **Rafraîchir** (rechargement complet),
 - un mode **auto-refresh léger** (runs + process watch uniquement).
 
-## UX complémentaires alignées Hermes
+## UX complémentaires
 
 - **Reprise du dernier projet**: l’ID du dernier projet sélectionné est persisté localement et réappliqué au démarrage si le projet existe encore.
 - **Conversation**: le panneau chat s’ouvre en bas (dernier message visible), avec garde-fou si l’utilisateur scrolle manuellement (bouton "Nouveaux messages — aller en bas").

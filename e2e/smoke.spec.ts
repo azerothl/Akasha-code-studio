@@ -254,6 +254,46 @@ test.beforeEach(async ({ page }) => {
               task_id: `${demoId}-sub-1`,
               payload: { tool_name: "read_file", path: "index.html" },
             },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:03Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:04Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build en créant les fichiers manquants",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:05Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 50,
+                message: "Je corrige le build en créant les fichiers manquants et en alignant les conventions de nommage.",
+              },
+            },
+            {
+              event_type: "progress_update",
+              at: "2020-01-01T00:00:06Z",
+              task_id: `${demoId}-sub-1`,
+              payload: {
+                task_id: `${demoId}-sub-1`,
+                progress_pct: 80,
+                message: "Je vérifie ensuite les imports et les chemins.",
+              },
+            },
           ],
         }),
       });
@@ -415,6 +455,23 @@ test.beforeEach(async ({ page }) => {
       body: JSON.stringify({ status: "ok", version: "0.0.0-e2e" }),
     });
   });
+
+  // Return 404 so EventSource fires onerror and falls back to the already-mocked polling endpoint.
+  await page.route("**/api/events", async (route) => {
+    await route.fulfill({ status: 404, body: "" });
+  });
+
+  await page.route(`**/api/studio/projects/${demoId}/patch/hunks`, async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, dry_run: false, requested: 1, applied: 1, errors: [] }),
+      });
+      return;
+    }
+    await route.continue();
+  });
 });
 
 async function selectDemoProject(page: Page) {
@@ -429,6 +486,15 @@ test("loads layout and lists mocked project", async ({ page }) => {
   await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
   await expect(page.getByRole("button", { name: /Démo E2E/i })).toBeVisible();
+});
+
+test("opens integrated documentation tab", async ({ page }) => {
+  await page.goto("/");
+  const docTab = page.getByTestId("studio-doc-tab");
+  await expect(docTab).toBeVisible();
+  await docTab.click();
+  await expect(page.getByTestId("studio-doc-tab")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("studio-doc-content")).toContainText("Akasha Code Studio");
 });
 
 test("loads project tech stack from metadata", async ({ page }) => {
@@ -475,6 +541,22 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
   await expect(page.locator(".bubble.assistant").getByText(/Mock — tâche terminée|La tâche est terminée/i)).toBeVisible({
     timeout: 10_000,
   });
+});
+
+test("POST /api/message includes studio_acceptance_criteria when draft is set", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-project-settings-menu").click();
+  await page.getByTestId("acceptance-criteria-draft").fill("README doit mentionner E2E");
+  await page.locator(".header-menu-backdrop").click({ force: true });
+  const post = page.waitForRequest(
+    (r) => r.url().includes("/api/message") && r.method() === "POST",
+  );
+  await page.locator(".chat-form textarea").fill("ping");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const req = await post;
+  const body = req.postDataJSON() as { studio_acceptance_criteria?: string };
+  expect(body.studio_acceptance_criteria).toBe("README doit mentionner E2E");
 });
 
 test("opens Design tab and saves DESIGN.md", async ({ page }) => {
@@ -529,6 +611,17 @@ test("opens task detail modal and shows mocked event", async ({ page }) => {
   });
   await expect(modal.locator(".task-detail-events-category-title").filter({ hasText: /^Outils$/ })).toBeVisible();
   await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^tool_call$/ })).toBeVisible();
+  const subAgentWorkflowCard = modal
+    .locator(".task-detail-workflow-item")
+    .filter({ hasText: /Sous-agent/i })
+    .first();
+  await expect(subAgentWorkflowCard).toBeVisible();
+  const progressRows = subAgentWorkflowCard.locator(".task-detail-workflow-progress li");
+  await expect(progressRows).toHaveCount(2);
+  await expect(subAgentWorkflowCard).toContainText(
+    "Je corrige le build en créant les fichiers manquants et en alignant les conventions de nommage.",
+  );
+  await expect(subAgentWorkflowCard).toContainText("Je vérifie ensuite les imports et les chemins.");
 });
 
 test("shows suggested action chips and clicking message chip fills input", async ({ page }) => {
@@ -544,11 +637,11 @@ test("shows suggested action chips and clicking message chip fills input", async
   await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
 });
 
-test("shows Hermes cockpit in dedicated section and endpoint blocks", async ({ page }) => {
+test("shows operator cockpit in dedicated section and endpoint blocks", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
   await page.getByRole("tab", { name: /^Cockpit$/i }).click();
-  const panel = page.locator(".preview-pane--cockpit .hermes-ops-panel");
+  const panel = page.locator(".preview-pane--cockpit .daemon-ops-panel");
   await expect(panel).toBeVisible({ timeout: 5_000 });
   await expect(panel.getByTestId("ops-task-runs-card")).toContainText(/run-1|Build \+ tests/i);
   await expect(panel.getByTestId("ops-process-watch-card")).toContainText(/npm run build|ok/i);
@@ -571,4 +664,138 @@ test("restores last selected project from localStorage", async ({ page }) => {
   }, demoId);
   await page.goto("/");
   await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
+});
+
+test("fork dialog sends fork_from_task_id and fork_after_message_index", async ({ page }) => {
+  await page.goto("/");
+  await selectDemoProject(page);
+
+  // Send a message so a user bubble with task_id is created.
+  await page.locator(".chat-form textarea").fill("Implement feature X");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+
+  // The fork button (⎇) appears on the user bubble once task_id is set.
+  const forkBtn = page.locator(".bubble.user").last().getByRole("button", { name: /Fork à partir de ce message/i });
+  await expect(forkBtn).toBeVisible({ timeout: 5_000 });
+
+  // Capture the next POST /api/message to inspect its body.
+  const forkRequest = page.waitForRequest(
+    (r) => r.url().includes("/api/message") && r.method() === "POST",
+  );
+
+  await forkBtn.click();
+  const modal = page.getByRole("dialog", { name: /Nouvelle branche de conversation/i });
+  await expect(modal).toBeVisible();
+
+  // Replace the default pre-filled instruction and submit.
+  const instructionArea = modal.locator("textarea");
+  await instructionArea.fill("Continue from a different angle");
+  await modal.getByRole("button", { name: /Créer la branche/i }).click();
+
+  const req = await forkRequest;
+  const body = req.postDataJSON() as Record<string, unknown>;
+  expect(body.fork_from_task_id).toBe(demoId);
+  expect(typeof body.fork_after_message_index).toBe("number");
+});
+
+test("hunk selection applies selected hunks via POST /patch/hunks", async ({ page }) => {
+  // Override studio-diff to return an actual diff with one hunk.
+  await page.route(`**/api/tasks/${demoId}/studio-diff`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        task_id: demoId,
+        captured_at: "2020-01-01T00:00:00Z",
+        files: [
+          {
+            path: "src/index.ts",
+            status: "M",
+            truncated: false,
+            diff: [
+              "diff --git a/src/index.ts b/src/index.ts",
+              "--- a/src/index.ts",
+              "+++ b/src/index.ts",
+              "@@ -1,3 +1,4 @@",
+              " const x = 1;",
+              "+const y = 2;",
+              " export { x };",
+            ].join("\n"),
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await selectDemoProject(page);
+
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+
+  // Wait for task to complete and the diff panel toggle to appear.
+  const diffToggle = page.locator(".chat-studio-diff-toggle");
+  await expect(diffToggle).toBeVisible({ timeout: 10_000 });
+  await diffToggle.click();
+
+  // Select the hunk checkbox (expand the file details first).
+  const fileDetails = page.locator(".chat-studio-diff-file").first();
+  await expect(fileDetails).toBeVisible();
+  await fileDetails.locator("summary").click();
+  const hunkCheckbox = page.locator(".chat-studio-diff-hunk input[type=checkbox]").first();
+  await expect(hunkCheckbox).toBeVisible();
+  await hunkCheckbox.check();
+
+  // Capture the POST to /patch/hunks.
+  const patchRequest = page.waitForRequest(
+    (r) => r.url().includes("/patch/hunks") && r.method() === "POST",
+  );
+  await page.getByRole("button", { name: /Appliquer sélection/i }).click();
+  const req = await patchRequest;
+  const body = req.postDataJSON() as { patches: string[]; dry_run?: boolean };
+  expect(body.patches.length).toBeGreaterThan(0);
+  expect(body.dry_run).not.toBe(true);
+  await expect(page.locator(".hint").filter({ hasText: /Patch OK/i })).toBeVisible({ timeout: 5_000 });
+});
+
+test("SSE success path delivers live events to task detail modal", async ({ page }) => {
+  const sseAt = "2020-06-01T12:00:00Z";
+  // Override /api/events to return a real SSE stream with one event.
+  await page.route("**/api/events", async (route) => {
+    const sseEvent = JSON.stringify({
+      id: "sse-test-event-1",
+      event_type: "progress_update",
+      correlation_id: demoId,
+      task_id: `${demoId}-sse-sub`,
+      schema_version: 2,
+      timestamp: sseAt,
+      payload: { message: "SSE live progress" },
+    });
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      headers: { "Cache-Control": "no-cache", "Connection": "keep-alive" },
+      // Single SSE message followed by a blank line (end of stream)
+      body: `data: ${sseEvent}\n\n`,
+    });
+  });
+
+  await page.goto("/");
+  await selectDemoProject(page);
+
+  // Send a task and open the task-detail modal.
+  await page.locator(".chat-form textarea").fill("Hello scaffold");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  const detailBtn = page.locator(".bubble.assistant").getByRole("button", { name: /Détails de la tâche/i });
+  await expect(detailBtn).toBeVisible({ timeout: 10_000 });
+  await detailBtn.click();
+
+  const modal = page.getByRole("dialog", { name: /Détail de la tâche/i });
+  await expect(modal).toBeVisible();
+
+  // The SSE event (progress_update at sseAt) should appear in the modal.
+  // The task-detail panel groups events by type; progress_update should be visible.
+  await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /progress_update/i })).toBeVisible({
+    timeout: 5_000,
+  });
 });
