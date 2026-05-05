@@ -477,7 +477,7 @@ test.beforeEach(async ({ page }) => {
 async function selectDemoProject(page: Page) {
   await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
-  await page.getByRole("button", { name: /Démo E2E/i }).click();
+  await page.getByTestId(`studio-project-${demoId}`).click();
 }
 
 test("loads layout and lists mocked project", async ({ page }) => {
@@ -485,7 +485,7 @@ test("loads layout and lists mocked project", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Code Studio/i })).toBeVisible();
   await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
-  await expect(page.getByRole("button", { name: /Démo E2E/i })).toBeVisible();
+  await expect(page.getByTestId(`studio-project-${demoId}`)).toBeVisible();
 });
 
 test("opens integrated documentation tab", async ({ page }) => {

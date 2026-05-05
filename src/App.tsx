@@ -418,6 +418,10 @@ export default function App() {
   const chatPinnedByUserRef = useRef(false);
   /** Buffers live events received before the initial task-detail fetch completes. */
   const taskDetailLiveSnapshotRef = useRef<api.TaskEventEntry[] | null>(null);
+  /** Incremented each time openDeleteProjectDialog is called; guards against applying a stale
+   *  precheck result to the wrong project when the user quickly opens deletion for another project
+   *  before the first precheck request resolves. */
+  const deletePrecheckGenRef = useRef(0);
   const [chatHasUnseen, setChatHasUnseen] = useState(false);
 
   const selectedProject = useMemo(
@@ -533,14 +537,22 @@ export default function App() {
     setDeleteProjectDialog(p);
     setDeletePrecheck(null);
     setDeletePrecheckLoading(true);
+    const gen = ++deletePrecheckGenRef.current;
     void api
       .getDeletePrecheck(p.id)
-      .then((c) => setDeletePrecheck(c))
+      .then((c) => {
+        if (deletePrecheckGenRef.current !== gen) return;
+        setDeletePrecheck(c);
+      })
       .catch((e) => {
+        if (deletePrecheckGenRef.current !== gen) return;
         setError(String(e));
         setDeleteProjectDialog(null);
       })
-      .finally(() => setDeletePrecheckLoading(false));
+      .finally(() => {
+        if (deletePrecheckGenRef.current !== gen) return;
+        setDeletePrecheckLoading(false);
+      });
   }, []);
 
   const onConfirmDeleteProject = useCallback(
@@ -609,11 +621,15 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedId) {
-      clearLastProjectId();
+      // Only clear the stored ID once projects have actually been loaded; on the
+      // very first render projects is still [] and selectedId is null, so we must
+      // not wipe the last-project-id before the restore logic has had a chance to
+      // read it.
+      if (projects.length > 0) clearLastProjectId();
       return;
     }
     setLastProjectId(selectedId);
-  }, [selectedId]);
+  }, [selectedId, projects.length]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -2118,6 +2134,10 @@ Procédure:
       return;
     }
     let closed = false;
+    // Track the current delivery mode: polling delivers full ordered snapshots (replace), while
+    // SSE provides deduplicated incremental events (merge). Keeping them separate avoids
+    // accumulating id-less duplicate rows each time a polling tick delivers a new full snapshot.
+    let currentMode: "sse" | "polling" = "polling";
     const sub = api.subscribeTaskEventsLive(
       taskDetailForId,
       (liveEvents) => {
@@ -2128,12 +2148,25 @@ Procédure:
             taskDetailLiveSnapshotRef.current = liveEvents;
             return prev;
           }
-          // Merge: keep all prior events plus new live events, deduplicating by type+timestamp.
+          // Polling delivers full snapshots: replace to avoid accumulating id-less duplicates.
+          // SSE accumulates deduplicated incremental events: merge to preserve any that arrived
+          // before the modal's initial fetch completed.
+          if (currentMode === "polling") {
+            return { ...prev, events: liveEvents };
+          }
           return { ...prev, events: mergeTaskEvents(prev.events, liveEvents) };
         });
       },
-      { pollIntervalMs: 1800, preferSse: true, onModeChange: (m) => setTaskDetailLiveMode(m) },
+      {
+        pollIntervalMs: 1800,
+        preferSse: true,
+        onModeChange: (m) => {
+          currentMode = m;
+          setTaskDetailLiveMode(m);
+        },
+      },
     );
+    currentMode = sub.mode;
     setTaskDetailLiveMode(sub.mode);
 
     const statusTimer = window.setInterval(() => {
