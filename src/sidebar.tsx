@@ -217,7 +217,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
     <>
       {/* Mobile toggle button */}
       <button
-        className="sidebar-toggle-mobile"
+        className={`sidebar-toggle-mobile ${!isOpen ? "sidebar-toggle-mobile--visible" : ""}`}
         onClick={() => onToggle(!isOpen)}
         aria-label="Ouvrir/fermer le menu"
         title="Menu de navigation"
@@ -299,8 +299,13 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
 
         {/* Footer */}
         <div className="sidebar-footer">
-          <button className="sidebar-footer-btn" title="Réduire le menu" onClick={() => onToggle(false)}>
-            ◀ Réduire
+          <button
+            className="sidebar-footer-btn"
+            type="button"
+            title="Masquer le menu latéral (réouverture avec le bouton ☰)"
+            onClick={() => onToggle(false)}
+          >
+            ◀ Masquer
           </button>
         </div>
       </nav>

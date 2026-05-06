@@ -166,6 +166,27 @@ body {
   box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
 }
 
+.sidebar-toggle-mobile.sidebar-toggle-mobile--visible {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  top: 0.45rem;
+  left: 0.45rem;
+  font-size: 1rem;
+  border-radius: 7px;
+  z-index: 260;
+  opacity: 0.62;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.22);
+}
+
+.sidebar-toggle-mobile.sidebar-toggle-mobile--visible:hover,
+.sidebar-toggle-mobile.sidebar-toggle-mobile--visible:focus-visible {
+  opacity: 1;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
 .sidebar-overlay {
   display: none;
   position: fixed;
@@ -190,6 +211,14 @@ body {
   border-right: 1px solid var(--akasha-border);
   overflow: hidden;
   transition: transform 0.3s ease;
+}
+
+.sidebar:not(.sidebar--open) {
+  transform: translateX(-100%);
+}
+
+.sidebar.sidebar--open {
+  transform: translateX(0);
 }
 
 .sidebar-header {
@@ -1578,6 +1607,31 @@ kbd {
   position: relative;
   margin-left: 240px;
   transition: margin-left 0.3s ease;
+}
+
+.app.app--sidebar-collapsed {
+  margin-left: 0;
+}
+
+/* Quand la sidebar est masquée sur desktop, on décale légèrement le titre pour éviter
+   la superposition avec le bouton de réouverture (☰). */
+.app.app--sidebar-collapsed .app-header-row {
+  padding-left: 2.4rem;
+}
+
+@media (max-width: 768px) {
+  .app.app--sidebar-collapsed .app-header-row {
+    padding-left: 0;
+  }
+
+  .sidebar-toggle-mobile.sidebar-toggle-mobile--visible {
+    width: 2.5rem;
+    height: 2.5rem;
+    top: 1rem;
+    left: 1rem;
+    font-size: 1.25rem;
+    border-radius: 8px;
+  }
 }
 
 .app-main {

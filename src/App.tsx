@@ -2453,7 +2453,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
-  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""}`;
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2507,6 +2507,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setSidebarOpen(open);
   };
 
+  const handleSidebarTabSelect = (tab: CenterTab) => {
+    setCenterTab(tab);
+    if (mainSplit === "chat") {
+      setMainSplit("balanced");
+    }
+  };
+
   useEffect(() => {
     const next = getGroupForTab(centerTab);
     if (next && next !== activeGroup) {
@@ -2529,7 +2536,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         isOpen={sidebarOpen}
         onToggle={handleSidebarToggle}
         activeTab={centerTab}
-        onTabSelect={setCenterTab}
+        onTabSelect={handleSidebarTabSelect}
         onGroupSelect={setActiveGroup}
         activeGroup={activeGroup}
       />
