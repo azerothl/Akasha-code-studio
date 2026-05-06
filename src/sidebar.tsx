@@ -217,7 +217,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
       {isOpen && <div className="sidebar-overlay" onClick={() => onToggle(false)} />}
 
       {/* Sidebar */}
-      <nav className={`sidebar ${isOpen ? "sidebar--open" : ""}`}>
+      <nav className={`sidebar ${isOpen ? "sidebar--open" : ""}`} aria-label="Navigation principale">
         {/* Header */}
         <div className="sidebar-header">
           <div className="sidebar-title">
@@ -235,17 +235,18 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
         </div>
 
         {/* Navigation Groups */}
-        <div className="sidebar-content">
+        <div className="sidebar-content" role="list">
           {SIDEBAR_NAV_GROUPS.map((group) => (
-            <div key={group.id} className="sidebar-group">
+            <div key={group.id} className="sidebar-group" role="listitem">
               <button
                 className={`sidebar-group-header ${activeGroup === group.id ? "sidebar-group-header--active" : ""}`}
                 onClick={() => handleGroupClick(group.id)}
                 aria-expanded={expandedGroup === group.id}
+                aria-label={`${group.title}, ${expandedGroup === group.id ? "développé" : "non développé"}`}
               >
-                <span className="sidebar-group-icon">{group.icon}</span>
+                <span className="sidebar-group-icon" aria-hidden="true">{group.icon}</span>
                 <span className="sidebar-group-title">{group.title}</span>
-                <span className="sidebar-group-chevron">
+                <span className="sidebar-group-chevron" aria-hidden="true">
                   {expandedGroup === group.id ? "▼" : "▶"}
                 </span>
               </button>
@@ -258,8 +259,10 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                       className={`sidebar-item ${item.tabs?.some((t) => t === activeTab) ? "sidebar-item--active" : ""}`}
                       onClick={() => handleItemClick(item, group.id)}
                       title={item.hint}
+                      aria-label={`${item.label}${item.hint ? ": " + item.hint : ""}`}
+                      aria-current={item.tabs?.some((t) => t === activeTab) ? "page" : undefined}
                     >
-                      <span className="sidebar-item-icon">{item.icon}</span>
+                      <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
                       <span className="sidebar-item-label">{item.label}</span>
                       {item.hint && (
                         <span className="sidebar-item-hint" role="tooltip">

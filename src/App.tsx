@@ -4,8 +4,6 @@ import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStor
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
 import { clearLastProjectId, getLastProjectId, setLastProjectId } from "./lastProjectStorage";
 import {
-  BASE_STACK_PRESETS,
-  STACK_ADDON_GROUPS,
   STACK_PRESET_CUSTOM,
   STACK_PRESET_NONE,
   type StackAddonCategoryId,
@@ -42,6 +40,7 @@ import { TooltipHint } from "./tooltipHint";
 import { Sidebar, getTabsForGroup, getDefaultGroup } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
 import { Accordion, type AccordionItem } from "./accordion";
+import { StackWizard } from "./stackWizard";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -93,97 +92,9 @@ const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "settings", label: "Paramètres", testId: "studio-settings-tab" },
 ];
 
-type StackFieldsProps = {
-  selectId: string;
-  presetId: string;
-  onPresetChange: (v: string) => void;
-  customText: string;
-  onCustomTextChange: (v: string) => void;
-  addons: Record<StackAddonCategoryId, string[]>;
-  onToggleAddon: (cat: StackAddonCategoryId, optId: string) => void;
-  composedStack: string;
-};
-
-function StackFields({
-  selectId,
-  presetId,
-  onPresetChange,
-  customText,
-  onCustomTextChange,
-  addons,
-  onToggleAddon,
-  composedStack,
-}: StackFieldsProps) {
-  const showCustom = presetId === STACK_PRESET_CUSTOM;
-  const showPreview = presetId !== STACK_PRESET_NONE && presetId !== STACK_PRESET_CUSTOM;
-
-  return (
-    <>
-      <label className="field stack-select-field">
-        <span>Modèle de stack</span>
-        <select id={selectId} value={presetId} onChange={(e) => onPresetChange(e.target.value)}>
-          <option value={STACK_PRESET_NONE}>— Aucune stack —</option>
-          {BASE_STACK_PRESETS.filter((p) => p.id !== STACK_PRESET_CUSTOM).map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-          <option value={STACK_PRESET_CUSTOM}>Personnalisé (texte libre)</option>
-        </select>
-      </label>
-      {presetId !== STACK_PRESET_NONE ? (
-        <details className="stack-addons-details">
-          <summary>Affiner avec des cases à cocher (optionnel)</summary>
-          <div className="stack-addon-groups">
-            {STACK_ADDON_GROUPS.map((g) => (
-              <fieldset key={g.id} className="stack-addon-group">
-                <legend>{g.title}</legend>
-                <div className="stack-addon-chips">
-                  {g.options.map((o) => {
-                    const checked = (addons[g.id] ?? []).includes(o.id);
-                    return (
-                      <label key={o.id} className="stack-addon-label">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => onToggleAddon(g.id, o.id)}
-                        />
-                        {o.label}
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            ))}
-          </div>
-        </details>
-      ) : (
-        <p className="hint stack-addons-hint">
-          Choisissez un modèle ou « Personnalisé » pour activer les précisions par catégorie.
-        </p>
-      )}
-      {showPreview ? (
-        <label className="field">
-          <span>Aperçu (texte injecté côté daemon)</span>
-          <textarea className="stack-textarea" readOnly rows={6} value={composedStack} spellCheck={false} />
-        </label>
-      ) : null}
-      {showCustom ? (
-        <label className="field">
-          <span>Stack libre</span>
-          <textarea
-            className="stack-textarea"
-            rows={8}
-            value={customText}
-            onChange={(e) => onCustomTextChange(e.target.value)}
-            placeholder="Décrivez langages, frameworks, conventions, outils…"
-            spellCheck={false}
-          />
-        </label>
-      ) : null}
-    </>
-  );
-}
+// Deprecated: Use StackWizard instead
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// Deprecated: StackFields and StackFieldsProps have been replaced by StackWizard component
 
 function formatTaskStatusFr(status: string): string {
   const m: Record<string, string> = {
@@ -2730,8 +2641,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         contraire dans le chat. Un projet déjà configuré s’ouvre en « Personnalisé » avec le texte enregistré.
                       </p>
                     </div>
-                    <StackFields
-                      selectId="project-stack-select"
+                    <StackWizard
                       presetId={stackPresetId}
                       onPresetChange={onStackPresetSelect}
                       customText={stackCustomText}
@@ -4293,8 +4203,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </label>
             <div className="new-project-stack">
               <span className="field-label-like">Stack à la création (optionnel)</span>
-              <StackFields
-                selectId="modal-new-project-stack-select"
+              <StackWizard
                 presetId={newStackPresetId}
                 onPresetChange={onNewStackPresetSelect}
                 customText={newStackCustomText}
