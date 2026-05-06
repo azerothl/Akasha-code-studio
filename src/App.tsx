@@ -73,7 +73,7 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type CenterTab = "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs";
+type CenterTab = "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "settings";
 
 const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "editor", label: "Éditeur" },
@@ -84,6 +84,7 @@ const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "logs", label: "Logs serveur" },
   { id: "cockpit", label: "Cockpit" },
   { id: "docs", label: "Documentation", testId: "studio-doc-tab" },
+  { id: "settings", label: "Paramètres", testId: "studio-settings-tab" },
 ];
 
 type StackFieldsProps = {
@@ -405,6 +406,27 @@ export default function App() {
     events: api.TaskEventEntry[];
   } | null>(null);
   const [taskDetailLiveMode, setTaskDetailLiveMode] = useState<"sse" | "polling" | null>(null);
+  const [chatOptionsOpen, setChatOptionsOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.chatOptionsOpen") === "1";
+  });
+  const [chatSuggestionsOpen, setChatSuggestionsOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.chatSuggestionsOpen") === "1";
+  });
+  const [buildLogOpen, setBuildLogOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.buildLogOpen") === "1";
+  });
+  const [taskDetailTab, setTaskDetailTab] = useState<"events" | "progress" | "workflow" | "summary">("events");
+  const [uiTheme, setUiTheme] = useState<"dark" | "light" | "compact-dark">(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiTheme") : null;
+    return stored === "light" || stored === "compact-dark" ? stored : "dark";
+  });
+  const [uiDensity, setUiDensity] = useState<"normal" | "compact">(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiDensity") : null;
+    return stored === "compact" ? "compact" : "normal";
+  });
 
   const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
   const [policyHintOneShot, setPolicyHintOneShot] = useState("");
@@ -2370,6 +2392,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2386,6 +2409,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     if (!taskDetailForId) return;
+    setTaskDetailTab("events");
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setTaskDetailForId(null);
     };
@@ -2393,8 +2417,29 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     return () => window.removeEventListener("keydown", onKey);
   }, [taskDetailForId]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", uiTheme);
+    window.localStorage.setItem("studio.uiTheme", uiTheme);
+  }, [uiTheme]);
+
+  useEffect(() => {
+    window.localStorage.setItem("studio.uiDensity", uiDensity);
+  }, [uiDensity]);
+
+  useEffect(() => {
+    window.localStorage.setItem("studio.chatOptionsOpen", chatOptionsOpen ? "1" : "0");
+  }, [chatOptionsOpen]);
+
+  useEffect(() => {
+    window.localStorage.setItem("studio.chatSuggestionsOpen", chatSuggestionsOpen ? "1" : "0");
+  }, [chatSuggestionsOpen]);
+
+  useEffect(() => {
+    window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0");
+  }, [buildLogOpen]);
+
   return (
-    <div className="app">
+    <div className={appClass}>
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
@@ -2904,49 +2949,51 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <label className="field-inline header-agent-inline">
-          <span className="header-agent-label">Rôle agent</span>
-          <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
-            {AGENT_OPTIONS.map((o) => (
-              <option key={o.value || "auto"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span
-          className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
-          title={daemonStatus.detail ?? "Statut du daemon Akasha"}
-          aria-label="Statut du daemon"
-        >
-          Daemon {daemonStatus.label}
-        </span>
+        <div className="app-header-nav-secondary">
+          <label className="field-inline header-agent-inline">
+            <span className="header-agent-label">Rôle agent</span>
+            <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
+              {AGENT_OPTIONS.map((o) => (
+                <option key={o.value || "auto"} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span
+            className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
+            title={daemonStatus.detail ?? "Statut du daemon Akasha"}
+            aria-label="Statut du daemon"
+          >
+            Daemon {daemonStatus.label}
+          </span>
 
-        <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "center" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "center"}
-            onClick={() => setMainSplit("center")}
-          >
-            Plein éditeur
-          </button>
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "balanced" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "balanced"}
-            onClick={() => setMainSplit("balanced")}
-          >
-            50/50
-          </button>
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "chat" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "chat"}
-            onClick={() => setMainSplit("chat")}
-          >
-            Plein chat
-          </button>
+          <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm${mainSplit === "center" ? " is-active" : ""}`}
+              aria-pressed={mainSplit === "center"}
+              onClick={() => setMainSplit("center")}
+            >
+              Plein éditeur
+            </button>
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm${mainSplit === "balanced" ? " is-active" : ""}`}
+              aria-pressed={mainSplit === "balanced"}
+              onClick={() => setMainSplit("balanced")}
+            >
+              50/50
+            </button>
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm${mainSplit === "chat" ? " is-active" : ""}`}
+              aria-pressed={mainSplit === "chat"}
+              onClick={() => setMainSplit("chat")}
+            >
+              Plein chat
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -3554,6 +3601,47 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </div>
             )}
           </div>
+        ) : centerTab === "settings" ? (
+          <div className="center-body plan-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Paramètres de l’application</span>
+            </div>
+            <div className="panel">
+              <h2>Apparence</h2>
+              <div className="field-row">
+                <label className="field">
+                  <span>Thème</span>
+                  <select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="compact-dark">Compact dark</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Densité</span>
+                  <select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
+                    <option value="normal">Normale</option>
+                    <option value="compact">Compacte</option>
+                  </select>
+                </label>
+              </div>
+              <label className="field-inline delegate-single">
+                <input type="checkbox" checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
+                <span>Options conversation ouvertes par défaut</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <input type="checkbox" checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
+                <span>Suggestions ouvertes par défaut</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <input type="checkbox" checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
+                <span>Journal de build ouvert par défaut</span>
+              </label>
+              <p className="hint">
+                Les paramètres sont persistés localement (navigateur) pour ce poste.
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">
             <div className="preview-toolbar">
@@ -3715,75 +3803,30 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             {lastAssistant?.suggested_actions && lastAssistant.suggested_actions.length > 0 ? (
               <div className="chat-suggestions" aria-label="Prochaines étapes suggérées">
-                <span className="chat-suggestions-label">Suggestions</span>
-                <div className="chat-suggestion-chips">
-                  {lastAssistant.suggested_actions.map((a) => (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className="btn btn-ghost btn-sm chat-suggestion-chip"
-                      onClick={() => {
-                        if (a.kind === "message" && a.message) setChatInput(a.message);
-                        if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
-                      }}
-                    >
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
+                <details open={chatSuggestionsOpen} onToggle={(e) => setChatSuggestionsOpen((e.target as HTMLDetailsElement).open)}>
+                  <summary className="chat-suggestions-label">Suggestions ({lastAssistant.suggested_actions.length})</summary>
+                  <div className="chat-suggestion-chips">
+                    {lastAssistant.suggested_actions.map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className="btn btn-ghost btn-sm chat-suggestion-chip"
+                        onClick={() => {
+                          if (a.kind === "message" && a.message) setChatInput(a.message);
+                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
+                        }}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </details>
               </div>
             ) : null}
           </section>
         </div>
 
         <div className="chat-panel-footer">
-          <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
-            {CODE_MODE_OPTIONS.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
-                title={o.hint}
-                onClick={() => setCodeMode(o.value)}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          <label className="field chat-policy-hint-field">
-            <span>Consigne ponctuelle (optionnel, un envoi)</span>
-            <input
-              type="text"
-              value={policyHintOneShot}
-              onChange={(e) => setPolicyHintOneShot(e.target.value)}
-              placeholder="Ex. ne pas toucher au dossier legacy/…"
-              spellCheck={false}
-            />
-          </label>
-          <label
-            className="field-inline delegate-single"
-            title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
-          >
-            <input
-              type="checkbox"
-              checked={delegateSingleLevel}
-              onChange={(e) => setDelegateSingleLevel(e.target.checked)}
-            />
-            <span>Délégation simple (sans sous-agents)</span>
-          </label>
-          <label className="field-inline delegate-single">
-            <input
-              type="checkbox"
-              checked={autoApplyDesign}
-              onChange={(e) => setAutoApplyDesign(e.target.checked)}
-            />
-            <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
-          </label>
-          {autoApplyDesign && designHint ? (
-            <p className="hint chat-design-hint" title={designHint}>
-              Design actif: {designHint}
-            </p>
-          ) : null}
           <div className="chat-form">
             <textarea
               value={chatInput}
@@ -3800,12 +3843,74 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               Envoyer
             </button>
           </div>
-          <p className="kbd-hint">
-            Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour envoyer
-          </p>
-
-          <div className="pane-title">Journal de build</div>
-          <pre className="build-pre">{buildLog || "—"}</pre>
+          <div className="chat-controls-row">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm chat-options-toggle"
+              onClick={() => setChatOptionsOpen((v) => !v)}
+              title="Afficher ou masquer les options avancées"
+            >
+              {chatOptionsOpen ? "Masquer options" : "Options"}
+            </button>
+            <p className="kbd-hint">
+              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
+            </p>
+          </div>
+          {chatOptionsOpen ? (
+            <div className="chat-options-panel">
+              <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+                {CODE_MODE_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                    title={o.hint}
+                    onClick={() => setCodeMode(o.value)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <label className="field chat-policy-hint-field">
+                <span>Consigne ponctuelle (optionnel, un envoi)</span>
+                <input
+                  type="text"
+                  value={policyHintOneShot}
+                  onChange={(e) => setPolicyHintOneShot(e.target.value)}
+                  placeholder="Ex. ne pas toucher au dossier legacy/…"
+                  spellCheck={false}
+                />
+              </label>
+              <label
+                className="field-inline delegate-single"
+                title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
+              >
+                <input
+                  type="checkbox"
+                  checked={delegateSingleLevel}
+                  onChange={(e) => setDelegateSingleLevel(e.target.checked)}
+                />
+                <span>Délégation simple (sans sous-agents)</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <input
+                  type="checkbox"
+                  checked={autoApplyDesign}
+                  onChange={(e) => setAutoApplyDesign(e.target.checked)}
+                />
+                <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
+              </label>
+              {autoApplyDesign && designHint ? (
+                <p className="hint chat-design-hint" title={designHint}>
+                  Design actif: {designHint}
+                </p>
+              ) : null}
+              <details open={buildLogOpen} onToggle={(e) => setBuildLogOpen((e.target as HTMLDetailsElement).open)}>
+                <summary className="pane-title">Journal de build</summary>
+                <pre className="build-pre">{buildLog || "—"}</pre>
+              </details>
+            </div>
+          ) : null}
         </div>
       </aside>
       </div>
@@ -3836,59 +3941,86 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               {taskDetailError ? <div className="banner banner-error">{taskDetailError}</div> : null}
               {!taskDetailLoading && !taskDetailError && taskDetailPayload ? (
                 <>
-                  <section className="task-detail-section">
-                    <h4>Résumé</h4>
-                    <p>
-                      <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
-                    </p>
-                    {taskDetailLiveMode ? (
-                      <p className="hint">
-                        Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                  <div className="task-detail-tabs" role="tablist" aria-label="Navigation détail tâche">
+                    {[
+                      { id: "events", label: "Événements" },
+                      { id: "progress", label: "Progression" },
+                      { id: "workflow", label: "Workflow" },
+                      { id: "summary", label: "Résumé" },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={taskDetailTab === tab.id}
+                        className={`task-detail-tab ${taskDetailTab === tab.id ? "is-active" : ""}`}
+                        onClick={() => setTaskDetailTab(tab.id as typeof taskDetailTab)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  {taskDetailTab === "summary" ? (
+                    <section className="task-detail-section">
+                      <h4>Résumé</h4>
+                      <p>
+                        <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                       </p>
-                    ) : null}
-                    {taskDetailPayload.task.assigned_agent ? (
-                      <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
-                    ) : null}
-                    {taskDetailPayload.task.failure_detail ? (
-                      <pre className="task-detail-failure">{taskDetailPayload.task.failure_detail}</pre>
-                    ) : null}
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Workflow / sous-agents</h4>
-                    <TaskDetailWorkflowView
-                      events={taskDetailPayload.events}
-                      rootTaskId={taskDetailPayload.task.task_id}
-                    />
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Progression</h4>
-                    {(() => {
-                      const mergedProgress = mergeProgressWithEventProgress(
-                        taskDetailPayload.task.progress ?? [],
-                        taskDetailPayload.events,
-                        taskDetailPayload.task.task_id,
-                      );
-                      return mergedProgress.length > 0 ? (
-                        <TaskDetailProgressView
-                          progress={mergedProgress}
-                          rootTaskId={taskDetailPayload.task.task_id}
-                        />
-                      ) : (
-                        <p className="hint">Aucune entrée de progression.</p>
-                      );
-                    })()}
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Événements</h4>
-                    {taskDetailPayload.events.length === 0 ? (
-                      <p className="hint">Aucun événement.</p>
-                    ) : (
-                      <TaskDetailEventsGrouped
+                      {taskDetailLiveMode ? (
+                        <p className="hint">
+                          Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                        </p>
+                      ) : null}
+                      {taskDetailPayload.task.assigned_agent ? (
+                        <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
+                      ) : null}
+                      {taskDetailPayload.task.failure_detail ? (
+                        <pre className="task-detail-failure">{taskDetailPayload.task.failure_detail}</pre>
+                      ) : null}
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "workflow" ? (
+                    <section className="task-detail-section">
+                      <h4>Workflow / sous-agents</h4>
+                      <TaskDetailWorkflowView
                         events={taskDetailPayload.events}
                         rootTaskId={taskDetailPayload.task.task_id}
                       />
-                    )}
-                  </section>
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "progress" ? (
+                    <section className="task-detail-section">
+                      <h4>Progression</h4>
+                      {(() => {
+                        const mergedProgress = mergeProgressWithEventProgress(
+                          taskDetailPayload.task.progress ?? [],
+                          taskDetailPayload.events,
+                          taskDetailPayload.task.task_id,
+                        );
+                        return mergedProgress.length > 0 ? (
+                          <TaskDetailProgressView
+                            progress={mergedProgress}
+                            rootTaskId={taskDetailPayload.task.task_id}
+                          />
+                        ) : (
+                          <p className="hint">Aucune entrée de progression.</p>
+                        );
+                      })()}
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "events" ? (
+                    <section className="task-detail-section">
+                      <h4>Événements</h4>
+                      {taskDetailPayload.events.length === 0 ? (
+                        <p className="hint">Aucun événement.</p>
+                      ) : (
+                        <TaskDetailEventsGrouped
+                          events={taskDetailPayload.events}
+                          rootTaskId={taskDetailPayload.task.task_id}
+                        />
+                      )}
+                    </section>
+                  ) : null}
                 </>
               ) : null}
             </div>
