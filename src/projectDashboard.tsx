@@ -44,15 +44,19 @@ function formatCodeRagStatus(status?: api.CodeRagStatus): string {
   }
 }
 
+const MINUTES_PER_HOUR = 60;
+const MINUTES_PER_DAY = 1440;
+
 function timeSinceInMinutes(time: string): string {
   try {
     const date = new Date(time);
+    if (isNaN(date.getTime())) return "?";
     const now = new Date();
     const diff = (now.getTime() - date.getTime()) / 1000 / 60;
     if (diff < 1) return "À l'instant";
-    if (diff < 60) return `${Math.floor(diff)}m`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h`;
-    return `${Math.floor(diff / 1440)}j`;
+    if (diff < MINUTES_PER_HOUR) return `il y a ${Math.floor(diff)} min`;
+    if (diff < MINUTES_PER_DAY) return `il y a ${Math.floor(diff / MINUTES_PER_HOUR)} h`;
+    return `il y a ${Math.floor(diff / MINUTES_PER_DAY)} j`;
   } catch {
     return "?";
   }
@@ -162,7 +166,7 @@ export function ProjectDashboard({
           <div className="dashboard-card-body">
             <p className="hint">{ragStatus}</p>
             {codeRagStatus?.status === "ready" && codeRagStatus.built_at && (
-              <p className="hint dashboard-hint-secondary">Mis à jour {timeSinceInMinutes(codeRagStatus.built_at)} ago</p>
+              <p className="hint dashboard-hint-secondary">Mis à jour {timeSinceInMinutes(codeRagStatus.built_at)}</p>
             )}
           </div>
         </div>
@@ -178,7 +182,7 @@ export function ProjectDashboard({
                 <p className="dashboard-task-id">
                   <code>{activeTask.taskId.slice(0, 12)}…</code>
                 </p>
-                <p className="hint">Démarrée {timeSinceInMinutes(new Date(activeTask.startedAt).toISOString())} ago</p>
+                <p className="hint">Démarrée {timeSinceInMinutes(new Date(activeTask.startedAt).toISOString())}</p>
               </div>
             </div>
           </div>

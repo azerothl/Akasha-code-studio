@@ -200,6 +200,17 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onToggle(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onToggle]);
+
   const handleGroupClick = (groupId: string) => {
     setExpandedGroup(expandedGroup === groupId ? null : groupId);
     onGroupSelect?.(groupId);

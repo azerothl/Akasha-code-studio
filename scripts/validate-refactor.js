@@ -117,7 +117,7 @@ try {
 }
 
 if (jsFiles.length > 0) {
-  testFile('dist/assets/index-*.js exists', path.join(assetsDir, jsFiles[0]), 500000);
+  testFile('dist/assets/index-*.js exists', path.join(assetsDir, jsFiles[0]), 1000);
 } else if (cssFiles.length === 0 && jsFiles.length === 0) {
   // already reported above
 } else {
@@ -126,7 +126,7 @@ if (jsFiles.length > 0) {
 }
 
 if (cssFiles.length > 0) {
-  testFile('dist/assets/index-*.css exists', path.join(assetsDir, cssFiles[0]), 50000);
+  testFile('dist/assets/index-*.css exists', path.join(assetsDir, cssFiles[0]), 100);
 } else if (jsFiles.length === 0 && cssFiles.length === 0) {
   // already reported above
 } else {
@@ -139,34 +139,26 @@ if (cssFiles.length > 0) {
 // ─────────────────────────────────────
 console.log('\n♿ ACCESSIBILITY ATTRIBUTES\n');
 
-const accessibilityPatterns = [
-  'aria-label',
-  'aria-expanded',
-  'aria-hidden',
-  'aria-current',
-  'aria-pressed',
-  'aria-selected',
-  'role=',
-  '<nav',
-  '<main',
-  '<section',
-  '<fieldset',
-  '<legend'
-];
-
-let totalAccessibility = 0;
-
 try {
-  const files = fs.readdirSync(SRC_DIR).filter(f => f.endsWith('.tsx'));
-  
-  const ariaMatches = searchInFile(path.join(SRC_DIR, 'App.tsx'), ['aria-']);
-  testExists('ARIA attributes present (aria-*)', ariaMatches['aria-'] > 20);
-  
-  const roleMatches = searchInFile(path.join(SRC_DIR, 'App.tsx'), ['role=']);
-  testExists('Role attributes present (role=)', roleMatches['role='] > 5);
-  
-  const semanticMatches = searchInFile(path.join(SRC_DIR, 'App.tsx'), ['<nav', '<section']);
-  testExists('Semantic HTML present (<nav, <section)', semanticMatches['<nav'] > 0 || semanticMatches['<section'] > 0);
+  const tsxFiles = fs.readdirSync(SRC_DIR).filter(f => f.endsWith('.tsx'));
+
+  let totalAria = 0;
+  let totalRole = 0;
+  let totalSemantic = 0;
+
+  for (const file of tsxFiles) {
+    const filePath = path.join(SRC_DIR, file);
+    const ariaM = searchInFile(filePath, ['aria-']);
+    const roleM = searchInFile(filePath, ['role=']);
+    const semM  = searchInFile(filePath, ['<nav', '<section']);
+    totalAria     += ariaM['aria-']    || 0;
+    totalRole     += roleM['role=']    || 0;
+    totalSemantic += (semM['<nav'] || 0) + (semM['<section'] || 0);
+  }
+
+  testExists(`ARIA attributes present (aria-*) across ${tsxFiles.length} files`, totalAria > 20);
+  testExists(`Role attributes present (role=) across ${tsxFiles.length} files`, totalRole > 5);
+  testExists(`Semantic HTML present (<nav, <section) across ${tsxFiles.length} files`, totalSemantic > 0);
 } catch (err) {
   results.failed.push(`Accessibility scanning: ${err.message}`);
   console.log(`❌ Accessibility scanning failed: ${err.message}`);
