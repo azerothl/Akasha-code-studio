@@ -275,6 +275,8 @@ export async function patchStudioTicket(
     depends_on_ticket_id?: string | null;
     status?: StudioTicketStatus;
     acceptance_criteria?: StudioTicketAcceptanceCriterion[];
+    /** Remet un ticket « bloqué » après crash daemon : passe en todo et enlève related_task_id. */
+    recover_stuck_execution?: boolean;
   },
 ): Promise<StudioTicket> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}`), {
@@ -789,6 +791,41 @@ export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   const r = await fetch(api(`/api/tasks/${taskId}`));
   if (!r.ok) throw new Error(`getTask ${r.status}`);
   return r.json() as Promise<TaskStatusResponse>;
+}
+
+/** `null` si la tâche n’existe plus (404) — pour détecter exécution orpheline côté Kanban. */
+export async function tryGetTask(taskId: string): Promise<TaskStatusResponse | null> {
+  const r = await fetch(api(`/api/tasks/${taskId}`));
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`tryGetTask ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<TaskStatusResponse>;
+}
+
+export async function pauseTask(taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/pause`), { method: "POST" });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`pauseTask ${r.status}: ${t}`);
+  }
+}
+
+export async function resumeTask(taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/resume`), { method: "POST" });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`resumeTask ${r.status}: ${t}`);
+  }
+}
+
+export async function cancelTask(taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/cancel`), { method: "POST" });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`cancelTask ${r.status}: ${t}`);
+  }
 }
 
 /** Une entrée de diff fichier ↔ snapshot de début de tâche Code Studio. */

@@ -79,6 +79,8 @@ export function KanbanBoard({
   const [dependsOnDraft, setDependsOnDraft] = useState("");
   const [depPatchBusy, setDepPatchBusy] = useState(false);
   const [depPatchError, setDepPatchError] = useState<string | null>(null);
+  const [recoverTicketBusy, setRecoverTicketBusy] = useState(false);
+  const [taskCtlBusy, setTaskCtlBusy] = useState<"pause" | "resume" | "cancel" | null>(null);
 
   async function load() {
     if (!projectId) return;
@@ -124,10 +126,17 @@ export function KanbanBoard({
     let cancelled = false;
     const refresh = async () => {
       try {
-        const t = await api.getTask(taskId);
+        const t = await api.tryGetTask(taskId);
         if (!cancelled) {
-          setLinkedTaskSnapshot(t);
-          setLinkedTaskError(null);
+          if (t === null) {
+            setLinkedTaskSnapshot(null);
+            setLinkedTaskError(
+              "Tâche introuvable (souvent après redémarrage du daemon ou perte du store local). Le ticket peut rester « en cours » par erreur.",
+            );
+          } else {
+            setLinkedTaskSnapshot(t);
+            setLinkedTaskError(null);
+          }
           setLinkedTaskLoading(false);
         }
       } catch (e) {
@@ -158,6 +167,44 @@ export function KanbanBoard({
     for (const t of tickets) map.get(t.status)?.push(t);
     return map;
   }, [tickets]);
+
+  const stuckExecutionHint = useMemo(() => {
+    if (!selected?.related_task_id?.trim()) return null;
+    if (selected.status !== "in_progress" && selected.status !== "review") return null;
+    if (linkedTaskError) {
+      return {
+        tone: "warn" as const,
+        text: linkedTaskError,
+      };
+    }
+    const st = linkedTaskSnapshot?.status;
+    if (!st) return null;
+    if (st === "failed" || st === "cancelled" || st === "completed") {
+      const text =
+        st === "completed"
+          ? "La tâche liée est terminée alors que le ticket est encore en cours ou en review. Débloquez le ticket pour réaligner le Kanban."
+          : "La tâche liée est en état terminal (échec ou annulation). Débloquez le ticket si vous voulez relancer un Play."
+      return { tone: "warn" as const, text };
+    }
+    if (st === "interrupted") {
+      return {
+        tone: "info" as const,
+        text:
+          "La tâche a été interrompue (ex. arrêt du daemon). Vous pouvez la reprendre ci-dessous ou débloquer le ticket pour un nouveau Play.",
+      };
+    }
+    return null;
+  }, [selected, linkedTaskError, linkedTaskSnapshot]);
+
+  const canPauseLinked =
+    !!linkedTaskSnapshot &&
+    ["pending", "queued", "running", "waiting_user_input"].includes(linkedTaskSnapshot.status);
+  const canResumeLinked =
+    !!linkedTaskSnapshot &&
+    ["paused", "interrupted", "failed"].includes(linkedTaskSnapshot.status);
+  const canCancelLinked =
+    !!linkedTaskSnapshot &&
+    ["pending", "queued", "running"].includes(linkedTaskSnapshot.status);
 
   async function openTicket(ticket: api.StudioTicket) {
     if (!projectId) return;
@@ -223,6 +270,45 @@ export function KanbanBoard({
     await load();
     if (selected?.id === ticket.id) {
       await openTicket({ ...ticket, status });
+    }
+  }
+
+  async function recoverStuckTicketExecution() {
+    if (!projectId || !selected) return;
+    setRecoverTicketBusy(true);
+    setTicketDetailError(null);
+    try {
+      const t = await api.patchStudioTicket(projectId, selected.id, { recover_stuck_execution: true });
+      await load();
+      await openTicket(t);
+    } catch (e) {
+      setTicketDetailError(String(e));
+    } finally {
+      setRecoverTicketBusy(false);
+    }
+  }
+
+  async function runLinkedTaskCtl(action: "pause" | "resume" | "cancel") {
+    const taskId = selected?.related_task_id?.trim();
+    if (!taskId) return;
+    setTaskCtlBusy(action);
+    try {
+      if (action === "pause") await api.pauseTask(taskId);
+      else if (action === "resume") await api.resumeTask(taskId);
+      else await api.cancelTask(taskId);
+      const t = await api.tryGetTask(taskId);
+      setLinkedTaskSnapshot(t);
+      if (t === null) {
+        setLinkedTaskError(
+          "Tâche introuvable après l’action (souvent après annulation définitive ou redémarrage du daemon).",
+        );
+      } else {
+        setLinkedTaskError(null);
+      }
+    } catch (e) {
+      setLinkedTaskError(String(e));
+    } finally {
+      setTaskCtlBusy(null);
     }
   }
 
@@ -561,6 +647,26 @@ export function KanbanBoard({
               ) : null}
             </div>
           ) : null}
+          {stuckExecutionHint ? (
+            <div
+              className="panel card"
+              style={{
+                marginTop: 10,
+                borderLeft: `4px solid ${stuckExecutionHint.tone === "warn" ? "#b45309" : "#2563eb"}`,
+              }}
+            >
+              <p style={{ margin: "0 0 8px 0" }}>{stuckExecutionHint.text}</p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={recoverTicketBusy || !projectId}
+                onClick={() => void recoverStuckTicketExecution()}
+              >
+                {recoverTicketBusy ? "Déblocage…" : "Débloquer le ticket (revenir en todo)"}
+              </Button>
+            </div>
+          ) : null}
           <div className="panel card kanban-task-track" style={{ marginTop: 10 }}>
             <h4 style={{ margin: "0 0 8px 0" }}>Suivi de la tâche</h4>
             {!selected.related_task_id?.trim() ? (
@@ -605,6 +711,34 @@ export function KanbanBoard({
                   </div>
                 ) : null}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={!canPauseLinked || taskCtlBusy !== null}
+                    title={canPauseLinked ? "Met la tâche en pause (la boucle agent s’arrête au prochain tour)" : undefined}
+                    onClick={() => void runLinkedTaskCtl("pause")}
+                  >
+                    {taskCtlBusy === "pause" ? "Pause…" : "Pause"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={!canResumeLinked || taskCtlBusy !== null}
+                    onClick={() => void runLinkedTaskCtl("resume")}
+                  >
+                    {taskCtlBusy === "resume" ? "Reprise…" : "Reprendre"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={!canCancelLinked || taskCtlBusy !== null}
+                    onClick={() => void runLinkedTaskCtl("cancel")}
+                  >
+                    {taskCtlBusy === "cancel" ? "Annulation…" : "Annuler la tâche"}
+                  </Button>
                   <Button
                     type="button"
                     variant="secondary"
