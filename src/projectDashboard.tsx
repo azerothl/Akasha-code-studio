@@ -1,4 +1,5 @@
 import type * as api from "./api";
+import { Button } from "./components/ui/button";
 
 // Helper to check if project is StudioProjectMeta
 function isMeta(project: api.StudioProject | api.StudioProjectMeta): project is api.StudioProjectMeta {
@@ -189,30 +190,36 @@ export function ProjectDashboard({
             <h3>Actions rapides</h3>
           </div>
           <div className="dashboard-card-body dashboard-actions">
-            <button
-              className="btn btn-primary btn-sm"
+            <Button
+              className="w-full justify-center text-[0.85rem]"
               onClick={onStartAgent}
               disabled={!onStartAgent}
               title="Ouvrir le focus sur le chat pour démarrer une nouvelle consigne agent"
+              variant="default"
+              size="sm"
             >
               🚀 Démarrer agent
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
+            </Button>
+            <Button
+              className="w-full justify-center text-[0.85rem]"
               onClick={onOpenPlan}
               disabled={!onOpenPlan}
               title="Aller à l’onglet Plan (CODE_STUDIO_PLAN.md)"
+              variant="secondary"
+              size="sm"
             >
               📋 Voir plan
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
+            </Button>
+            <Button
+              className="w-full justify-center text-[0.85rem]"
               onClick={onOpenDesign}
               disabled={!onOpenDesign}
               title="Aller à l’onglet Design (DESIGN.md)"
+              variant="secondary"
+              size="sm"
             >
               🎨 Voir design
-            </button>
+            </Button>
           </div>
         </div>
 

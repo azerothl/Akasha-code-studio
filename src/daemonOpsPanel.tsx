@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "./api";
+import { Button } from "./components/ui/button";
+import { Checkbox } from "./components/ui/checkbox";
 
 type RawSection = { title: string; ok: boolean; payload: unknown; error?: string };
 
@@ -174,12 +176,12 @@ export function DaemonOpsPanel() {
         <strong>Cockpit opérateur (daemon)</strong>
         <div className="daemon-ops-header-actions">
           <label className="field-inline" style={{ fontSize: "0.72rem" }}>
-            <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+            <Checkbox checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
             <span>Auto-refresh runs/process</span>
           </label>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={loading} onClick={() => void loadAll()}>
+          <Button variant="ghost" size="sm" disabled={loading} onClick={() => void loadAll()}>
           {loading ? "Chargement…" : "Rafraîchir"}
-          </button>
+          </Button>
         </div>
       </div>
       {err ? <p className="banner banner-error">{err}</p> : null}
@@ -312,30 +314,30 @@ export function DaemonOpsPanel() {
                   </td>
                   <td>{s.enabled === false ? "non" : "oui"}</td>
                   <td className="daemon-ops-schedule-actions">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={scheduleBusy !== null}
                       onClick={() => void onScheduleAction(s.id, "pause")}
                     >
                       {scheduleBusy === `${s.id}:pause` ? "…" : "Pause"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={scheduleBusy !== null}
                       onClick={() => void onScheduleAction(s.id, "resume")}
                     >
                       {scheduleBusy === `${s.id}:resume` ? "…" : "Reprendre"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
                       disabled={scheduleBusy !== null}
                       onClick={() => void onScheduleAction(s.id, "run_now")}
                     >
                       {scheduleBusy === `${s.id}:run_now` ? "…" : "Exécuter maintenant"}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

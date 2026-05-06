@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { CenterTab } from "./App";
+import { Button } from "./components/ui/button";
 
 export type NavItem = {
   id: string;
@@ -216,14 +217,16 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
   return (
     <>
       {/* Mobile toggle button */}
-      <button
+      <Button
         className={`sidebar-toggle-mobile ${!isOpen ? "sidebar-toggle-mobile--visible" : ""}`}
         onClick={() => onToggle(!isOpen)}
         aria-label="Ouvrir/fermer le menu"
         title="Menu de navigation"
+        variant="default"
+        size="icon"
       >
         ☰
-      </button>
+      </Button>
 
       {/* Overlay pour mobile */}
       {isOpen && <div className="sidebar-overlay" onClick={() => onToggle(false)} />}
@@ -236,32 +239,36 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
             <span className="sidebar-logo">⚡</span>
             <span className="sidebar-app-name">Code Studio</span>
           </div>
-          <button
+          <Button
             className="sidebar-close-btn"
             onClick={() => onToggle(false)}
             aria-label="Fermer le menu"
             title="Fermer (Esc)"
+            variant="ghost"
+            size="icon"
           >
             ✕
-          </button>
+          </Button>
         </div>
 
         {/* Navigation Groups */}
         <div className="sidebar-content" role="list">
           {SIDEBAR_NAV_GROUPS.map((group) => (
             <div key={group.id} className="sidebar-group" role="listitem">
-              <button
+              <Button
                 className={`sidebar-group-header ${activeGroup === group.id ? "sidebar-group-header--active" : ""}`}
                 onClick={() => handleGroupClick(group.id)}
                 aria-expanded={expandedGroup === group.id}
                 aria-label={`${group.title}, ${expandedGroup === group.id ? "développé" : "non développé"}`}
+                variant="ghost"
+                size="sm"
               >
                 <span className="sidebar-group-icon" aria-hidden="true">{group.icon}</span>
                 <span className="sidebar-group-title">{group.title}</span>
                 <span className="sidebar-group-chevron" aria-hidden="true">
                   {expandedGroup === group.id ? "▼" : "▶"}
                 </span>
-              </button>
+              </Button>
 
               {expandedGroup === group.id && (
                 <div className="sidebar-group-items">
@@ -270,7 +277,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                       const isActionable = Boolean(item.tabs && item.tabs.length > 0);
                       const isActive = item.tabs?.some((t) => t === activeTab);
                       return (
-                    <button
+                    <Button
                       key={item.id}
                       className={`sidebar-item ${isActive ? "sidebar-item--active" : ""} ${!isActionable ? "sidebar-item--disabled" : ""}`}
                       onClick={() => handleItemClick(item, group.id)}
@@ -279,6 +286,8 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                       aria-current={isActive ? "page" : undefined}
                       disabled={!isActionable}
                       aria-disabled={!isActionable}
+                      variant="ghost"
+                      size="sm"
                     >
                       <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
                       <span className="sidebar-item-label">{item.label}</span>
@@ -287,7 +296,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                           {item.hint}
                         </span>
                       )}
-                    </button>
+                    </Button>
                       );
                     })()
                   ))}
@@ -299,14 +308,16 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
 
         {/* Footer */}
         <div className="sidebar-footer">
-          <button
+          <Button
             className="sidebar-footer-btn"
             type="button"
             title="Masquer le menu latéral (réouverture avec le bouton ☰)"
             onClick={() => onToggle(false)}
+            variant="secondary"
+            size="sm"
           >
             ◀ Masquer
-          </button>
+          </Button>
         </div>
       </nav>
     </>

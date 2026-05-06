@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "./components/ui/button";
 
 export type AccordionItem = {
   id: string;
@@ -40,8 +41,9 @@ export function Accordion({ items, onToggle, allowMultiple = false, className = 
         const isOpen = openItems.has(item.id);
         return (
           <div key={item.id} className="accordion-item">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               className={`accordion-header ${isOpen ? "accordion-header--open" : ""}`}
               onClick={() => handleToggle(item.id)}
               aria-expanded={isOpen}
@@ -52,7 +54,7 @@ export function Accordion({ items, onToggle, allowMultiple = false, className = 
                 <span className="accordion-title">{item.title}</span>
               </div>
               <span className="accordion-toggle-icon">▼</span>
-            </button>
+            </Button>
             {isOpen && (
               <div id={`accordion-content-${item.id}`} className="accordion-content">
                 {item.content}

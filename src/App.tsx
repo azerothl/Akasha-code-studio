@@ -41,6 +41,11 @@ import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sid
 import { ProjectDashboard } from "./projectDashboard";
 import { Accordion, type AccordionItem } from "./accordion";
 import { StackWizard } from "./stackWizard";
+import { Input } from "./components/ui/input";
+import { Textarea } from "./components/ui/textarea";
+import { Select } from "./components/ui/select";
+import { Checkbox } from "./components/ui/checkbox";
+import { Button } from "./components/ui/button";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -2597,16 +2602,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         : "Indexé"}
                   </span>
                 ) : null}
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm app-header-reindex-btn"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="app-header-reindex-btn"
                   data-testid="studio-code-rag-reindex"
                   disabled={codeRagReindexBusy || codeRagStatusLoading}
                   title="Reconstruire l’index local des sources (recherche et contexte pour l’agent)"
                   onClick={() => void onReindexCodeRag()}
                 >
                   {codeRagReindexBusy ? "Réindexation…" : "Réindexer"}
-                </button>
+                </Button>
               </span>
               <span className="app-header-branches">
                 <span className="app-header-branch" title="Branche Git courante (HEAD)">
@@ -2630,9 +2636,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </span>
                 ) : null}
                 <span className="header-menu-wrap app-header-git-popover">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     data-testid="studio-git-worktree-toggle"
                     disabled={!selectedId}
                     aria-expanded={gitStatusPopoverOpen}
@@ -2640,7 +2646,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     onClick={() => setGitStatusPopoverOpen((v) => !v)}
                   >
                     Git Δ{gitWorktreeLines.length ? ` (${gitWorktreeLines.length})` : ""}
-                  </button>
+                  </Button>
                   {gitStatusPopoverOpen ? (
                     <>
                       <div
@@ -2705,31 +2711,32 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="header-menu-wrap">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="header-menu-trigger"
             data-testid="studio-project-settings-menu"
             aria-expanded={openHeaderMenu === "project"}
             onClick={() => setOpenHeaderMenu((m) => (m === "project" ? null : "project"))}
           >
             Projet
-          </button>
+          </Button>
           {openHeaderMenu === "project" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               <div className="project-actions-row">
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
+                <Button
+                  variant="default"
+                  size="sm"
                   onClick={() => {
                     setOpenHeaderMenu(null);
                     setModalCreateOpen(true);
                   }}
                 >
                   Créer un projet
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   data-testid="studio-load-project"
                   onClick={() => {
                     setOpenHeaderMenu(null);
@@ -2740,7 +2747,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   }}
                 >
                   Charger un projet
-                </button>
+                </Button>
               </div>
               {selectedProject ? (
                 <p className="hint sidebar-project-hint">
@@ -2755,11 +2762,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <div className="rename-box">
                     <label className="field">
                       <span>Renommer l’affichage</span>
-                      <input value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} />
+                      <Input value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} />
                     </label>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onRenameProject()}>
+                    <Button variant="secondary" size="sm" onClick={() => void onRenameProject()}>
                       Enregistrer le nom
-                    </button>
+                    </Button>
                   </div>
                   <div className="stack-box">
                     <div className="field stack-box-intro">
@@ -2778,9 +2785,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       onToggleAddon={toggleStackAddon}
                       composedStack={composedStack}
                     />
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveTechStack()}>
+                    <Button variant="secondary" size="sm" onClick={() => void onSaveTechStack()}>
                       Enregistrer la stack
-                    </button>
+                    </Button>
                   </div>
                   <div className="evolution-policy-box">
                     <p className="hint evolution-policy-intro">
@@ -2790,7 +2797,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </p>
                     <label className="field">
                       <span>Résumé produit (objectif de l’application)</span>
-                      <textarea
+                      <Textarea
                         className="evolution-policy-textarea"
                         rows={4}
                         spellCheck={false}
@@ -2801,7 +2808,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </label>
                     <label className="field">
                       <span>Résumé d’évolution / session</span>
-                      <textarea
+                      <Textarea
                         className="evolution-policy-textarea"
                         rows={4}
                         spellCheck={false}
@@ -2812,7 +2819,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </label>
                     <label className="field">
                       <span>Notes de politique (outils, périmètre)</span>
-                      <textarea
+                      <Textarea
                         className="evolution-policy-textarea"
                         rows={4}
                         spellCheck={false}
@@ -2821,9 +2828,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
                       />
                     </label>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
+                    <Button variant="secondary" size="sm" onClick={() => void onSaveEvolutionAndPolicy()}>
                       Enregistrer résumés &amp; politique
-                    </button>
+                    </Button>
                   </div>
                   <div className="evolution-policy-box">
                     <p className="hint evolution-policy-intro">
@@ -2833,7 +2840,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </p>
                     <label className="field" htmlFor="acceptance-criteria-draft">
                       <span>Critères d&apos;acceptation (optionnel)</span>
-                      <textarea
+                      <Textarea
                         id="acceptance-criteria-draft"
                         className="evolution-policy-textarea"
                         rows={5}
@@ -2854,14 +2861,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       Supprime définitivement le dossier du projet sur ce poste (fichiers et dépôt Git locaux, index code du
                       daemon).
                     </p>
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       data-testid="studio-delete-project-settings"
                       onClick={() => selectedProject && openDeleteProjectDialog(selectedProject)}
                     >
                       Supprimer ce projet…
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}
@@ -2870,15 +2877,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="header-menu-wrap">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "evolutions"}
             title="Créer/sélectionner une branche d’évolution Git"
             onClick={() => setOpenHeaderMenu((m) => (m === "evolutions" ? null : "evolutions"))}
           >
             Évolutions Git
-          </button>
+          </Button>
           {openHeaderMenu === "evolutions" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               <p className="hint">
@@ -2887,32 +2895,33 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </p>
               <label className="field">
                 <span>Label de branche (optionnel)</span>
-                <input
+                <Input
                   value={evoLabel}
                   onChange={(e) => setEvoLabel(e.target.value)}
                   placeholder="ex. auth-login"
                 />
               </label>
-              <button
-                type="button"
-                className="btn btn-secondary btn-block"
+              <Button
+                variant="secondary"
+                className="w-full"
                 disabled={!selectedId}
                 title={!selectedId ? "Chargez un projet pour créer une branche d’évolution." : undefined}
                 onClick={() => void onNewEvolution()}
               >
                 Créer une branche studio/…
-              </button>
+              </Button>
               <ul className="evo-list">
                 {evolutions.map((e) => (
                   <li key={e.id}>
-                    <button
-                      type="button"
-                      className={e.id === selectedEvoId ? "active" : ""}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={e.id === selectedEvoId ? "active" : undefined}
                       onClick={() => setSelectedEvoId(e.id)}
                     >
                       <span className="evo-branch">{e.branch}</span>
                       <span className="evo-status">{e.status}</span>
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -2921,22 +2930,23 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="header-menu-wrap header-menu-wrap--right">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "ops"}
             title="Importer un dépôt, lancer un build, fusionner ou abandonner une évolution"
             onClick={() => setOpenHeaderMenu((m) => (m === "ops" ? null : "ops"))}
           >
             Import &amp; build
-          </button>
+          </Button>
           {openHeaderMenu === "ops" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               <div className="ops-panel">
                 <div className="ops-group ops-group--stacked">
                   <label className="field">
                     <span>URL du dépôt (HTTPS)</span>
-                    <input
+                    <Input
                       className="ops-input"
                       value={cloneUrl}
                       onChange={(e) => setCloneUrl(e.target.value)}
@@ -2944,20 +2954,20 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       title="Adresse Git distante à cloner dans le dossier du projet Code Studio pour récupérer le code d’un dépôt distant."
                     />
                   </label>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-block"
+                  <Button
+                    variant="secondary"
+                    className="w-full"
                     disabled={!selectedId}
                     title="Exécute git clone dans le répertoire du projet Code Studio pour récupérer le code d’un dépôt distant."
                     onClick={() => void onClone()}
                   >
                     Cloner (HTTPS)
-                  </button>
+                  </Button>
                 </div>
                 <div className="ops-group ops-group--stacked">
                   <label className="field">
                     <span>Commande de build</span>
-                    <input
+                    <Input
                       className="ops-input"
                       value={buildCmd}
                       onChange={(e) => setBuildCmd(e.target.value)}
@@ -2965,20 +2975,20 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       title="Ligne de commande exécutée dans le dossier projet (ex. npm run build, cargo build)."
                     />
                   </label>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-block"
+                  <Button
+                    variant="default"
+                    className="w-full"
                     disabled={!selectedId}
                     title="Lance la commande sur le serveur Akasha et affiche la sortie dans le journal de build (panneau droit)."
                     onClick={() => void onBuild()}
                   >
                     Exécuter le build
-                  </button>
+                  </Button>
                 </div>
                 <div className="ops-group ops-group--stacked">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-block"
+                  <Button
+                    variant="secondary"
+                    className="w-full"
                     disabled={!selectedId || !selectedEvoId}
                     title="Fusionne la branche de travail sélectionnée dans la branche principale (main ou master, côté daemon)."
                     onClick={() => {
@@ -2991,10 +3001,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     }}
                   >
                     Fusionner dans main
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-block"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full"
                     disabled={!selectedId || !selectedEvoId}
                     title="Abandonne la branche de travail sans fusion (suppression côté daemon selon la logique Git)."
                     onClick={() => {
@@ -3007,7 +3017,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     }}
                   >
                     Abandonner la branche
-                  </button>
+                  </Button>
                 </div>
                 {error ? <div className="banner banner-error">{error}</div> : null}
                 {status ? <div className="banner banner-ok">{status}</div> : null}
@@ -3017,15 +3027,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="header-menu-wrap header-menu-wrap--right">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "agent"}
             title="Actions agent (régénération plan/design, capacités)"
             onClick={() => setOpenHeaderMenu((m) => (m === "agent" ? null : "agent"))}
           >
             Agent / actions
-          </button>
+          </Button>
           {openHeaderMenu === "agent" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               {agentHint ? <p className="hint agent-hint">{agentHint}</p> : null}
@@ -3035,36 +3046,39 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   dans l’en-tête. Créez une branche dans « Évolutions Git » pour isoler une évolution.
                 </p>
               ) : null}
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm btn-block"
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
                 disabled={!selectedId}
                 title="Envoie une consigne à l’agent pour créer ou remplir CODE_STUDIO_PLAN.md"
                 onClick={() => void onRegeneratePlan()}
               >
                 Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm btn-block"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
                 disabled={!selectedId}
                 title="Envoie une consigne à l’agent pour créer ou compléter DESIGN.md"
                 onClick={() => void onRegenerateDesign()}
               >
                 Initialiser / régénérer le design (DESIGN.md)
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm btn-block"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
                 disabled={!selectedId}
                 title="Force une recréation de DESIGN.md à partir des styles réellement présents dans le dépôt."
                 onClick={() => void onRegenerateDesign(true)}
               >
                 Recréer DESIGN.md depuis le style du projet
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => setShowAgentMatrix((v) => !v)}>
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowAgentMatrix((v) => !v)}>
                 {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
-              </button>
+              </Button>
               {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
             </div>
           ) : null}
@@ -3073,13 +3087,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         <div className="app-header-nav-secondary">
           <label className="field-inline header-agent-inline">
             <span className="header-agent-label">Rôle agent</span>
-            <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
+            <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
               {AGENT_OPTIONS.map((o) => (
                 <option key={o.value || "auto"} value={o.value}>
                   {o.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <span
             className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
@@ -3090,30 +3104,33 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </span>
 
           <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
-            <button
-              type="button"
-              className={`btn btn-ghost btn-sm${mainSplit === "center" ? " is-active" : ""}`}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={mainSplit === "center" ? "is-active" : undefined}
               aria-pressed={mainSplit === "center"}
               onClick={() => setMainSplit("center")}
             >
               Plein éditeur
-            </button>
-            <button
-              type="button"
-              className={`btn btn-ghost btn-sm${mainSplit === "balanced" ? " is-active" : ""}`}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={mainSplit === "balanced" ? "is-active" : undefined}
               aria-pressed={mainSplit === "balanced"}
               onClick={() => setMainSplit("balanced")}
             >
               50/50
-            </button>
-            <button
-              type="button"
-              className={`btn btn-ghost btn-sm${mainSplit === "chat" ? " is-active" : ""}`}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={mainSplit === "chat" ? "is-active" : undefined}
               aria-pressed={mainSplit === "chat"}
               onClick={() => setMainSplit("chat")}
             >
               Plein chat
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
@@ -3123,9 +3140,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
       <div className="center">
         <div className="center-tabs" role="tablist" aria-label="Navigation principale Code Studio">
           {visibleTabs.map((tab) => (
-            <button
+            <Button
               key={tab.id}
-              type="button"
+              variant="ghost"
+              size="sm"
               role="tab"
               aria-selected={centerTab === tab.id}
               className={`center-tab ${centerTab === tab.id ? "active" : ""}`}
@@ -3134,7 +3152,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               title={`Ouvrir l’onglet ${tab.label}`}
             >
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
         {centerTab === "dashboard" ? (
@@ -3156,15 +3174,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="editor-layout">
               <div className="editor-file-pane">
                 <div className="editor-file-pane-header">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     disabled={!selectedId}
                     title="Recharger la liste depuis le daemon"
                     onClick={() => void refreshFiles()}
                   >
                     Rafraîchir
-                  </button>
+                  </Button>
                 </div>
                 {!selectedId ? (
                   <p className="hint editor-file-pane-hint">Sélectionnez un projet pour voir ses fichiers.</p>
@@ -3193,24 +3211,24 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       {filePath}
                     </code>
                   ) : null}
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
+                  <Button
+                    variant="default"
+                    size="sm"
                     data-testid="studio-save-file"
                     disabled={!selectedId || !filePath || editorBinary || !editorDirty}
                     title="Enregistrer sur le disque du projet (Ctrl+S ou Cmd+S)"
                     onClick={() => void saveEditor()}
                   >
                     Enregistrer
-                  </button>
+                  </Button>
                   {isMarkdownPath(filePath) ? (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setEditorMarkdownPreview((v) => !v)}
                     >
                       {editorMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
                 {editorMarkdownPreview && isMarkdownPath(filePath) ? (
@@ -3232,49 +3250,48 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="preview-toolbar">
               <span className="pane-title-inline">Aperçu</span>
               <label className="preview-checkbox" title="Relance npm install avant le serveur (utile après changement de dépendances).">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={forceInstallBeforePreview}
                   onChange={(e) => setForceInstallBeforePreview(e.target.checked)}
                 />
                 Forcer npm install
               </label>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={!selectedId || depsInstallBusy}
                 title="Exécute uniquement npm install dans le dossier projet (sans démarrer le serveur)."
                 onClick={() => void onInstallDepsOnly()}
               >
                 {depsInstallBusy ? "Installation…" : "Installer les dépendances"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
                 disabled={!selectedId || previewBusy}
                 title="npm install si nécessaire (ou forcé), puis npm run dev (Vite, etc.)"
                 onClick={() => void onPlayPreview()}
               >
                 {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={!selectedId || !devPreviewUrl}
                 title="Arrête le serveur de développement lancé par le daemon."
                 onClick={() => void onStopPreview()}
               >
                 Arrêter le serveur
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 disabled={!previewUrl}
                 title="Ouvre l’URL d’aperçu (serveur dev ou fichier HTML) dans un nouvel onglet ou une nouvelle fenêtre du navigateur."
                 onClick={() => openPreviewInNewWindow()}
               >
                 Nouvelle fenêtre
-              </button>
+              </Button>
             </div>
             {previewLog ? (
               <pre className="preview-install-log" title="Sortie npm install">
@@ -3310,17 +3327,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">CODE_STUDIO_PLAN.md</span>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
+              <Button
+                variant="default"
+                size="sm"
                 disabled={!selectedId || planDocLoading}
                 onClick={() => void onSavePlanFromTab()}
               >
                 Enregistrer
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 disabled={!selectedId}
                 title="Mémorise la version courante pour comparer (session navigateur)"
                 onClick={() => {
@@ -3333,15 +3350,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }}
               >
                 Référence (diff)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={planDocLoading}
                 onClick={() => setPlanMarkdownPreview((v) => !v)}
               >
                 {planMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
-              </button>
+              </Button>
             </div>
             {planDocLoading ? (
               <p className="hint">Chargement…</p>
@@ -3361,7 +3378,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <MarkdownBlock text={planDocText} className="md-content" />
                   </div>
                 ) : (
-                  <textarea
+                  <Textarea
                     className="plan-doc-textarea"
                     spellCheck={false}
                     value={planDocText}
@@ -3377,65 +3394,68 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane design-pane-root">
             <div className="preview-toolbar design-toolbar-wrap">
               <span className="pane-title-inline">DESIGN.md</span>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
+              <Button
+                variant="default"
+                size="sm"
                 data-testid="studio-save-design"
                 disabled={!selectedId || designDocLoading}
                 onClick={() => void onSaveDesignFromTab()}
               >
                 Enregistrer
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={!selectedId}
                 onClick={() => onImportDesignFromDisk()}
               >
                 Importer
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignDoc()}>
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!designDocText} onClick={() => onExportDesignDoc()}>
                 Export DESIGN.md
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignTokens()}>
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!designDocText} onClick={() => onExportDesignTokens()}>
                 Export tokens
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignCss()}>
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!designDocText} onClick={() => onExportDesignCss()}>
                 Export CSS
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={designDocLoading}
                 onClick={() => setDesignMarkdownPreview((v) => !v)}
               >
                 {designMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
-              </button>
+              </Button>
               <span className="design-view-toggle" role="group" aria-label="Affichage design">
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${designViewMode === "split" ? " is-active" : ""}`}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={designViewMode === "split" ? "is-active" : undefined}
                   aria-pressed={designViewMode === "split"}
                   onClick={() => setDesignViewMode("split")}
                 >
                   Les deux
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${designViewMode === "visual" ? " is-active" : ""}`}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={designViewMode === "visual" ? "is-active" : undefined}
                   aria-pressed={designViewMode === "visual"}
                   onClick={() => setDesignViewMode("visual")}
                 >
                   Visuel
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${designViewMode === "source" ? " is-active" : ""}`}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={designViewMode === "source" ? "is-active" : undefined}
                   aria-pressed={designViewMode === "source"}
                   onClick={() => setDesignViewMode("source")}
                 >
                   Source
-                </button>
+                </Button>
               </span>
             </div>
             {designDocLoading ? (
@@ -3467,16 +3487,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </ul>
                   ) : null}
                   {designHasFixableDiagnostics ? (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm design-fix-diagnostics-btn"
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="design-fix-diagnostics-btn"
                       data-testid="studio-design-fix-diagnostics"
                       disabled={!selectedId}
                       title="Envoie une tâche à l’agent pour corriger uniquement DESIGN.md"
                       onClick={() => void onFixDesignDiagnostics()}
                     >
                       Demander à l’agent de corriger
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
                 {designViewMode === "split" ? (
@@ -3490,7 +3511,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                           <MarkdownBlock text={designDocText} className="md-content" />
                         </div>
                       ) : (
-                        <textarea
+                        <Textarea
                           className="plan-doc-textarea"
                           spellCheck={false}
                           value={designDocText}
@@ -3514,7 +3535,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         <MarkdownBlock text={designDocText} className="md-content" />
                       </div>
                     ) : (
-                      <textarea
+                      <Textarea
                         className="plan-doc-textarea"
                         spellCheck={false}
                         value={designDocText}
@@ -3533,9 +3554,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="preview-toolbar branches-toolbar">
               <span className="pane-title-inline">Gestion des branches</span>
               <TooltipHint text="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   void refreshGitBranches();
                   void refreshGitConflicts();
@@ -3543,7 +3564,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 title="Actualiser la liste des branches et l’état de conflit"
               >
                 Rafraîchir
-              </button>
+              </Button>
             </div>
             <p className="hint plan-pane-hint">
               Suivez les branches locales, comparez les divergences et pilotez les merges depuis cet écran.
@@ -3568,14 +3589,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                           <span>{b.last_commit_subject || "Aucun commit"}</span>
                         </div>
                         {!b.current ? (
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={() => void onCheckoutBranch(b.name)}
                             title="Passer sur cette branche"
                           >
                             Checkout
-                          </button>
+                          </Button>
                         ) : null}
                       </div>
                     </li>
@@ -3590,46 +3611,46 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div className="field-row">
                   <label className="field">
                     <span>Branche cible</span>
-                    <select value={gitCompareBase} onChange={(e) => { setGitCompareBase(e.target.value); setGitCompareResult(null); }}>
+                    <Select value={gitCompareBase} onChange={(e) => { setGitCompareBase(e.target.value); setGitCompareResult(null); }}>
                       <option value="">Choisir…</option>
                       {gitBranches.map((b) => (
                         <option key={`base-${b.name}`} value={b.name}>
                           {b.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </label>
                   <label className="field">
                     <span>Branche source</span>
-                    <select value={gitCompareTarget} onChange={(e) => { setGitCompareTarget(e.target.value); setGitCompareResult(null); }}>
+                    <Select value={gitCompareTarget} onChange={(e) => { setGitCompareTarget(e.target.value); setGitCompareResult(null); }}>
                       <option value="">Choisir…</option>
                       {gitBranches.map((b) => (
                         <option key={`target-${b.name}`} value={b.name}>
                           {b.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </label>
                 </div>
                 <div className="project-actions-row">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     disabled={!gitCompareBase || !gitCompareTarget}
                     onClick={() => void onCompareBranches()}
                     title="Afficher les commits et statistiques de divergence"
                   >
                     Comparer
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
                     disabled={!gitCompareBase || !gitCompareTarget || gitCompareBase === gitCompareTarget}
                     onClick={() => void onMergeBranches()}
                     title="Fusionner la branche source dans la cible"
                   >
                     Merger
-                  </button>
+                  </Button>
                 </div>
                 {gitCompareResult ? (
                   <div className="branches-compare-summary">
@@ -3672,15 +3693,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     ))}
                   </ul>
                 ) : null}
-                <button
-                  type="button"
-                  className="btn btn-danger btn-sm"
+                <Button
+                  variant="danger"
+                  size="sm"
                   disabled={!gitMergeInProgress}
                   onClick={() => void onAbortMerge()}
                   title="Annuler le merge en cours et revenir à l’état précédent"
                 >
                   Annuler le merge
-                </button>
+                </Button>
               </section>
             </div>
           </div>
@@ -3698,13 +3719,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane docs-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">User documentation</span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => void window.open("/docs/USER_GUIDE.md", "_blank", "noopener,noreferrer")}
               >
                 Open raw markdown
-              </button>
+              </Button>
             </div>
             <p className="hint plan-pane-hint">
               End-user guide rendered directly inside Code Studio, with the application visual theme.
@@ -3753,18 +3774,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <div className="field-row">
                         <label className="field">
                           <span>Thème</span>
-                          <select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
+                          <Select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
                             <option value="dark">Dark</option>
                             <option value="light">Light</option>
                             <option value="compact-dark">Compact dark</option>
-                          </select>
+                          </Select>
                         </label>
                         <label className="field">
                           <span>Densité</span>
-                          <select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
+                          <Select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
                             <option value="normal">Normale</option>
                             <option value="compact">Compacte</option>
-                          </select>
+                          </Select>
                         </label>
                       </div>
                     </div>
@@ -3778,11 +3799,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   content: (
                     <div className="settings-form-group">
                       <label className="field-inline delegate-single">
-                        <input type="checkbox" checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
+                        <Checkbox checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
                         <span>Options conversation ouvertes par défaut</span>
                       </label>
                       <label className="field-inline delegate-single">
-                        <input type="checkbox" checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
+                        <Checkbox checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
                         <span>Suggestions ouvertes par défaut</span>
                       </label>
                     </div>
@@ -3796,7 +3817,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   content: (
                     <div className="settings-form-group">
                       <label className="field-inline delegate-single">
-                        <input type="checkbox" checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
+                        <Checkbox checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
                         <span>Journal de build ouvert par défaut</span>
                       </label>
                     </div>
@@ -3854,14 +3875,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
         <div className="chat-activity-area">
           {taskTrace ? (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => void onOpenTaskDetailModal(taskTrace.id)}
               title="Ouvrir la modale de détail de la tâche"
             >
               Tâche en cours
-            </button>
+            </Button>
           ) : null}
           {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
             <div className="task-human-input">
@@ -3878,15 +3899,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               {pendingHumanInput.choices?.length ? (
                 <div className="task-human-input-choices">
                   {pendingHumanInput.choices.map((c) => (
-                    <button
+                    <Button
                       key={c}
-                      type="button"
-                      className="btn btn-secondary btn-sm"
+                      variant="secondary"
+                      size="sm"
                       disabled={humanReplyBusy}
                       onClick={() => setHumanReplyDraft(c)}
                     >
                       {c}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               ) : null}
@@ -3896,7 +3917,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   pour éviter que l’agent réessaie la même action.
                 </p>
               ) : null}
-              <textarea
+              <Textarea
                 className="task-human-input-textarea"
                 value={humanReplyDraft}
                 onChange={(e) => setHumanReplyDraft(e.target.value)}
@@ -3904,23 +3925,25 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 rows={3}
                 disabled={humanReplyBusy}
               />
-              <button
-                type="button"
-                className="btn btn-primary btn-sm task-human-input-submit"
+              <Button
+                variant="default"
+                size="sm"
+                className="task-human-input-submit"
                 disabled={humanReplyBusy || !humanReplyDraft.trim()}
                 onClick={() => void onSubmitHumanReply()}
               >
                 {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
-              </button>
+              </Button>
             </div>
           ) : null}
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="pane-title pane-title--compact">Conversation</div>
             {chatHasUnseen ? (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm chat-unseen-btn"
+              <Button
+                variant="secondary"
+                size="sm"
+                className="chat-unseen-btn"
                 onClick={() => {
                   const el = chatLogRef.current;
                   if (!el) return;
@@ -3930,7 +3953,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }}
               >
                 Nouveaux messages — aller en bas
-              </button>
+              </Button>
             ) : null}
             <div
               className="chat-log"
@@ -3948,26 +3971,28 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
                     {m.role === "user" && m.task_id ? (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="bubble-task-detail-btn"
                         aria-label="Fork à partir de ce message"
                         title="Fork à partir d’ici"
                         onClick={() => onOpenForkDialog(i, m)}
                       >
                         ⎇
-                      </button>
+                      </Button>
                     ) : null}
                     {m.role === "assistant" && m.task_id ? (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="bubble-task-detail-btn"
                         aria-label="Détails de la tâche"
                         title="Voir statut, progression et événements daemon"
                         onClick={() => void onOpenTaskDetailModal(m.task_id!)}
                       >
                         ℹ
-                      </button>
+                      </Button>
                     ) : null}
                     {m.role === "assistant" && m.studio_diff?.files?.length ? (
                       <ChatStudioDiffPanel
@@ -3986,17 +4011,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <summary className="chat-suggestions-label">Suggestions ({lastAssistant.suggested_actions.length})</summary>
                   <div className="chat-suggestion-chips">
                     {lastAssistant.suggested_actions.map((a) => (
-                      <button
+                      <Button
                         key={a.id}
-                        type="button"
-                        className="btn btn-ghost btn-sm chat-suggestion-chip"
+                        variant="ghost"
+                        size="sm"
+                        className="chat-suggestion-chip"
                         onClick={() => {
                           if (a.kind === "message" && a.message) setChatInput(a.message);
                           if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
                         }}
                       >
                         {a.label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </details>
@@ -4007,7 +4033,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
         <div className="chat-panel-footer">
           <div className="chat-form">
-            <textarea
+            <Textarea
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
@@ -4018,19 +4044,20 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }
               }}
             />
-            <button type="button" className="btn btn-primary" disabled={!selectedId} onClick={() => void onSendChat()}>
+            <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
               Envoyer
-            </button>
+            </Button>
           </div>
           <div className="chat-controls-row">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm chat-options-toggle"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
               onClick={() => setChatOptionsOpen((v) => !v)}
               title="Afficher ou masquer les options avancées"
             >
               {chatOptionsOpen ? "Masquer options" : "Options"}
-            </button>
+            </Button>
             <p className="kbd-hint">
               Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
             </p>
@@ -4039,20 +4066,21 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="chat-options-panel">
               <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
                 {CODE_MODE_OPTIONS.map((o) => (
-                  <button
+                  <Button
                     key={o.value}
-                    type="button"
+                    variant="ghost"
+                    size="sm"
                     className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
                     title={o.hint}
                     onClick={() => setCodeMode(o.value)}
                   >
                     {o.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <label className="field chat-policy-hint-field">
                 <span>Consigne ponctuelle (optionnel, un envoi)</span>
-                <input
+                <Input
                   type="text"
                   value={policyHintOneShot}
                   onChange={(e) => setPolicyHintOneShot(e.target.value)}
@@ -4064,16 +4092,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 className="field-inline delegate-single"
                 title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={delegateSingleLevel}
                   onChange={(e) => setDelegateSingleLevel(e.target.checked)}
                 />
                 <span>Délégation simple (sans sous-agents)</span>
               </label>
               <label className="field-inline delegate-single">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={autoApplyDesign}
                   onChange={(e) => setAutoApplyDesign(e.target.checked)}
                 />
@@ -4111,9 +4137,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           >
             <div className="modal-card-head">
               <h3 id="task-detail-title">Détail de la tâche</h3>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setTaskDetailForId(null)}>
+              <Button variant="secondary" size="sm" onClick={() => setTaskDetailForId(null)}>
                 Fermer
-              </button>
+              </Button>
             </div>
             <div className="task-detail-scroll">
               {taskDetailLoading ? <p className="hint">Chargement…</p> : null}
@@ -4127,16 +4153,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       { id: "workflow", label: "Workflow" },
                       { id: "summary", label: "Résumé" },
                     ].map((tab) => (
-                      <button
+                      <Button
                         key={tab.id}
-                        type="button"
+                        variant="ghost"
+                        size="sm"
                         role="tab"
                         aria-selected={taskDetailTab === tab.id}
                         className={`task-detail-tab ${taskDetailTab === tab.id ? "is-active" : ""}`}
                         onClick={() => setTaskDetailTab(tab.id as typeof taskDetailTab)}
                       >
                         {tab.label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   {taskDetailTab === "summary" ? (
@@ -4231,7 +4258,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </p>
             <label className="field">
               <span>Instruction initiale</span>
-              <textarea
+              <Textarea
                 value={forkInitialInstruction}
                 onChange={(e) => setForkInitialInstruction(e.target.value)}
                 rows={5}
@@ -4239,17 +4266,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               />
             </label>
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setForkDialog(null)}>
+              <Button variant="secondary" onClick={() => setForkDialog(null)}>
                 Annuler
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
+              </Button>
+              <Button
+                variant="default"
                 disabled={!forkInitialInstruction.trim()}
                 onClick={() => void onCreateFork()}
               >
                 Créer la branche
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -4277,8 +4303,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               <ul className="project-list modal-project-list">
                 {projects.map((p) => (
                   <li key={p.id} className="project-list-row">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className={`project-item ${p.id === selectedId ? "active" : ""}`}
                       data-testid={`studio-project-${p.id}`}
                       onClick={() => {
@@ -4289,10 +4316,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     >
                       <span className="project-name">{p.name}</span>
                       <span className="project-id">{p.id.slice(0, 8)}…</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm project-delete-btn"
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="project-delete-btn"
                       aria-label={`Supprimer le projet ${p.name}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -4300,15 +4328,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       }}
                     >
                       Supprimer
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
             )}
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setModalLoadOpen(false)}>
+              <Button variant="secondary" onClick={() => setModalLoadOpen(false)}>
                 Fermer
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -4332,7 +4360,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <p className="hint">Un dépôt Git local est initialisé automatiquement dans le dossier du projet.</p>
             <label className="field">
               <span>Nom du projet</span>
-              <input
+              <Input
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder="Ex. Landing vitrine"
@@ -4352,7 +4380,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             <label className="field">
               <span>Résumé de l’application (recommandé)</span>
-              <textarea
+              <Textarea
                 value={newProjectSummary}
                 onChange={(e) => setNewProjectSummary(e.target.value)}
                 placeholder="Décrivez ce que l’application doit faire : public, fonctionnalités, contraintes. Sert de base au plan (CODE_STUDIO_PLAN.md), au DESIGN.md et au contexte agent."
@@ -4361,12 +4389,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               />
             </label>
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setModalCreateOpen(false)}>
+              <Button variant="secondary" onClick={() => setModalCreateOpen(false)}>
                 Annuler
-              </button>
-              <button type="button" className="btn btn-primary" onClick={() => void onCreateProject()}>
+              </Button>
+              <Button variant="default" onClick={() => void onCreateProject()}>
                 Créer
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -4430,32 +4458,29 @@ git push`}
               </>
             ) : null}
             <div className="modal-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
+              <Button
+                variant="secondary"
                 disabled={deleteProjectBusy}
                 onClick={() => setDeleteProjectDialog(null)}
               >
                 Annuler
-              </button>
+              </Button>
               {!deletePrecheckLoading && deletePrecheck?.requires_force ? (
-                <button
-                  type="button"
-                  className="btn btn-danger"
+                <Button
+                  variant="danger"
                   disabled={deleteProjectBusy || !deletePrecheck}
                   onClick={() => void onConfirmDeleteProject(true)}
                 >
                   {deleteProjectBusy ? "Suppression…" : "Supprimer quand même"}
-                </button>
+                </Button>
               ) : (
-                <button
-                  type="button"
-                  className="btn btn-danger"
+                <Button
+                  variant="danger"
                   disabled={deleteProjectBusy || deletePrecheckLoading || !deletePrecheck}
                   onClick={() => void onConfirmDeleteProject(false)}
                 >
                   {deleteProjectBusy ? "Suppression…" : "Supprimer"}
-                </button>
+                </Button>
               )}
             </div>
           </div>

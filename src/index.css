@@ -10,22 +10,6 @@
   .panel {
     @apply rounded-xl border border-white/10 bg-slate-900/70 p-3 shadow-md shadow-black/20;
   }
-
-  .btn-primary {
-    @apply bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:from-violet-400 hover:to-cyan-400;
-  }
-
-  .btn-secondary {
-    @apply border border-violet-400/35 bg-violet-500/5 text-violet-200 hover:border-violet-300/60 hover:bg-violet-500/15 hover:text-white;
-  }
-
-  .btn-ghost {
-    @apply border border-white/15 bg-transparent text-slate-300 hover:border-violet-300/60 hover:bg-violet-500/10 hover:text-white;
-  }
-
-  .btn-danger {
-    @apply border border-rose-400/45 bg-rose-600/20 text-rose-200 hover:bg-rose-600/35 hover:text-white;
-  }
 }
 
 /*
@@ -647,7 +631,8 @@ body {
   gap: 0.5rem;
 }
 
-.dashboard-actions .btn {
+.dashboard-actions > button,
+.dashboard-actions > [data-slot="button"] {
   width: 100%;
   justify-content: center;
   font-size: 0.85rem;
@@ -1288,16 +1273,6 @@ body {
     border-radius: 6px;
   }
 
-  /* Buttons */
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-  }
-
-  .btn-sm {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.7rem;
-  }
 }
 
 /* Extra small (max 360px) */
@@ -1380,10 +1355,6 @@ body {
   color: var(--akasha-text);
 }
 
-.btn-ghost {
-  color: var(--akasha-text);
-}
-
 .hint,
 .dashboard-hint-muted {
   color: var(--akasha-text-muted);
@@ -1391,7 +1362,6 @@ body {
 }
 
 /* Ensure buttons have minimum touch target size (44x44px) */
-.btn,
 button,
 a[role="button"] {
   min-height: 44px;
@@ -1643,7 +1613,7 @@ kbd {
   min-width: 0;
 }
 
-.app--density-compact .btn {
+.app--density-compact [data-slot="button"] {
   padding: 0.32rem 0.65rem;
 }
 
@@ -2032,7 +2002,7 @@ kbd {
   padding: 0.2rem 0.45rem;
 }
 
-.split-toolbar .btn.is-active {
+.split-toolbar .is-active {
   border-color: var(--akasha-btn-secondary-border);
   color: var(--akasha-text);
   background: rgba(139, 92, 246, 0.15);
@@ -2089,7 +2059,7 @@ kbd {
   flex-wrap: wrap;
 }
 
-.design-view-toggle .btn.is-active {
+.design-view-toggle .is-active {
   border-color: var(--akasha-btn-secondary-border);
   color: var(--akasha-text);
   background: rgba(139, 92, 246, 0.12);
@@ -2898,29 +2868,6 @@ kbd {
   margin-bottom: 0;
 }
 
-.btn {
-  border: none;
-  border-radius: var(--akasha-radius-button, 6px);
-  padding: 0.45rem 0.85rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    opacity 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-
 .studio-danger-zone {
   margin-top: 0.75rem;
   padding-top: 0.65rem;
@@ -2954,16 +2901,6 @@ kbd {
   color: var(--text-muted);
 }
 
-
-.btn-sm {
-  padding: 0.3rem 0.55rem;
-  font-size: 0.78rem;
-}
-
-.btn-block {
-  width: 100%;
-  margin-top: 0.25rem;
-}
 
 .project-list,
 .file-list,
@@ -4733,7 +4670,7 @@ textarea.editor {
   align-items: center;
 }
 
-.editor-file-tree .editor-file-tree-actions .btn,
+.editor-file-tree .editor-file-tree-actions [data-slot="button"],
 .editor-file-tree .editor-file-tree-rename-btn {
   width: auto;
   min-width: 0;

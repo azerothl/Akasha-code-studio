@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { Button } from "./components/ui/button";
 
 export type FileTreeNode =
   | { kind: "dir"; name: string; path: string; children: FileTreeNode[] }
@@ -169,27 +170,28 @@ export function EditorFileTree({ files, activePath, onOpenFile, onDeleteFile, on
               />
             ) : (
               <>
-                <button type="button" className="editor-file-tree-label" onClick={() => void onOpenFile(node.path)}>
+                <Button variant="ghost" size="sm" className="editor-file-tree-label" onClick={() => void onOpenFile(node.path)}>
                   {node.name}
-                </button>
+                </Button>
                 <span className="editor-file-tree-actions">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     title={`Renommer ${node.path}`}
                     onClick={() => startRename(node.path, node.name)}
                   >
                     Renommer
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm file-list-delete"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="file-list-delete"
                     data-testid="studio-delete-file"
                     title={`Supprimer ${node.path}`}
                     onClick={() => void onDeleteFile(node.path)}
                   >
                     Suppr.
-                  </button>
+                  </Button>
                 </span>
               </>
             )}
@@ -234,15 +236,16 @@ export function EditorFileTree({ files, activePath, onOpenFile, onDeleteFile, on
               e.dataTransfer.effectAllowed = "move";
             }}
           >
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               className="editor-file-tree-chevron"
               aria-expanded={!collapsedHere}
               title={collapsedHere ? "Développer" : "Replier"}
               onClick={() => toggleDir(node.path)}
             >
               {collapsedHere ? "▸" : "▾"}
-            </button>
+            </Button>
             {isEditing ? (
               <input
                 className="editor-file-tree-rename-input"
@@ -261,14 +264,15 @@ export function EditorFileTree({ files, activePath, onOpenFile, onDeleteFile, on
             ) : (
               <>
                 <span className="editor-file-tree-dir-label">{node.name}</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm editor-file-tree-rename-btn"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="editor-file-tree-rename-btn"
                   title={`Renommer le dossier ${node.path}`}
                   onClick={() => startRename(node.path, node.name)}
                 >
                   Renommer
-                </button>
+                </Button>
               </>
             )}
           </div>

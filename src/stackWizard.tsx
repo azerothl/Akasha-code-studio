@@ -1,4 +1,5 @@
 import { BASE_STACK_PRESETS, STACK_ADDON_GROUPS, STACK_PRESET_CUSTOM, STACK_PRESET_NONE, type StackAddonCategoryId } from "./stackConfig";
+import { Button } from "./components/ui/button";
 
 type Props = {
   presetId: string;
@@ -34,8 +35,9 @@ export function StackWizard({
       <div className="stack-wizard-step">
         <h3 className="stack-wizard-step-title" id="stack-presets-label">Étape 1 : Choisir un modèle</h3>
         <div className="stack-preset-grid" aria-labelledby="stack-presets-label" role="group">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="default"
             className={`stack-preset-card ${presetId === STACK_PRESET_NONE ? "stack-preset-card--active" : ""}`}
             onClick={() => onPresetChange(STACK_PRESET_NONE)}
             title="Pas de stack prédéfinie"
@@ -45,12 +47,13 @@ export function StackWizard({
             <div className="stack-preset-icon" aria-hidden="true">🚫</div>
             <div className="stack-preset-name">Aucune</div>
             <div className="stack-preset-hint">Pas de stack</div>
-          </button>
+          </Button>
 
           {BASE_STACK_PRESETS.filter((p) => p.id !== STACK_PRESET_CUSTOM && p.id !== STACK_PRESET_NONE).map((preset) => (
-            <button
+            <Button
               key={preset.id}
-              type="button"
+              variant="ghost"
+              size="default"
               className={`stack-preset-card ${presetId === preset.id ? "stack-preset-card--active" : ""}`}
               onClick={() => onPresetChange(preset.id)}
               title={preset.text}
@@ -60,11 +63,12 @@ export function StackWizard({
               <div className="stack-preset-icon" aria-hidden="true">{getPresetIcon(preset.id)}</div>
               <div className="stack-preset-name">{preset.label}</div>
               <div className="stack-preset-hint">{preset.text.split("\n")[0]}</div>
-            </button>
+            </Button>
           ))}
 
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="default"
             className={`stack-preset-card ${presetId === STACK_PRESET_CUSTOM ? "stack-preset-card--active" : ""}`}
             onClick={() => onPresetChange(STACK_PRESET_CUSTOM)}
             title="Stack personnalisée"
@@ -74,7 +78,7 @@ export function StackWizard({
             <div className="stack-preset-icon" aria-hidden="true">✏️</div>
             <div className="stack-preset-name">Personnalisé</div>
             <div className="stack-preset-hint">Texte libre</div>
-          </button>
+          </Button>
         </div>
       </div>
 
