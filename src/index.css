@@ -631,8 +631,7 @@ body {
   gap: 0.5rem;
 }
 
-.dashboard-actions > button,
-.dashboard-actions > [data-slot="button"] {
+.dashboard-actions > button {
   width: 100%;
   justify-content: center;
   font-size: 0.85rem;
@@ -993,19 +992,10 @@ body {
     font-size: 14px;
   }
 
-  /* Sidebar */
-  .sidebar {
-    width: 200px;
-  }
-
+  /* Sidebar — handled by drawer block below */
   .sidebar-item {
     font-size: 0.8rem;
     padding: 0.5rem 0.4rem;
-  }
-
-  /* App layout */
-  .app {
-    margin-left: 200px;
   }
 
   /* Center tabs */
@@ -1198,7 +1188,7 @@ body {
   }
 
   .stack-wizard-textarea {
-    font-size: 12px; /* iOS zoom prevention */
+    font-size: 16px; /* iOS zoom prevention — must be >=16px */
     padding: 0.75rem;
   }
 
@@ -1361,14 +1351,13 @@ body {
   /* Ensure minimum contrast ratio of 4.5:1 for AA compliance */
 }
 
-/* Ensure buttons have minimum touch target size (44x44px) */
-button,
-a[role="button"] {
-  min-height: 44px;
-  min-width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* Ensure buttons have minimum touch target size (44x44px) — coarse pointer devices only */
+@media (pointer: coarse) {
+  button,
+  a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Sidebar items accessible size */
@@ -1613,7 +1602,7 @@ kbd {
   min-width: 0;
 }
 
-.app--density-compact [data-slot="button"] {
+.app--density-compact button {
   padding: 0.32rem 0.65rem;
 }
 
@@ -3976,6 +3965,29 @@ textarea.editor {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background-color: rgba(139, 92, 246, 0.1);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0)
+  );
+  background-repeat: repeat-y;
+  background-size: 50px 100%;
+  background-position: -1000px 0;
+}
+
 .chat-log {
   flex: 1;
   overflow-y: auto;
@@ -4760,7 +4772,7 @@ textarea.editor {
   align-items: center;
 }
 
-.editor-file-tree .editor-file-tree-actions [data-slot="button"],
+.editor-file-tree .editor-file-tree-actions button,
 .editor-file-tree .editor-file-tree-rename-btn {
   width: auto;
   min-width: 0;

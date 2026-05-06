@@ -103,18 +103,32 @@ function searchInDir(dir, filePattern, contentPatterns) {
 console.log('\n📦 BUILD ARTIFACTS\n');
 
 testFile('dist/index.html exists', path.join(DIST_DIR, 'index.html'), 500);
-const jsFiles = fs.readdirSync(path.join(DIST_DIR, 'assets')).filter(f => f.match(/index-.*\.js/));
-const cssFiles = fs.readdirSync(path.join(DIST_DIR, 'assets')).filter(f => f.match(/index-.*\.css/));
+
+const assetsDir = path.join(DIST_DIR, 'assets');
+let jsFiles = [];
+let cssFiles = [];
+try {
+  const assetEntries = fs.readdirSync(assetsDir);
+  jsFiles = assetEntries.filter(f => f.match(/index-.*\.js/));
+  cssFiles = assetEntries.filter(f => f.match(/index-.*\.css/));
+} catch (_err) {
+  results.failed.push('dist/assets directory not found — run npm run build first');
+  console.log('❌ dist/assets directory not found — run npm run build first');
+}
 
 if (jsFiles.length > 0) {
-  testFile('dist/assets/index-*.js exists', path.join(DIST_DIR, 'assets', jsFiles[0]), 500000);
+  testFile('dist/assets/index-*.js exists', path.join(assetsDir, jsFiles[0]), 500000);
+} else if (cssFiles.length === 0 && jsFiles.length === 0) {
+  // already reported above
 } else {
   results.failed.push('dist/assets/index-*.js not found');
   console.log('❌ dist/assets/index-*.js not found');
 }
 
 if (cssFiles.length > 0) {
-  testFile('dist/assets/index-*.css exists', path.join(DIST_DIR, 'assets', cssFiles[0]), 50000);
+  testFile('dist/assets/index-*.css exists', path.join(assetsDir, cssFiles[0]), 50000);
+} else if (jsFiles.length === 0 && cssFiles.length === 0) {
+  // already reported above
 } else {
   results.failed.push('dist/assets/index-*.css not found');
   console.log('❌ dist/assets/index-*.css not found');

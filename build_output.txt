@@ -2,5 +2,13 @@
 > akasha-code-studio@0.1.0 build
 > tsc --noEmit && vite build
 
-src/sidebar.tsx(181,33): error TS2345: Argument of type 'CenterTab | null' is not assignable to parameter of type 'CenterTab'.
-  Type 'null' is not assignable to type 'CenterTab'.
+vite v6.4.2 building for production...
+transforming...
+✓ 2037 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.79 kB │ gzip:   0.44 kB
+dist/assets/index-*.css         104.82 kB │ gzip:  18.79 kB
+dist/assets/index-*.js          550.31 kB │ gzip: 165.77 kB
+
+✓ built in ~3s
