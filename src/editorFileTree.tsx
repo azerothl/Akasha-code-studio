@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "./components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 
 export type FileTreeNode =
   | { kind: "dir"; name: string; path: string; children: FileTreeNode[] }
@@ -176,21 +177,24 @@ export function EditorFileTree({ files, activePath, onOpenFile, onDeleteFile, on
                 <span className="editor-file-tree-actions">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
+                    className="editor-file-tree-action-btn"
                     title={`Renommer ${node.path}`}
+                    aria-label={`Renommer ${node.path}`}
                     onClick={() => startRename(node.path, node.name)}
                   >
-                    Renommer
+                    <Pencil className="h-3.5 w-3.5" aria-hidden />
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="file-list-delete"
+                    size="icon"
+                    className="file-list-delete editor-file-tree-action-btn"
                     data-testid="studio-delete-file"
                     title={`Supprimer ${node.path}`}
+                    aria-label={`Supprimer ${node.path}`}
                     onClick={() => void onDeleteFile(node.path)}
                   >
-                    Suppr.
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
                   </Button>
                 </span>
               </>
@@ -266,12 +270,13 @@ export function EditorFileTree({ files, activePath, onOpenFile, onDeleteFile, on
                 <span className="editor-file-tree-dir-label">{node.name}</span>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="editor-file-tree-rename-btn"
+                  size="icon"
+                  className="editor-file-tree-rename-btn editor-file-tree-action-btn"
                   title={`Renommer le dossier ${node.path}`}
+                  aria-label={`Renommer le dossier ${node.path}`}
                   onClick={() => startRename(node.path, node.name)}
                 >
-                  Renommer
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
                 </Button>
               </>
             )}

@@ -1617,6 +1617,85 @@ kbd {
   padding: 0.32rem 0.65rem;
 }
 
+.app--density-compact {
+  font-size: 14px;
+}
+
+.app--density-compact .app-header {
+  padding: 0.45rem 0.7rem;
+}
+
+.app--density-compact .app-header h1 {
+  font-size: 0.95rem;
+}
+
+.app--density-compact .center-tabs {
+  gap: 0.25rem;
+  padding: 0.25rem 0.4rem;
+}
+
+.app--density-compact .center-tab {
+  font-size: 0.72rem;
+  padding: 0.22rem 0.55rem;
+}
+
+.app--density-compact .pane-title,
+.app--density-compact .pane-title-inline {
+  font-size: 0.64rem;
+}
+
+.app--density-compact .hint {
+  font-size: 0.72rem;
+}
+
+.app--density-compact .sidebar-header {
+  padding: 0.75rem;
+}
+
+.app--density-compact .sidebar-item {
+  padding: 0.5rem 0.55rem;
+  font-size: 0.8rem;
+  gap: 0.55rem;
+  min-height: 36px;
+}
+
+.app--density-compact .sidebar-item-icon {
+  font-size: 0.92rem;
+}
+
+.app--density-compact .sidebar-logo {
+  font-size: 1rem;
+}
+
+.app--density-compact .panel {
+  padding: 0.55rem;
+}
+
+.app--density-compact .panel h2 {
+  font-size: 0.66rem;
+}
+
+.app--density-compact .project-dashboard {
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.app--density-compact .dashboard-grid {
+  gap: 0.75rem;
+}
+
+.app--density-compact .dashboard-card-header {
+  padding: 0.7rem 0.75rem 0.55rem;
+}
+
+.app--density-compact .dashboard-card-body {
+  padding: 0.72rem;
+}
+
+.app--density-compact .dashboard-empty-icon {
+  font-size: 3rem;
+}
+
 .app--density-compact .chat-panel {
   padding: 0.3rem;
   gap: 0.25rem;
@@ -1997,9 +2076,20 @@ kbd {
   white-space: nowrap;
 }
 
-.split-toolbar button {
-  font-size: 0.65rem;
-  padding: 0.2rem 0.45rem;
+.split-toolbar-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.15rem;
+  background: color-mix(in srgb, var(--akasha-bg-card) 88%, transparent);
+}
+
+.split-toolbar .split-toolbar-btn {
+  font-size: 0.72rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  min-height: 1.9rem;
+  min-width: 1.9rem;
+  padding: 0;
 }
 
 .split-toolbar .is-active {
@@ -4677,6 +4767,15 @@ textarea.editor {
   text-align: center;
   font-size: 0.68rem;
   padding: 0.2rem 0.35rem !important;
+}
+
+.editor-file-tree .editor-file-tree-action-btn {
+  width: 1.6rem !important;
+  height: 1.6rem !important;
+  min-width: 1.6rem !important;
+  min-height: 1.6rem !important;
+  padding: 0 !important;
+  font-size: 0.78rem;
 }
 
 .editor-file-tree-rename-input {

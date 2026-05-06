@@ -46,6 +46,7 @@ import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
 import { Checkbox } from "./components/ui/checkbox";
 import { Button } from "./components/ui/button";
+import { Columns2, PanelLeft, PanelRight } from "lucide-react";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -345,6 +346,7 @@ export default function App() {
   const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("balanced");
   /** Menu header ouvert : null ou id section. */
   const [openHeaderMenu, setOpenHeaderMenu] = useState<null | "project" | "evolutions" | "ops" | "agent">(null);
+  const [dashboardProjectSettingsOpen, setDashboardProjectSettingsOpen] = useState(false);
   const [gitStatusPopoverOpen, setGitStatusPopoverOpen] = useState(false);
   const [designViewMode, setDesignViewMode] = useState<"split" | "visual" | "source">("split");
   const [taskDetailForId, setTaskDetailForId] = useState<string | null>(null);
@@ -2473,7 +2475,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
-  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
+  const appClass = `app ${uiDensity === "compact" || uiTheme === "compact-dark" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2758,103 +2760,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               )}
               {selectedId ? (
                 <div className="project-settings">
-                  <h2 className="header-menu-section-title">Paramètres du projet</h2>
-                  <div className="rename-box">
-                    <label className="field">
-                      <span>Renommer l’affichage</span>
-                      <Input value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} />
-                    </label>
-                    <Button variant="secondary" size="sm" onClick={() => void onRenameProject()}>
-                      Enregistrer le nom
-                    </Button>
-                  </div>
-                  <div className="stack-box">
-                    <div className="field stack-box-intro">
-                      <span>Stack technique (agents Code Studio)</span>
-                      <p className="hint stack-hint">
-                        S’ajoute au message côté daemon : les agents doivent respecter cette stack sauf consigne explicite
-                        contraire dans le chat. Un projet déjà configuré s’ouvre en « Personnalisé » avec le texte enregistré.
-                      </p>
-                    </div>
-                    <StackWizard
-                      presetId={stackPresetId}
-                      onPresetChange={onStackPresetSelect}
-                      customText={stackCustomText}
-                      onCustomTextChange={setStackCustomText}
-                      addons={stackAddons}
-                      onToggleAddon={toggleStackAddon}
-                      composedStack={composedStack}
-                    />
-                    <Button variant="secondary" size="sm" onClick={() => void onSaveTechStack()}>
-                      Enregistrer la stack
-                    </Button>
-                  </div>
-                  <div className="evolution-policy-box">
-                    <p className="hint evolution-policy-intro">
-                      Résumé produit (périmètre initial), résumé d’évolution et notes de politique : injectés dans les prochains
-                      messages (daemon). Le résumé produit sert surtout au plan et au périmètre ; le résumé d’évolution à la
-                      session ou à la branche courante.
-                    </p>
-                    <label className="field">
-                      <span>Résumé produit (objectif de l’application)</span>
-                      <Textarea
-                        className="evolution-policy-textarea"
-                        rows={4}
-                        spellCheck={false}
-                        value={projectSummaryDraft}
-                        onChange={(e) => setProjectSummaryDraft(e.target.value)}
-                        placeholder="Ex. application à réaliser, utilisateurs cibles, fonctionnalités clés, contraintes…"
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Résumé d’évolution / session</span>
-                      <Textarea
-                        className="evolution-policy-textarea"
-                        rows={4}
-                        spellCheck={false}
-                        value={evolutionSummaryDraft}
-                        onChange={(e) => setEvolutionSummaryDraft(e.target.value)}
-                        placeholder="Ex. objectif de la branche, décisions déjà prises, ce qu’il reste à faire…"
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Notes de politique (outils, périmètre)</span>
-                      <Textarea
-                        className="evolution-policy-textarea"
-                        rows={4}
-                        spellCheck={false}
-                        value={policyNotesDraft}
-                        onChange={(e) => setPolicyNotesDraft(e.target.value)}
-                        placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
-                      />
-                    </label>
-                    <Button variant="secondary" size="sm" onClick={() => void onSaveEvolutionAndPolicy()}>
-                      Enregistrer résumés &amp; politique
-                    </Button>
-                  </div>
-                  <div className="evolution-policy-box">
-                    <p className="hint evolution-policy-intro">
-                      Critères de fin (Definition of Done) : texte libre ou JSON <code>criteria</code> avec{" "}
-                      <code>manual</code>, <code>file_exists</code>, <code>command_ok</code> — envoyés avec chaque message
-                      agent tant que le champ n’est pas vide (voir spec Code Studio).
-                    </p>
-                    <label className="field" htmlFor="acceptance-criteria-draft">
-                      <span>Critères d&apos;acceptation (optionnel)</span>
-                      <Textarea
-                        id="acceptance-criteria-draft"
-                        className="evolution-policy-textarea"
-                        rows={5}
-                        spellCheck={false}
-                        aria-label="Critères d'acceptation Code Studio"
-                        data-testid="acceptance-criteria-draft"
-                        value={acceptanceCriteriaDraft}
-                        onChange={(e) => setAcceptanceCriteriaDraft(e.target.value)}
-                        placeholder={
-                          'Ex. liste en texte libre, ou JSON : {"criteria":[{"id":"1","text":"…","kind":"manual"},{"id":"2","text":"…","kind":"file_exists","path":"src/x.ts"}]}'
-                        }
-                      />
-                    </label>
-                  </div>
                   <div className="studio-danger-zone">
                     <h3 className="header-menu-section-title">Zone de danger</h3>
                     <p className="hint">
@@ -2890,8 +2795,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           {openHeaderMenu === "evolutions" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               <p className="hint">
-                Branche de travail isolée pour une évolution (idée ou feature) ; fusionnez vers la branche principale depuis «
-                Import &amp; build ».
+                Branche de travail isolée pour une évolution (idée ou feature) ; gérez comparaison, merge et abandon depuis
+                l’onglet « Branches ».
               </p>
               <label className="field">
                 <span>Label de branche (optionnel)</span>
@@ -2935,7 +2840,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             size="sm"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "ops"}
-            title="Importer un dépôt, lancer un build, fusionner ou abandonner une évolution"
+            title="Importer un dépôt et lancer un build"
             onClick={() => setOpenHeaderMenu((m) => (m === "ops" ? null : "ops"))}
           >
             Import &amp; build
@@ -2983,40 +2888,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     onClick={() => void onBuild()}
                   >
                     Exécuter le build
-                  </Button>
-                </div>
-                <div className="ops-group ops-group--stacked">
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    disabled={!selectedId || !selectedEvoId}
-                    title="Fusionne la branche de travail sélectionnée dans la branche principale (main ou master, côté daemon)."
-                    onClick={() => {
-                      if (selectedId && selectedEvoId) {
-                        void api
-                          .mergeEvolution(selectedId, selectedEvoId, { design_check: true })
-                          .then(() => refreshEvolutions())
-                          .catch((e) => setError(String(e)));
-                      }
-                    }}
-                  >
-                    Fusionner dans main
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full"
-                    disabled={!selectedId || !selectedEvoId}
-                    title="Abandonne la branche de travail sans fusion (suppression côté daemon selon la logique Git)."
-                    onClick={() => {
-                      if (selectedId && selectedEvoId) {
-                        void api
-                          .abandonEvolution(selectedId, selectedEvoId)
-                          .then(() => refreshEvolutions())
-                          .catch((e) => setError(String(e)));
-                      }
-                    }}
-                  >
-                    Abandonner la branche
                   </Button>
                 </div>
                 {error ? <div className="banner banner-error">{error}</div> : null}
@@ -3103,33 +2974,39 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             Daemon {daemonStatus.label}
           </span>
 
-          <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
+          <div className="split-toolbar split-toolbar-group" role="group" aria-label="Répartition éditeur et chat">
             <Button
               variant="ghost"
-              size="sm"
-              className={mainSplit === "center" ? "is-active" : undefined}
+              size="icon"
+              className={`split-toolbar-btn ${mainSplit === "center" ? "is-active" : ""}`}
               aria-pressed={mainSplit === "center"}
+              aria-label="Plein éditeur"
+              title="Plein éditeur"
               onClick={() => setMainSplit("center")}
             >
-              Plein éditeur
+              <PanelLeft className="h-4 w-4" aria-hidden />
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className={mainSplit === "balanced" ? "is-active" : undefined}
+              size="icon"
+              className={`split-toolbar-btn ${mainSplit === "balanced" ? "is-active" : ""}`}
               aria-pressed={mainSplit === "balanced"}
+              aria-label="Vue 50/50"
+              title="Vue 50/50"
               onClick={() => setMainSplit("balanced")}
             >
-              50/50
+              <Columns2 className="h-4 w-4" aria-hidden />
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className={mainSplit === "chat" ? "is-active" : undefined}
+              size="icon"
+              className={`split-toolbar-btn ${mainSplit === "chat" ? "is-active" : ""}`}
               aria-pressed={mainSplit === "chat"}
+              aria-label="Plein chat"
+              title="Plein chat"
               onClick={() => setMainSplit("chat")}
             >
-              Plein chat
+              <PanelRight className="h-4 w-4" aria-hidden />
             </Button>
           </div>
         </div>
@@ -3168,6 +3045,122 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               onOpenPlan={() => setCenterTab("plan")}
               onOpenDesign={() => setCenterTab("design")}
             />
+            {selectedId ? (
+              <section className="panel panel-collapsible">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="panel-collapse-trigger"
+                  aria-expanded={dashboardProjectSettingsOpen}
+                  onClick={() => setDashboardProjectSettingsOpen((v) => !v)}
+                >
+                  <span className="panel-collapse-chevron">{dashboardProjectSettingsOpen ? "▾" : "▸"}</span>
+                  <h2>Paramètres du projet</h2>
+                </Button>
+                {dashboardProjectSettingsOpen ? (
+                  <div className="panel-collapse-inner" style={{ maxHeight: "55vh", overflowY: "auto" }}>
+                    <div className="project-settings">
+                  <div className="rename-box">
+                    <label className="field">
+                      <span>Renommer l’affichage</span>
+                      <Input value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} />
+                    </label>
+                    <Button variant="secondary" size="sm" onClick={() => void onRenameProject()}>
+                      Enregistrer le nom
+                    </Button>
+                  </div>
+                  <div className="stack-box">
+                    <div className="field stack-box-intro">
+                      <span>Stack technique (agents Code Studio)</span>
+                      <p className="hint stack-hint">
+                        S’ajoute au message côté daemon : les agents doivent respecter cette stack sauf consigne explicite
+                        contraire dans le chat. Un projet déjà configuré s’ouvre en « Personnalisé » avec le texte enregistré.
+                      </p>
+                    </div>
+                    <StackWizard
+                      presetId={stackPresetId}
+                      onPresetChange={onStackPresetSelect}
+                      customText={stackCustomText}
+                      onCustomTextChange={setStackCustomText}
+                      addons={stackAddons}
+                      onToggleAddon={toggleStackAddon}
+                      composedStack={composedStack}
+                    />
+                    <Button variant="secondary" size="sm" onClick={() => void onSaveTechStack()}>
+                      Enregistrer la stack
+                    </Button>
+                  </div>
+                  <div className="evolution-policy-box">
+                    <p className="hint evolution-policy-intro">
+                      Résumé produit (périmètre initial), résumé d’évolution et notes de politique : injectés dans les prochains
+                      messages (daemon). Le résumé produit sert surtout au plan et au périmètre ; le résumé d’évolution à la
+                      session ou à la branche courante.
+                    </p>
+                    <label className="field">
+                      <span>Résumé produit (objectif de l’application)</span>
+                      <Textarea
+                        className="evolution-policy-textarea"
+                        rows={4}
+                        spellCheck={false}
+                        value={projectSummaryDraft}
+                        onChange={(e) => setProjectSummaryDraft(e.target.value)}
+                        placeholder="Ex. application à réaliser, utilisateurs cibles, fonctionnalités clés, contraintes…"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Résumé d’évolution / session</span>
+                      <Textarea
+                        className="evolution-policy-textarea"
+                        rows={4}
+                        spellCheck={false}
+                        value={evolutionSummaryDraft}
+                        onChange={(e) => setEvolutionSummaryDraft(e.target.value)}
+                        placeholder="Ex. objectif de la branche, décisions déjà prises, ce qu’il reste à faire…"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Notes de politique (outils, périmètre)</span>
+                      <Textarea
+                        className="evolution-policy-textarea"
+                        rows={4}
+                        spellCheck={false}
+                        value={policyNotesDraft}
+                        onChange={(e) => setPolicyNotesDraft(e.target.value)}
+                        placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
+                      />
+                    </label>
+                    <Button variant="secondary" size="sm" onClick={() => void onSaveEvolutionAndPolicy()}>
+                      Enregistrer résumés &amp; politique
+                    </Button>
+                  </div>
+                  <div className="evolution-policy-box">
+                    <p className="hint evolution-policy-intro">
+                      Critères de fin (Definition of Done) : texte libre ou JSON <code>criteria</code> avec{" "}
+                      <code>manual</code>, <code>file_exists</code>, <code>command_ok</code> — envoyés avec chaque message
+                      agent tant que le champ n’est pas vide (voir spec Code Studio).
+                    </p>
+                    <label className="field" htmlFor="acceptance-criteria-draft-dashboard">
+                      <span>Critères d&apos;acceptation (optionnel)</span>
+                      <Textarea
+                        id="acceptance-criteria-draft-dashboard"
+                        className="evolution-policy-textarea"
+                        rows={5}
+                        spellCheck={false}
+                        aria-label="Critères d'acceptation Code Studio"
+                        data-testid="acceptance-criteria-draft"
+                        value={acceptanceCriteriaDraft}
+                        onChange={(e) => setAcceptanceCriteriaDraft(e.target.value)}
+                        placeholder={
+                          'Ex. liste en texte libre, ou JSON : {"criteria":[{"id":"1","text":"…","kind":"manual"},{"id":"2","text":"…","kind":"file_exists","path":"src/x.ts"}]}'
+                        }
+                      />
+                    </label>
+                    </div>
+                  </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
           </div>
         ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
@@ -3650,6 +3643,22 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     title="Fusionner la branche source dans la cible"
                   >
                     Merger
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={!selectedId || !selectedEvoId}
+                    title="Abandonne la branche d’évolution sélectionnée sans fusion."
+                    onClick={() => {
+                      if (selectedId && selectedEvoId) {
+                        void api
+                          .abandonEvolution(selectedId, selectedEvoId)
+                          .then(() => refreshEvolutions())
+                          .catch((e) => setError(String(e)));
+                      }
+                    }}
+                  >
+                    Abandonner la branche
                   </Button>
                 </div>
                 {gitCompareResult ? (
