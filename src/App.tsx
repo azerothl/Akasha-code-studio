@@ -92,6 +92,20 @@ const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "settings", label: "Paramètres", testId: "studio-settings-tab" },
 ];
 
+const CENTER_TAB_STORAGE_KEY = "studio.centerTab";
+
+function loadPersistedCenterTab(): CenterTab {
+  if (typeof window === "undefined") return "dashboard";
+  try {
+    const stored = window.localStorage.getItem(CENTER_TAB_STORAGE_KEY);
+    if (!stored) return "dashboard";
+    const allowed = new Set<CenterTab>(CENTER_TAB_ITEMS.map((t) => t.id));
+    return allowed.has(stored as CenterTab) ? (stored as CenterTab) : "dashboard";
+  } catch {
+    return "dashboard";
+  }
+}
+
 // Deprecated: Use StackWizard instead
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 // Deprecated: StackFields and StackFieldsProps have been replaced by StackWizard component
@@ -252,7 +266,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<CenterTab>("editor");
+  const [centerTab, setCenterTab] = useState<CenterTab>(() => loadPersistedCenterTab());
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -1427,6 +1441,7 @@ export default function App() {
       });
       await refreshProjects();
       setSelectedId(p.id);
+      setCenterTab("dashboard");
       setNewProjectSummary("");
       setNewStackPresetId(STACK_PRESET_NONE);
       setNewStackCustomText("");
@@ -2498,6 +2513,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   useEffect(() => {
     try { window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0"); } catch { /* quota / private mode */ }
   }, [buildLogOpen]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem(CENTER_TAB_STORAGE_KEY, centerTab); } catch { /* quota / private mode */ }
+  }, [centerTab]);
 
   useEffect(() => {
     try { window.localStorage.setItem("akasha-studio-sidebar-open", sidebarOpen ? "1" : "0"); } catch { /* quota / private mode */ }
@@ -4264,6 +4283,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       data-testid={`studio-project-${p.id}`}
                       onClick={() => {
                         setSelectedId(p.id);
+                        setCenterTab("dashboard");
                         setModalLoadOpen(false);
                       }}
                     >
