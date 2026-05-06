@@ -37,7 +37,7 @@ import {
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { TooltipHint } from "./tooltipHint";
-import { Sidebar, getTabsForGroup, getDefaultGroup } from "./sidebar";
+import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
 import { Accordion, type AccordionItem } from "./accordion";
 import { StackWizard } from "./stackWizard";
@@ -231,7 +231,7 @@ export default function App() {
     }
     return true;
   });
-  const [activeGroup] = useState<string>(getDefaultGroup());
+  const [activeGroup, setActiveGroup] = useState<string>(getDefaultGroup());
   const [newProjectName, setNewProjectName] = useState("Mon application");
   const [newProjectSummary, setNewProjectSummary] = useState("");
   const [newStackPresetId, setNewStackPresetId] = useState(STACK_PRESET_NONE);
@@ -273,6 +273,7 @@ export default function App() {
   const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
   const [codeRagStatusError, setCodeRagStatusError] = useState<string | null>(null);
   const [codeRagReindexBusy, setCodeRagReindexBusy] = useState(false);
+  const [dashboardLastSyncAt, setDashboardLastSyncAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
@@ -429,6 +430,40 @@ export default function App() {
     () => composeStackString(stackPresetId, stackCustomText, stackAddons),
     [stackPresetId, stackCustomText, stackAddons],
   );
+
+  const dashboardProjectMeta = useMemo<api.StudioProjectMeta | null>(() => {
+    if (!selectedProject) return null;
+    return {
+      id: selectedProject.id,
+      name: selectedProject.name,
+      created_at: "",
+      tech_stack: composedStack.trim() ? composedStack.trim() : null,
+      git_branch: gitHeadBranch ?? null,
+      git_worktree_clean: gitWorktreeClean ?? null,
+      git_worktree_lines: gitWorktreeLines,
+      project_summary: projectSummaryDraft.trim() ? projectSummaryDraft.trim() : null,
+      evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
+      policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+    };
+  }, [
+    selectedProject,
+    composedStack,
+    gitHeadBranch,
+    gitWorktreeClean,
+    gitWorktreeLines,
+    projectSummaryDraft,
+    evolutionSummaryDraft,
+    policyNotesDraft,
+  ]);
+
+  const dashboardActiveTask = useMemo(() => {
+    if (!selectedId || !taskTrace || taskTrace.done) return null;
+    const stored = loadActiveTask(selectedId);
+    return {
+      taskId: taskTrace.id,
+      startedAt: stored?.startedAt ?? Date.now(),
+    };
+  }, [selectedId, taskTrace]);
 
   const editorDirty = useMemo(
     () => Boolean(filePath && !editorBinary && editorText !== savedEditorText),
@@ -712,6 +747,7 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedId) {
+      setDashboardLastSyncAt(null);
       setCodeRagStatus(null);
       setCodeRagStatusError(null);
       setCodeRagStatusLoading(false);
@@ -741,6 +777,63 @@ export default function App() {
       cancelled = true;
     };
   }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "dashboard") return;
+    let cancelled = false;
+
+    const refreshDashboardData = async () => {
+      try {
+        const [meta, rag] = await Promise.all([
+          api.getProjectMeta(selectedId),
+          api.getCodeRagStatus(selectedId),
+        ]);
+        if (cancelled) return;
+
+        setGitHeadBranch(meta.git_branch ?? null);
+        setGitWorktreeClean(meta.git_worktree_clean ?? null);
+        setGitWorktreeLines(meta.git_worktree_lines ?? []);
+        setProjectSummaryDraft((meta.project_summary ?? "").trim());
+        setEvolutionSummaryDraft((meta.evolution_summary ?? "").trim());
+        setPolicyNotesDraft((meta.policy_notes ?? "").trim());
+
+        const raw = (meta.tech_stack ?? "").trim();
+        if (raw) {
+          setStackPresetId(STACK_PRESET_CUSTOM);
+          setStackCustomText(meta.tech_stack ?? "");
+          setStackAddons(emptyStackAddons());
+        } else {
+          setStackPresetId(STACK_PRESET_NONE);
+          setStackCustomText("");
+          setStackAddons(emptyStackAddons());
+        }
+
+        setCodeRagStatus(rag);
+        setCodeRagStatusError(null);
+        setDashboardLastSyncAt(Date.now());
+
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === meta.id
+              ? { ...p, name: meta.name || p.name }
+              : p,
+          ),
+        );
+      } catch {
+        // Silent retry on next poll to avoid noisy UI while dashboard is open.
+      }
+    };
+
+    void refreshDashboardData();
+    const id = window.setInterval(() => {
+      void refreshDashboardData();
+    }, 10_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [selectedId, centerTab]);
 
   const onReindexCodeRag = useCallback(async () => {
     if (!selectedId) return;
@@ -2414,6 +2507,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setSidebarOpen(open);
   };
 
+  useEffect(() => {
+    const next = getGroupForTab(centerTab);
+    if (next && next !== activeGroup) {
+      setActiveGroup(next);
+    }
+  }, [centerTab, activeGroup]);
+
   // Get filtered tabs for the active group
   const visibleTabs = useMemo(
     () => {
@@ -2430,6 +2530,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         onToggle={handleSidebarToggle}
         activeTab={centerTab}
         onTabSelect={setCenterTab}
+        onGroupSelect={setActiveGroup}
+        activeGroup={activeGroup}
       />
       <div className={appClass}>
       <header className="app-header app-header--compact">
@@ -2746,6 +2848,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             type="button"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "evolutions"}
+            title="Créer/sélectionner une branche d’évolution Git"
             onClick={() => setOpenHeaderMenu((m) => (m === "evolutions" ? null : "evolutions"))}
           >
             Évolutions Git
@@ -2796,6 +2899,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             type="button"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "ops"}
+            title="Importer un dépôt, lancer un build, fusionner ou abandonner une évolution"
             onClick={() => setOpenHeaderMenu((m) => (m === "ops" ? null : "ops"))}
           >
             Import &amp; build
@@ -2891,6 +2995,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             type="button"
             className="header-menu-trigger"
             aria-expanded={openHeaderMenu === "agent"}
+            title="Actions agent (régénération plan/design, capacités)"
             onClick={() => setOpenHeaderMenu((m) => (m === "agent" ? null : "agent"))}
           >
             Agent / actions
@@ -3009,10 +3114,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         {centerTab === "dashboard" ? (
           <div className="center-body">
             <ProjectDashboard
-              project={selectedProject}
-              codeRagStatus={undefined}
-              activeTask={undefined}
-              onStartAgent={() => {}}
+              project={dashboardProjectMeta}
+              codeRagStatus={codeRagStatus ?? undefined}
+              activeTask={dashboardActiveTask}
+              lastSyncedAt={dashboardLastSyncAt}
+              onStartAgent={() => {
+                setMainSplit("chat");
+              }}
+              onOpenPlan={() => setCenterTab("plan")}
+              onOpenDesign={() => setCenterTab("design")}
             />
           </div>
         ) : centerTab === "editor" ? (

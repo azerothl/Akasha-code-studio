@@ -156,6 +156,18 @@ export function getTabsForGroup(groupId: string): CenterTab[] {
 }
 
 /**
+ * Retourne le groupe qui contient un onglet donné.
+ */
+export function getGroupForTab(tab: CenterTab): string | null {
+  for (const group of SIDEBAR_NAV_GROUPS) {
+    for (const item of group.items) {
+      if (item.tabs?.includes(tab)) return group.id;
+    }
+  }
+  return null;
+}
+
+/**
  * Récupère le groupe par défaut (pour initialisation)
  */
 export function getDefaultGroup(): string {
@@ -254,13 +266,19 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
               {expandedGroup === group.id && (
                 <div className="sidebar-group-items">
                   {group.items.map((item) => (
+                    (() => {
+                      const isActionable = Boolean(item.tabs && item.tabs.length > 0);
+                      const isActive = item.tabs?.some((t) => t === activeTab);
+                      return (
                     <button
                       key={item.id}
-                      className={`sidebar-item ${item.tabs?.some((t) => t === activeTab) ? "sidebar-item--active" : ""}`}
+                      className={`sidebar-item ${isActive ? "sidebar-item--active" : ""} ${!isActionable ? "sidebar-item--disabled" : ""}`}
                       onClick={() => handleItemClick(item, group.id)}
-                      title={item.hint}
+                      title={isActionable ? item.hint : `${item.hint ?? "Action"} (bientôt disponible)`}
                       aria-label={`${item.label}${item.hint ? ": " + item.hint : ""}`}
-                      aria-current={item.tabs?.some((t) => t === activeTab) ? "page" : undefined}
+                      aria-current={isActive ? "page" : undefined}
+                      disabled={!isActionable}
+                      aria-disabled={!isActionable}
                     >
                       <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
                       <span className="sidebar-item-label">{item.label}</span>
@@ -270,6 +288,8 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                         </span>
                       )}
                     </button>
+                      );
+                    })()
                   ))}
                 </div>
               )}
@@ -279,7 +299,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
 
         {/* Footer */}
         <div className="sidebar-footer">
-          <button className="sidebar-footer-btn" title="Réduire le menu">
+          <button className="sidebar-footer-btn" title="Réduire le menu" onClick={() => onToggle(false)}>
             ◀ Réduire
           </button>
         </div>

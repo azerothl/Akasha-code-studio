@@ -14,7 +14,10 @@ type Props = {
     label: string;
     time: string;
   }[];
+  lastSyncedAt?: number | null;
   onStartAgent?: () => void;
+  onOpenPlan?: () => void;
+  onOpenDesign?: () => void;
 };
 
 function formatGitStatus(clean: boolean | null | undefined, lines?: { status: string; path: string }[]): string {
@@ -59,7 +62,10 @@ export function ProjectDashboard({
   codeRagStatus,
   activeTask,
   lastActivity,
+  lastSyncedAt,
   onStartAgent,
+  onOpenPlan,
+  onOpenDesign,
 }: Props) {
   if (!project) {
     return (
@@ -89,6 +95,9 @@ export function ProjectDashboard({
           <code className="dashboard-project-id" title={project.id}>
             {project.id.slice(0, 8)}…{project.id.slice(-4)}
           </code>
+          <p className="hint" title="Rafraîchissement automatique des données du dashboard toutes les 10 secondes">
+            {lastSyncedAt ? `Dernière synchro: ${timeSinceInMinutes(new Date(lastSyncedAt).toISOString())}` : "Dernière synchro: —"}
+          </p>
         </div>
       </div>
 
@@ -180,13 +189,28 @@ export function ProjectDashboard({
             <h3>Actions rapides</h3>
           </div>
           <div className="dashboard-card-body dashboard-actions">
-            <button className="btn btn-primary btn-sm" onClick={onStartAgent} title="Démarrer un nouvel agent">
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={onStartAgent}
+              disabled={!onStartAgent}
+              title="Ouvrir le focus sur le chat pour démarrer une nouvelle consigne agent"
+            >
               🚀 Démarrer agent
             </button>
-            <button className="btn btn-secondary btn-sm" title="Voir le plan du projet">
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onOpenPlan}
+              disabled={!onOpenPlan}
+              title="Aller à l’onglet Plan (CODE_STUDIO_PLAN.md)"
+            >
               📋 Voir plan
             </button>
-            <button className="btn btn-secondary btn-sm" title="Voir le design">
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onOpenDesign}
+              disabled={!onOpenDesign}
+              title="Aller à l’onglet Design (DESIGN.md)"
+            >
               🎨 Voir design
             </button>
           </div>
