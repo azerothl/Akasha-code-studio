@@ -39,7 +39,9 @@ import {
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { TooltipHint } from "./tooltipHint";
-import { Sidebar } from "./sidebar";
+import { Sidebar, getTabsForGroup, getDefaultGroup } from "./sidebar";
+import { ProjectDashboard } from "./projectDashboard";
+import { Accordion, type AccordionItem } from "./accordion";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -74,11 +76,12 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type CenterTab = "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "settings";
+type CenterTab = "dashboard" | "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "settings";
 
 export type { CenterTab };
 
 const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
+  { id: "dashboard", label: "Tableau de bord" },
   { id: "editor", label: "Éditeur" },
   { id: "preview", label: "Aperçu" },
   { id: "plan", label: "Plan" },
@@ -317,6 +320,7 @@ export default function App() {
     }
     return true;
   });
+  const [activeGroup] = useState<string>(getDefaultGroup());
   const [newProjectName, setNewProjectName] = useState("Mon application");
   const [newProjectSummary, setNewProjectSummary] = useState("");
   const [newStackPresetId, setNewStackPresetId] = useState(STACK_PRESET_NONE);
@@ -2499,6 +2503,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setSidebarOpen(open);
   };
 
+  // Get filtered tabs for the active group
+  const visibleTabs = useMemo(
+    () => {
+      const groupTabs = getTabsForGroup(activeGroup);
+      return CENTER_TAB_ITEMS.filter((tab) => groupTabs.includes(tab.id));
+    },
+    [activeGroup]
+  );
+
   return (
     <>
       <Sidebar
@@ -3068,7 +3081,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
       <div className={appMainClass}>
       <div className="center">
         <div className="center-tabs" role="tablist" aria-label="Navigation principale Code Studio">
-          {CENTER_TAB_ITEMS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -3083,7 +3096,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </button>
           ))}
         </div>
-        {centerTab === "editor" ? (
+        {centerTab === "dashboard" ? (
+          <div className="center-body">
+            <ProjectDashboard
+              project={selectedProject}
+              codeRagStatus={undefined}
+              activeTask={undefined}
+              onStartAgent={() => {}}
+            />
+          </div>
+        ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
             <div className="editor-layout">
               <div className="editor-file-pane">
@@ -3674,41 +3696,84 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="preview-toolbar">
               <span className="pane-title-inline">Paramètres de l’application</span>
             </div>
-            <div className="panel">
-              <h2>Apparence</h2>
-              <div className="field-row">
-                <label className="field">
-                  <span>Thème</span>
-                  <select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
-                    <option value="dark">Dark</option>
-                    <option value="light">Light</option>
-                    <option value="compact-dark">Compact dark</option>
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Densité</span>
-                  <select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
-                    <option value="normal">Normale</option>
-                    <option value="compact">Compacte</option>
-                  </select>
-                </label>
-              </div>
-              <label className="field-inline delegate-single">
-                <input type="checkbox" checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
-                <span>Options conversation ouvertes par défaut</span>
-              </label>
-              <label className="field-inline delegate-single">
-                <input type="checkbox" checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
-                <span>Suggestions ouvertes par défaut</span>
-              </label>
-              <label className="field-inline delegate-single">
-                <input type="checkbox" checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
-                <span>Journal de build ouvert par défaut</span>
-              </label>
-              <p className="hint">
-                Les paramètres sont persistés localement (navigateur) pour ce poste.
-              </p>
-            </div>
+            <Accordion
+              items={[
+                {
+                  id: "appearance",
+                  title: "Apparence",
+                  icon: "🎨",
+                  content: (
+                    <div className="settings-form-group">
+                      <div className="field-row">
+                        <label className="field">
+                          <span>Thème</span>
+                          <select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                            <option value="compact-dark">Compact dark</option>
+                          </select>
+                        </label>
+                        <label className="field">
+                          <span>Densité</span>
+                          <select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
+                            <option value="normal">Normale</option>
+                            <option value="compact">Compacte</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                  ),
+                  isOpen: true,
+                },
+                {
+                  id: "conversation",
+                  title: "Conversation",
+                  icon: "💬",
+                  content: (
+                    <div className="settings-form-group">
+                      <label className="field-inline delegate-single">
+                        <input type="checkbox" checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
+                        <span>Options conversation ouvertes par défaut</span>
+                      </label>
+                      <label className="field-inline delegate-single">
+                        <input type="checkbox" checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
+                        <span>Suggestions ouvertes par défaut</span>
+                      </label>
+                    </div>
+                  ),
+                  isOpen: false,
+                },
+                {
+                  id: "build",
+                  title: "Build & Logs",
+                  icon: "🔨",
+                  content: (
+                    <div className="settings-form-group">
+                      <label className="field-inline delegate-single">
+                        <input type="checkbox" checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
+                        <span>Journal de build ouvert par défaut</span>
+                      </label>
+                    </div>
+                  ),
+                  isOpen: false,
+                },
+                {
+                  id: "info",
+                  title: "Informations",
+                  icon: "ℹ️",
+                  content: (
+                    <div className="settings-form-group">
+                      <p className="hint">
+                        Les paramètres sont persistés localement (navigateur) pour ce poste.
+                      </p>
+                    </div>
+                  ),
+                  isOpen: false,
+                },
+              ] as AccordionItem[]}
+              allowMultiple
+              className="settings-accordion"
+            />
           </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">

@@ -27,7 +27,7 @@ export const SIDEBAR_NAV_GROUPS: NavGroup[] = [
         label: "Tableau de bord",
         icon: "📊",
         hint: "Vue d'ensemble du projet",
-        tabs: [],
+        tabs: ["dashboard"],
       },
       {
         id: "project-settings",
@@ -138,19 +138,44 @@ export const SIDEBAR_NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/**
+ * Récupère tous les onglets disponibles pour un groupe donné
+ */
+export function getTabsForGroup(groupId: string): CenterTab[] {
+  const group = SIDEBAR_NAV_GROUPS.find((g) => g.id === groupId);
+  if (!group) return [];
+  const tabs = new Set<CenterTab>();
+  for (const item of group.items) {
+    if (item.tabs) {
+      for (const tab of item.tabs) {
+        tabs.add(tab);
+      }
+    }
+  }
+  return Array.from(tabs);
+}
+
+/**
+ * Récupère le groupe par défaut (pour initialisation)
+ */
+export function getDefaultGroup(): string {
+  return "development";
+}
+
 type SidebarProps = {
   isOpen: boolean;
   onToggle: (open: boolean) => void;
   activeTab: CenterTab | null;
   onTabSelect: (tab: CenterTab) => void;
-  onItemSelect?: (itemId: string) => void;
+  onGroupSelect?: (groupId: string) => void;
+  activeGroup?: string | null;
 };
 
-export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onItemSelect }: SidebarProps) {
-  const [expandedGroup, setExpandedGroup] = useState<string | null>("development");
+export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelect, activeGroup }: SidebarProps) {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(activeGroup || getDefaultGroup());
 
   useEffect(() => {
-    // Expand relevant group based on active tab
+    // Auto-expand group based on active tab
     if (!activeTab) return;
     for (const group of SIDEBAR_NAV_GROUPS) {
       for (const item of group.items) {
@@ -162,8 +187,15 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onItemSelect
     }
   }, [activeTab]);
 
-  const handleItemClick = (item: NavItem) => {
-    onItemSelect?.(item.id);
+  const handleGroupClick = (groupId: string) => {
+    setExpandedGroup(expandedGroup === groupId ? null : groupId);
+    onGroupSelect?.(groupId);
+  };
+
+  const handleItemClick = (item: NavItem, groupId: string) => {
+    // Select the group first
+    onGroupSelect?.(groupId);
+    // Then select the first tab of this item
     if (item.tabs && item.tabs.length > 0) {
       onTabSelect(item.tabs[0]);
     }
@@ -207,8 +239,8 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onItemSelect
           {SIDEBAR_NAV_GROUPS.map((group) => (
             <div key={group.id} className="sidebar-group">
               <button
-                className="sidebar-group-header"
-                onClick={() => setExpandedGroup(expandedGroup === group.id ? null : group.id)}
+                className={`sidebar-group-header ${activeGroup === group.id ? "sidebar-group-header--active" : ""}`}
+                onClick={() => handleGroupClick(group.id)}
                 aria-expanded={expandedGroup === group.id}
               >
                 <span className="sidebar-group-icon">{group.icon}</span>
@@ -224,7 +256,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onItemSelect
                     <button
                       key={item.id}
                       className={`sidebar-item ${item.tabs?.some((t) => t === activeTab) ? "sidebar-item--active" : ""}`}
-                      onClick={() => handleItemClick(item)}
+                      onClick={() => handleItemClick(item, group.id)}
                       title={item.hint}
                     >
                       <span className="sidebar-item-icon">{item.icon}</span>
