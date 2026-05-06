@@ -266,10 +266,14 @@ export function KanbanBoard({
 
   async function moveTicket(ticket: api.StudioTicket, status: api.StudioTicketStatus) {
     if (!projectId) return;
-    await api.patchStudioTicket(projectId, ticket.id, { status });
-    await load();
-    if (selected?.id === ticket.id) {
-      await openTicket({ ...ticket, status });
+    try {
+      await api.patchStudioTicket(projectId, ticket.id, { status });
+      await load();
+      if (selected?.id === ticket.id) {
+        await openTicket({ ...ticket, status });
+      }
+    } catch (e) {
+      setError(String(e));
     }
   }
 
@@ -318,17 +322,21 @@ export function KanbanBoard({
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
-    const t = await api.reviewStudioTicket(projectId, selected.id, {
-      reviewer_agent: selected.review_agent,
-      outcome,
-      review_notes: reviewNotes.trim() || undefined,
-      corrective_steps: outcome === "changes_requested" ? corrective_steps : undefined,
-    });
-    setSelected(t);
-    setReviewNotes("");
-    setCorrectiveStepsRaw("");
-    await load();
-    await openTicket(t);
+    try {
+      const t = await api.reviewStudioTicket(projectId, selected.id, {
+        reviewer_agent: selected.review_agent,
+        outcome,
+        review_notes: reviewNotes.trim() || undefined,
+        corrective_steps: outcome === "changes_requested" ? corrective_steps : undefined,
+      });
+      setSelected(t);
+      setReviewNotes("");
+      setCorrectiveStepsRaw("");
+      await load();
+      await openTicket(t);
+    } catch (e) {
+      setTicketDetailError(String(e));
+    }
   }
 
   function composeTicketMessage(ticket: api.StudioTicket): string {

@@ -1,14 +1,14 @@
 # AIPM -> Akasha Code Studio: concept mapping
 
-This document maps reusable concepts from `C:\www\aipm` to concrete implementation targets in `akasha-code-studio` and Akasha daemon APIs.
+This document maps reusable concepts from the `aipm` project to concrete implementation targets in `akasha-code-studio` and Akasha daemon APIs.
 
 ## 1) Workspace shell with pluggable panels
 
 - **AIPM reference**
-  - `C:\www\aipm\src\app\page.tsx`
+  - `src/app/page.tsx`
 - **Code Studio target**
-  - `c:\www\akasha-code-studio\src\App.tsx`
-  - `c:\www\akasha-code-studio\src\sidebar.tsx`
+  - `src/App.tsx`
+  - `src/sidebar.tsx`
 - **Adoption**
   - Add `Kanban` as a first-class center tab.
   - Keep existing central orchestration in `App.tsx` and compose a new focused panel component.
@@ -16,12 +16,12 @@ This document maps reusable concepts from `C:\www\aipm` to concrete implementati
 ## 2) Ticket-centric workflow (Kanban + lifecycle)
 
 - **AIPM reference**
-  - `C:\www\aipm\src\components\Kanban.tsx`
-  - `C:\www\aipm\src\app\api\tickets\**\route.ts`
+  - `src/components/Kanban.tsx`
+  - `src/app/api/tickets/**/route.ts`
 - **Code Studio target**
-  - `c:\www\akasha-code-studio\src\kanbanBoard.tsx` (new)
-  - `c:\www\akasha-code-studio\src\api.ts`
-  - `c:\www\Akasha\crates\akasha-daemon\src\api_studio\handlers.rs`
+  - `src/kanbanBoard.tsx` (new)
+  - `src/api.ts`
+  - `crates/akasha-daemon/src/api_studio/handlers.rs`
 - **Adoption**
   - Introduce a daemon-backed `StudioTicket` model and `Kanban` board per studio project.
   - Track assignment, review gate, corrective steps, and task linkage.
@@ -31,8 +31,8 @@ This document maps reusable concepts from `C:\www\aipm` to concrete implementati
 - **AIPM reference**
   - Multiple route files under `src/app/api/...`
 - **Code Studio target**
-  - `c:\www\Akasha\crates\akasha-daemon\src\api_studio\handlers.rs`
-  - `c:\www\Akasha\crates\akasha-daemon\src\api.rs`
+  - `crates/akasha-daemon/src/api_studio/handlers.rs`
+  - `crates/akasha-daemon/src/api.rs`
 - **Adoption**
   - Add dedicated `/api/studio/projects/:id/tickets*` endpoints.
   - Add `POST /api/message` integration fields (`studio_ticket_id`, enforcement mode).
@@ -40,10 +40,10 @@ This document maps reusable concepts from `C:\www\aipm` to concrete implementati
 ## 4) Real-time eventing + timeline
 
 - **AIPM reference**
-  - `C:\www\aipm\src\lib\ticket-events.ts`
-  - `C:\www\aipm\src\app\api\tickets\stream\route.ts`
+  - `src/lib/ticket-events.ts`
+  - `src/app/api/tickets/stream/route.ts`
 - **Code Studio target**
-  - Existing global stream in `c:\www\akasha-code-studio\src\api.ts` (`subscribeTaskEventsLive`)
+  - Existing global stream in `src/api.ts` (`subscribeTaskEventsLive`)
   - New ticket timeline rendering in Kanban ticket details.
 - **Adoption**
   - Reuse existing daemon event bus and task events as source of truth.
@@ -52,10 +52,10 @@ This document maps reusable concepts from `C:\www\aipm` to concrete implementati
 ## 5) Plan import -> executable backlog
 
 - **AIPM reference**
-  - `C:\www\aipm\src\lib\plan-import.ts`
+  - `src/lib/plan-import.ts`
 - **Code Studio target**
-  - `c:\www\akasha-code-studio\src\App.tsx`
-  - `c:\www\akasha-code-studio\src\api.ts`
+  - `src/App.tsx`
+  - `src/api.ts`
 - **Adoption**
   - Parse plan text in UI and create ticket drafts/actions without auto-running mutation.
 
@@ -64,7 +64,7 @@ This document maps reusable concepts from `C:\www\aipm` to concrete implementati
 - **AIPM reference**
   - Dashboard actions integrated in main page shell.
 - **Code Studio target**
-  - `c:\www\akasha-code-studio\src\projectDashboard.tsx`
+  - `src/projectDashboard.tsx`
 - **Adoption**
   - Contextual action cards (preview/build/review/branch follow-up) driven by daemon state.
 

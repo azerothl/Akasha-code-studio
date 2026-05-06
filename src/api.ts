@@ -748,7 +748,7 @@ export async function sendMessage(body: {
         ? { studio_acceptance_criteria: body.studio_acceptance_criteria }
         : {}),
       ...(body.studio_ticket_id?.trim() ? { studio_ticket_id: body.studio_ticket_id.trim() } : {}),
-      ...(body.studio_ticket_enforcement_mode
+      ...(body.studio_ticket_enforcement_mode && body.studio_ticket_enforcement_mode !== "off"
         ? { studio_ticket_enforcement_mode: body.studio_ticket_enforcement_mode }
         : {}),
     }),
