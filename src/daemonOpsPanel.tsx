@@ -1,0 +1,369 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import * as api from "./api";
+import { Button } from "./components/ui/button";
+import { Checkbox } from "./components/ui/checkbox";
+
+type RawSection = { title: string; ok: boolean; payload: unknown; error?: string };
+
+/** Cockpit opérateur : endpoints documentés dans `docs/OPERATOR_COCKPIT.md`. */
+export function DaemonOpsPanel() {
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [rawSections, setRawSections] = useState<RawSection[]>([]);
+  const [schedules, setSchedules] = useState<api.OpsSchedule[]>([]);
+  const [taskRuns, setTaskRuns] = useState<api.OpsTaskRun[]>([]);
+  const [processEvents, setProcessEvents] = useState<api.OpsProcessEvent[]>([]);
+  const [terminal, setTerminal] = useState<api.OpsTerminalSummary>({
+    current: "unknown",
+    interactivePty: false,
+    ptyApi: [],
+    shells: [],
+  });
+  const [tools, setTools] = useState<api.OpsToolsSummary>({ profile: "default", allow: 0, deny: 0, approval: 0 });
+  const [mcp, setMcp] = useState<api.OpsMcpSummary>({
+    configPresent: false,
+    serverCount: 0,
+    runtime: "unknown",
+    oauthMode: "unknown",
+  });
+  const [lifecycle, setLifecycle] = useState<api.OpsLifecycleSummary>({
+    present: false,
+    timeoutSec: 0,
+    sandbox: "none",
+    phases: [],
+  });
+  const [scheduleBusy, setScheduleBusy] = useState<string | null>(null);
+  const [scheduleMsg, setScheduleMsg] = useState<string | null>(null);
+  const [opsHealth, setOpsHealth] = useState<string>("");
+
+  const fetchSection = useCallback(async (title: string, fn: () => Promise<unknown>) => {
+    try {
+      const payload = await fn();
+      return { title, ok: true, payload } as RawSection;
+    } catch (e) {
+      return {
+        title,
+        ok: false,
+        payload: null,
+        error: e instanceof Error ? e.message : String(e),
+      } as RawSection;
+    }
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const [
+        schedulesSection,
+        taskRunsSection,
+        processSection,
+        terminalSection,
+        toolsSection,
+        memorySection,
+        mcpStatusSection,
+        mcpRuntimeSection,
+        lifecycleSection,
+      ] = await Promise.all([
+        fetchSection("GET /api/schedules", () => api.fetchSchedulesPayload()),
+        fetchSection("GET /api/task_runs", () => api.fetchTaskRunsPayload()),
+        fetchSection("GET /api/process/watch/recent", () => api.fetchProcessWatchRecent(30)),
+        fetchSection("GET /api/terminal/capabilities", () => api.fetchTerminalCapabilities()),
+        fetchSection("GET /api/tools/effective", () => api.fetchToolsEffective()),
+        fetchSection("GET /api/memory/recall-metrics", () => api.fetchMemoryRecallMetrics()),
+        fetchSection("GET /api/mcp/status", () => api.fetchMcpStatus()),
+        fetchSection("GET /api/mcp/runtime", () => api.fetchMcpRuntime()),
+        fetchSection("GET /api/lifecycle/hooks", () => api.fetchLifecycleHooks()),
+      ]);
+
+      const schedulesPayload = schedulesSection.ok ? schedulesSection.payload : { schedules: [] };
+      const taskRunsPayload = taskRunsSection.ok ? taskRunsSection.payload : { task_runs: [] };
+      const processPayload = processSection.ok ? processSection.payload : { events: [] };
+      const terminalPayload = terminalSection.ok ? terminalSection.payload : {};
+      const toolsPayload = toolsSection.ok ? toolsSection.payload : {};
+      const mcpStatusPayload = mcpStatusSection.ok ? mcpStatusSection.payload : {};
+      const mcpRuntimePayload = mcpRuntimeSection.ok ? mcpRuntimeSection.payload : {};
+      const lifecyclePayload = lifecycleSection.ok ? lifecycleSection.payload : {};
+
+      setSchedules(api.parseSchedulesPayload(schedulesPayload));
+      setTaskRuns(api.parseTaskRunsPayload(taskRunsPayload));
+      setProcessEvents(api.parseProcessWatchPayload(processPayload));
+      setTerminal(api.parseTerminalCapabilitiesPayload(terminalPayload));
+      setTools(api.parseToolsEffectivePayload(toolsPayload));
+      setMcp(api.parseMcpSummary(mcpStatusPayload, mcpRuntimePayload));
+      setLifecycle(api.parseLifecycleHooksPayload(lifecyclePayload));
+
+      const out = [
+        schedulesSection,
+        taskRunsSection,
+        processSection,
+        terminalSection,
+        toolsSection,
+        memorySection,
+        mcpStatusSection,
+        mcpRuntimeSection,
+        lifecycleSection,
+      ];
+      setRawSections(out);
+      const okCount = out.filter((x) => x.ok).length;
+      setOpsHealth(`${okCount}/${out.length} endpoints OK`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchSection]);
+
+  const loadLight = useCallback(async () => {
+    try {
+      const [runs, watch] = await Promise.all([api.fetchTaskRunsPayload(), api.fetchProcessWatchRecent(30)]);
+      setTaskRuns(api.parseTaskRunsPayload(runs));
+      setProcessEvents(api.parseProcessWatchPayload(watch));
+    } catch {
+      /* keep previous values */
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = window.setInterval(() => {
+      void loadLight();
+    }, 7_500);
+    return () => window.clearInterval(timer);
+  }, [autoRefresh, loadLight]);
+
+  const onScheduleAction = async (id: string, action: "pause" | "resume" | "run_now") => {
+    setScheduleBusy(`${id}:${action}`);
+    setScheduleMsg(null);
+    try {
+      const j = await api.postScheduleControl(id, action);
+      setScheduleMsg(`${action} → OK: ${JSON.stringify(j).slice(0, 400)}`);
+      await loadAll();
+    } catch (e) {
+      setScheduleMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setScheduleBusy(null);
+    }
+  };
+
+  const processTop = useMemo(() => [...processEvents].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10), [processEvents]);
+  const runsTop = useMemo(() => taskRuns.slice(0, 10), [taskRuns]);
+  const runStatusSummary = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const run of taskRuns) {
+      const key = (run.status || "unknown").toLowerCase();
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [taskRuns]);
+  const swarmGraphRows = useMemo(() => {
+    return taskRuns.slice(0, 12).map((r, idx) => ({
+      id: r.id,
+      label: r.summary || r.task || `run-${idx + 1}`,
+      status: r.status,
+      order: idx + 1,
+    }));
+  }, [taskRuns]);
+
+  return (
+    <div className="daemon-ops-panel">
+      <div className="daemon-ops-header">
+        <strong>Cockpit opérateur (daemon)</strong>
+        <div className="daemon-ops-header-actions">
+          <label className="field-inline" style={{ fontSize: "0.72rem" }}>
+            <Checkbox checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+            <span>Auto-refresh runs/process</span>
+          </label>
+          <Button variant="ghost" size="sm" disabled={loading} onClick={() => void loadAll()}>
+          {loading ? "Chargement…" : "Rafraîchir"}
+          </Button>
+        </div>
+      </div>
+      {err ? <p className="banner banner-error">{err}</p> : null}
+      <p className="hint" style={{ marginBottom: "0.75rem" }}>
+        Scheduler, runs, process watch, terminal, toolsets, recall, MCP (statut disque), hooks lifecycle. Webhooks signés :{" "}
+        <a
+          href="https://github.com/azerothl/Akasha/blob/main/docs/automation-webhooks.md"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          automation-webhooks.md
+        </a>
+        . Voir aussi{" "}
+        <a href="/docs/OPERATOR_COCKPIT.md" target="_blank" rel="noopener">
+          docs/OPERATOR_COCKPIT.md
+        </a>
+        .
+      </p>
+      <p className="hint" style={{ marginBottom: "0.75rem" }}>
+        État cockpit: <strong>{opsHealth || "…"}</strong>
+      </p>
+
+      <section className="daemon-ops-structured-grid">
+        <div className="daemon-ops-card" data-testid="ops-task-runs-card">
+          <h4>Task runs</h4>
+          {runStatusSummary.length > 0 ? (
+            <p className="hint">
+              Répartition: {runStatusSummary.map(([s, n]) => `${s}=${n}`).join(" · ")}
+            </p>
+          ) : null}
+          {runsTop.length === 0 ? <p className="hint">Aucun run récent.</p> : (
+            <ul className="daemon-ops-mini-list">
+              {runsTop.map((r) => (
+                <li key={r.id}>
+                  <strong>{r.id.slice(0, 8)}…</strong> · {r.status} · {r.summary || r.task}
+                  <span className="hint"> · start {r.startedAt}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/task_runs"))?.payload, null, 2)}</pre>
+          </details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-swarm-graph-card">
+          <h4>Swarm graph (MVP)</h4>
+          {swarmGraphRows.length === 0 ? (
+            <p className="hint">Aucun worker/runs récents.</p>
+          ) : (
+            <ol className="daemon-ops-mini-list">
+              {swarmGraphRows.map((row) => (
+                <li key={row.id}>
+                  <strong>#{row.order}</strong> · <code>{row.id.slice(0, 8)}…</code> · {row.status} · {row.label}
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="hint">Vue graphe simplifiée basée sur les derniers task runs (coordination swarm opt-in).</p>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-process-watch-card">
+          <h4>Process watch</h4>
+          {processTop.length === 0 ? <p className="hint">Aucun événement.</p> : (
+            <ul className="daemon-ops-mini-list">
+              {processTop.map((e, idx) => (
+                <li key={`${e.at}-${idx}`}>
+                  <strong>{e.status}</strong> · {e.command} · {e.detail}
+                </li>
+              ))}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/process/watch/recent"))?.payload, null, 2)}</pre>
+          </details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-terminal-card">
+          <h4>Terminal</h4>
+          <p className="hint">Mode: <strong>{terminal.current}</strong> · PTY interactif: <strong>{terminal.interactivePty ? "oui" : "non"}</strong></p>
+          <p className="hint">API PTY: {terminal.ptyApi.join(", ") || "—"}</p>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/terminal/capabilities"))?.payload, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-tools-card">
+          <h4>Tools effective</h4>
+          <p className="hint">Profil: <strong>{tools.profile}</strong></p>
+          <p className="hint">Allow: {tools.allow} · Approval: {tools.approval} · Deny: {tools.deny}</p>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/tools/effective"))?.payload, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-mcp-card">
+          <h4>MCP</h4>
+          <p className="hint">Config: <strong>{mcp.configPresent ? "présente" : "absente"}</strong> · Servers: <strong>{mcp.serverCount}</strong></p>
+          <p className="hint">Runtime: {mcp.runtime} · OAuth: {mcp.oauthMode}</p>
+          <details><summary>Raw JSON status/runtime</summary><pre className="daemon-ops-pre">{JSON.stringify({
+            status: rawSections.find((s) => s.title.includes("/api/mcp/status"))?.payload,
+            runtime: rawSections.find((s) => s.title.includes("/api/mcp/runtime"))?.payload,
+          }, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-lifecycle-card">
+          <h4>Lifecycle hooks</h4>
+          <p className="hint">Présent: <strong>{lifecycle.present ? "oui" : "non"}</strong> · Sandbox: <strong>{lifecycle.sandbox}</strong> · Timeout: <strong>{lifecycle.timeoutSec}s</strong></p>
+          <p className="hint">Phases: {lifecycle.phases.join(", ") || "—"}</p>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/lifecycle/hooks"))?.payload, null, 2)}</pre></details>
+        </div>
+      </section>
+
+      {schedules.length > 0 ? (
+        <div className="daemon-ops-schedules" style={{ marginBottom: "1rem" }}>
+          <strong className="daemon-ops-schedules-title">Actions planificateur</strong>
+          <table className="daemon-ops-schedule-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>ID</th>
+                <th>Actif</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedules.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.name ?? "—"}</td>
+                  <td>
+                    <code title={s.id}>{s.id.slice(0, 8)}…</code>
+                  </td>
+                  <td>{s.enabled === false ? "non" : "oui"}</td>
+                  <td className="daemon-ops-schedule-actions">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={scheduleBusy !== null}
+                      onClick={() => void onScheduleAction(s.id, "pause")}
+                    >
+                      {scheduleBusy === `${s.id}:pause` ? "…" : "Pause"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={scheduleBusy !== null}
+                      onClick={() => void onScheduleAction(s.id, "resume")}
+                    >
+                      {scheduleBusy === `${s.id}:resume` ? "…" : "Reprendre"}
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      disabled={scheduleBusy !== null}
+                      onClick={() => void onScheduleAction(s.id, "run_now")}
+                    >
+                      {scheduleBusy === `${s.id}:run_now` ? "…" : "Exécuter maintenant"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {scheduleMsg ? <p className="hint daemon-ops-schedule-msg">{scheduleMsg}</p> : null}
+        </div>
+      ) : (
+        <p className="hint" style={{ marginBottom: "1rem" }}>
+          Aucune entrée dans <code>GET /api/schedules</code> — les actions pause / reprise / exécution apparaissent lorsque des
+          plannings existent côté daemon.
+        </p>
+      )}
+
+      <div className="daemon-ops-blocks">
+        {rawSections.map((b) => (
+          <details key={b.title} open={!b.ok}>
+            <summary>
+              {b.ok ? "OK" : "Erreur"} — {b.title}
+            </summary>
+            <pre className="daemon-ops-pre">
+              {b.ok ? JSON.stringify(b.payload, null, 2).slice(0, 12_000) : b.error}
+            </pre>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}
