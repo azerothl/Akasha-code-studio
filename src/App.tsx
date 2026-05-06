@@ -1354,6 +1354,15 @@ export default function App() {
   }, [centerTab, filePath, editorBinary, editorDirty, saveEditor]);
 
   useEffect(() => {
+    if (!openHeaderMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenHeaderMenu(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openHeaderMenu]);
+
+  useEffect(() => {
     return () => {
       if (staticPreviewBlobUrl) URL.revokeObjectURL(staticPreviewBlobUrl);
     };
@@ -2574,7 +2583,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <span className="hint app-header-placeholder">Aucun projet chargé</span>
           )}
         </div>
-      </header>
       <nav className="app-header-nav" aria-label="Menus Code Studio">
         {openHeaderMenu ? (
           <div
@@ -2801,7 +2809,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <div className="header-menu-wrap">
+        <div className="header-menu-wrap header-menu-wrap--right">
           <button
             type="button"
             className="header-menu-trigger"
@@ -2896,7 +2904,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <div className="header-menu-wrap">
+        <div className="header-menu-wrap header-menu-wrap--right">
           <button
             type="button"
             className="header-menu-trigger"
@@ -2996,6 +3004,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </div>
         </div>
       </nav>
+      </header>
 
       <div className={appMainClass}>
       <div className="center">

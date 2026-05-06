@@ -189,6 +189,8 @@ kbd {
 
 .app-header {
   grid-column: 1 / -1;
+  position: relative;
+  z-index: 220;
   padding: 0.85rem 1.25rem;
   background: linear-gradient(180deg, var(--akasha-bg-card) 0%, var(--akasha-bg-elevated) 100%);
   border-bottom: 1px solid var(--border);
@@ -406,7 +408,7 @@ kbd {
   gap: 0.35rem 0.5rem;
   padding: 0.35rem 0 0;
   background: transparent;
-  overflow-x: auto;
+  overflow: visible;
   scrollbar-width: thin;
 }
 
@@ -419,6 +421,11 @@ kbd {
 
 .header-menu-wrap {
   position: relative;
+}
+
+.header-menu-wrap--right .header-menu-panel {
+  left: auto;
+  right: 0;
 }
 
 .header-menu-trigger {
@@ -448,9 +455,9 @@ kbd {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 50;
-  min-width: min(22rem, 92vw);
-  max-width: min(32rem, 94vw);
+  z-index: 260;
+  min-width: min(22rem, calc(100vw - 1rem));
+  max-width: min(32rem, calc(100vw - 1rem));
   max-height: min(70vh, 28rem);
   overflow-y: auto;
   padding: 0.65rem;
@@ -463,7 +470,7 @@ kbd {
 .header-menu-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 110;
+  z-index: 240;
   background: rgba(4, 6, 14, 0.28);
 }
 
@@ -4116,6 +4123,11 @@ textarea.editor {
   .app-header-nav {
     flex-wrap: wrap;
     overflow-x: visible;
+  }
+
+  .header-menu-wrap--right .header-menu-panel {
+    left: 0;
+    right: auto;
   }
 
   .split-toolbar {
