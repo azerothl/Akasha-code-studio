@@ -38,6 +38,7 @@ import {
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
+import { TooltipHint } from "./tooltipHint";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -70,6 +71,20 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
     label: "Planification (lecture seule)",
     hint: "Préférence sous-agent : explorer le dépôt et mettre à jour CODE_STUDIO_PLAN.md uniquement.",
   },
+];
+
+type CenterTab = "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "settings";
+
+const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
+  { id: "editor", label: "Éditeur" },
+  { id: "preview", label: "Aperçu" },
+  { id: "plan", label: "Plan" },
+  { id: "design", label: "Design" },
+  { id: "branches", label: "Branches", testId: "studio-branches-tab" },
+  { id: "logs", label: "Logs serveur" },
+  { id: "cockpit", label: "Cockpit" },
+  { id: "docs", label: "Documentation", testId: "studio-doc-tab" },
+  { id: "settings", label: "Paramètres", testId: "studio-settings-tab" },
 ];
 
 type StackFieldsProps = {
@@ -308,7 +323,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design" | "cockpit" | "docs">("editor");
+  const [centerTab, setCenterTab] = useState<CenterTab>("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -317,6 +332,13 @@ export default function App() {
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
   const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
   const [gitWorktreeLines, setGitWorktreeLines] = useState<{ status: string; path: string }[]>([]);
+  const [gitBranches, setGitBranches] = useState<api.GitBranchEntry[]>([]);
+  const [gitBranchesLoading, setGitBranchesLoading] = useState(false);
+  const [gitCompareBase, setGitCompareBase] = useState("");
+  const [gitCompareTarget, setGitCompareTarget] = useState("");
+  const [gitCompareResult, setGitCompareResult] = useState<api.GitComparePayload | null>(null);
+  const [gitConflicts, setGitConflicts] = useState<string[]>([]);
+  const [gitMergeInProgress, setGitMergeInProgress] = useState(false);
   /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
   const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
   const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
@@ -384,6 +406,27 @@ export default function App() {
     events: api.TaskEventEntry[];
   } | null>(null);
   const [taskDetailLiveMode, setTaskDetailLiveMode] = useState<"sse" | "polling" | null>(null);
+  const [chatOptionsOpen, setChatOptionsOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.chatOptionsOpen") === "1";
+  });
+  const [chatSuggestionsOpen, setChatSuggestionsOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.chatSuggestionsOpen") === "1";
+  });
+  const [buildLogOpen, setBuildLogOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.buildLogOpen") === "1";
+  });
+  const [taskDetailTab, setTaskDetailTab] = useState<"events" | "progress" | "workflow" | "summary">("events");
+  const [uiTheme, setUiTheme] = useState<"dark" | "light" | "compact-dark">(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiTheme") : null;
+    return stored === "light" || stored === "compact-dark" ? stored : "dark";
+  });
+  const [uiDensity, setUiDensity] = useState<"normal" | "compact">(() => {
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiDensity") : null;
+    return stored === "compact" ? "compact" : "normal";
+  });
 
   const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
   const [policyHintOneShot, setPolicyHintOneShot] = useState("");
@@ -967,6 +1010,13 @@ export default function App() {
       setEvolutions([]);
       return;
     }
+    // Reset Git state immediately so the Branches tab never shows stale data from the previous project
+    setGitBranches([]);
+    setGitCompareBase("");
+    setGitCompareTarget("");
+    setGitCompareResult(null);
+    setGitConflicts([]);
+    setGitMergeInProgress(false);
     let cancelled = false;
     setFilePath(null);
     setEditorText("");
@@ -994,6 +1044,45 @@ export default function App() {
       setEvolutions(evo);
     } catch {
       setEvolutions([]);
+    }
+  }, [selectedId]);
+
+  const refreshGitBranches = useCallback(async () => {
+    if (!selectedId) {
+      setGitBranches([]);
+      return;
+    }
+    setGitBranchesLoading(true);
+    try {
+      const payload = await api.listGitBranches(selectedId);
+      setGitBranches(payload.branches);
+      if (!gitCompareBase && payload.current_branch) {
+        setGitCompareBase(payload.current_branch);
+      }
+      if (!gitCompareTarget) {
+        const fallbackTarget = payload.branches.find((b) => !b.current)?.name ?? "";
+        if (fallbackTarget) setGitCompareTarget(fallbackTarget);
+      }
+    } catch {
+      setGitBranches([]);
+    } finally {
+      setGitBranchesLoading(false);
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget]);
+
+  const refreshGitConflicts = useCallback(async () => {
+    if (!selectedId) {
+      setGitConflicts([]);
+      setGitMergeInProgress(false);
+      return;
+    }
+    try {
+      const payload = await api.getGitConflicts(selectedId);
+      setGitConflicts(payload.conflict_files);
+      setGitMergeInProgress(payload.merge_in_progress);
+    } catch {
+      setGitConflicts([]);
+      setGitMergeInProgress(false);
     }
   }, [selectedId]);
 
@@ -1032,6 +1121,10 @@ export default function App() {
       } catch {
         /* ignore */
       }
+      if (centerTab === "branches") {
+        await refreshGitBranches();
+        await refreshGitConflicts();
+      }
       if (filePath && f.includes(filePath) && !editorBinary) {
         if (editorDirty) {
           metaNote = " — éditeur non rechargé (fichier modifié localement)";
@@ -1043,7 +1136,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer]);
+  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts, centerTab]);
 
   const onPlayPreview = useCallback(async () => {
     if (!selectedId) return;
@@ -1274,6 +1367,15 @@ export default function App() {
   }, [centerTab, filePath, editorBinary, editorDirty, saveEditor]);
 
   useEffect(() => {
+    if (!openHeaderMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenHeaderMenu(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openHeaderMenu]);
+
+  useEffect(() => {
     return () => {
       if (staticPreviewBlobUrl) URL.revokeObjectURL(staticPreviewBlobUrl);
     };
@@ -1475,6 +1577,57 @@ export default function App() {
       setStatus("");
     }
   };
+
+  const onCheckoutBranch = useCallback(async (branch: string) => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.checkoutGitBranch(selectedId, branch);
+      setStatus(`Branche active: ${branch}`);
+      await refreshFiles();
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, refreshFiles]);
+
+  const onCompareBranches = useCallback(async () => {
+    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    setError(null);
+    try {
+      const compare = await api.compareGitBranches(selectedId, gitCompareBase, gitCompareTarget);
+      setGitCompareResult(compare);
+    } catch (e) {
+      setError(String(e));
+      setGitCompareResult(null);
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget]);
+
+  const onMergeBranches = useCallback(async () => {
+    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    setError(null);
+    try {
+      const result = await api.mergeGitBranches(selectedId, gitCompareTarget, gitCompareBase);
+      setStatus(result.message || "Merge effectué");
+      await refreshFiles();
+      await refreshGitConflicts();
+    } catch (e) {
+      setError(String(e));
+      await refreshGitConflicts();
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget, refreshFiles, refreshGitConflicts]);
+
+  const onAbortMerge = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.abortGitMerge(selectedId);
+      setStatus("Merge annulé");
+      await refreshGitConflicts();
+      await refreshFiles();
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, refreshGitConflicts, refreshFiles]);
 
   const onNewEvolution = async () => {
     if (!selectedId) {
@@ -1701,6 +1854,12 @@ export default function App() {
       cancelled = true;
     };
   }, [selectedId, centerTab]);
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "branches") return;
+    void refreshGitBranches();
+    void refreshGitConflicts();
+  }, [selectedId, centerTab, refreshGitBranches, refreshGitConflicts]);
 
   useEffect(() => {
     if (centerTab !== "docs") {
@@ -2272,6 +2431,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2288,6 +2448,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     if (!taskDetailForId) return;
+    setTaskDetailTab("events");
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setTaskDetailForId(null);
     };
@@ -2295,8 +2456,29 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     return () => window.removeEventListener("keydown", onKey);
   }, [taskDetailForId]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", uiTheme);
+    try { window.localStorage.setItem("studio.uiTheme", uiTheme); } catch { /* quota / private mode */ }
+  }, [uiTheme]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.uiDensity", uiDensity); } catch { /* quota / private mode */ }
+  }, [uiDensity]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.chatOptionsOpen", chatOptionsOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [chatOptionsOpen]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.chatSuggestionsOpen", chatSuggestionsOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [chatSuggestionsOpen]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [buildLogOpen]);
+
   return (
-    <div className="app">
+    <div className={appClass}>
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
@@ -2431,7 +2613,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <span className="hint app-header-placeholder">Aucun projet chargé</span>
           )}
         </div>
-      </header>
       <nav className="app-header-nav" aria-label="Menus Code Studio">
         {openHeaderMenu ? (
           <div
@@ -2658,7 +2839,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <div className="header-menu-wrap">
+        <div className="header-menu-wrap header-menu-wrap--right">
           <button
             type="button"
             className="header-menu-trigger"
@@ -2753,7 +2934,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <div className="header-menu-wrap">
+        <div className="header-menu-wrap header-menu-wrap--right">
           <button
             type="button"
             className="header-menu-trigger"
@@ -2806,119 +2987,72 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <label className="field-inline header-agent-inline">
-          <span className="header-agent-label">Rôle agent</span>
-          <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
-            {AGENT_OPTIONS.map((o) => (
-              <option key={o.value || "auto"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span
-          className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
-          title={daemonStatus.detail ?? "Statut du daemon Akasha"}
-          aria-label="Statut du daemon"
-        >
-          Daemon {daemonStatus.label}
-        </span>
+        <div className="app-header-nav-secondary">
+          <label className="field-inline header-agent-inline">
+            <span className="header-agent-label">Rôle agent</span>
+            <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
+              {AGENT_OPTIONS.map((o) => (
+                <option key={o.value || "auto"} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span
+            className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
+            title={daemonStatus.detail ?? "Statut du daemon Akasha"}
+            aria-label="Statut du daemon"
+          >
+            Daemon {daemonStatus.label}
+          </span>
 
-        <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "center" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "center"}
-            onClick={() => setMainSplit("center")}
-          >
-            Plein éditeur
-          </button>
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "balanced" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "balanced"}
-            onClick={() => setMainSplit("balanced")}
-          >
-            50/50
-          </button>
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "chat" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "chat"}
-            onClick={() => setMainSplit("chat")}
-          >
-            Plein chat
-          </button>
+          <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm${mainSplit === "center" ? " is-active" : ""}`}
+              aria-pressed={mainSplit === "center"}
+              onClick={() => setMainSplit("center")}
+            >
+              Plein éditeur
+            </button>
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm${mainSplit === "balanced" ? " is-active" : ""}`}
+              aria-pressed={mainSplit === "balanced"}
+              onClick={() => setMainSplit("balanced")}
+            >
+              50/50
+            </button>
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm${mainSplit === "chat" ? " is-active" : ""}`}
+              aria-pressed={mainSplit === "chat"}
+              onClick={() => setMainSplit("chat")}
+            >
+              Plein chat
+            </button>
+          </div>
         </div>
       </nav>
+      </header>
 
       <div className={appMainClass}>
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design, cockpit, documentation ou logs">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "editor"}
-            className={`center-tab ${centerTab === "editor" ? "active" : ""}`}
-            onClick={() => setCenterTab("editor")}
-          >
-            Éditeur
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "preview"}
-            className={`center-tab ${centerTab === "preview" ? "active" : ""}`}
-            onClick={() => setCenterTab("preview")}
-          >
-            Aperçu
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "plan"}
-            className={`center-tab ${centerTab === "plan" ? "active" : ""}`}
-            onClick={() => setCenterTab("plan")}
-          >
-            Plan
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "design"}
-            className={`center-tab ${centerTab === "design" ? "active" : ""}`}
-            onClick={() => setCenterTab("design")}
-          >
-            Design
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "logs"}
-            className={`center-tab ${centerTab === "logs" ? "active" : ""}`}
-            onClick={() => setCenterTab("logs")}
-          >
-            Logs serveur
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "cockpit"}
-            className={`center-tab ${centerTab === "cockpit" ? "active" : ""}`}
-            onClick={() => setCenterTab("cockpit")}
-          >
-            Cockpit
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "docs"}
-            className={`center-tab ${centerTab === "docs" ? "active" : ""}`}
-            onClick={() => setCenterTab("docs")}
-            data-testid="studio-doc-tab"
-          >
-            Documentation
-          </button>
+        <div className="center-tabs" role="tablist" aria-label="Navigation principale Code Studio">
+          {CENTER_TAB_ITEMS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={centerTab === tab.id}
+              className={`center-tab ${centerTab === tab.id ? "active" : ""}`}
+              onClick={() => setCenterTab(tab.id)}
+              data-testid={tab.testId}
+              title={`Ouvrir l’onglet ${tab.label}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
         {centerTab === "editor" ? (
           <div className="center-body editor-pane">
@@ -3297,6 +3431,162 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </>
             )}
           </div>
+        ) : centerTab === "branches" ? (
+          <div className="center-body plan-pane branches-pane">
+            <div className="preview-toolbar branches-toolbar">
+              <span className="pane-title-inline">Gestion des branches</span>
+              <TooltipHint text="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  void refreshGitBranches();
+                  void refreshGitConflicts();
+                }}
+                title="Actualiser la liste des branches et l’état de conflit"
+              >
+                Rafraîchir
+              </button>
+            </div>
+            <p className="hint plan-pane-hint">
+              Suivez les branches locales, comparez les divergences et pilotez les merges depuis cet écran.
+            </p>
+            <div className="branches-layout">
+              <section className="panel branches-panel">
+                <h2>
+                  Branches disponibles <TooltipHint text="Liste locale avec état courant, avance/retard et dernier commit." />
+                </h2>
+                {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
+                <ul className="branches-list">
+                  {gitBranches.map((b) => (
+                    <li key={b.name}>
+                      <div className={`branches-item${b.current ? " is-current" : ""}`}>
+                        <div className="branches-item-main">
+                          <strong>{b.name}</strong>
+                          {b.current ? <span className="branches-badge">active</span> : null}
+                        </div>
+                        <div className="branches-item-meta">
+                          <span>↑ {b.ahead}</span>
+                          <span>↓ {b.behind}</span>
+                          <span>{b.last_commit_subject || "Aucun commit"}</span>
+                        </div>
+                        {!b.current ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => void onCheckoutBranch(b.name)}
+                            title="Passer sur cette branche"
+                          >
+                            Checkout
+                          </button>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="panel branches-panel">
+                <h2>
+                  Comparer / merger <TooltipHint text="La branche source est fusionnée dans la branche cible." />
+                </h2>
+                <div className="field-row">
+                  <label className="field">
+                    <span>Branche cible</span>
+                    <select value={gitCompareBase} onChange={(e) => { setGitCompareBase(e.target.value); setGitCompareResult(null); }}>
+                      <option value="">Choisir…</option>
+                      {gitBranches.map((b) => (
+                        <option key={`base-${b.name}`} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Branche source</span>
+                    <select value={gitCompareTarget} onChange={(e) => { setGitCompareTarget(e.target.value); setGitCompareResult(null); }}>
+                      <option value="">Choisir…</option>
+                      {gitBranches.map((b) => (
+                        <option key={`target-${b.name}`} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="project-actions-row">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={!gitCompareBase || !gitCompareTarget}
+                    onClick={() => void onCompareBranches()}
+                    title="Afficher les commits et statistiques de divergence"
+                  >
+                    Comparer
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    disabled={!gitCompareBase || !gitCompareTarget || gitCompareBase === gitCompareTarget}
+                    onClick={() => void onMergeBranches()}
+                    title="Fusionner la branche source dans la cible"
+                  >
+                    Merger
+                  </button>
+                </div>
+                {gitCompareResult ? (
+                  <div className="branches-compare-summary">
+                    <p className="hint">
+                      {gitCompareResult.target} → {gitCompareResult.base} | ahead {gitCompareResult.ahead} / behind{" "}
+                      {gitCompareResult.behind}
+                    </p>
+                    <p className="hint">
+                      {gitCompareResult.files_changed} fichiers, +{gitCompareResult.insertions} / -
+                      {gitCompareResult.deletions}
+                    </p>
+                    <ul className="branches-commit-list">
+                      {gitCompareResult.commits.slice(0, 12).map((c) => (
+                        <li key={c.hash}>
+                          <code>{c.hash.slice(0, 8)}</code> {c.subject}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </section>
+
+              <section className="panel branches-panel">
+                <h2>
+                  Conflits de merge <TooltipHint text="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                </h2>
+                {gitMergeInProgress ? (
+                  <p className="hint branches-warning">
+                    Merge en cours avec conflits potentiels. Résolvez les fichiers puis commit, ou annulez le merge.
+                  </p>
+                ) : (
+                  <p className="hint">Aucun merge en conflit détecté.</p>
+                )}
+                {gitConflicts.length > 0 ? (
+                  <ul className="branches-conflict-list">
+                    {gitConflicts.map((f) => (
+                      <li key={f}>
+                        <code>{f}</code>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  disabled={!gitMergeInProgress}
+                  onClick={() => void onAbortMerge()}
+                  title="Annuler le merge en cours et revenir à l’état précédent"
+                >
+                  Annuler le merge
+                </button>
+              </section>
+            </div>
+          </div>
         ) : centerTab === "cockpit" ? (
           <div className="center-body preview-pane preview-pane--cockpit">
             <div className="preview-toolbar">
@@ -3349,6 +3639,47 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 </div>
               </div>
             )}
+          </div>
+        ) : centerTab === "settings" ? (
+          <div className="center-body plan-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Paramètres de l’application</span>
+            </div>
+            <div className="panel">
+              <h2>Apparence</h2>
+              <div className="field-row">
+                <label className="field">
+                  <span>Thème</span>
+                  <select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="compact-dark">Compact dark</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Densité</span>
+                  <select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
+                    <option value="normal">Normale</option>
+                    <option value="compact">Compacte</option>
+                  </select>
+                </label>
+              </div>
+              <label className="field-inline delegate-single">
+                <input type="checkbox" checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
+                <span>Options conversation ouvertes par défaut</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <input type="checkbox" checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
+                <span>Suggestions ouvertes par défaut</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <input type="checkbox" checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
+                <span>Journal de build ouvert par défaut</span>
+              </label>
+              <p className="hint">
+                Les paramètres sont persistés localement (navigateur) pour ce poste.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">
@@ -3511,75 +3842,30 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             {lastAssistant?.suggested_actions && lastAssistant.suggested_actions.length > 0 ? (
               <div className="chat-suggestions" aria-label="Prochaines étapes suggérées">
-                <span className="chat-suggestions-label">Suggestions</span>
-                <div className="chat-suggestion-chips">
-                  {lastAssistant.suggested_actions.map((a) => (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className="btn btn-ghost btn-sm chat-suggestion-chip"
-                      onClick={() => {
-                        if (a.kind === "message" && a.message) setChatInput(a.message);
-                        if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
-                      }}
-                    >
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
+                <details open={chatSuggestionsOpen} onToggle={(e) => setChatSuggestionsOpen((e.currentTarget as HTMLDetailsElement).open)}>
+                  <summary className="chat-suggestions-label">Suggestions ({lastAssistant.suggested_actions.length})</summary>
+                  <div className="chat-suggestion-chips">
+                    {lastAssistant.suggested_actions.map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className="btn btn-ghost btn-sm chat-suggestion-chip"
+                        onClick={() => {
+                          if (a.kind === "message" && a.message) setChatInput(a.message);
+                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
+                        }}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </details>
               </div>
             ) : null}
           </section>
         </div>
 
         <div className="chat-panel-footer">
-          <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
-            {CODE_MODE_OPTIONS.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
-                title={o.hint}
-                onClick={() => setCodeMode(o.value)}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          <label className="field chat-policy-hint-field">
-            <span>Consigne ponctuelle (optionnel, un envoi)</span>
-            <input
-              type="text"
-              value={policyHintOneShot}
-              onChange={(e) => setPolicyHintOneShot(e.target.value)}
-              placeholder="Ex. ne pas toucher au dossier legacy/…"
-              spellCheck={false}
-            />
-          </label>
-          <label
-            className="field-inline delegate-single"
-            title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
-          >
-            <input
-              type="checkbox"
-              checked={delegateSingleLevel}
-              onChange={(e) => setDelegateSingleLevel(e.target.checked)}
-            />
-            <span>Délégation simple (sans sous-agents)</span>
-          </label>
-          <label className="field-inline delegate-single">
-            <input
-              type="checkbox"
-              checked={autoApplyDesign}
-              onChange={(e) => setAutoApplyDesign(e.target.checked)}
-            />
-            <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
-          </label>
-          {autoApplyDesign && designHint ? (
-            <p className="hint chat-design-hint" title={designHint}>
-              Design actif: {designHint}
-            </p>
-          ) : null}
           <div className="chat-form">
             <textarea
               value={chatInput}
@@ -3596,12 +3882,74 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               Envoyer
             </button>
           </div>
-          <p className="kbd-hint">
-            Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour envoyer
-          </p>
-
-          <div className="pane-title">Journal de build</div>
-          <pre className="build-pre">{buildLog || "—"}</pre>
+          <div className="chat-controls-row">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm chat-options-toggle"
+              onClick={() => setChatOptionsOpen((v) => !v)}
+              title="Afficher ou masquer les options avancées"
+            >
+              {chatOptionsOpen ? "Masquer options" : "Options"}
+            </button>
+            <p className="kbd-hint">
+              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
+            </p>
+          </div>
+          {chatOptionsOpen ? (
+            <div className="chat-options-panel">
+              <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+                {CODE_MODE_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                    title={o.hint}
+                    onClick={() => setCodeMode(o.value)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <label className="field chat-policy-hint-field">
+                <span>Consigne ponctuelle (optionnel, un envoi)</span>
+                <input
+                  type="text"
+                  value={policyHintOneShot}
+                  onChange={(e) => setPolicyHintOneShot(e.target.value)}
+                  placeholder="Ex. ne pas toucher au dossier legacy/…"
+                  spellCheck={false}
+                />
+              </label>
+              <label
+                className="field-inline delegate-single"
+                title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
+              >
+                <input
+                  type="checkbox"
+                  checked={delegateSingleLevel}
+                  onChange={(e) => setDelegateSingleLevel(e.target.checked)}
+                />
+                <span>Délégation simple (sans sous-agents)</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <input
+                  type="checkbox"
+                  checked={autoApplyDesign}
+                  onChange={(e) => setAutoApplyDesign(e.target.checked)}
+                />
+                <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
+              </label>
+              {autoApplyDesign && designHint ? (
+                <p className="hint chat-design-hint" title={designHint}>
+                  Design actif: {designHint}
+                </p>
+              ) : null}
+              <details open={buildLogOpen} onToggle={(e) => setBuildLogOpen((e.currentTarget as HTMLDetailsElement).open)}>
+                <summary className="pane-title">Journal de build</summary>
+                <pre className="build-pre">{buildLog || "—"}</pre>
+              </details>
+            </div>
+          ) : null}
         </div>
       </aside>
       </div>
@@ -3632,59 +3980,86 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               {taskDetailError ? <div className="banner banner-error">{taskDetailError}</div> : null}
               {!taskDetailLoading && !taskDetailError && taskDetailPayload ? (
                 <>
-                  <section className="task-detail-section">
-                    <h4>Résumé</h4>
-                    <p>
-                      <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
-                    </p>
-                    {taskDetailLiveMode ? (
-                      <p className="hint">
-                        Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                  <div className="task-detail-tabs" role="tablist" aria-label="Navigation détail tâche">
+                    {[
+                      { id: "events", label: "Événements" },
+                      { id: "progress", label: "Progression" },
+                      { id: "workflow", label: "Workflow" },
+                      { id: "summary", label: "Résumé" },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={taskDetailTab === tab.id}
+                        className={`task-detail-tab ${taskDetailTab === tab.id ? "is-active" : ""}`}
+                        onClick={() => setTaskDetailTab(tab.id as typeof taskDetailTab)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  {taskDetailTab === "summary" ? (
+                    <section className="task-detail-section">
+                      <h4>Résumé</h4>
+                      <p>
+                        <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                       </p>
-                    ) : null}
-                    {taskDetailPayload.task.assigned_agent ? (
-                      <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
-                    ) : null}
-                    {taskDetailPayload.task.failure_detail ? (
-                      <pre className="task-detail-failure">{taskDetailPayload.task.failure_detail}</pre>
-                    ) : null}
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Workflow / sous-agents</h4>
-                    <TaskDetailWorkflowView
-                      events={taskDetailPayload.events}
-                      rootTaskId={taskDetailPayload.task.task_id}
-                    />
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Progression</h4>
-                    {(() => {
-                      const mergedProgress = mergeProgressWithEventProgress(
-                        taskDetailPayload.task.progress ?? [],
-                        taskDetailPayload.events,
-                        taskDetailPayload.task.task_id,
-                      );
-                      return mergedProgress.length > 0 ? (
-                        <TaskDetailProgressView
-                          progress={mergedProgress}
-                          rootTaskId={taskDetailPayload.task.task_id}
-                        />
-                      ) : (
-                        <p className="hint">Aucune entrée de progression.</p>
-                      );
-                    })()}
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Événements</h4>
-                    {taskDetailPayload.events.length === 0 ? (
-                      <p className="hint">Aucun événement.</p>
-                    ) : (
-                      <TaskDetailEventsGrouped
+                      {taskDetailLiveMode ? (
+                        <p className="hint">
+                          Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                        </p>
+                      ) : null}
+                      {taskDetailPayload.task.assigned_agent ? (
+                        <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
+                      ) : null}
+                      {taskDetailPayload.task.failure_detail ? (
+                        <pre className="task-detail-failure">{taskDetailPayload.task.failure_detail}</pre>
+                      ) : null}
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "workflow" ? (
+                    <section className="task-detail-section">
+                      <h4>Workflow / sous-agents</h4>
+                      <TaskDetailWorkflowView
                         events={taskDetailPayload.events}
                         rootTaskId={taskDetailPayload.task.task_id}
                       />
-                    )}
-                  </section>
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "progress" ? (
+                    <section className="task-detail-section">
+                      <h4>Progression</h4>
+                      {(() => {
+                        const mergedProgress = mergeProgressWithEventProgress(
+                          taskDetailPayload.task.progress ?? [],
+                          taskDetailPayload.events,
+                          taskDetailPayload.task.task_id,
+                        );
+                        return mergedProgress.length > 0 ? (
+                          <TaskDetailProgressView
+                            progress={mergedProgress}
+                            rootTaskId={taskDetailPayload.task.task_id}
+                          />
+                        ) : (
+                          <p className="hint">Aucune entrée de progression.</p>
+                        );
+                      })()}
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "events" ? (
+                    <section className="task-detail-section">
+                      <h4>Événements</h4>
+                      {taskDetailPayload.events.length === 0 ? (
+                        <p className="hint">Aucun événement.</p>
+                      ) : (
+                        <TaskDetailEventsGrouped
+                          events={taskDetailPayload.events}
+                          rootTaskId={taskDetailPayload.task.task_id}
+                        />
+                      )}
+                    </section>
+                  ) : null}
                 </>
               ) : null}
             </div>
