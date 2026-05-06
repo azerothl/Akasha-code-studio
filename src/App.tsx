@@ -3346,7 +3346,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <KanbanBoard
               projectId={selectedId}
               defaultAgent={agent || undefined}
+              ticketEnforcementMode={ticketEnforcementModeDraft}
               onLaunchTicket={onLaunchTicket}
+              onOpenTaskTracking={onOpenTaskDetailModal}
             />
           </div>
         ) : centerTab === "editor" ? (

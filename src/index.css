@@ -5698,6 +5698,191 @@ textarea.editor {
   font-size: 0.72rem;
 }
 
+.kanban-toolbar {
+  margin-bottom: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.kanban-toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.kanban-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.kanban-column {
+  min-height: min(66vh, 40rem);
+  max-height: min(66vh, 40rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.kanban-column-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+}
+
+.kanban-column-count {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  font-size: 0.72rem;
+}
+
+.kanban-column-body {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  overflow-y: auto;
+  padding-right: 0.1rem;
+}
+
+.kanban-ticket-card {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.35rem;
+  background: var(--bg-elevated);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.kanban-ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.kanban-ticket-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.25;
+}
+
+.kanban-card-actions {
+  margin-top: 0.2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.kanban-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kanban-detail-modal {
+  max-width: min(74rem, 95vw);
+}
+
+.kanban-detail-pill {
+  margin-top: 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.77rem;
+}
+
+.kanban-theme-slate {
+  color: #cbd5e1;
+  background: rgba(100, 116, 139, 0.18);
+}
+
+.kanban-theme-blue {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.kanban-theme-amber {
+  color: #fcd34d;
+  background: rgba(217, 119, 6, 0.22);
+}
+
+.kanban-theme-green {
+  color: #86efac;
+  background: rgba(22, 163, 74, 0.2);
+}
+
+.kanban-theme-red {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.kanban-ticket-card--slate {
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.kanban-ticket-card--blue {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.kanban-ticket-card--amber {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.kanban-ticket-card--green {
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.kanban-ticket-card--red {
+  border-color: rgba(252, 165, 165, 0.45);
+}
+
+.kanban-task-track-failure {
+  max-height: 7rem;
+  overflow: auto;
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.kanban-task-track-progress {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.75rem;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+.kanban-card-prereq {
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+  line-height: 1.3;
+}
+
+.kanban-card-prereq--wait {
+  background: rgba(217, 119, 6, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.kanban-card-prereq--ok {
+  background: rgba(22, 163, 74, 0.14);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
 .daemon-ops-schedule-table th,
 .daemon-ops-schedule-table td {
   border: 1px solid var(--border);

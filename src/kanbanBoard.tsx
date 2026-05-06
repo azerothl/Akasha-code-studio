@@ -5,32 +5,80 @@ import { Input } from "./components/ui/input";
 import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
 
-const COLUMNS: { id: api.StudioTicketStatus; label: string }[] = [
-  { id: "todo", label: "Todo" },
-  { id: "in_progress", label: "In progress" },
-  { id: "review", label: "Review" },
-  { id: "done", label: "Done" },
-  { id: "blocked", label: "Blocked" },
+const COLUMNS: { id: api.StudioTicketStatus; label: string; theme: string }[] = [
+  { id: "todo", label: "Todo", theme: "slate" },
+  { id: "in_progress", label: "In progress", theme: "blue" },
+  { id: "review", label: "Review", theme: "amber" },
+  { id: "done", label: "Done", theme: "green" },
+  { id: "blocked", label: "Blocked", theme: "red" },
 ];
+
+/** Le ticket `depends_on_ticket_id` doit être en `done` avant de lancer celui-ci. */
+function ticketPrerequisiteSatisfied(ticket: api.StudioTicket, all: api.StudioTicket[]): boolean {
+  const depId = ticket.depends_on_ticket_id?.trim();
+  if (!depId) return true;
+  const dep = all.find((x) => x.id === depId);
+  return dep?.status === "done";
+}
+
+function formatTaskStatusFr(status: string): string {
+  const m: Record<string, string> = {
+    pending: "En attente",
+    queued: "En file",
+    running: "En cours (LLM / outils)",
+    completed: "Terminé",
+    failed: "Échec",
+    paused: "En pause",
+    cancelled: "Annulé",
+    waiting_user_input: "Attente de votre réponse",
+    interrupted: "Interrompu",
+  };
+  return m[status] ?? status;
+}
 
 type KanbanBoardProps = {
   projectId: string | null;
   defaultAgent?: string;
+  ticketEnforcementMode?: "off" | "soft" | "strict";
   onLaunchTicket: (ticket: api.StudioTicket) => void;
+  /** Ouvre la modale « Détail de la tâche » (événements, progression, workflow). */
+  onOpenTaskTracking?: (taskId: string) => void;
 };
 
-export function KanbanBoard({ projectId, defaultAgent, onLaunchTicket }: KanbanBoardProps) {
+export function KanbanBoard({
+  projectId,
+  defaultAgent,
+  ticketEnforcementMode,
+  onLaunchTicket,
+  onOpenTaskTracking,
+}: KanbanBoardProps) {
   const [tickets, setTickets] = useState<api.StudioTicket[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<api.StudioTicket | null>(null);
   const [timeline, setTimeline] = useState<api.StudioTicketEvent[]>([]);
+  const [ticketDetailState, setTicketDetailState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [ticketDetailError, setTicketDetailError] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [correctiveStepsRaw, setCorrectiveStepsRaw] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newAssignedAgent, setNewAssignedAgent] = useState(defaultAgent || "studio_fullstack");
   const [newReviewAgent, setNewReviewAgent] = useState("studio_reviewer");
+  const [newCriteriaRaw, setNewCriteriaRaw] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createBusy, setCreateBusy] = useState(false);
+  const [playBusyId, setPlayBusyId] = useState<string | null>(null);
+  const [playAllBusy, setPlayAllBusy] = useState(false);
+  const [playAllStatus, setPlayAllStatus] = useState<string | null>(null);
+  const [linkedTaskSnapshot, setLinkedTaskSnapshot] = useState<api.TaskStatusResponse | null>(null);
+  const [linkedTaskLoading, setLinkedTaskLoading] = useState(false);
+  const [linkedTaskError, setLinkedTaskError] = useState<string | null>(null);
+  const [newDependsOnId, setNewDependsOnId] = useState("");
+  const [dependsOnDraft, setDependsOnDraft] = useState("");
+  const [depPatchBusy, setDepPatchBusy] = useState(false);
+  const [depPatchError, setDepPatchError] = useState<string | null>(null);
 
   async function load() {
     if (!projectId) return;
@@ -63,6 +111,47 @@ export function KanbanBoard({ projectId, defaultAgent, onLaunchTicket }: KanbanB
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, selected?.id]);
 
+  useEffect(() => {
+    const taskId = selected?.related_task_id?.trim();
+    if (!taskId) {
+      setLinkedTaskSnapshot(null);
+      setLinkedTaskError(null);
+      setLinkedTaskLoading(false);
+      return;
+    }
+    setLinkedTaskSnapshot(null);
+    setLinkedTaskError(null);
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const t = await api.getTask(taskId);
+        if (!cancelled) {
+          setLinkedTaskSnapshot(t);
+          setLinkedTaskError(null);
+          setLinkedTaskLoading(false);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setLinkedTaskError(String(e));
+          setLinkedTaskLoading(false);
+        }
+      }
+    };
+    setLinkedTaskLoading(true);
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [selected?.related_task_id]);
+
+  useEffect(() => {
+    if (!selected) return;
+    setDependsOnDraft(selected.depends_on_ticket_id?.trim() ?? "");
+    setDepPatchError(null);
+  }, [selected?.id, selected?.depends_on_ticket_id]);
+
   const byStatus = useMemo(() => {
     const map = new Map<api.StudioTicketStatus, api.StudioTicket[]>();
     for (const col of COLUMNS) map.set(col.id, []);
@@ -73,28 +162,59 @@ export function KanbanBoard({ projectId, defaultAgent, onLaunchTicket }: KanbanB
   async function openTicket(ticket: api.StudioTicket) {
     if (!projectId) return;
     setSelected(ticket);
+    setTicketDetailState("loading");
+    setTicketDetailError(null);
     try {
       const payload = await api.getStudioTicket(projectId, ticket.id);
       setSelected(payload.ticket);
       setTimeline(payload.timeline);
-    } catch {
+      setTicketDetailState("ready");
+    } catch (e) {
       setTimeline([]);
+      setTicketDetailState("error");
+      setTicketDetailError(String(e));
     }
   }
 
   async function createTicket() {
     if (!projectId) return;
     const title = newTitle.trim();
-    if (!title) return;
-    await api.createStudioTicket(projectId, {
-      title,
-      description: newDesc.trim(),
-      assigned_agent: newAssignedAgent.trim(),
-      review_agent: newReviewAgent.trim(),
-    });
-    setNewTitle("");
-    setNewDesc("");
-    await load();
+    if (!title) {
+      setCreateError("Le titre est obligatoire.");
+      return;
+    }
+    setCreateBusy(true);
+    setCreateError(null);
+    try {
+      const acceptanceCriteria = newCriteriaRaw
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line, index) => ({
+          id: `ac-${index + 1}`,
+          text: line,
+          kind: "manual" as const,
+        }));
+      const created = await api.createStudioTicket(projectId, {
+        title,
+        description: newDesc.trim(),
+        assigned_agent: newAssignedAgent.trim(),
+        review_agent: newReviewAgent.trim(),
+        acceptance_criteria: acceptanceCriteria.length ? acceptanceCriteria : undefined,
+        ...(newDependsOnId.trim() ? { depends_on_ticket_id: newDependsOnId.trim() } : {}),
+      });
+      setNewTitle("");
+      setNewDesc("");
+      setNewCriteriaRaw("");
+      setNewDependsOnId("");
+      setShowCreateModal(false);
+      await load();
+      await openTicket(created);
+    } catch (e) {
+      setCreateError(String(e));
+    } finally {
+      setCreateBusy(false);
+    }
   }
 
   async function moveTicket(ticket: api.StudioTicket, status: api.StudioTicketStatus) {
@@ -125,80 +245,388 @@ export function KanbanBoard({ projectId, defaultAgent, onLaunchTicket }: KanbanB
     await openTicket(t);
   }
 
+  function composeTicketMessage(ticket: api.StudioTicket): string {
+    return [
+      `Implémente le ticket Kanban #${ticket.id}.`,
+      `Titre: ${ticket.title}`,
+      ticket.description ? `Description: ${ticket.description}` : "",
+      "Contraintes:",
+      "- Respecter la stack/projet existants.",
+      "- Produire des changements concrets et testables.",
+      "- Laisser le ticket prêt pour review (status review) en fin d'implémentation.",
+      ticket.corrective_steps?.length
+        ? `Correctifs demandés précédemment:\n${ticket.corrective_steps.map((s) => `- ${s}`).join("\n")}`
+        : "",
+      ticket.acceptance_criteria?.length
+        ? `Critères d'acceptation:\n${ticket.acceptance_criteria.map((c) => `- ${c.text}`).join("\n")}`
+        : "",
+      ticket.depends_on_ticket_id?.trim()
+        ? `Ce ticket ne doit être implémenté qu'après complétion du ticket prérequis #${
+            ticket.depends_on_ticket_id
+          } (statut done côté Kanban).`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  function playBlockedReason(ticket: api.StudioTicket): string | null {
+    if (ticket.status === "in_progress") return "Ticket en cours — Play désactivé";
+    if (!ticketPrerequisiteSatisfied(ticket, tickets)) {
+      return "Le ticket prérequis doit être terminé (done) avant de lancer celui-ci.";
+    }
+    return null;
+  }
+
+  async function saveDependsOnTicket() {
+    if (!projectId || !selected) return;
+    setDepPatchBusy(true);
+    setDepPatchError(null);
+    try {
+      const raw = dependsOnDraft.trim();
+      const updated = await api.patchStudioTicket(projectId, selected.id, {
+        depends_on_ticket_id: raw ? raw : null,
+      });
+      await load();
+      await openTicket(updated);
+    } catch (e) {
+      setDepPatchError(String(e));
+    } finally {
+      setDepPatchBusy(false);
+    }
+  }
+
+  async function launchTicket(ticket: api.StudioTicket) {
+    if (!projectId) return;
+    if (playBlockedReason(ticket)) return;
+    setPlayBusyId(ticket.id);
+    setError(null);
+    try {
+      const payload = await api.sendMessage({
+        message: composeTicketMessage(ticket),
+        studio_project_id: projectId,
+        studio_assigned_agent: ticket.assigned_agent,
+        studio_ticket_id: ticket.id,
+        studio_ticket_enforcement_mode: ticketEnforcementMode ?? "soft",
+      });
+      await load();
+      await openTicket({ ...ticket, related_task_id: payload.task_id, status: "in_progress" });
+      onLaunchTicket({ ...ticket, related_task_id: payload.task_id });
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setPlayBusyId(null);
+    }
+  }
+
+  async function launchAllTickets() {
+    if (!projectId || playAllBusy) return;
+    const todoAll = tickets.filter((ticket) => ticket.status === "todo");
+    const candidates = todoAll.filter((ticket) => ticketPrerequisiteSatisfied(ticket, tickets));
+    const skippedDep = todoAll.length - candidates.length;
+    if (!candidates.length) {
+      setPlayAllStatus(
+        skippedDep > 0
+          ? `Aucun ticket « todo » prêt : ${skippedDep} en attente de prérequis (done).`
+          : "Aucun ticket « todo » à lancer.",
+      );
+      return;
+    }
+    setPlayAllBusy(true);
+    setPlayAllStatus(
+      `0 / ${candidates.length} tickets lancés${skippedDep > 0 ? ` (${skippedDep} ignorés — prérequis)` : ""}`,
+    );
+    let processed = 0;
+    const errors: string[] = [];
+    for (const ticket of candidates) {
+      try {
+        // Sequential launch keeps timeline readable and avoids daemon overload.
+        // eslint-disable-next-line no-await-in-loop
+        await api.sendMessage({
+          message: composeTicketMessage(ticket),
+          studio_project_id: projectId,
+          studio_assigned_agent: ticket.assigned_agent,
+          studio_ticket_id: ticket.id,
+          studio_ticket_enforcement_mode: ticketEnforcementMode ?? "soft",
+        });
+      } catch (e) {
+        errors.push(`${ticket.title}: ${String(e)}`);
+      } finally {
+        processed += 1;
+        setPlayAllStatus(`${processed} / ${candidates.length} tickets lancés`);
+      }
+    }
+    await load();
+    if (errors.length) {
+      setPlayAllStatus(`${processed} / ${candidates.length} tickets lancés — erreurs: ${errors.join(" | ")}`);
+    } else if (skippedDep > 0 && !errors.length) {
+      setPlayAllStatus(`${processed} / ${candidates.length} lancés ; ${skippedDep} ticket(s) « todo » ignoré(s) (prérequis non done).`);
+    }
+    setPlayAllBusy(false);
+  }
+
+  function getTheme(status: api.StudioTicketStatus): string {
+    return COLUMNS.find((col) => col.id === status)?.theme ?? "slate";
+  }
+
   if (!projectId) {
     return <div className="muted">Sélectionnez un projet pour afficher le Kanban.</div>;
   }
 
   return (
     <div className="kanban-board">
-      <div className="panel card" style={{ marginBottom: 12 }}>
-        <h3>Nouveau ticket</h3>
-        <div style={{ display: "grid", gap: 8 }}>
-          <Input placeholder="Titre du ticket" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-          <Textarea placeholder="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <Select
-              value={newAssignedAgent}
-              onChange={(e) => setNewAssignedAgent(e.target.value)}
-            >
-              <option value="studio_scaffold">studio_scaffold</option>
-              <option value="studio_frontend">studio_frontend</option>
-              <option value="studio_backend">studio_backend</option>
-              <option value="studio_fullstack">studio_fullstack</option>
-            </Select>
-            <Select
-              value={newReviewAgent}
-              onChange={(e) => setNewReviewAgent(e.target.value)}
-            >
-              <option value="studio_reviewer">studio_reviewer</option>
-              <option value="qa">qa</option>
-            </Select>
-          </div>
-          <Button onClick={() => void createTicket()}>Créer ticket</Button>
+      <div className="kanban-toolbar panel card">
+        <div>
+          <h3 style={{ margin: 0 }}>Board tickets</h3>
+          <p className="muted" style={{ margin: "6px 0 0 0" }}>
+            Lancez ticket par ticket ou en séquence globale depuis le board.
+          </p>
+        </div>
+        <div className="kanban-toolbar-actions">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setNewDependsOnId("");
+              setCreateError(null);
+              setShowCreateModal(true);
+            }}
+          >
+            Nouveau ticket
+          </Button>
+          <Button onClick={() => void launchAllTickets()} disabled={playAllBusy}>
+            {playAllBusy ? "Play all…" : "Play all"}
+          </Button>
         </div>
       </div>
+      {playAllStatus ? <div className="muted">{playAllStatus}</div> : null}
 
       {loading && <div className="muted">Chargement tickets…</div>}
       {error && <div className="error">{error}</div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(220px, 1fr))", gap: 10, alignItems: "start" }}>
+      <div className="kanban-columns-grid">
         {COLUMNS.map((col) => (
-          <div key={col.id} className="panel card">
-            <h3 style={{ marginTop: 0 }}>{col.label}</h3>
-            <div style={{ display: "grid", gap: 8 }}>
-              {(byStatus.get(col.id) ?? []).map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className="btn ghost"
-                  style={{ textAlign: "left", width: "100%" }}
-                  onClick={() => void openTicket(t)}
-                >
-                  <div style={{ fontWeight: 700 }}>{t.title}</div>
+          <div key={col.id} className={`panel card kanban-column kanban-column--${col.theme}`}>
+            <div className={`kanban-column-head kanban-theme-${col.theme}`}>
+              <h3 style={{ margin: 0 }}>{col.label}</h3>
+              <span className="kanban-column-count">{(byStatus.get(col.id) ?? []).length}</span>
+            </div>
+            <div className="kanban-column-body">
+              {(byStatus.get(col.id) ?? []).map((t) => {
+                const dep = t.depends_on_ticket_id?.trim()
+                  ? tickets.find((x) => x.id === t.depends_on_ticket_id)
+                  : undefined;
+                const prereqOk = ticketPrerequisiteSatisfied(t, tickets);
+                return (
+                <article key={t.id} className={`kanban-ticket-card kanban-ticket-card--${getTheme(t.status)}`}>
+                  <div className="kanban-ticket-top">
+                    <div className="kanban-ticket-title">{t.title}</div>
+                    <span className={`kanban-status-badge kanban-theme-${getTheme(t.status)}`}>{t.status}</span>
+                  </div>
+                  {t.depends_on_ticket_id?.trim() ? (
+                    <div
+                      className={`kanban-card-prereq ${prereqOk ? "kanban-card-prereq--ok" : "kanban-card-prereq--wait"}`}
+                      style={{ fontSize: 11 }}
+                    >
+                      {prereqOk ? "Prérequis fait : " : "Après : "}
+                      <span title={t.depends_on_ticket_id}>
+                        {dep?.title ?? `ticket ${t.depends_on_ticket_id.slice(0, 8)}…`}
+                      </span>
+                      {!prereqOk && dep ? (
+                        <span className="muted"> ({dep.status})</span>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div className="muted" style={{ fontSize: 12 }}>
                     {t.assigned_agent} {"->"} {t.review_agent}
                   </div>
                   <div className="muted" style={{ fontSize: 12 }}>
                     task: {t.related_task_id ?? "—"}
                   </div>
-                </button>
-              ))}
+                  <div className="kanban-card-actions">
+                    <Button size="sm" variant="ghost" onClick={() => void openTicket(t)}>Détail</Button>
+                    <Button
+                      size="sm"
+                      onClick={() => void launchTicket(t)}
+                      disabled={playBusyId === t.id || playBlockedReason(t) != null}
+                      title={playBlockedReason(t) ?? undefined}
+                    >
+                      {playBusyId === t.id ? "Play…" : "Play"}
+                    </Button>
+                  </div>
+                </article>
+                );
+              })}
+              {(byStatus.get(col.id) ?? []).length === 0 ? <div className="muted">Aucun ticket.</div> : null}
             </div>
           </div>
         ))}
       </div>
 
       {selected && (
-        <div className="panel card" style={{ marginTop: 12 }}>
+        <div className="modal-backdrop" onClick={() => setSelected(null)}>
+          <section
+            className="modal-card modal-card--wide kanban-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Détail ticket Kanban"
+            onClick={(e) => e.stopPropagation()}
+          >
           <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-            <h3 style={{ margin: 0 }}>{selected.title}</h3>
+            <h3 style={{ margin: 0 }}>Ticket: {selected.title}</h3>
             <Button variant="ghost" onClick={() => setSelected(null)}>Fermer</Button>
           </div>
-          <p className="muted">{selected.description}</p>
+          <div className={`kanban-detail-pill kanban-theme-${getTheme(selected.status)}`}>
+            Statut: {selected.status} - Assigné: {selected.assigned_agent} - Reviewer: {selected.review_agent}
+          </div>
+          <p className="muted">{selected.description || "Aucune description."}</p>
+          <div className="panel card" style={{ marginTop: 10 }}>
+            <h4 style={{ margin: "0 0 8px 0" }}>Prérequis avant Play</h4>
+            {selected.depends_on_ticket_id?.trim() ? (
+              <p className="muted" style={{ margin: "0 0 8px 0" }}>
+                Ce ticket attend la fin de :{" "}
+                <strong>{tickets.find((x) => x.id === selected.depends_on_ticket_id)?.title ?? selected.depends_on_ticket_id}</strong>
+                {(() => {
+                  const d = tickets.find((x) => x.id === selected.depends_on_ticket_id);
+                  return d ? (
+                    <span>
+                      {" "}
+                      (statut : <code>{d.status}</code>
+                      {ticketPrerequisiteSatisfied(selected, tickets) ? " — prêt pour Play" : " — Play bloqué jusqu’à done"})
+                    </span>
+                  ) : (
+                    <span className="error"> — ticket prérequis introuvable</span>
+                  );
+                })()}
+              </p>
+            ) : (
+              <p className="muted" style={{ margin: "0 0 8px 0" }}>Aucun — vous pouvez lancer dès que le statut le permet.</p>
+            )}
+            <label className="field">
+              <span>Ticket à terminer avant (optionnel)</span>
+              <Select value={dependsOnDraft} onChange={(e) => setDependsOnDraft(e.target.value)}>
+                <option value="">— Aucun —</option>
+                {tickets
+                  .filter((x) => x.id !== selected.id)
+                  .map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.title.slice(0, 72)}
+                      {x.title.length > 72 ? "…" : ""} ({x.status})
+                    </option>
+                  ))}
+              </Select>
+            </label>
+            {depPatchError ? <div className="error">{depPatchError}</div> : null}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+              <Button variant="secondary" size="sm" disabled={depPatchBusy} onClick={() => void saveDependsOnTicket()}>
+                {depPatchBusy ? "Enregistrement…" : "Enregistrer le prérequis"}
+              </Button>
+              {selected.depends_on_ticket_id?.trim() ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  disabled={!tickets.some((x) => x.id === selected.depends_on_ticket_id)}
+                  onClick={() => {
+                    const tid = selected.depends_on_ticket_id?.trim();
+                    const d = tid ? tickets.find((x) => x.id === tid) : undefined;
+                    if (d) void openTicket(d);
+                  }}
+                >
+                  Ouvrir le ticket prérequis
+                </Button>
+              ) : null}
+            </div>
+          </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Button onClick={() => onLaunchTicket(selected)}>Lancer ticket</Button>
+            <Button
+              onClick={() => void launchTicket(selected)}
+              disabled={playBusyId === selected.id || playBlockedReason(selected) != null}
+              title={playBlockedReason(selected) ?? undefined}
+            >
+              {playBusyId === selected.id ? "Play…" : "Play"}
+            </Button>
+            <Button variant="ghost" onClick={() => onLaunchTicket(selected)}>Pré-remplir le chat</Button>
             <Button variant="secondary" onClick={() => void moveTicket(selected, "in_progress")}>Passer en cours</Button>
             <Button variant="secondary" onClick={() => void moveTicket(selected, "review")}>Envoyer en review</Button>
+          </div>
+          {selected.review_outcome ? (
+            <div className="panel card" style={{ marginTop: 10 }}>
+              <h4 style={{ margin: "0 0 8px 0" }}>Dernière review</h4>
+              <div className="muted">Verdict: {selected.review_outcome}</div>
+              {selected.review_notes ? <p className="muted">{selected.review_notes}</p> : null}
+              {selected.corrective_steps?.length ? (
+                <ul style={{ marginTop: 6 }}>
+                  {selected.corrective_steps.map((step) => <li key={step}>{step}</li>)}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+          <div className="panel card kanban-task-track" style={{ marginTop: 10 }}>
+            <h4 style={{ margin: "0 0 8px 0" }}>Suivi de la tâche</h4>
+            {!selected.related_task_id?.trim() ? (
+              <p className="muted" style={{ margin: 0 }}>
+                Aucune tâche liée — utilisez <strong>Play</strong> pour démarrer une exécution.
+              </p>
+            ) : (
+              <>
+                <div className="muted" style={{ marginBottom: 8 }}>
+                  <code>{selected.related_task_id}</code>
+                </div>
+                {linkedTaskLoading && !linkedTaskSnapshot ? (
+                  <p className="hint" style={{ margin: 0 }}>Chargement du statut…</p>
+                ) : null}
+                {linkedTaskError ? <div className="error">{linkedTaskError}</div> : null}
+                {linkedTaskSnapshot ? (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    <p style={{ margin: 0 }}>
+                      <strong>{formatTaskStatusFr(linkedTaskSnapshot.status)}</strong>
+                      {linkedTaskSnapshot.assigned_agent ? (
+                        <span className="muted"> — agent : {linkedTaskSnapshot.assigned_agent}</span>
+                      ) : null}
+                    </p>
+                    {linkedTaskSnapshot.failure_detail ? (
+                      <pre className="task-detail-failure kanban-task-track-failure">
+                        {linkedTaskSnapshot.failure_detail}
+                      </pre>
+                    ) : null}
+                    {linkedTaskSnapshot.progress && linkedTaskSnapshot.progress.length > 0 ? (
+                      <ul className="kanban-task-track-progress">
+                        {linkedTaskSnapshot.progress.slice(-8).map((p, idx) => (
+                          <li key={`${p.message}-${idx}-${p.progress_pct}`}>
+                            {p.progress_pct}% — {p.message}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="muted hint" style={{ margin: 0 }}>
+                        Pas encore de progression détaillée (la tâche démarre ou est encore en file).
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={!onOpenTaskTracking}
+                    title={
+                      !onOpenTaskTracking
+                        ? "Callback non configuré"
+                        : "Ouvre la même vue que depuis le chat : événements, progression, workflow"
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (selected.related_task_id && onOpenTaskTracking) {
+                        onOpenTaskTracking(selected.related_task_id);
+                      }
+                    }}
+                  >
+                    Ouvrir le détail de la tâche
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
           {selected.status === "review" && (
             <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
@@ -222,15 +650,72 @@ export function KanbanBoard({ projectId, defaultAgent, onLaunchTicket }: KanbanB
           )}
           <h4>Timeline</h4>
           <div style={{ display: "grid", gap: 6 }}>
+            {ticketDetailState === "loading" ? <div className="muted">Chargement du détail ticket…</div> : null}
+            {ticketDetailState === "error" ? <div className="error">{ticketDetailError ?? "Erreur de chargement."}</div> : null}
+            {ticketDetailState === "ready" && timeline.length === 0 ? <div className="muted">Aucun événement.</div> : null}
             {timeline.map((ev) => (
               <div key={ev.id} className="muted" style={{ fontSize: 12 }}>
                 [{new Date(ev.at).toLocaleString()}] {ev.event_type} ({ev.actor})
               </div>
             ))}
-            {timeline.length === 0 && <div className="muted">Aucun événement.</div>}
           </div>
+          </section>
         </div>
       )}
+
+      {showCreateModal ? (
+        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
+          <section
+            className="modal-card modal-card--wide"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Nouveau ticket Kanban"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Nouveau ticket</h3>
+            <div style={{ display: "grid", gap: 8 }}>
+              <Input placeholder="Titre du ticket" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+              <Textarea placeholder="Description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+              <Textarea
+                placeholder="Critères d'acceptation (1 par ligne)"
+                value={newCriteriaRaw}
+                onChange={(e) => setNewCriteriaRaw(e.target.value)}
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <Select value={newAssignedAgent} onChange={(e) => setNewAssignedAgent(e.target.value)}>
+                  <option value="studio_scaffold">studio_scaffold</option>
+                  <option value="studio_frontend">studio_frontend</option>
+                  <option value="studio_backend">studio_backend</option>
+                  <option value="studio_fullstack">studio_fullstack</option>
+                </Select>
+                <Select value={newReviewAgent} onChange={(e) => setNewReviewAgent(e.target.value)}>
+                  <option value="studio_reviewer">studio_reviewer</option>
+                  <option value="qa">qa</option>
+                </Select>
+              </div>
+              <label className="field">
+                <span>Terminer d’abord ce ticket (prérequis)</span>
+                <Select value={newDependsOnId} onChange={(e) => setNewDependsOnId(e.target.value)}>
+                  <option value="">— Aucun —</option>
+                  {tickets.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.title.slice(0, 72)}
+                      {x.title.length > 72 ? "…" : ""} ({x.status})
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              {createError ? <div className="error">{createError}</div> : null}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Annuler</Button>
+                <Button onClick={() => void createTicket()} disabled={createBusy}>
+                  {createBusy ? "Création…" : "Créer ticket"}
+                </Button>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

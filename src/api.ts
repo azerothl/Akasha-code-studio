@@ -68,6 +68,8 @@ export type StudioTicket = {
   requested_by: string;
   assigned_agent: string;
   review_agent: string;
+  /** Ticket du même projet à terminer avant de pouvoir lancer celui-ci. */
+  depends_on_ticket_id?: string | null;
   related_task_id?: string | null;
   acceptance_criteria: StudioTicketAcceptanceCriterion[];
   evidence: { files?: string[]; task_ids?: string[]; summary?: string };
@@ -233,6 +235,7 @@ export async function createStudioTicket(
     assigned_agent: string;
     review_agent?: string;
     requested_by?: string;
+    depends_on_ticket_id?: string | null;
     acceptance_criteria?: StudioTicketAcceptanceCriterion[];
   },
 ): Promise<StudioTicket> {
@@ -269,6 +272,7 @@ export async function patchStudioTicket(
     description?: string;
     assigned_agent?: string;
     review_agent?: string;
+    depends_on_ticket_id?: string | null;
     status?: StudioTicketStatus;
     acceptance_criteria?: StudioTicketAcceptanceCriterion[];
   },
