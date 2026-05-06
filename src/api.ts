@@ -337,6 +337,110 @@ export async function gitClone(projectId: string, repoUrl: string, branch?: stri
   }
 }
 
+export type GitBranchEntry = {
+  name: string;
+  current: boolean;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  last_commit_subject: string | null;
+};
+
+export type GitBranchesPayload = {
+  current_branch: string | null;
+  branches: GitBranchEntry[];
+};
+
+export async function listGitBranches(projectId: string): Promise<GitBranchesPayload> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/branches`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`listGitBranches ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<GitBranchesPayload>;
+}
+
+export async function checkoutGitBranch(projectId: string, branch: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/checkout`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ branch }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`checkoutGitBranch ${r.status}: ${t}`);
+  }
+}
+
+export type GitComparePayload = {
+  base: string;
+  target: string;
+  ahead: number;
+  behind: number;
+  files_changed: number;
+  insertions: number;
+  deletions: number;
+  commits: { hash: string; subject: string }[];
+};
+
+export async function compareGitBranches(
+  projectId: string,
+  base: string,
+  target: string,
+): Promise<GitComparePayload> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/compare`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ base, target }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`compareGitBranches ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<GitComparePayload>;
+}
+
+export async function mergeGitBranches(
+  projectId: string,
+  source: string,
+  target: string,
+): Promise<{ ok: boolean; message: string }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/merge`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source, target }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`mergeGitBranches ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<{ ok: boolean; message: string }>;
+}
+
+export type GitConflictPayload = {
+  merge_in_progress: boolean;
+  conflict_files: string[];
+};
+
+export async function getGitConflicts(projectId: string): Promise<GitConflictPayload> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/conflicts`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getGitConflicts ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<GitConflictPayload>;
+}
+
+export async function abortGitMerge(projectId: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/merge/abort`), {
+    method: "POST",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`abortGitMerge ${r.status}: ${t}`);
+  }
+}
+
 export async function runBuild(
   projectId: string,
   argv: string[],

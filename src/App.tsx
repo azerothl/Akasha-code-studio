@@ -38,6 +38,7 @@ import {
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
+import { TooltipHint } from "./tooltipHint";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -70,6 +71,19 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
     label: "Planification (lecture seule)",
     hint: "Préférence sous-agent : explorer le dépôt et mettre à jour CODE_STUDIO_PLAN.md uniquement.",
   },
+];
+
+type CenterTab = "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs";
+
+const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
+  { id: "editor", label: "Éditeur" },
+  { id: "preview", label: "Aperçu" },
+  { id: "plan", label: "Plan" },
+  { id: "design", label: "Design" },
+  { id: "branches", label: "Branches", testId: "studio-branches-tab" },
+  { id: "logs", label: "Logs serveur" },
+  { id: "cockpit", label: "Cockpit" },
+  { id: "docs", label: "Documentation", testId: "studio-doc-tab" },
 ];
 
 type StackFieldsProps = {
@@ -308,7 +322,7 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design" | "cockpit" | "docs">("editor");
+  const [centerTab, setCenterTab] = useState<CenterTab>("editor");
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
@@ -317,6 +331,13 @@ export default function App() {
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
   const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
   const [gitWorktreeLines, setGitWorktreeLines] = useState<{ status: string; path: string }[]>([]);
+  const [gitBranches, setGitBranches] = useState<api.GitBranchEntry[]>([]);
+  const [gitBranchesLoading, setGitBranchesLoading] = useState(false);
+  const [gitCompareBase, setGitCompareBase] = useState("");
+  const [gitCompareTarget, setGitCompareTarget] = useState("");
+  const [gitCompareResult, setGitCompareResult] = useState<api.GitComparePayload | null>(null);
+  const [gitConflicts, setGitConflicts] = useState<string[]>([]);
+  const [gitMergeInProgress, setGitMergeInProgress] = useState(false);
   /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
   const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
   const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
@@ -962,6 +983,18 @@ export default function App() {
         if (!cancelled) setFiles(f);
         const evo = await api.listEvolutions(selectedId).catch(() => []);
         if (!cancelled) setEvolutions(evo);
+        const branches = await api.listGitBranches(selectedId).catch(() => null);
+        if (!cancelled && branches) {
+          setGitBranches(branches.branches);
+          if (branches.current_branch) setGitCompareBase(branches.current_branch);
+          const fallbackTarget = branches.branches.find((b) => !b.current)?.name ?? "";
+          if (fallbackTarget) setGitCompareTarget(fallbackTarget);
+        }
+        const conflicts = await api.getGitConflicts(selectedId).catch(() => null);
+        if (!cancelled && conflicts) {
+          setGitConflicts(conflicts.conflict_files);
+          setGitMergeInProgress(conflicts.merge_in_progress);
+        }
       } catch (e) {
         if (!cancelled) setError(String(e));
       }
@@ -978,6 +1011,45 @@ export default function App() {
       setEvolutions(evo);
     } catch {
       setEvolutions([]);
+    }
+  }, [selectedId]);
+
+  const refreshGitBranches = useCallback(async () => {
+    if (!selectedId) {
+      setGitBranches([]);
+      return;
+    }
+    setGitBranchesLoading(true);
+    try {
+      const payload = await api.listGitBranches(selectedId);
+      setGitBranches(payload.branches);
+      if (!gitCompareBase && payload.current_branch) {
+        setGitCompareBase(payload.current_branch);
+      }
+      if (!gitCompareTarget) {
+        const fallbackTarget = payload.branches.find((b) => !b.current)?.name ?? "";
+        if (fallbackTarget) setGitCompareTarget(fallbackTarget);
+      }
+    } catch {
+      setGitBranches([]);
+    } finally {
+      setGitBranchesLoading(false);
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget]);
+
+  const refreshGitConflicts = useCallback(async () => {
+    if (!selectedId) {
+      setGitConflicts([]);
+      setGitMergeInProgress(false);
+      return;
+    }
+    try {
+      const payload = await api.getGitConflicts(selectedId);
+      setGitConflicts(payload.conflict_files);
+      setGitMergeInProgress(payload.merge_in_progress);
+    } catch {
+      setGitConflicts([]);
+      setGitMergeInProgress(false);
     }
   }, [selectedId]);
 
@@ -1016,6 +1088,8 @@ export default function App() {
       } catch {
         /* ignore */
       }
+      await refreshGitBranches();
+      await refreshGitConflicts();
       if (filePath && f.includes(filePath) && !editorBinary) {
         if (editorDirty) {
           metaNote = " — éditeur non rechargé (fichier modifié localement)";
@@ -1027,7 +1101,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer]);
+  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts]);
 
   const onPlayPreview = useCallback(async () => {
     if (!selectedId) return;
@@ -1460,6 +1534,57 @@ export default function App() {
     }
   };
 
+  const onCheckoutBranch = useCallback(async (branch: string) => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.checkoutGitBranch(selectedId, branch);
+      setStatus(`Branche active: ${branch}`);
+      await refreshFiles();
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, refreshFiles]);
+
+  const onCompareBranches = useCallback(async () => {
+    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    setError(null);
+    try {
+      const compare = await api.compareGitBranches(selectedId, gitCompareBase, gitCompareTarget);
+      setGitCompareResult(compare);
+    } catch (e) {
+      setError(String(e));
+      setGitCompareResult(null);
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget]);
+
+  const onMergeBranches = useCallback(async () => {
+    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    setError(null);
+    try {
+      const result = await api.mergeGitBranches(selectedId, gitCompareTarget, gitCompareBase);
+      setStatus(result.message || "Merge effectué");
+      await refreshFiles();
+      await refreshGitConflicts();
+    } catch (e) {
+      setError(String(e));
+      await refreshGitConflicts();
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget, refreshFiles, refreshGitConflicts]);
+
+  const onAbortMerge = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.abortGitMerge(selectedId);
+      setStatus("Merge annulé");
+      await refreshGitConflicts();
+      await refreshFiles();
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, refreshGitConflicts, refreshFiles]);
+
   const onNewEvolution = async () => {
     if (!selectedId) {
       setError("Sélectionnez d’abord un projet avant de créer une branche d’évolution.");
@@ -1685,6 +1810,12 @@ export default function App() {
       cancelled = true;
     };
   }, [selectedId, centerTab]);
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "branches") return;
+    void refreshGitBranches();
+    void refreshGitConflicts();
+  }, [selectedId, centerTab, refreshGitBranches, refreshGitConflicts]);
 
   useEffect(() => {
     if (centerTab !== "docs") {
@@ -2821,71 +2952,21 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
       <div className={appMainClass}>
       <div className="center">
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design, cockpit, documentation ou logs">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "editor"}
-            className={`center-tab ${centerTab === "editor" ? "active" : ""}`}
-            onClick={() => setCenterTab("editor")}
-          >
-            Éditeur
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "preview"}
-            className={`center-tab ${centerTab === "preview" ? "active" : ""}`}
-            onClick={() => setCenterTab("preview")}
-          >
-            Aperçu
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "plan"}
-            className={`center-tab ${centerTab === "plan" ? "active" : ""}`}
-            onClick={() => setCenterTab("plan")}
-          >
-            Plan
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "design"}
-            className={`center-tab ${centerTab === "design" ? "active" : ""}`}
-            onClick={() => setCenterTab("design")}
-          >
-            Design
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "logs"}
-            className={`center-tab ${centerTab === "logs" ? "active" : ""}`}
-            onClick={() => setCenterTab("logs")}
-          >
-            Logs serveur
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "cockpit"}
-            className={`center-tab ${centerTab === "cockpit" ? "active" : ""}`}
-            onClick={() => setCenterTab("cockpit")}
-          >
-            Cockpit
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "docs"}
-            className={`center-tab ${centerTab === "docs" ? "active" : ""}`}
-            onClick={() => setCenterTab("docs")}
-            data-testid="studio-doc-tab"
-          >
-            Documentation
-          </button>
+        <div className="center-tabs" role="tablist" aria-label="Navigation principale Code Studio">
+          {CENTER_TAB_ITEMS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={centerTab === tab.id}
+              className={`center-tab ${centerTab === tab.id ? "active" : ""}`}
+              onClick={() => setCenterTab(tab.id)}
+              data-testid={tab.testId}
+              title={`Ouvrir l’onglet ${tab.label}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
         {centerTab === "editor" ? (
           <div className="center-body editor-pane">
@@ -3263,6 +3344,162 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 )}
               </>
             )}
+          </div>
+        ) : centerTab === "branches" ? (
+          <div className="center-body plan-pane branches-pane">
+            <div className="preview-toolbar branches-toolbar">
+              <span className="pane-title-inline">Gestion des branches</span>
+              <TooltipHint text="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  void refreshGitBranches();
+                  void refreshGitConflicts();
+                }}
+                title="Actualiser la liste des branches et l’état de conflit"
+              >
+                Rafraîchir
+              </button>
+            </div>
+            <p className="hint plan-pane-hint">
+              Suivez les branches locales, comparez les divergences et pilotez les merges depuis cet écran.
+            </p>
+            <div className="branches-layout">
+              <section className="panel branches-panel">
+                <h2>
+                  Branches disponibles <TooltipHint text="Liste locale avec état courant, avance/retard et dernier commit." />
+                </h2>
+                {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
+                <ul className="branches-list">
+                  {gitBranches.map((b) => (
+                    <li key={b.name}>
+                      <div className={`branches-item${b.current ? " is-current" : ""}`}>
+                        <div className="branches-item-main">
+                          <strong>{b.name}</strong>
+                          {b.current ? <span className="branches-badge">active</span> : null}
+                        </div>
+                        <div className="branches-item-meta">
+                          <span>↑ {b.ahead}</span>
+                          <span>↓ {b.behind}</span>
+                          <span>{b.last_commit_subject || "Aucun commit"}</span>
+                        </div>
+                        {!b.current ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => void onCheckoutBranch(b.name)}
+                            title="Passer sur cette branche"
+                          >
+                            Checkout
+                          </button>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="panel branches-panel">
+                <h2>
+                  Comparer / merger <TooltipHint text="La branche source est fusionnée dans la branche cible." />
+                </h2>
+                <div className="field-row">
+                  <label className="field">
+                    <span>Branche cible</span>
+                    <select value={gitCompareBase} onChange={(e) => setGitCompareBase(e.target.value)}>
+                      <option value="">Choisir…</option>
+                      {gitBranches.map((b) => (
+                        <option key={`base-${b.name}`} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Branche source</span>
+                    <select value={gitCompareTarget} onChange={(e) => setGitCompareTarget(e.target.value)}>
+                      <option value="">Choisir…</option>
+                      {gitBranches.map((b) => (
+                        <option key={`target-${b.name}`} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="project-actions-row">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={!gitCompareBase || !gitCompareTarget}
+                    onClick={() => void onCompareBranches()}
+                    title="Afficher les commits et statistiques de divergence"
+                  >
+                    Comparer
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    disabled={!gitCompareBase || !gitCompareTarget || gitCompareBase === gitCompareTarget}
+                    onClick={() => void onMergeBranches()}
+                    title="Fusionner la branche source dans la cible"
+                  >
+                    Merger
+                  </button>
+                </div>
+                {gitCompareResult ? (
+                  <div className="branches-compare-summary">
+                    <p className="hint">
+                      {gitCompareResult.target} → {gitCompareResult.base} | ahead {gitCompareResult.ahead} / behind{" "}
+                      {gitCompareResult.behind}
+                    </p>
+                    <p className="hint">
+                      {gitCompareResult.files_changed} fichiers, +{gitCompareResult.insertions} / -
+                      {gitCompareResult.deletions}
+                    </p>
+                    <ul className="branches-commit-list">
+                      {gitCompareResult.commits.slice(0, 12).map((c) => (
+                        <li key={c.hash}>
+                          <code>{c.hash.slice(0, 8)}</code> {c.subject}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </section>
+
+              <section className="panel branches-panel">
+                <h2>
+                  Conflits de merge <TooltipHint text="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                </h2>
+                {gitMergeInProgress ? (
+                  <p className="hint branches-warning">
+                    Merge en cours avec conflits potentiels. Résolvez les fichiers puis commit, ou annulez le merge.
+                  </p>
+                ) : (
+                  <p className="hint">Aucun merge en conflit détecté.</p>
+                )}
+                {gitConflicts.length > 0 ? (
+                  <ul className="branches-conflict-list">
+                    {gitConflicts.map((f) => (
+                      <li key={f}>
+                        <code>{f}</code>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  disabled={!gitMergeInProgress}
+                  onClick={() => void onAbortMerge()}
+                  title="Annuler le merge en cours et revenir à l’état précédent"
+                >
+                  Annuler le merge
+                </button>
+              </section>
+            </div>
           </div>
         ) : centerTab === "cockpit" ? (
           <div className="center-body preview-pane preview-pane--cockpit">

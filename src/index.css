@@ -353,15 +353,13 @@ kbd {
 
 /* Menus header (remplace l’ancienne sidebar gauche) */
 .app-header-nav {
-  position: absolute;
-  top: 0.43rem;
-  left: 7.4rem;
+  position: static;
   z-index: 30;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem 0.5rem;
-  padding: 0;
+  padding: 0.35rem 0 0;
   background: transparent;
 }
 
@@ -1241,6 +1239,52 @@ kbd {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tooltip-hint-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-hint-btn {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--akasha-text-muted);
+  font-size: 0.65rem;
+  line-height: 1;
+  padding: 0;
+  cursor: help;
+}
+
+.tooltip-hint-bubble {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 14rem;
+  max-width: 22rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--akasha-bg-card);
+  color: var(--akasha-text);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 60;
+}
+
+.tooltip-hint-wrap:hover .tooltip-hint-bubble,
+.tooltip-hint-wrap:focus-within .tooltip-hint-bubble {
+  opacity: 1;
 }
 
 .panel-files-header {
@@ -1714,6 +1758,83 @@ kbd {
   color: #fff;
   border-color: var(--akasha-btn-secondary-border);
   background: rgba(139, 92, 246, 0.18);
+}
+
+.branches-pane {
+  padding: 0.45rem;
+}
+
+.branches-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.branches-panel {
+  min-height: 0;
+  overflow: auto;
+}
+
+.branches-list,
+.branches-commit-list,
+.branches-conflict-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.branches-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  background: var(--akasha-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.branches-item.is-current {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.18);
+}
+
+.branches-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.branches-badge {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a7f3d0;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: 999px;
+  padding: 0.1rem 0.35rem;
+}
+
+.branches-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.65rem;
+  color: var(--akasha-text-muted);
+  font-size: 0.75rem;
+}
+
+.branches-compare-summary {
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.branches-warning {
+  color: var(--akasha-warning);
 }
 
 .center-body {
@@ -3841,4 +3962,54 @@ textarea.editor {
 
 .daemon-ops-schedule-msg {
   margin-top: 0.35rem;
+}
+
+@media (max-width: 1200px) {
+  .app-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chat-column {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .branches-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    padding: 0.65rem 0.8rem;
+  }
+
+  .app-header-row {
+    align-items: flex-start;
+  }
+
+  .app-header-meta {
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+
+  .center-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: thin;
+  }
+
+  .center-tab {
+    white-space: nowrap;
+  }
+
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-file-pane {
+    max-height: 16rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
 }
