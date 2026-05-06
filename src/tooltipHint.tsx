@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { Button } from "./components/ui/button";
 
 type TooltipHintProps = {
   text: string;
@@ -9,9 +10,9 @@ export function TooltipHint({ text, label = "Aide" }: TooltipHintProps) {
   const tooltipId = useId();
   return (
     <span className="tooltip-hint-wrap">
-      <button type="button" className="tooltip-hint-btn" aria-label={label} aria-describedby={tooltipId}>
+      <Button variant="ghost" size="icon" className="tooltip-hint-btn" aria-label={label} aria-describedby={tooltipId}>
         ?
-      </button>
+      </Button>
       <span id={tooltipId} role="tooltip" className="tooltip-hint-bubble">
         {text}
       </span>

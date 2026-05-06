@@ -1,6 +1,8 @@
 import { useState } from "react";
 import * as api from "./api";
 import type { TaskStudioDiffPayload } from "./api";
+import { Button } from "./components/ui/button";
+import { Checkbox } from "./components/ui/checkbox";
 
 type Props = {
   diff: TaskStudioDiffPayload;
@@ -101,24 +103,25 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
 
   return (
     <div className="chat-studio-diff">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         className="chat-studio-diff-toggle"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
         Fichiers modifiés ({diff.files.length})
         {open ? " — masquer" : " — afficher"}
-      </button>
+      </Button>
       {open ? (
         <div className="chat-studio-diff-body">
           <div className="chat-studio-diff-actions">
-            <button type="button" className="btn btn-secondary btn-sm" disabled={busy || !projectId} onClick={() => void onApply(true)}>
+            <Button variant="secondary" size="sm" disabled={busy || !projectId} onClick={() => void onApply(true)}>
               Vérifier (dry-run)
-            </button>
-            <button type="button" className="btn btn-primary btn-sm" disabled={busy || !projectId} onClick={() => void onApply(false)}>
+            </Button>
+            <Button variant="default" size="sm" disabled={busy || !projectId} onClick={() => void onApply(false)}>
               Appliquer sélection
-            </button>
+            </Button>
             {resultMsg ? <span className="hint">{resultMsg}</span> : null}
           </div>
           {diff.files.map((f) => (
@@ -138,8 +141,7 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
                       return (
                         <div key={key} className="chat-studio-diff-hunk">
                           <label className="field-inline">
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               checked={checked}
                               onChange={(e) =>
                                 setSelection((prev) => ({

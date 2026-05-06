@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { TaskEventEntry } from "./api";
 import { MarkdownBlock } from "./markdownBlock";
+import { Button } from "./components/ui/button";
 
 export type TaskProgressLine = {
   progress_pct: number;
@@ -638,14 +639,15 @@ export function TaskDetailEventRow({ ev, hideTypeBadge }: TaskDetailEventRowProp
           </code>
         ) : null}
         {hasPayload ? (
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm task-detail-json-toggle"
+          <Button
+            variant="secondary"
+            size="sm"
+            className="task-detail-json-toggle"
             onClick={() => setJsonOpen((o) => !o)}
             aria-expanded={jsonOpen}
           >
             {jsonOpen ? "Masquer JSON" : "Voir JSON"}
-          </button>
+          </Button>
         ) : null}
         <span className="hint task-detail-event-at">{ev.at}</span>
       </div>
