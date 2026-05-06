@@ -45,6 +45,46 @@ export type StudioProjectMeta = {
   git_worktree_clean?: boolean | null;
   /** Lignes `git status --porcelain` (codes + chemin), renvoyées par le daemon (plafonnées). */
   git_worktree_lines?: { status: string; path: string }[];
+  /** Enforced ticket discipline mode for studio tasks. */
+  ticket_enforcement_mode?: "off" | "soft" | "strict";
+};
+
+export type StudioTicketStatus = "todo" | "in_progress" | "review" | "done" | "blocked";
+
+export type StudioTicketAcceptanceCriterion = {
+  id?: string;
+  text: string;
+  kind?: "manual" | "file_exists" | "command_ok" | string;
+  path?: string;
+  argv?: string[];
+};
+
+export type StudioTicket = {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string;
+  status: StudioTicketStatus;
+  requested_by: string;
+  assigned_agent: string;
+  review_agent: string;
+  related_task_id?: string | null;
+  acceptance_criteria: StudioTicketAcceptanceCriterion[];
+  evidence: { files?: string[]; task_ids?: string[]; summary?: string };
+  review_outcome?: "approved" | "changes_requested" | null;
+  review_notes?: string | null;
+  corrective_steps?: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudioTicketEvent = {
+  id: string;
+  ticket_id: string;
+  event_type: string;
+  at: string;
+  actor: string;
+  payload?: unknown;
 };
 
 export async function listProjects(): Promise<StudioProject[]> {
@@ -66,6 +106,7 @@ export async function patchProjectSettings(
     evolution_summary?: string | null;
     policy_notes?: string | null;
     project_summary?: string | null;
+    ticket_enforcement_mode?: "off" | "soft" | "strict" | null;
   },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
@@ -162,6 +203,110 @@ export async function listFiles(projectId: string): Promise<string[]> {
   if (!r.ok) throw new Error(`listFiles ${r.status}`);
   const j = (await r.json()) as { files: string[] };
   return j.files ?? [];
+}
+
+export async function listStudioTickets(
+  projectId: string,
+  filters?: { status?: StudioTicketStatus; assigned_agent?: string; q?: string },
+): Promise<StudioTicket[]> {
+  const q = new URLSearchParams();
+  if (filters?.status) q.set("status", filters.status);
+  if (filters?.assigned_agent?.trim()) q.set("assigned_agent", filters.assigned_agent.trim());
+  if (filters?.q?.trim()) q.set("q", filters.q.trim());
+  const path = q.toString()
+    ? `/api/studio/projects/${projectId}/tickets?${q.toString()}`
+    : `/api/studio/projects/${projectId}/tickets`;
+  const r = await fetch(api(path));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`listStudioTickets ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { items?: StudioTicket[] };
+  return j.items ?? [];
+}
+
+export async function createStudioTicket(
+  projectId: string,
+  body: {
+    title: string;
+    description?: string;
+    assigned_agent: string;
+    review_agent?: string;
+    requested_by?: string;
+    acceptance_criteria?: StudioTicketAcceptanceCriterion[];
+  },
+): Promise<StudioTicket> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`createStudioTicket ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { ticket: StudioTicket };
+  return j.ticket;
+}
+
+export async function getStudioTicket(
+  projectId: string,
+  ticketId: string,
+): Promise<{ ticket: StudioTicket; timeline: StudioTicketEvent[] }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getStudioTicket ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<{ ticket: StudioTicket; timeline: StudioTicketEvent[] }>;
+}
+
+export async function patchStudioTicket(
+  projectId: string,
+  ticketId: string,
+  body: {
+    title?: string;
+    description?: string;
+    assigned_agent?: string;
+    review_agent?: string;
+    status?: StudioTicketStatus;
+    acceptance_criteria?: StudioTicketAcceptanceCriterion[];
+  },
+): Promise<StudioTicket> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`patchStudioTicket ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { ticket: StudioTicket };
+  return j.ticket;
+}
+
+export async function reviewStudioTicket(
+  projectId: string,
+  ticketId: string,
+  body: {
+    reviewer_agent: string;
+    outcome: "approved" | "changes_requested";
+    review_notes?: string;
+    corrective_steps?: string[];
+  },
+): Promise<StudioTicket> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}/review`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`reviewStudioTicket ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { ticket: StudioTicket };
+  return j.ticket;
 }
 
 export type StudioPreviewStartResponse = {
@@ -566,6 +711,10 @@ export async function sendMessage(body: {
   studio_design_doc?: string;
   /** Definition of Done : texte ou critères structurés (voir spec daemon). */
   studio_acceptance_criteria?: string | StudioAcceptancePayload | StudioAcceptanceCriterion[];
+  /** Ticket Kanban rattaché à la demande (enforcement optionnel côté daemon). */
+  studio_ticket_id?: string;
+  /** Override ponctuel du mode enforcement ticket. */
+  studio_ticket_enforcement_mode?: "off" | "soft" | "strict";
 }): Promise<{ task_id: string }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
@@ -591,6 +740,10 @@ export async function sendMessage(body: {
       ...(body.studio_design_doc?.trim() ? { studio_design_doc: body.studio_design_doc } : {}),
       ...(body.studio_acceptance_criteria !== undefined && body.studio_acceptance_criteria !== null
         ? { studio_acceptance_criteria: body.studio_acceptance_criteria }
+        : {}),
+      ...(body.studio_ticket_id?.trim() ? { studio_ticket_id: body.studio_ticket_id.trim() } : {}),
+      ...(body.studio_ticket_enforcement_mode
+        ? { studio_ticket_enforcement_mode: body.studio_ticket_enforcement_mode }
         : {}),
     }),
   });
