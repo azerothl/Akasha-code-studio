@@ -994,6 +994,13 @@ export default function App() {
       setEvolutions([]);
       return;
     }
+    // Reset Git state immediately so the Branches tab never shows stale data from the previous project
+    setGitBranches([]);
+    setGitCompareBase("");
+    setGitCompareTarget("");
+    setGitCompareResult(null);
+    setGitConflicts([]);
+    setGitMergeInProgress(false);
     let cancelled = false;
     setFilePath(null);
     setEditorText("");
@@ -1005,18 +1012,6 @@ export default function App() {
         if (!cancelled) setFiles(f);
         const evo = await api.listEvolutions(selectedId).catch(() => []);
         if (!cancelled) setEvolutions(evo);
-        const branches = await api.listGitBranches(selectedId).catch(() => null);
-        if (!cancelled && branches) {
-          setGitBranches(branches.branches);
-          if (branches.current_branch) setGitCompareBase(branches.current_branch);
-          const fallbackTarget = branches.branches.find((b) => !b.current)?.name ?? "";
-          if (fallbackTarget) setGitCompareTarget(fallbackTarget);
-        }
-        const conflicts = await api.getGitConflicts(selectedId).catch(() => null);
-        if (!cancelled && conflicts) {
-          setGitConflicts(conflicts.conflict_files);
-          setGitMergeInProgress(conflicts.merge_in_progress);
-        }
       } catch (e) {
         if (!cancelled) setError(String(e));
       }
@@ -1110,8 +1105,10 @@ export default function App() {
       } catch {
         /* ignore */
       }
-      await refreshGitBranches();
-      await refreshGitConflicts();
+      if (centerTab === "branches") {
+        await refreshGitBranches();
+        await refreshGitConflicts();
+      }
       if (filePath && f.includes(filePath) && !editorBinary) {
         if (editorDirty) {
           metaNote = " — éditeur non rechargé (fichier modifié localement)";
@@ -1123,7 +1120,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts]);
+  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts, centerTab]);
 
   const onPlayPreview = useCallback(async () => {
     if (!selectedId) return;
@@ -2428,23 +2425,23 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", uiTheme);
-    window.localStorage.setItem("studio.uiTheme", uiTheme);
+    try { window.localStorage.setItem("studio.uiTheme", uiTheme); } catch { /* quota / private mode */ }
   }, [uiTheme]);
 
   useEffect(() => {
-    window.localStorage.setItem("studio.uiDensity", uiDensity);
+    try { window.localStorage.setItem("studio.uiDensity", uiDensity); } catch { /* quota / private mode */ }
   }, [uiDensity]);
 
   useEffect(() => {
-    window.localStorage.setItem("studio.chatOptionsOpen", chatOptionsOpen ? "1" : "0");
+    try { window.localStorage.setItem("studio.chatOptionsOpen", chatOptionsOpen ? "1" : "0"); } catch { /* quota / private mode */ }
   }, [chatOptionsOpen]);
 
   useEffect(() => {
-    window.localStorage.setItem("studio.chatSuggestionsOpen", chatSuggestionsOpen ? "1" : "0");
+    try { window.localStorage.setItem("studio.chatSuggestionsOpen", chatSuggestionsOpen ? "1" : "0"); } catch { /* quota / private mode */ }
   }, [chatSuggestionsOpen]);
 
   useEffect(() => {
-    window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0");
+    try { window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0"); } catch { /* quota / private mode */ }
   }, [buildLogOpen]);
 
   return (
@@ -3463,7 +3460,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div className="field-row">
                   <label className="field">
                     <span>Branche cible</span>
-                    <select value={gitCompareBase} onChange={(e) => setGitCompareBase(e.target.value)}>
+                    <select value={gitCompareBase} onChange={(e) => { setGitCompareBase(e.target.value); setGitCompareResult(null); }}>
                       <option value="">Choisir…</option>
                       {gitBranches.map((b) => (
                         <option key={`base-${b.name}`} value={b.name}>
@@ -3474,7 +3471,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </label>
                   <label className="field">
                     <span>Branche source</span>
-                    <select value={gitCompareTarget} onChange={(e) => setGitCompareTarget(e.target.value)}>
+                    <select value={gitCompareTarget} onChange={(e) => { setGitCompareTarget(e.target.value); setGitCompareResult(null); }}>
                       <option value="">Choisir…</option>
                       {gitBranches.map((b) => (
                         <option key={`target-${b.name}`} value={b.name}>
@@ -3812,7 +3809,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             {lastAssistant?.suggested_actions && lastAssistant.suggested_actions.length > 0 ? (
               <div className="chat-suggestions" aria-label="Prochaines étapes suggérées">
-                <details open={chatSuggestionsOpen} onToggle={(e) => setChatSuggestionsOpen((e.target as HTMLDetailsElement).open)}>
+                <details open={chatSuggestionsOpen} onToggle={(e) => setChatSuggestionsOpen((e.currentTarget as HTMLDetailsElement).open)}>
                   <summary className="chat-suggestions-label">Suggestions ({lastAssistant.suggested_actions.length})</summary>
                   <div className="chat-suggestion-chips">
                     {lastAssistant.suggested_actions.map((a) => (
@@ -3914,7 +3911,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   Design actif: {designHint}
                 </p>
               ) : null}
-              <details open={buildLogOpen} onToggle={(e) => setBuildLogOpen((e.target as HTMLDetailsElement).open)}>
+              <details open={buildLogOpen} onToggle={(e) => setBuildLogOpen((e.currentTarget as HTMLDetailsElement).open)}>
                 <summary className="pane-title">Journal de build</summary>
                 <pre className="build-pre">{buildLog || "—"}</pre>
               </details>
