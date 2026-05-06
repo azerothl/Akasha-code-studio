@@ -46,7 +46,7 @@ import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
 import { Checkbox } from "./components/ui/checkbox";
 import { Button } from "./components/ui/button";
-import { Columns2, PanelLeft, PanelRight } from "lucide-react";
+import { Bot, Columns2, PanelLeft, PanelRight, Route, ShieldCheck, Sparkles } from "lucide-react";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -313,6 +313,7 @@ export default function App() {
   } | null>(null);
   const [forkInitialInstruction, setForkInitialInstruction] = useState("");
   const [agent, setAgent] = useState<string>("studio_scaffold");
+  const [activeTocSection, setActiveTocSection] = useState<string>("agents-overview");
   const [taskTrace, setTaskTrace] = useState<{
     id: string;
     status: string;
@@ -504,6 +505,51 @@ export default function App() {
   useEffect(() => {
     if (!isMarkdownPath(filePath)) setEditorMarkdownPreview(false);
   }, [filePath]);
+
+  useEffect(() => {
+    if (centerTab !== "agents") return;
+
+    const sections = [
+      document.getElementById("agents-overview"),
+      document.getElementById("agents-role-selection"),
+      document.getElementById("agents-practices"),
+      document.getElementById("agents-matrix"),
+    ].filter((el) => el !== null) as HTMLElement[];
+
+    if (sections.length === 0) return;
+
+    const pageContainer = document.querySelector(".agents-page") as HTMLElement | null;
+    if (!pageContainer) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let highestIntersection = 0;
+        let visibleSectionId = "agents-overview";
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > highestIntersection) {
+            highestIntersection = entry.intersectionRatio;
+            visibleSectionId = entry.target.id;
+          }
+        });
+
+        if (visibleSectionId) {
+          setActiveTocSection(visibleSectionId);
+        }
+      },
+      {
+        root: pageContainer,
+        threshold: [0, 0.1, 0.25, 0.5],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      sections.forEach((section) => observer.unobserve(section));
+      observer.disconnect();
+    };
+  }, [centerTab]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -3773,53 +3819,105 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="preview-toolbar">
               <span className="pane-title-inline">Agents disponibles</span>
             </div>
-            <p className="hint plan-pane-hint agents-page-intro">
-              Cette vue récapitule les rôles des agents Code Studio et la façon dont le daemon les orchestre.
-              Pratique quand on veut éviter de parler dans le vide cosmique à un mauvais spécialiste.
-            </p>
-            <div className="agents-grid">
-              <section className="panel agents-panel">
-                <h2>Comment ça fonctionne</h2>
-                <p className="hint">
-                  Par défaut, Code Studio route les demandes vers un chef de projet qui délègue ensuite au bon spécialiste.
-                  Le sélecteur <strong>Rôle agent</strong> dans l’en-tête sert de préférence de routage pour les demandes envoyées.
+            <div className="docs-pane-layout agents-page-layout">
+              <aside className="docs-pane-toc agents-page-toc" aria-label="Sommaire agents">
+                <h3>Dans cette page</h3>
+                <ul className="docs-pane-toc-list">
+                  <li><a href="#agents-overview" className={activeTocSection === "agents-overview" ? "is-active" : ""}>Vue d’ensemble</a></li>
+                  <li><a href="#agents-role-selection" className={activeTocSection === "agents-role-selection" ? "is-active" : ""}>Choisir un rôle</a></li>
+                  <li><a href="#agents-practices" className={activeTocSection === "agents-practices" ? "is-active" : ""}>Bonnes pratiques</a></li>
+                  <li><a href="#agents-matrix" className={activeTocSection === "agents-matrix" ? "is-active" : ""}>Matrice des capacités</a></li>
+                </ul>
+              </aside>
+
+              <div className="agents-page-content">
+                <p className="hint plan-pane-hint agents-page-intro">
+                  Cette vue récapitule les rôles des agents Code Studio et la façon dont le daemon les orchestre.
+                  Pratique quand on veut éviter de parler dans le vide cosmique à un mauvais spécialiste.
                 </p>
-                <ul className="agents-bullet-list">
-                  <li><strong>Automatique</strong> : laisse le daemon choisir la meilleure orchestration.</li>
-                  <li><strong>Spécialiste</strong> : biaise la demande vers frontend, backend, full-stack, scaffold ou planner.</li>
-                  <li><strong>Délégation simple</strong> : force une seule passe, sans chaîne de sous-agents.</li>
-                </ul>
-              </section>
+                <div className="agents-current-role" role="status" aria-live="polite">
+                  <span className="agents-current-role-label">Rôle actuellement sélectionné</span>
+                  <strong>{AGENT_OPTIONS.find((o) => o.value === agent)?.label ?? "Automatique"}</strong>
+                  {agentHint ? <span className="hint agents-current-role-hint">{agentHint}</span> : null}
+                </div>
 
-              <section className="panel agents-panel">
-                <h2>Quand choisir un rôle</h2>
-                <ul className="agents-bullet-list">
-                  <li><strong>Scaffold</strong> pour initialiser une app ou créer une structure minimale.</li>
-                  <li><strong>Frontend</strong> pour UI, styles, composants, accessibilité et navigation.</li>
-                  <li><strong>Backend</strong> pour API, config, persistance et logique serveur.</li>
-                  <li><strong>Full-stack</strong> pour une évolution qui traverse UI et backend.</li>
-                  <li><strong>Planner</strong> pour l’analyse du dépôt et la mise à jour du plan en lecture seule.</li>
-                </ul>
-              </section>
+                <div className="agents-grid">
+                  <section className="panel agents-panel" id="agents-overview">
+                    <h2 className="agents-section-title">
+                      <Bot className="agents-section-icon" aria-hidden />
+                      <span>Comment ça fonctionne</span>
+                    </h2>
+                    <p className="hint">
+                      Par défaut, Code Studio route les demandes vers un chef de projet qui délègue ensuite au bon spécialiste.
+                      Le sélecteur <strong>Rôle agent</strong> dans l’en-tête sert de préférence de routage pour les demandes envoyées.
+                    </p>
+                    <ul className="agents-bullet-list">
+                      <li><strong>Automatique</strong> : laisse le daemon choisir la meilleure orchestration.</li>
+                      <li><strong>Spécialiste</strong> : biaise la demande vers frontend, backend, full-stack, scaffold ou planner.</li>
+                      <li><strong>Délégation simple</strong> : force une seule passe, sans chaîne de sous-agents.</li>
+                    </ul>
+                  </section>
 
-              <section className="panel agents-panel">
-                <h2>Bonnes pratiques</h2>
-                <ul className="agents-bullet-list">
-                  <li>Décrivez le résultat attendu, pas seulement l’outil à utiliser.</li>
-                  <li>Renseignez la stack et les critères d’acceptation pour guider le routage.</li>
-                  <li>Utilisez une branche d’évolution pour isoler une feature avant merge.</li>
-                  <li>Gardez <code>Automatique</code> si vous n’avez pas besoin de contraindre le spécialiste.</li>
-                </ul>
-              </section>
+                  <section className="panel agents-panel" id="agents-role-selection">
+                    <h2 className="agents-section-title">
+                      <Route className="agents-section-icon" aria-hidden />
+                      <span>Quand choisir un rôle</span>
+                    </h2>
+                    <div className="agents-role-grid" role="list" aria-label="Sélection rapide du rôle agent">
+                      {AGENT_OPTIONS.map((option) => {
+                        const isActive = agent === option.value;
+                        return (
+                          <Button
+                            key={option.value || "auto"}
+                            variant="ghost"
+                            size="sm"
+                            className={`agents-role-card ${isActive ? "is-active" : ""}`}
+                            aria-pressed={isActive}
+                            title={`Sélectionner le rôle ${option.label}`}
+                            onClick={() => setAgent(option.value)}
+                            role="listitem"
+                          >
+                            <span className="agents-role-card-title">{option.label}</span>
+                            <span className="agents-role-card-hint">{option.hint}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <ul className="agents-bullet-list">
+                      <li><strong>Scaffold</strong> pour initialiser une app ou créer une structure minimale.</li>
+                      <li><strong>Frontend</strong> pour UI, styles, composants, accessibilité et navigation.</li>
+                      <li><strong>Backend</strong> pour API, config, persistance et logique serveur.</li>
+                      <li><strong>Full-stack</strong> pour une évolution qui traverse UI et backend.</li>
+                      <li><strong>Planner</strong> pour l’analyse du dépôt et la mise à jour du plan en lecture seule.</li>
+                    </ul>
+                  </section>
+
+                  <section className="panel agents-panel" id="agents-practices">
+                    <h2 className="agents-section-title">
+                      <ShieldCheck className="agents-section-icon" aria-hidden />
+                      <span>Bonnes pratiques</span>
+                    </h2>
+                    <ul className="agents-bullet-list">
+                      <li>Décrivez le résultat attendu, pas seulement l’outil à utiliser.</li>
+                      <li>Renseignez la stack et les critères d’acceptation pour guider le routage.</li>
+                      <li>Utilisez une branche d’évolution pour isoler une feature avant merge.</li>
+                      <li>Gardez <code>Automatique</code> si vous n’avez pas besoin de contraindre le spécialiste.</li>
+                    </ul>
+                  </section>
+                </div>
+
+                <section className="panel agents-matrix-panel" id="agents-matrix">
+                  <h2 className="agents-section-title">
+                    <Sparkles className="agents-section-icon" aria-hidden />
+                    <span>Matrice des capacités</span>
+                  </h2>
+                  <p className="hint">
+                    Référence synthétique des agents studio et de leurs limites opérationnelles.
+                  </p>
+                  <AgentCapabilitiesTable />
+                </section>
+              </div>
             </div>
-
-            <section className="panel agents-matrix-panel">
-              <h2>Matrice des capacités</h2>
-              <p className="hint">
-                Référence synthétique des agents studio et de leurs limites opérationnelles.
-              </p>
-              <AgentCapabilitiesTable />
-            </section>
           </div>
         ) : centerTab === "settings" ? (
           <div className="center-body plan-pane">
