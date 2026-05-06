@@ -4487,6 +4487,40 @@ textarea.editor {
   margin: 1.35rem 0;
 }
 
+.agents-page {
+  gap: 0.85rem;
+}
+
+.agents-page-intro {
+  margin-bottom: 0.1rem;
+}
+
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.agents-panel,
+.agents-matrix-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.agents-panel h2,
+.agents-matrix-panel h2 {
+  margin: 0;
+}
+
+.agents-bullet-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
 @media (max-width: 980px) {
   .docs-pane-layout {
     grid-template-columns: 1fr;
@@ -4601,6 +4635,7 @@ textarea.editor {
 
 .agent-capabilities {
   margin-top: 0.35rem;
+  overflow-x: auto;
 }
 
 .agent-capabilities-table {

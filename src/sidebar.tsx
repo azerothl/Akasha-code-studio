@@ -133,7 +133,7 @@ export const SIDEBAR_NAV_GROUPS: NavGroup[] = [
         label: "Agents",
         icon: "🤖",
         hint: "Capacités des agents disponibles",
-        tabs: [],
+        tabs: ["agents"],
       },
     ],
   },

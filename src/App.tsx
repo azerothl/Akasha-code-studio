@@ -81,7 +81,7 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type CenterTab = "dashboard" | "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "settings";
+type CenterTab = "dashboard" | "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "agents" | "settings";
 
 export type { CenterTab };
 
@@ -95,6 +95,7 @@ const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "logs", label: "Logs serveur" },
   { id: "cockpit", label: "Cockpit" },
   { id: "docs", label: "Documentation", testId: "studio-doc-tab" },
+  { id: "agents", label: "Agents", testId: "studio-agents-tab" },
   { id: "settings", label: "Paramètres", testId: "studio-settings-tab" },
 ];
 
@@ -3766,6 +3767,59 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 </div>
               </div>
             )}
+          </div>
+        ) : centerTab === "agents" ? (
+          <div className="center-body plan-pane docs-pane agents-page">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Agents disponibles</span>
+            </div>
+            <p className="hint plan-pane-hint agents-page-intro">
+              Cette vue récapitule les rôles des agents Code Studio et la façon dont le daemon les orchestre.
+              Pratique quand on veut éviter de parler dans le vide cosmique à un mauvais spécialiste.
+            </p>
+            <div className="agents-grid">
+              <section className="panel agents-panel">
+                <h2>Comment ça fonctionne</h2>
+                <p className="hint">
+                  Par défaut, Code Studio route les demandes vers un chef de projet qui délègue ensuite au bon spécialiste.
+                  Le sélecteur <strong>Rôle agent</strong> dans l’en-tête sert de préférence de routage pour les demandes envoyées.
+                </p>
+                <ul className="agents-bullet-list">
+                  <li><strong>Automatique</strong> : laisse le daemon choisir la meilleure orchestration.</li>
+                  <li><strong>Spécialiste</strong> : biaise la demande vers frontend, backend, full-stack, scaffold ou planner.</li>
+                  <li><strong>Délégation simple</strong> : force une seule passe, sans chaîne de sous-agents.</li>
+                </ul>
+              </section>
+
+              <section className="panel agents-panel">
+                <h2>Quand choisir un rôle</h2>
+                <ul className="agents-bullet-list">
+                  <li><strong>Scaffold</strong> pour initialiser une app ou créer une structure minimale.</li>
+                  <li><strong>Frontend</strong> pour UI, styles, composants, accessibilité et navigation.</li>
+                  <li><strong>Backend</strong> pour API, config, persistance et logique serveur.</li>
+                  <li><strong>Full-stack</strong> pour une évolution qui traverse UI et backend.</li>
+                  <li><strong>Planner</strong> pour l’analyse du dépôt et la mise à jour du plan en lecture seule.</li>
+                </ul>
+              </section>
+
+              <section className="panel agents-panel">
+                <h2>Bonnes pratiques</h2>
+                <ul className="agents-bullet-list">
+                  <li>Décrivez le résultat attendu, pas seulement l’outil à utiliser.</li>
+                  <li>Renseignez la stack et les critères d’acceptation pour guider le routage.</li>
+                  <li>Utilisez une branche d’évolution pour isoler une feature avant merge.</li>
+                  <li>Gardez <code>Automatique</code> si vous n’avez pas besoin de contraindre le spécialiste.</li>
+                </ul>
+              </section>
+            </div>
+
+            <section className="panel agents-matrix-panel">
+              <h2>Matrice des capacités</h2>
+              <p className="hint">
+                Référence synthétique des agents studio et de leurs limites opérationnelles.
+              </p>
+              <AgentCapabilitiesTable />
+            </section>
           </div>
         ) : centerTab === "settings" ? (
           <div className="center-body plan-pane">
