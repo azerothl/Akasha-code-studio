@@ -39,6 +39,7 @@ import {
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { TooltipHint } from "./tooltipHint";
+import { Sidebar } from "./sidebar";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -74,6 +75,8 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
 ];
 
 type CenterTab = "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "settings";
+
+export type { CenterTab };
 
 const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "editor", label: "Éditeur" },
@@ -303,6 +306,17 @@ function dedupeProgressForTrace(
 export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof localStorage !== "undefined") {
+      try {
+        const saved = localStorage.getItem("akasha-studio-sidebar-open");
+        return saved === null ? true : saved === "1";
+      } catch {
+        return true;
+      }
+    }
+    return true;
+  });
   const [newProjectName, setNewProjectName] = useState("Mon application");
   const [newProjectSummary, setNewProjectSummary] = useState("");
   const [newStackPresetId, setNewStackPresetId] = useState(STACK_PRESET_NONE);
@@ -2477,8 +2491,23 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     try { window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0"); } catch { /* quota / private mode */ }
   }, [buildLogOpen]);
 
+  useEffect(() => {
+    try { window.localStorage.setItem("akasha-studio-sidebar-open", sidebarOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [sidebarOpen]);
+
+  const handleSidebarToggle = (open: boolean) => {
+    setSidebarOpen(open);
+  };
+
   return (
-    <div className={appClass}>
+    <>
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={handleSidebarToggle}
+        activeTab={centerTab}
+        onTabSelect={setCenterTab}
+      />
+      <div className={appClass}>
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
@@ -4322,5 +4351,6 @@ git push`}
         </div>
       ) : null}
     </div>
+    </>
   );
 }
