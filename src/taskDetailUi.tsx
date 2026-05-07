@@ -396,7 +396,7 @@ function worktreeDetails(step: WorkflowStep): string[] {
   ].filter(Boolean);
 }
 
-export function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
+function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
   const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
   const progressByTask = new Map<string, TaskProgressLine[]>();
   for (const p of progressLinesFromEvents(sorted, rootTaskId)) {
