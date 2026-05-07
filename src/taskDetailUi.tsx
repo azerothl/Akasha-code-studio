@@ -384,7 +384,9 @@ function isSupportedWorktreeIntegrationEventType(eventType: string): boolean {
 }
 
 function worktreeTitleFromEventType(eventType: string): string {
-  return eventType === "studio_worktree_created" ? "Worktree créé" : "Intégration worktree";
+  if (eventType === "studio_worktree_created") return "Worktree créé";
+  if (isSupportedWorktreeIntegrationEventType(eventType)) return "Intégration worktree";
+  return "Worktree";
 }
 
 function worktreeDetails(step: WorkflowStep): string[] {

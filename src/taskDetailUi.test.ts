@@ -14,6 +14,10 @@ function renderWorkflow(events: TaskEventEntry[]): string {
   return renderToStaticMarkup(createElement(TaskDetailWorkflowView, { events, rootTaskId }));
 }
 
+function occurrences(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1;
+}
+
 describe("TaskDetailWorkflowView worktree lifecycle", () => {
   it("shows the latest integration title and snapshot details", () => {
     const html = renderWorkflow([
@@ -36,7 +40,7 @@ describe("TaskDetailWorkflowView worktree lifecycle", () => {
     expect(html).toContain("Branche: feat/worktree");
     expect(html).toContain("Chemin: /tmp/worktree");
     expect(html).not.toContain("Worktree créé</span>");
-    expect(html.split("Branche: feat/worktree")).toHaveLength(2);
+    expect(occurrences(html, "Branche: feat/worktree")).toBe(1);
   });
 
   it("ignores unsupported worktree integration event names", () => {
