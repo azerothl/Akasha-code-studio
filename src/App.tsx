@@ -1548,6 +1548,17 @@ export default function App() {
         ...(stack ? { tech_stack: stack } : {}),
         ...(summary ? { project_summary: summary } : {}),
       });
+      void api
+        .sendMessage({
+          session_id: `code-studio-bootstrap-${p.id}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`,
+          studio_project_id: p.id,
+          studio_assigned_agent: "studio_project_manager",
+          message:
+            "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
+        })
+        .catch(() => {
+          /* bootstrap best-effort ; l’utilisateur peut relancer depuis le chat */
+        });
       await refreshProjects();
       setSelectedId(p.id);
       setCenterTab("dashboard");

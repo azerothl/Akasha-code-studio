@@ -13,12 +13,27 @@ const COLUMNS: { id: api.StudioTicketStatus; label: string; theme: string }[] = 
   { id: "blocked", label: "Blocked", theme: "red" },
 ];
 
-/** Le ticket `depends_on_ticket_id` doit être en `done` avant de lancer celui-ci. */
+/** IDs prérequis fusionnés (liste + ancien champ singleton). */
+function mergedTicketDependencyIds(ticket: api.StudioTicket): string[] {
+  const set = new Set<string>();
+  for (const id of ticket.depends_on_ticket_ids ?? []) {
+    const x = id.trim();
+    if (x) set.add(x);
+  }
+  const single = ticket.depends_on_ticket_id?.trim();
+  if (single) set.add(single);
+  return [...set].sort();
+}
+
+/** Tous les tickets prérequis doivent être en `done`. */
 function ticketPrerequisiteSatisfied(ticket: api.StudioTicket, all: api.StudioTicket[]): boolean {
-  const depId = ticket.depends_on_ticket_id?.trim();
-  if (!depId) return true;
-  const dep = all.find((x) => x.id === depId);
-  return dep?.status === "done";
+  const deps = mergedTicketDependencyIds(ticket);
+  if (deps.length === 0) return true;
+  for (const depId of deps) {
+    const dep = all.find((x) => x.id === depId);
+    if (dep?.status !== "done") return false;
+  }
+  return true;
 }
 
 function formatTaskStatusFr(status: string): string {
@@ -75,8 +90,8 @@ export function KanbanBoard({
   const [linkedTaskSnapshot, setLinkedTaskSnapshot] = useState<api.TaskStatusResponse | null>(null);
   const [linkedTaskLoading, setLinkedTaskLoading] = useState(false);
   const [linkedTaskError, setLinkedTaskError] = useState<string | null>(null);
-  const [newDependsOnId, setNewDependsOnId] = useState("");
-  const [dependsOnDraft, setDependsOnDraft] = useState("");
+  const [newDependsOnIds, setNewDependsOnIds] = useState<string[]>([]);
+  const [dependsOnDraftIds, setDependsOnDraftIds] = useState<string[]>([]);
   const [depPatchBusy, setDepPatchBusy] = useState(false);
   const [depPatchError, setDepPatchError] = useState<string | null>(null);
   const [recoverTicketBusy, setRecoverTicketBusy] = useState(false);
@@ -157,9 +172,9 @@ export function KanbanBoard({
 
   useEffect(() => {
     if (!selected) return;
-    setDependsOnDraft(selected.depends_on_ticket_id?.trim() ?? "");
+    setDependsOnDraftIds(mergedTicketDependencyIds(selected));
     setDepPatchError(null);
-  }, [selected?.id, selected?.depends_on_ticket_id]);
+  }, [selected?.id, selected?.depends_on_ticket_id, selected?.depends_on_ticket_ids]);
 
   const byStatus = useMemo(() => {
     const map = new Map<api.StudioTicketStatus, api.StudioTicket[]>();
@@ -248,12 +263,12 @@ export function KanbanBoard({
         assigned_agent: newAssignedAgent.trim(),
         review_agent: newReviewAgent.trim(),
         acceptance_criteria: acceptanceCriteria.length ? acceptanceCriteria : undefined,
-        ...(newDependsOnId.trim() ? { depends_on_ticket_id: newDependsOnId.trim() } : {}),
+        ...(newDependsOnIds.length ? { depends_on_ticket_ids: newDependsOnIds } : {}),
       });
       setNewTitle("");
       setNewDesc("");
       setNewCriteriaRaw("");
-      setNewDependsOnId("");
+      setNewDependsOnIds([]);
       setShowCreateModal(false);
       await load();
       await openTicket(created);
@@ -354,10 +369,8 @@ export function KanbanBoard({
       ticket.acceptance_criteria?.length
         ? `Critères d'acceptation:\n${ticket.acceptance_criteria.map((c) => `- ${c.text}`).join("\n")}`
         : "",
-      ticket.depends_on_ticket_id?.trim()
-        ? `Ce ticket ne doit être implémenté qu'après complétion du ticket prérequis #${
-            ticket.depends_on_ticket_id
-          } (statut done côté Kanban).`
+      mergedTicketDependencyIds(ticket).length
+        ? `Ce ticket ne doit être implémenté qu'après complétion des tickets prérequis suivants (statut done pour chacun) : ${mergedTicketDependencyIds(ticket).join(", ")}.`
         : "",
     ]
       .filter(Boolean)
@@ -377,9 +390,8 @@ export function KanbanBoard({
     setDepPatchBusy(true);
     setDepPatchError(null);
     try {
-      const raw = dependsOnDraft.trim();
       const updated = await api.patchStudioTicket(projectId, selected.id, {
-        depends_on_ticket_id: raw ? raw : null,
+        depends_on_ticket_ids: dependsOnDraftIds,
       });
       await load();
       await openTicket(updated);
@@ -480,7 +492,7 @@ export function KanbanBoard({
           <Button
             variant="secondary"
             onClick={() => {
-              setNewDependsOnId("");
+              setNewDependsOnIds([]);
               setCreateError(null);
               setShowCreateModal(true);
             }}
@@ -506,9 +518,7 @@ export function KanbanBoard({
             </div>
             <div className="kanban-column-body">
               {(byStatus.get(col.id) ?? []).map((t) => {
-                const dep = t.depends_on_ticket_id?.trim()
-                  ? tickets.find((x) => x.id === t.depends_on_ticket_id)
-                  : undefined;
+                const depIds = mergedTicketDependencyIds(t);
                 const prereqOk = ticketPrerequisiteSatisfied(t, tickets);
                 return (
                 <article key={t.id} className={`kanban-ticket-card kanban-ticket-card--${getTheme(t.status)}`}>
@@ -516,18 +526,22 @@ export function KanbanBoard({
                     <div className="kanban-ticket-title">{t.title}</div>
                     <span className={`kanban-status-badge kanban-theme-${getTheme(t.status)}`}>{t.status}</span>
                   </div>
-                  {t.depends_on_ticket_id?.trim() ? (
+                  {depIds.length > 0 ? (
                     <div
                       className={`kanban-card-prereq ${prereqOk ? "kanban-card-prereq--ok" : "kanban-card-prereq--wait"}`}
                       style={{ fontSize: 11 }}
                     >
-                      {prereqOk ? "Prérequis fait : " : "Après : "}
-                      <span title={t.depends_on_ticket_id}>
-                        {dep?.title ?? `ticket ${t.depends_on_ticket_id.slice(0, 8)}…`}
-                      </span>
-                      {!prereqOk && dep ? (
-                        <span className="muted"> ({dep.status})</span>
-                      ) : null}
+                      {prereqOk ? "Prérequis OK — " : "Après : "}
+                      {depIds.map((did, i) => {
+                        const dep = tickets.find((x) => x.id === did);
+                        return (
+                          <span key={did}>
+                            {i > 0 ? ", " : ""}
+                            <span title={did}>{dep?.title ?? `${did.slice(0, 8)}…`}</span>
+                            {!prereqOk && dep ? <span className="muted"> ({dep.status})</span> : null}
+                          </span>
+                        );
+                      })}
                     </div>
                   ) : null}
                   <div className="muted" style={{ fontSize: 12 }}>
@@ -575,30 +589,50 @@ export function KanbanBoard({
           <p className="muted">{selected.description || "Aucune description."}</p>
           <div className="panel card" style={{ marginTop: 10 }}>
             <h4 style={{ margin: "0 0 8px 0" }}>Prérequis avant Play</h4>
-            {selected.depends_on_ticket_id?.trim() ? (
-              <p className="muted" style={{ margin: "0 0 8px 0" }}>
-                Ce ticket attend la fin de :{" "}
-                <strong>{tickets.find((x) => x.id === selected.depends_on_ticket_id)?.title ?? selected.depends_on_ticket_id}</strong>
-                {(() => {
-                  const d = tickets.find((x) => x.id === selected.depends_on_ticket_id);
-                  return d ? (
-                    <span>
-                      {" "}
-                      (statut : <code>{d.status}</code>
-                      {ticketPrerequisiteSatisfied(selected, tickets) ? " — prêt pour Play" : " — Play bloqué jusqu’à done"})
-                    </span>
-                  ) : (
-                    <span className="error"> — ticket prérequis introuvable</span>
-                  );
-                })()}
-              </p>
+            {mergedTicketDependencyIds(selected).length > 0 ? (
+              <div className="muted" style={{ margin: "0 0 8px 0" }}>
+                <p style={{ margin: "0 0 6px 0" }}>Ce ticket attend la fin de :</p>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  {mergedTicketDependencyIds(selected).map((did) => {
+                    const d = tickets.find((x) => x.id === did);
+                    return (
+                      <li key={did}>
+                        <strong>{d?.title ?? did}</strong>
+                        {d ? (
+                          <span>
+                            {" "}
+                            (<code>{d.status}</code>
+                            {d.status === "done" ? " ✓" : ""})
+                          </span>
+                        ) : (
+                          <span className="error"> — introuvable</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="muted" style={{ margin: "6px 0 0 0" }}>
+                  {ticketPrerequisiteSatisfied(selected, tickets)
+                    ? "Tous les prérequis sont done — Play autorisé."
+                    : "Play bloqué jusqu’à ce que chaque prérequis soit en done."}
+                </p>
+              </div>
             ) : (
               <p className="muted" style={{ margin: "0 0 8px 0" }}>Aucun — vous pouvez lancer dès que le statut le permet.</p>
             )}
             <label className="field">
-              <span>Ticket à terminer avant (optionnel)</span>
-              <Select value={dependsOnDraft} onChange={(e) => setDependsOnDraft(e.target.value)}>
-                <option value="">— Aucun —</option>
+              <span>Tickets à terminer avant (Ctrl+clic pour plusieurs)</span>
+              <select
+                className="select"
+                multiple
+                size={Math.min(8, Math.max(3, tickets.filter((x) => x.id !== selected.id).length))}
+                value={dependsOnDraftIds}
+                onChange={(e) => {
+                  const opts = Array.from(e.target.selectedOptions).map((o) => o.value);
+                  setDependsOnDraftIds(opts);
+                }}
+                style={{ width: "100%", minHeight: 100 }}
+              >
                 {tickets
                   .filter((x) => x.id !== selected.id)
                   .map((x) => (
@@ -607,28 +641,28 @@ export function KanbanBoard({
                       {x.title.length > 72 ? "…" : ""} ({x.status})
                     </option>
                   ))}
-              </Select>
+              </select>
             </label>
             {depPatchError ? <div className="error">{depPatchError}</div> : null}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
               <Button variant="secondary" size="sm" disabled={depPatchBusy} onClick={() => void saveDependsOnTicket()}>
                 {depPatchBusy ? "Enregistrement…" : "Enregistrer le prérequis"}
               </Button>
-              {selected.depends_on_ticket_id?.trim() ? (
+              {mergedTicketDependencyIds(selected).map((did) => (
                 <Button
+                  key={did}
                   variant="ghost"
                   size="sm"
                   type="button"
-                  disabled={!tickets.some((x) => x.id === selected.depends_on_ticket_id)}
+                  disabled={!tickets.some((x) => x.id === did)}
                   onClick={() => {
-                    const tid = selected.depends_on_ticket_id?.trim();
-                    const d = tid ? tickets.find((x) => x.id === tid) : undefined;
+                    const d = tickets.find((x) => x.id === did);
                     if (d) void openTicket(d);
                   }}
                 >
-                  Ouvrir le ticket prérequis
+                  Ouvrir « {tickets.find((x) => x.id === did)?.title?.slice(0, 24) ?? did.slice(0, 8)} »
                 </Button>
-              ) : null}
+              ))}
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -836,16 +870,24 @@ export function KanbanBoard({
                 </Select>
               </div>
               <label className="field">
-                <span>Terminer d’abord ce ticket (prérequis)</span>
-                <Select value={newDependsOnId} onChange={(e) => setNewDependsOnId(e.target.value)}>
-                  <option value="">— Aucun —</option>
+                <span>Terminer d’abord ces tickets (prérequis, Ctrl+clic)</span>
+                <select
+                  className="select"
+                  multiple
+                  size={Math.min(8, Math.max(3, tickets.length))}
+                  value={newDependsOnIds}
+                  onChange={(e) => {
+                    setNewDependsOnIds(Array.from(e.target.selectedOptions).map((o) => o.value));
+                  }}
+                  style={{ width: "100%", minHeight: 80 }}
+                >
                   {tickets.map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.title.slice(0, 72)}
                       {x.title.length > 72 ? "…" : ""} ({x.status})
                     </option>
                   ))}
-                </Select>
+                </select>
               </label>
               {createError ? <div className="error">{createError}</div> : null}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>

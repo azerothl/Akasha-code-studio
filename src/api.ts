@@ -68,8 +68,10 @@ export type StudioTicket = {
   requested_by: string;
   assigned_agent: string;
   review_agent: string;
-  /** Ticket du même projet à terminer avant de pouvoir lancer celui-ci. */
+  /** Ticket du même projet à terminer avant de pouvoir lancer celui-ci (alias du premier prérequis). */
   depends_on_ticket_id?: string | null;
+  /** Prérequis multiples (union avec depends_on_ticket_id côté daemon). */
+  depends_on_ticket_ids?: string[];
   related_task_id?: string | null;
   acceptance_criteria: StudioTicketAcceptanceCriterion[];
   evidence: { files?: string[]; task_ids?: string[]; summary?: string };
@@ -236,6 +238,7 @@ export async function createStudioTicket(
     review_agent?: string;
     requested_by?: string;
     depends_on_ticket_id?: string | null;
+    depends_on_ticket_ids?: string[];
     acceptance_criteria?: StudioTicketAcceptanceCriterion[];
   },
 ): Promise<StudioTicket> {
@@ -273,6 +276,7 @@ export async function patchStudioTicket(
     assigned_agent?: string;
     review_agent?: string;
     depends_on_ticket_id?: string | null;
+    depends_on_ticket_ids?: string[] | null;
     status?: StudioTicketStatus;
     acceptance_criteria?: StudioTicketAcceptanceCriterion[];
     /** Remet un ticket « bloqué » après crash daemon : passe en todo et enlève related_task_id. */
