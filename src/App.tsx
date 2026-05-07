@@ -39,6 +39,7 @@ import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { TooltipHint } from "./tooltipHint";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
+import { KanbanBoard } from "./kanbanBoard";
 import { Accordion, type AccordionItem } from "./accordion";
 import { StackWizard } from "./stackWizard";
 import { Input } from "./components/ui/input";
@@ -81,12 +82,25 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type CenterTab = "dashboard" | "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "agents" | "settings";
+type CenterTab =
+  | "dashboard"
+  | "kanban"
+  | "editor"
+  | "preview"
+  | "plan"
+  | "design"
+  | "branches"
+  | "logs"
+  | "cockpit"
+  | "docs"
+  | "agents"
+  | "settings";
 
 export type { CenterTab };
 
 const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "dashboard", label: "Tableau de bord" },
+  { id: "kanban", label: "Kanban", testId: "studio-kanban-tab" },
   { id: "editor", label: "Éditeur" },
   { id: "preview", label: "Aperçu" },
   { id: "plan", label: "Plan" },
@@ -220,6 +234,40 @@ function isMarkdownPath(path: string | null): boolean {
   if (!path) return false;
   const p = path.toLowerCase();
   return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
+}
+
+function extractTicketDraftsFromPlan(planText: string): { title: string; description: string }[] {
+  const lines = planText.split(/\r?\n/);
+  const drafts: { title: string; description: string }[] = [];
+  let currentSection = "";
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith("## ")) {
+      currentSection = line.replace(/^##\s+/, "").trim();
+      continue;
+    }
+    // Accept TODO markdown checklists and task bullets.
+    if (/^-\s+\[\s?\]\s+/.test(line) || /^-\s+/.test(line)) {
+      const title = line
+        .replace(/^-\s+\[\s?\]\s+/, "")
+        .replace(/^-+\s+/, "")
+        .trim();
+      if (!title || title.length < 3) continue;
+      drafts.push({
+        title: title.slice(0, 200),
+        description: currentSection ? `Source plan section: ${currentSection}` : "Imported from CODE_STUDIO_PLAN.md",
+      });
+    }
+  }
+  // de-duplicate by case-insensitive title
+  const seen = new Set<string>();
+  return drafts.filter((d) => {
+    const k = d.title.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 function dedupeProgressForTrace(
@@ -387,6 +435,8 @@ export default function App() {
   const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
   const [projectSummaryDraft, setProjectSummaryDraft] = useState("");
   const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  const [ticketEnforcementModeDraft, setTicketEnforcementModeDraft] = useState<"off" | "soft" | "strict">("off");
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   /** Definition of Done : texte libre ou JSON critères (réutilisé pour chaque envoi tant que non vide). */
   const [acceptanceCriteriaDraft, setAcceptanceCriteriaDraft] = useState("");
   const [planDocText, setPlanDocText] = useState("");
@@ -771,6 +821,8 @@ export default function App() {
       setEvolutionSummaryDraft("");
       setProjectSummaryDraft("");
       setPolicyNotesDraft("");
+      setTicketEnforcementModeDraft("off");
+      setActiveTicketId(null);
       return;
     }
     let cancelled = false;
@@ -784,6 +836,7 @@ export default function App() {
         setProjectSummaryDraft((m.project_summary ?? "").trim());
         setEvolutionSummaryDraft((m.evolution_summary ?? "").trim());
         setPolicyNotesDraft((m.policy_notes ?? "").trim());
+        setTicketEnforcementModeDraft((m.ticket_enforcement_mode ?? "off") as "off" | "soft" | "strict");
         const raw = (m.tech_stack ?? "").trim();
         if (raw) {
           setStackPresetId(STACK_PRESET_CUSTOM);
@@ -806,6 +859,7 @@ export default function App() {
           setProjectSummaryDraft("");
           setEvolutionSummaryDraft("");
           setPolicyNotesDraft("");
+          setTicketEnforcementModeDraft("off");
         }
       });
     return () => {
@@ -864,6 +918,7 @@ export default function App() {
         setProjectSummaryDraft((meta.project_summary ?? "").trim());
         setEvolutionSummaryDraft((meta.evolution_summary ?? "").trim());
         setPolicyNotesDraft((meta.policy_notes ?? "").trim());
+        setTicketEnforcementModeDraft((meta.ticket_enforcement_mode ?? "off") as "off" | "soft" | "strict");
 
         const raw = (meta.tech_stack ?? "").trim();
         if (raw) {
@@ -1493,6 +1548,17 @@ export default function App() {
         ...(stack ? { tech_stack: stack } : {}),
         ...(summary ? { project_summary: summary } : {}),
       });
+      void api
+        .sendMessage({
+          session_id: `code-studio-bootstrap-${p.id}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`,
+          studio_project_id: p.id,
+          studio_assigned_agent: "studio_project_manager",
+          message:
+            "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
+        })
+        .catch(() => {
+          /* bootstrap best-effort ; l’utilisateur peut relancer depuis le chat */
+        });
       await refreshProjects();
       setSelectedId(p.id);
       setCenterTab("dashboard");
@@ -1545,6 +1611,7 @@ export default function App() {
         project_summary: projectSummaryDraft.trim() ? projectSummaryDraft.trim() : null,
         evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
         policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+        ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setStatus("Résumés produit / évolution et politique enregistrés (réinjectés dans les prochains messages)");
     } catch (e) {
@@ -1567,6 +1634,33 @@ export default function App() {
       setError(String(e));
     }
   };
+
+  const onCreateTicketsFromPlan = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      const drafts = extractTicketDraftsFromPlan(planDocText);
+      if (drafts.length === 0) {
+        setStatus("Aucune tâche détectée dans le plan.");
+        return;
+      }
+      let created = 0;
+      for (const d of drafts.slice(0, 30)) {
+        await api.createStudioTicket(selectedId, {
+          title: d.title,
+          description: d.description,
+          assigned_agent: agent || "studio_fullstack",
+          review_agent: "studio_reviewer",
+          requested_by: "plan_import",
+        });
+        created += 1;
+      }
+      setStatus(`${created} ticket(s) créés depuis le plan.`);
+      setCenterTab("kanban");
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, planDocText, agent]);
 
   const downloadTextFile = useCallback((filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -2011,6 +2105,8 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2090,6 +2186,8 @@ Procédure:
         studio_design_hint: regenerateDesignHint || undefined,
         studio_design_doc: designDocText.trim() || undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2145,6 +2243,8 @@ Procédure:
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
@@ -2163,6 +2263,22 @@ Procédure:
       setError(String(e));
     }
   };
+
+  const onLaunchTicket = useCallback((ticket: api.StudioTicket) => {
+    const intro = [
+      `Ticket #${ticket.id}: ${ticket.title}`,
+      ticket.description ? `Description: ${ticket.description}` : "",
+      `Assigned agent: ${ticket.assigned_agent}`,
+      `Review agent: ${ticket.review_agent}`,
+      "Objectif: implémenter la tâche puis laisser le ticket en review.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    setActiveTicketId(ticket.id);
+    setAgent(ticket.assigned_agent || agent);
+    setChatInput(intro);
+    setMainSplit("chat");
+  }, [agent]);
 
   const onOpenForkDialog = useCallback((index: number, msg: ChatMessage) => {
     if (!msg.task_id) return;
@@ -2200,6 +2316,8 @@ Procédure:
         fork_from_task_id: forkDialog.parentTaskId,
         fork_after_message_index: forkDialog.index,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [
         ...c,
@@ -2471,6 +2589,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -3089,8 +3209,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               onStartAgent={() => {
                 setMainSplit("chat");
               }}
+              onOpenKanban={() => setCenterTab("kanban")}
               onOpenPlan={() => setCenterTab("plan")}
               onOpenDesign={() => setCenterTab("design")}
+              onOpenPreview={() => setCenterTab("preview")}
+              onOpenBranches={() => setCenterTab("branches")}
             />
             {selectedId ? (
               <section className="panel panel-collapsible">
@@ -3176,6 +3299,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
                       />
                     </label>
+                    <label className="field">
+                      <span>Enforcement tickets</span>
+                      <Select
+                        value={ticketEnforcementModeDraft}
+                        onChange={(e) => setTicketEnforcementModeDraft(e.target.value as "off" | "soft" | "strict")}
+                      >
+                        <option value="off">off (aucune contrainte ticket)</option>
+                        <option value="soft">soft (warning sans ticket)</option>
+                        <option value="strict">strict (ticket obligatoire)</option>
+                      </Select>
+                    </label>
                     <Button variant="secondary" size="sm" onClick={() => void onSaveEvolutionAndPolicy()}>
                       Enregistrer résumés &amp; politique
                     </Button>
@@ -3202,12 +3336,31 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         }
                       />
                     </label>
+                    <label className="field" htmlFor="active-ticket-id-dashboard">
+                      <span>Ticket actif (optionnel)</span>
+                      <Input
+                        id="active-ticket-id-dashboard"
+                        value={activeTicketId ?? ""}
+                        onChange={(e) => setActiveTicketId(e.target.value.trim() || null)}
+                        placeholder="UUID ticket (injecté dans les prochains messages)"
+                      />
+                    </label>
                     </div>
                   </div>
                   </div>
                 ) : null}
               </section>
             ) : null}
+          </div>
+        ) : centerTab === "kanban" ? (
+          <div className="center-body">
+            <KanbanBoard
+              projectId={selectedId}
+              defaultAgent={agent || undefined}
+              ticketEnforcementMode={ticketEnforcementModeDraft}
+              onLaunchTicket={onLaunchTicket}
+              onOpenTaskTracking={onOpenTaskDetailModal}
+            />
           </div>
         ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
@@ -3390,6 +3543,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }}
               >
                 Référence (diff)
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!selectedId}
+                onClick={() => void onCreateTicketsFromPlan()}
+                title="Crée des tickets Kanban depuis les listes de tâches du plan"
+              >
+                Créer tickets Kanban
               </Button>
               <Button
                 variant="secondary"

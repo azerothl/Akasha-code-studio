@@ -45,6 +45,13 @@ export const SIDEBAR_NAV_GROUPS: NavGroup[] = [
     icon: "🛠️",
     items: [
       {
+        id: "dev-kanban",
+        label: "Kanban",
+        icon: "🗂️",
+        hint: "Suivi tickets, review et correctifs",
+        tabs: ["kanban"],
+      },
+      {
         id: "dev-editor",
         label: "Éditeur",
         icon: "📝",
