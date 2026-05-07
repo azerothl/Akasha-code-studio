@@ -325,7 +325,18 @@ type WorkflowStep = {
   at: string;
   details?: string[];
   progress: TaskProgressLine[];
+  worktreeBranch?: string;
+  worktreePath?: string;
+  worktreeIntegration?: string;
+  worktreeConflict?: string;
 };
+
+const WORKTREE_INTEGRATION_EVENT_TYPES = new Set([
+  "studio_worktree_integration_conflict",
+  "studio_worktree_integration_failed",
+  "studio_worktree_integration_cleaned",
+  "studio_worktree_integration_merged",
+]);
 
 function statusLabel(s: WorkflowStep["status"]): string {
   switch (s) {
@@ -368,7 +379,24 @@ function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
   return "info";
 }
 
-function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
+function isSupportedWorktreeIntegrationEventType(eventType: string): boolean {
+  return WORKTREE_INTEGRATION_EVENT_TYPES.has(eventType);
+}
+
+function worktreeTitleFromEventType(eventType: string): string {
+  return eventType === "studio_worktree_created" ? "Worktree créé" : "Intégration worktree";
+}
+
+function worktreeDetails(step: WorkflowStep): string[] {
+  return [
+    step.worktreeIntegration ? `Intégration: ${step.worktreeIntegration}` : "",
+    step.worktreeConflict ? `Conflit: ${step.worktreeConflict}` : "",
+    step.worktreeBranch ? `Branche: ${step.worktreeBranch}` : "",
+    step.worktreePath ? `Chemin: ${step.worktreePath}` : "",
+  ].filter(Boolean);
+}
+
+export function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
   const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
   const progressByTask = new Map<string, TaskProgressLine[]>();
   for (const p of progressLinesFromEvents(sorted, rootTaskId)) {
@@ -510,36 +538,29 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
       continue;
     }
 
-    if (
-      ev.event_type === "studio_worktree_created" ||
-      ev.event_type.startsWith("studio_worktree_integration_")
-    ) {
+    if (ev.event_type === "studio_worktree_created" || isSupportedWorktreeIntegrationEventType(ev.event_type)) {
       const taskId = payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
       const branch = payloadString(ev.payload, "worktree_branch");
       const path = payloadString(ev.payload, "worktree_path");
       const integration = payloadString(ev.payload, "integration_status");
       const conflict = payloadString(ev.payload, "conflict_state");
       const key = taskId ? `worktree:${taskId}` : `worktree:${ev.at}`;
-      const title =
-        ev.event_type === "studio_worktree_created"
-          ? "Worktree créé"
-          : "Intégration worktree";
       const step = ensure(key, {
         id: key,
         taskId,
-        title,
+        title: worktreeTitleFromEventType(ev.event_type),
         status: workflowStatusFromEvent(ev),
         at: ev.at,
         details: [],
       });
       step.status = workflowStatusFromEvent(ev);
-      step.details = [
-        ...(step.details ?? []),
-        branch ? `Branche: ${branch}` : "",
-        path ? `Chemin: ${path}` : "",
-        integration ? `Intégration: ${integration}` : "",
-        conflict ? `Conflit: ${conflict}` : "",
-      ].filter(Boolean).slice(-20);
+      step.title = worktreeTitleFromEventType(ev.event_type);
+      step.at = ev.at;
+      if (branch) step.worktreeBranch = branch;
+      if (path) step.worktreePath = path;
+      if (integration) step.worktreeIntegration = integration;
+      if (conflict) step.worktreeConflict = conflict;
+      step.details = worktreeDetails(step);
       continue;
     }
   }
