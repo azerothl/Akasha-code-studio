@@ -325,7 +325,11 @@ export type StudioPreviewStartResponse = {
   port: number;
   proxy_signed?: boolean;
   installed?: boolean;
-  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+  install?: { exit_code: number | null; stdout?: string; stderr?: string; argv?: string[] };
+  /** Libellé de la stack détectée (« Node.js (npm) », « Python · uv · Streamlit », …). */
+  profile?: string;
+  /** Argv concrète utilisée pour démarrer le serveur de dev (debug / journal). */
+  run_argv?: string[];
 };
 
 /** Lance `npm install` si besoin puis `npm run dev` (serveur en arrière-plan sur le daemon). */
@@ -365,7 +369,8 @@ export async function getPreviewLogs(projectId: string): Promise<{
   return r.json() as Promise<{ running: boolean; log: string; preview_inactive?: boolean }>;
 }
 
-/** `npm install` uniquement (sans lancer le serveur de dev). */
+/** Installe les dépendances du projet via la commande détectée pour la stack
+ * (`npm install` pour Node, `uv sync` pour Python uv, …) sans lancer le serveur. */
 export async function installStudioDeps(
   projectId: string,
   opts?: { force?: boolean },
@@ -373,7 +378,9 @@ export async function installStudioDeps(
   ok: boolean;
   skipped?: boolean;
   reason?: string;
-  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+  /** Libellé de la stack détectée (renvoyé par le daemon pour affichage UI). */
+  profile?: string;
+  install?: { exit_code: number | null; stdout?: string; stderr?: string; argv?: string[] };
 }> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/preview/install`), {
     method: "POST",
@@ -388,7 +395,8 @@ export async function installStudioDeps(
       ok: boolean;
       skipped?: boolean;
       reason?: string;
-      install?: { exit_code: number | null; stdout?: string; stderr?: string };
+      profile?: string;
+      install?: { exit_code: number | null; stdout?: string; stderr?: string; argv?: string[] };
     };
     if (!r.ok && !j.install) {
       throw new Error(`installStudioDeps ${r.status}`);

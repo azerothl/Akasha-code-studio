@@ -3438,6 +3438,20 @@ kbd {
   white-space: nowrap;
 }
 
+.preview-stack-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  white-space: nowrap;
+}
+
 .preview-dev-log {
   flex: 1;
   margin: 0;

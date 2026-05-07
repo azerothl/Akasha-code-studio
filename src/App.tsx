@@ -325,6 +325,8 @@ export default function App() {
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
+  /** Libellé de la stack détectée par le daemon lors du dernier `preview/start` ou `preview/install`. */
+  const [previewProfile, setPreviewProfile] = useState<string | null>(null);
   const [devServerLog, setDevServerLog] = useState("");
   const [depsInstallBusy, setDepsInstallBusy] = useState(false);
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
@@ -1291,6 +1293,7 @@ export default function App() {
     try {
       const r = await api.startStudioPreview(selectedId, { force_install: forceInstallBeforePreview });
       setDevPreviewUrl(r.url);
+      setPreviewProfile(r.profile ?? null);
       if (r.install) {
         const { stdout, stderr } = r.install;
         setPreviewLog([stdout, stderr].filter(Boolean).join("\n"));
@@ -1298,7 +1301,8 @@ export default function App() {
         setPreviewLog("");
       }
       setCenterTab("preview");
-      setStatus(`Prévisualisation : ${r.url}`);
+      const profileSuffix = r.profile ? ` (${r.profile})` : "";
+      setStatus(`Prévisualisation${profileSuffix} : ${r.url}`);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -1313,15 +1317,29 @@ export default function App() {
     setPreviewLog("");
     try {
       const r = await api.installStudioDeps(selectedId, { force: forceInstallBeforePreview });
+      setPreviewProfile(r.profile ?? null);
+      const profileSuffix = r.profile ? ` (${r.profile})` : "";
       if (r.skipped) {
-        setPreviewLog(`Dépendances déjà présentes (${r.reason ?? "node_modules"}).`);
-        setStatus("node_modules déjà installé");
+        setPreviewLog(`Dépendances déjà présentes${profileSuffix} : ${r.reason ?? ""}`);
+        setStatus(`Dépendances déjà installées${profileSuffix}`);
       } else if (r.install) {
-        const { stdout, stderr, exit_code } = r.install;
+        const { stdout, stderr, exit_code, argv } = r.install;
+        const cmd = argv?.join(" ") ?? "";
         setPreviewLog(
-          [`Code: ${exit_code}`, stdout, stderr].filter(Boolean).join("\n\n"),
+          [
+            cmd ? `$ ${cmd}` : null,
+            `Code: ${exit_code}`,
+            stdout,
+            stderr,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         );
-        setStatus(r.ok ? "npm install terminé" : "npm install a échoué — voir le journal ci-dessous");
+        setStatus(
+          r.ok
+            ? `Installation terminée${profileSuffix}`
+            : `Installation a échoué${profileSuffix} — voir le journal ci-dessous`,
+        );
       }
       setCenterTab("preview");
     } catch (e) {
@@ -3442,18 +3460,29 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body preview-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">Aperçu</span>
-              <label className="preview-checkbox" title="Relance npm install avant le serveur (utile après changement de dépendances).">
+              {previewProfile ? (
+                <span
+                  className="preview-stack-badge"
+                  title="Stack détectée par le daemon depuis les manifestes du projet"
+                >
+                  Stack : {previewProfile}
+                </span>
+              ) : null}
+              <label
+                className="preview-checkbox"
+                title="Relance la commande d’installation détectée (npm install / uv sync / …) avant le serveur, utile après changement de dépendances."
+              >
                 <Checkbox
                   checked={forceInstallBeforePreview}
                   onChange={(e) => setForceInstallBeforePreview(e.target.checked)}
                 />
-                Forcer npm install
+                Forcer la réinstallation des dépendances
               </label>
               <Button
                 variant="secondary"
                 size="sm"
                 disabled={!selectedId || depsInstallBusy}
-                title="Exécute uniquement npm install dans le dossier projet (sans démarrer le serveur)."
+                title="Exécute uniquement la commande d’installation détectée (npm install / uv sync / …) sans démarrer le serveur."
                 onClick={() => void onInstallDepsOnly()}
               >
                 {depsInstallBusy ? "Installation…" : "Installer les dépendances"}
@@ -3462,7 +3491,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 variant="default"
                 size="sm"
                 disabled={!selectedId || previewBusy}
-                title="npm install si nécessaire (ou forcé), puis npm run dev (Vite, etc.)"
+                title="Détecte la stack (Node, Python uv …), installe si nécessaire, puis lance le serveur de dev correspondant."
                 onClick={() => void onPlayPreview()}
               >
                 {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
@@ -3487,7 +3516,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </Button>
             </div>
             {previewLog ? (
-              <pre className="preview-install-log" title="Sortie npm install">
+              <pre className="preview-install-log" title="Sortie installation / serveur de dev">
                 {previewLog}
               </pre>
             ) : null}
@@ -3505,10 +3534,26 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             ) : (
               <div className="preview-empty">
                 <p>
-                  <strong>Serveur de dev</strong> : cliquez sur « Lancer la prévisualisation » (projet avec{" "}
-                  <code>package.json</code> et script <code>dev</code>). Le daemon exécute <code>npm install</code>{" "}
-                  si <code>node_modules</code> est absent.
+                  <strong>Serveur de dev</strong> : la stack est détectée automatiquement à partir des
+                  manifestes du projet, puis installée et lancée. Cliquez sur « Lancer la prévisualisation ».
                 </p>
+                <ul style={{ margin: "6px 0", paddingLeft: 20 }}>
+                  <li>
+                    <strong>Node.js</strong> — <code>package.json</code> (script <code>dev</code>) :
+                    {" "}
+                    <code>npm install</code> + <code>npm run dev</code>.
+                  </li>
+                  <li>
+                    <strong>Python · uv · Streamlit</strong> — <code>pyproject.toml</code> mentionnant
+                    {" "}
+                    <code>streamlit</code> : <code>uv sync</code> + <code>uv run streamlit run app.py</code>.
+                  </li>
+                  <li>
+                    <strong>Python · uv · FastAPI</strong> — <code>pyproject.toml</code> mentionnant
+                    {" "}
+                    <code>fastapi</code> : <code>uv sync</code> + <code>uv run uvicorn main:app</code>.
+                  </li>
+                </ul>
                 <p>
                   <strong>HTML statique</strong> : ouvrez un fichier <code>.html</code> dans l’arborescence, puis
                   revenez ici — l’aperçu s’affiche sans serveur.
