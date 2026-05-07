@@ -355,6 +355,15 @@ function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
   }
   if (ev.event_type === "subtask_completed" || ev.event_type === "task_completed") return "completed";
   if (ev.event_type === "task_failed" || ev.event_type === "task_cancelled") return "failed";
+  if (ev.event_type === "studio_worktree_integration_conflict") return "blocked";
+  if (ev.event_type === "studio_worktree_integration_failed") return "failed";
+  if (
+    ev.event_type === "studio_worktree_integration_cleaned" ||
+    ev.event_type === "studio_worktree_integration_merged"
+  ) {
+    return "completed";
+  }
+  if (ev.event_type === "studio_worktree_created") return "running";
   if (ev.event_type === "subtask_started" || ev.event_type === "sub_agent_spawned") return "running";
   return "info";
 }
@@ -498,6 +507,39 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
           files ? `Fichiers: ${files}` : "",
         ].filter(Boolean),
       });
+      continue;
+    }
+
+    if (
+      ev.event_type === "studio_worktree_created" ||
+      ev.event_type.startsWith("studio_worktree_integration_")
+    ) {
+      const taskId = payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
+      const branch = payloadString(ev.payload, "worktree_branch");
+      const path = payloadString(ev.payload, "worktree_path");
+      const integration = payloadString(ev.payload, "integration_status");
+      const conflict = payloadString(ev.payload, "conflict_state");
+      const key = taskId ? `worktree:${taskId}` : `worktree:${ev.at}`;
+      const title =
+        ev.event_type === "studio_worktree_created"
+          ? "Worktree créé"
+          : "Intégration worktree";
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        title,
+        status: workflowStatusFromEvent(ev),
+        at: ev.at,
+        details: [],
+      });
+      step.status = workflowStatusFromEvent(ev);
+      step.details = [
+        ...(step.details ?? []),
+        branch ? `Branche: ${branch}` : "",
+        path ? `Chemin: ${path}` : "",
+        integration ? `Intégration: ${integration}` : "",
+        conflict ? `Conflit: ${conflict}` : "",
+      ].filter(Boolean).slice(-20);
       continue;
     }
   }
