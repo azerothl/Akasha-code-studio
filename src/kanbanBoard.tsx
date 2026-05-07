@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -12,6 +12,31 @@ const COLUMNS: { id: api.StudioTicketStatus; label: string; theme: string }[] = 
   { id: "done", label: "Done", theme: "green" },
   { id: "blocked", label: "Blocked", theme: "red" },
 ];
+
+/** Snapshot léger pour afficher la progression sur les tickets actifs (in_progress / review). */
+type TicketProgressSnapshot = {
+  pct: number;
+  message: string;
+  status: string;
+};
+
+/** Statuts de ticket pour lesquels on affiche une barre de progression de la tâche liée. */
+const PROGRESS_TRACKED_STATUSES: api.StudioTicketStatus[] = ["in_progress", "review"];
+
+/** Dernière progression non vide (sinon 0%). */
+function lastProgress(task: api.TaskStatusResponse): { pct: number; message: string } {
+  const list = task.progress ?? [];
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    const p = list[i];
+    if (typeof p?.progress_pct === "number") {
+      return {
+        pct: Math.max(0, Math.min(100, Math.round(p.progress_pct))),
+        message: p.message ?? "",
+      };
+    }
+  }
+  return { pct: 0, message: "" };
+}
 
 /** IDs prérequis fusionnés (liste + ancien champ singleton). */
 function mergedTicketDependencyIds(ticket: api.StudioTicket): string[] {
@@ -96,6 +121,8 @@ export function KanbanBoard({
   const [depPatchError, setDepPatchError] = useState<string | null>(null);
   const [recoverTicketBusy, setRecoverTicketBusy] = useState(false);
   const [taskCtlBusy, setTaskCtlBusy] = useState<"pause" | "resume" | "cancel" | null>(null);
+  const [progressByTaskId, setProgressByTaskId] = useState<Record<string, TicketProgressSnapshot>>({});
+  const progressTickRef = useRef(0);
 
   async function load() {
     if (!projectId) return;
@@ -127,6 +154,67 @@ export function KanbanBoard({
     return () => window.clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, selected?.id]);
+
+  // IDs des tâches liées aux tickets actifs (in_progress / review) — recalculé à
+  // chaque refresh de la liste pour piloter le polling de progression côté carte.
+  const trackedTaskIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const t of tickets) {
+      if (!PROGRESS_TRACKED_STATUSES.includes(t.status)) continue;
+      const rid = t.related_task_id?.trim();
+      if (rid) ids.push(rid);
+    }
+    return ids;
+  }, [tickets]);
+
+  // Joined key — le useEffect ne se re-déclenche que si l'ensemble change.
+  const trackedTaskIdsKey = trackedTaskIds.slice().sort().join("|");
+
+  useEffect(() => {
+    if (trackedTaskIds.length === 0) {
+      setProgressByTaskId((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+      return;
+    }
+    let cancelled = false;
+    const tickId = ++progressTickRef.current;
+
+    const refresh = async () => {
+      const snapshots: [string, TicketProgressSnapshot][] = [];
+      await Promise.all(
+        trackedTaskIds.map(async (taskId) => {
+          try {
+            const t = await api.tryGetTask(taskId);
+            if (!t) return;
+            const { pct, message } = lastProgress(t);
+            snapshots.push([taskId, { pct, message, status: t.status }]);
+          } catch {
+            // Ignore individual failures: keep last known snapshot.
+          }
+        }),
+      );
+      if (cancelled || tickId !== progressTickRef.current) return;
+      setProgressByTaskId((prev) => {
+        const next: Record<string, TicketProgressSnapshot> = {};
+        for (const [id] of snapshots) next[id] = prev[id];
+        for (const [id, snap] of snapshots) next[id] = snap;
+        // Garder uniquement les tâches encore rattachées à un ticket actif.
+        const allowed = new Set(trackedTaskIds);
+        const filtered: Record<string, TicketProgressSnapshot> = {};
+        for (const [id, snap] of Object.entries(next)) {
+          if (allowed.has(id) && snap) filtered[id] = snap;
+        }
+        return filtered;
+      });
+    };
+
+    void refresh();
+    const handle = window.setInterval(() => void refresh(), 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(handle);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackedTaskIdsKey]);
 
   useEffect(() => {
     const taskId = selected?.related_task_id?.trim();
@@ -520,12 +608,41 @@ export function KanbanBoard({
               {(byStatus.get(col.id) ?? []).map((t) => {
                 const depIds = mergedTicketDependencyIds(t);
                 const prereqOk = ticketPrerequisiteSatisfied(t, tickets);
+                const taskId = t.related_task_id?.trim() ?? "";
+                const progressSnap =
+                  PROGRESS_TRACKED_STATUSES.includes(t.status) && taskId
+                    ? progressByTaskId[taskId]
+                    : undefined;
                 return (
                 <article key={t.id} className={`kanban-ticket-card kanban-ticket-card--${getTheme(t.status)}`}>
                   <div className="kanban-ticket-top">
                     <div className="kanban-ticket-title">{t.title}</div>
-                    <span className={`kanban-status-badge kanban-theme-${getTheme(t.status)}`}>{t.status}</span>
+                    <span className={`kanban-status-badge kanban-theme-${getTheme(t.status)}`}>
+                      {t.status}
+                      {progressSnap ? ` ${progressSnap.pct}%` : ""}
+                    </span>
                   </div>
+                  {progressSnap ? (
+                    <div
+                      className="kanban-card-progress"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={progressSnap.pct}
+                      aria-label={`Progression du ticket : ${progressSnap.pct}%`}
+                      title={progressSnap.message || `Progression : ${progressSnap.pct}%`}
+                    >
+                      <div className="kanban-card-progress-track">
+                        <div
+                          className="kanban-card-progress-fill"
+                          style={{ width: `${progressSnap.pct}%` }}
+                        />
+                      </div>
+                      {progressSnap.message ? (
+                        <div className="kanban-card-progress-msg muted">{progressSnap.message}</div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {depIds.length > 0 ? (
                     <div
                       className={`kanban-card-prereq ${prereqOk ? "kanban-card-prereq--ok" : "kanban-card-prereq--wait"}`}
