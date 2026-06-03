@@ -325,6 +325,8 @@ export default function App() {
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
+  /** WebContainers-style strict sandbox: iframe without same-origin (static/HTML preview safer). */
+  const [strictWebSandbox, setStrictWebSandbox] = useState(false);
   /** Libellé de la stack détectée par le daemon lors du dernier `preview/start` ou `preview/install`. */
   const [previewProfile, setPreviewProfile] = useState<string | null>(null);
   const [devServerLog, setDevServerLog] = useState("");
@@ -355,6 +357,7 @@ export default function App() {
   const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
   const [forkDialog, setForkDialog] = useState<{
     open: boolean;
     index: number;
@@ -2243,14 +2246,27 @@ Procédure:
     if (!text || !selectedId) return;
     setChatInput("");
     setError(null);
-    pollTaskAbortRef.current?.abort();
-    setPendingHumanInput(null);
-    setHumanReplyDraft("");
-    setTaskTrace(null);
+    const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+    const queued =
+      chatDeliveryMode !== "immediate" && activeTask !== null;
+    if (!queued) {
+      pollTaskAbortRef.current?.abort();
+      setPendingHumanInput(null);
+      setHumanReplyDraft("");
+      setTaskTrace(null);
+    }
     try {
       const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
+      const expanded = await api.expandAtFileRefs(selectedId, text);
       const { task_id } = await api.sendMessage({
-        message: text,
+        message: expanded,
+        ...(queued && activeTask
+          ? {
+              message_delivery_mode: chatDeliveryMode,
+              queue_mode: chatDeliveryMode,
+              target_task_id: activeTask.id,
+            }
+          : {}),
         studio_project_id: selectedId,
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
@@ -2264,6 +2280,17 @@ Procédure:
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
+      if (queued && activeTask) {
+        setChat((c) => [
+          ...c,
+          {
+            role: "user",
+            text: `[${chatDeliveryMode}] ${text}`,
+            task_id: activeTask.id,
+          },
+        ]);
+        return;
+      }
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
       const ac = new AbortController();
@@ -3478,6 +3505,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 />
                 Forcer la réinstallation des dépendances
               </label>
+              <label
+                className="preview-checkbox"
+                title="Sandbox iframe strict (sans same-origin) — mode WebContainer léger pour HTML/apercu statique."
+              >
+                <Checkbox
+                  checked={strictWebSandbox}
+                  onChange={(e) => setStrictWebSandbox(e.target.checked)}
+                />
+                Sandbox strict
+              </label>
               <Button
                 variant="secondary"
                 size="sm"
@@ -3527,7 +3564,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 src={devPreviewUrl ?? staticPreviewBlobUrl ?? undefined}
                 sandbox={
                   devPreviewUrl
-                    ? "allow-scripts allow-same-origin allow-forms allow-popups"
+                    ? strictWebSandbox
+                      ? "allow-scripts"
+                      : "allow-scripts allow-same-origin allow-forms allow-popups"
                     : "allow-scripts"
                 }
               />
@@ -4432,6 +4471,22 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </div>
           {chatOptionsOpen ? (
             <div className="chat-options-panel">
+              <label className="field">
+                <span>Livraison message (tâche en cours)</span>
+                <select
+                  value={chatDeliveryMode}
+                  onChange={(e) =>
+                    setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
+                  }
+                >
+                  <option value="immediate">Immédiat (nouvelle tâche)</option>
+                  <option value="steering">Steering (après le tour LLM courant)</option>
+                  <option value="follow_up">Follow-up (après fin du travail)</option>
+                </select>
+              </label>
+              <p className="hint">
+                Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
+              </p>
               <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
                 {CODE_MODE_OPTIONS.map((o) => (
                   <Button

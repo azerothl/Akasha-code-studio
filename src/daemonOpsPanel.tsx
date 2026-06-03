@@ -36,6 +36,7 @@ export function DaemonOpsPanel() {
   const [scheduleBusy, setScheduleBusy] = useState<string | null>(null);
   const [scheduleMsg, setScheduleMsg] = useState<string | null>(null);
   const [opsHealth, setOpsHealth] = useState<string>("");
+  const [permQueue, setPermQueue] = useState<Array<Record<string, unknown>>>([]);
 
   const fetchSection = useCallback(async (title: string, fn: () => Promise<unknown>) => {
     try {
@@ -65,6 +66,7 @@ export function DaemonOpsPanel() {
         mcpStatusSection,
         mcpRuntimeSection,
         lifecycleSection,
+        permissionsSection,
       ] = await Promise.all([
         fetchSection("GET /api/schedules", () => api.fetchSchedulesPayload()),
         fetchSection("GET /api/task_runs", () => api.fetchTaskRunsPayload()),
@@ -75,6 +77,7 @@ export function DaemonOpsPanel() {
         fetchSection("GET /api/mcp/status", () => api.fetchMcpStatus()),
         fetchSection("GET /api/mcp/runtime", () => api.fetchMcpRuntime()),
         fetchSection("GET /api/lifecycle/hooks", () => api.fetchLifecycleHooks()),
+        fetchSection("GET /api/permissions/queue", () => api.fetchPermissionsQueue()),
       ]);
 
       const schedulesPayload = schedulesSection.ok ? schedulesSection.payload : { schedules: [] };
@@ -85,6 +88,7 @@ export function DaemonOpsPanel() {
       const mcpStatusPayload = mcpStatusSection.ok ? mcpStatusSection.payload : {};
       const mcpRuntimePayload = mcpRuntimeSection.ok ? mcpRuntimeSection.payload : {};
       const lifecyclePayload = lifecycleSection.ok ? lifecycleSection.payload : {};
+      const permPayload = permissionsSection.ok ? permissionsSection.payload : { requests: [] };
 
       setSchedules(api.parseSchedulesPayload(schedulesPayload));
       setTaskRuns(api.parseTaskRunsPayload(taskRunsPayload));
@@ -93,6 +97,8 @@ export function DaemonOpsPanel() {
       setTools(api.parseToolsEffectivePayload(toolsPayload));
       setMcp(api.parseMcpSummary(mcpStatusPayload, mcpRuntimePayload));
       setLifecycle(api.parseLifecycleHooksPayload(lifecyclePayload));
+      const reqs = (permPayload as { requests?: unknown[] }).requests ?? [];
+      setPermQueue(reqs.filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null));
 
       const out = [
         schedulesSection,
@@ -104,6 +110,7 @@ export function DaemonOpsPanel() {
         mcpStatusSection,
         mcpRuntimeSection,
         lifecycleSection,
+        permissionsSection,
       ];
       setRawSections(out);
       const okCount = out.filter((x) => x.ok).length;
@@ -266,6 +273,50 @@ export function DaemonOpsPanel() {
           <p className="hint">Mode: <strong>{terminal.current}</strong> · PTY interactif: <strong>{terminal.interactivePty ? "oui" : "non"}</strong></p>
           <p className="hint">API PTY: {terminal.ptyApi.join(", ") || "—"}</p>
           <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/terminal/capabilities"))?.payload, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-permissions-queue-card">
+          <h4>File permissions</h4>
+          {permQueue.length === 0 ? (
+            <p className="hint">Aucune demande en attente.</p>
+          ) : (
+            <ul className="daemon-ops-mini-list">
+              {permQueue.map((item) => {
+                const id = String(item.id ?? "");
+                const tool = String(item.tool_id ?? item.action ?? "tool");
+                const status = String(item.status ?? "pending");
+                return (
+                  <li key={id}>
+                    <strong>{tool}</strong> · {status}
+                    <div style={{ display: "flex", gap: "0.35rem", marginTop: "0.25rem" }}>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={!id || status !== "pending"}
+                        onClick={() => void api.approvePermission(id).then(() => loadAll())}
+                      >
+                        Approuver
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!id || status !== "pending"}
+                        onClick={() => void api.denyPermission(id).then(() => loadAll())}
+                      >
+                        Refuser
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">
+              {JSON.stringify(rawSections.find((s) => s.title.includes("/api/permissions/queue"))?.payload, null, 2)}
+            </pre>
+          </details>
         </div>
 
         <div className="daemon-ops-card" data-testid="ops-tools-card">

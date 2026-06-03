@@ -718,6 +718,9 @@ export async function sendMessage(body: {
   studio_evolution_id?: string;
   fork_from_task_id?: string;
   fork_after_message_index?: number;
+  /** When steering/follow_up: target running task (defaults to latest root task in session). */
+  target_task_id?: string;
+  queue_mode?: "steering" | "follow_up";
   studio_code_mode?: StudioCodeMode;
   /** Consigne ponctuelle pour cette requête uniquement. */
   studio_policy_hint?: string;
@@ -741,6 +744,8 @@ export async function sendMessage(body: {
       session_id: defaultCodeStudioSessionId(body.session_id, body.studio_project_id),
       message: body.message,
       ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
+      ...(body.queue_mode ? { queue_mode: body.queue_mode } : {}),
+      ...(body.target_task_id ? { target_task_id: body.target_task_id } : {}),
       ...(body.studio_project_id ? { studio_project_id: body.studio_project_id } : {}),
       ...(body.studio_assigned_agent ? { studio_assigned_agent: body.studio_assigned_agent } : {}),
       ...(body.studio_evolution_branch ? { studio_evolution_branch: body.studio_evolution_branch } : {}),
@@ -1130,6 +1135,57 @@ export async function fetchLifecycleHooks(): Promise<unknown> {
   const r = await fetch(api("/api/lifecycle/hooks"));
   if (!r.ok) throw await normalizeHttpError("GET", "/api/lifecycle/hooks", r);
   return r.json();
+}
+
+export async function fetchPermissionsQueue(): Promise<{ requests: unknown[] }> {
+  const r = await fetch(api("/api/permissions/queue"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/permissions/queue", r);
+  return r.json() as Promise<{ requests: unknown[] }>;
+}
+
+export async function approvePermission(id: string): Promise<void> {
+  const r = await fetch(api(`/api/permissions/queue/${encodeURIComponent(id)}/approve`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) throw await normalizeHttpError("POST", `/api/permissions/queue/${id}/approve`, r);
+}
+
+export async function denyPermission(id: string): Promise<void> {
+  const r = await fetch(api(`/api/permissions/queue/${encodeURIComponent(id)}/deny`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) throw await normalizeHttpError("POST", `/api/permissions/queue/${id}/deny`, r);
+}
+
+/** Expand `@relative/path` tokens using project raw file API (phase 8 @fichier). */
+export async function expandAtFileRefs(
+  projectId: string,
+  message: string,
+): Promise<string> {
+  const re = /@([^\s@][^\s]*)/g;
+  let out = message;
+  const seen = new Set<string>();
+  for (const m of message.matchAll(re)) {
+    const path = m[1]?.trim();
+    if (!path || seen.has(path)) continue;
+    seen.add(path);
+    try {
+      const r = await fetch(
+        api(`/api/studio/projects/${encodeURIComponent(projectId)}/raw?path=${encodeURIComponent(path)}`),
+      );
+      if (!r.ok) continue;
+      const text = await r.text();
+      const clip = text.length > 8000 ? `${text.slice(0, 8000)}\n…[tronqué]` : text;
+      out += `\n\n[@fichier ${path}]\n\`\`\`\n${clip}\n\`\`\``;
+    } catch {
+      // skip unreadable refs
+    }
+  }
+  return out;
 }
 
 export type DaemonStatus = {
