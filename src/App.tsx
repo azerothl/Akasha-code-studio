@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
@@ -36,7 +37,9 @@ import {
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
-import { TooltipHint } from "./tooltipHint";
+import { NotificationCenter } from "./components/NotificationCenter";
+import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
+import { InfoTip, Tooltip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
 import { KanbanBoard } from "./kanbanBoard";
@@ -425,11 +428,10 @@ export default function App() {
     return window.localStorage.getItem("studio.buildLogOpen") === "1";
   });
   const [taskDetailTab, setTaskDetailTab] = useState<"events" | "progress" | "workflow" | "summary">("events");
-  const [uiTheme, setUiTheme] = useState<"dark" | "light" | "compact-dark">(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiTheme") : null;
-    return stored === "light" || stored === "compact-dark" ? stored : "dark";
-  });
+  const [uiTheme, setUiTheme] = useState<ThemeId>(() => loadThemePrefs().theme);
   const [uiDensity, setUiDensity] = useState<"normal" | "compact">(() => {
+    const prefs = loadThemePrefs();
+    if (prefs.forceCompactDensity) return "compact";
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiDensity") : null;
     return stored === "compact" ? "compact" : "normal";
   });
@@ -462,6 +464,11 @@ export default function App() {
   const [userGuideDoc, setUserGuideDoc] = useState("");
   const [userGuideLoading, setUserGuideLoading] = useState(false);
   const [userGuideError, setUserGuideError] = useState<string | null>(null);
+
+  useNotifyOnMessage(error, "error", "Code Studio");
+  useNotifyOnMessage(taskDetailError, "error", "Détail tâche");
+  useNotifyOnMessage(userGuideError, "error", "Documentation");
+  useNotifyOnMessage(codeRagStatusError, "error", "Index code");
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
@@ -2687,7 +2694,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
-  const appClass = `app ${uiDensity === "compact" || uiTheme === "compact-dark" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2714,8 +2721,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", uiTheme);
-    try { window.localStorage.setItem("studio.uiTheme", uiTheme); } catch { /* quota / private mode */ }
-  }, [uiTheme]);
+    document.documentElement.setAttribute("data-density", uiDensity === "compact" ? "compact" : "comfortable");
+    saveTheme(uiTheme);
+  }, [uiTheme, uiDensity]);
 
   useEffect(() => {
     try { window.localStorage.setItem("studio.uiDensity", uiDensity); } catch { /* quota / private mode */ }
@@ -3102,7 +3110,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     Exécuter le build
                   </Button>
                 </div>
-                {error ? <div className="banner banner-error">{error}</div> : null}
                 {status ? <div className="banner banner-ok">{status}</div> : null}
               </div>
             </div>
@@ -3168,6 +3175,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="app-header-nav-secondary">
+          <NotificationCenter />
           <label className="field-inline header-agent-inline">
             <span className="header-agent-label">Rôle agent</span>
             <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
@@ -3839,7 +3847,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane branches-pane">
             <div className="preview-toolbar branches-toolbar">
               <span className="pane-title-inline">Gestion des branches</span>
-              <TooltipHint text="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+              <InfoTip content="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
               <Button
                 variant="ghost"
                 size="sm"
@@ -3858,7 +3866,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="branches-layout">
               <section className="panel branches-panel">
                 <h2>
-                  Branches disponibles <TooltipHint text="Liste locale avec état courant, avance/retard et dernier commit." />
+                  Branches disponibles <InfoTip content="Liste locale avec état courant, avance/retard et dernier commit." />
                 </h2>
                 {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
                 <ul className="branches-list">
@@ -3892,7 +3900,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Comparer / merger <TooltipHint text="La branche source est fusionnée dans la branche cible." />
+                  Comparer / merger <InfoTip content="La branche source est fusionnée dans la branche cible." />
                 </h2>
                 <div className="field-row">
                   <label className="field">
@@ -3977,7 +3985,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Conflits de merge <TooltipHint text="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                  Conflits de merge <InfoTip content="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
                 </h2>
                 {gitMergeInProgress ? (
                   <p className="hint branches-warning">
@@ -4035,9 +4043,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             {userGuideLoading ? (
               <p className="hint">Loading documentation…</p>
             ) : userGuideError ? (
-              <div className="banner banner-error" role="alert">
-                Failed to load documentation: {userGuideError}
-              </div>
+              <p className="hint">Consultez le centre de notifications pour le détail.</p>
             ) : (
               <div className="docs-pane-layout">
                 <aside className="docs-pane-toc" aria-label="Documentation table of contents">
@@ -4181,10 +4187,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <div className="field-row">
                         <label className="field">
                           <span>Thème</span>
-                          <Select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
-                            <option value="dark">Dark</option>
-                            <option value="light">Light</option>
-                            <option value="compact-dark">Compact dark</option>
+                          <Select
+                            value={uiTheme}
+                            onChange={(e) => setUiTheme(e.target.value as ThemeId)}
+                          >
+                            {THEME_IDS.map((id) => (
+                              <option key={id} value={id}>
+                                {THEME_LABELS[id]}
+                              </option>
+                            ))}
                           </Select>
                         </label>
                         <label className="field">
@@ -4439,8 +4450,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="chat-panel-footer">
-          <div className="chat-form">
+          <div className="input-group input-group--textarea chat-form">
             <Textarea
+              className="input-group-field input-group-field--textarea"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
@@ -4451,9 +4463,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }
               }}
             />
-            <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
-              Envoyer
-            </Button>
+            <div className="input-group-append">
+              <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
+                Envoyer
+              </Button>
+            </div>
           </div>
           <div className="chat-controls-row">
             <Button
@@ -4473,32 +4487,35 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="chat-options-panel">
               <label className="field">
                 <span>Livraison message (tâche en cours)</span>
-                <select
-                  value={chatDeliveryMode}
-                  onChange={(e) =>
-                    setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
-                  }
-                >
-                  <option value="immediate">Immédiat (nouvelle tâche)</option>
-                  <option value="steering">Steering (après le tour LLM courant)</option>
-                  <option value="follow_up">Follow-up (après fin du travail)</option>
-                </select>
+                <div className="input-group field-input-group">
+                  <span className="input-group-addon">Envoi</span>
+                  <select
+                    className="input-group-field"
+                    value={chatDeliveryMode}
+                    onChange={(e) =>
+                      setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
+                    }
+                  >
+                    <option value="immediate">Immédiat (nouvelle tâche)</option>
+                    <option value="steering">Steering (après le tour LLM courant)</option>
+                    <option value="follow_up">Follow-up (après fin du travail)</option>
+                  </select>
+                </div>
               </label>
               <p className="hint">
                 Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
               </p>
-              <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+              <div className="btn-group code-mode-strip" role="group" aria-label="Mode Code Studio">
                 {CODE_MODE_OPTIONS.map((o) => (
-                  <Button
+                  <button
                     key={o.value}
-                    variant="ghost"
-                    size="sm"
-                    className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                    type="button"
+                    className={`btn-group-item ${codeMode === o.value ? "active" : ""}`}
                     title={o.hint}
                     onClick={() => setCodeMode(o.value)}
                   >
                     {o.label}
-                  </Button>
+                  </button>
                 ))}
               </div>
               <label className="field chat-policy-hint-field">
@@ -4566,8 +4583,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             <div className="task-detail-scroll">
               {taskDetailLoading ? <p className="hint">Chargement…</p> : null}
-              {taskDetailError ? <div className="banner banner-error">{taskDetailError}</div> : null}
-              {!taskDetailLoading && !taskDetailError && taskDetailPayload ? (
+              {!taskDetailLoading && taskDetailPayload ? (
                 <>
                   <div className="task-detail-tabs" role="tablist" aria-label="Navigation détail tâche">
                     {[

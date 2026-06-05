@@ -1,0 +1,106 @@
+/* DO NOT EDIT — source: Akasha/design-system/tooltip.css */
+
+.akasha-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.akasha-tooltip-trigger-host {
+  display: inline-block;
+}
+
+.akasha-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--akasha-text-dim);
+  cursor: help;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.akasha-tooltip-trigger:hover,
+.akasha-tooltip-trigger:focus-visible {
+  color: var(--akasha-accent);
+}
+
+.akasha-tooltip-bubble {
+  position: absolute;
+  z-index: 1100;
+  max-width: min(280px, 90vw);
+  padding: var(--akasha-space-sm) var(--akasha-space-md);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--akasha-text);
+  background: var(--akasha-bg-card);
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+.akasha-tooltip-wrap:hover .akasha-tooltip-bubble,
+.akasha-tooltip-wrap:focus-within .akasha-tooltip-bubble,
+.akasha-tooltip-wrap[data-open="true"] .akasha-tooltip-bubble,
+.akasha-tooltip-bubble--floating {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+}
+
+.akasha-tooltip-bubble--floating {
+  z-index: 1400;
+}
+
+.akasha-tooltip-bubble--top {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.akasha-tooltip-bubble--bottom {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Vanilla data-tooltip (Akasha_app) */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 1100;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(240px, 90vw);
+  padding: var(--akasha-space-sm) var(--akasha-space-md);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--akasha-text);
+  background: var(--akasha-bg-card);
+  border: 1px solid var(--akasha-border);
+  white-space: normal;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
