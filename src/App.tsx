@@ -39,7 +39,7 @@ import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { NotificationCenter } from "./components/NotificationCenter";
 import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
-import { InfoTip, Tooltip } from "./components/Tooltip";
+import { InfoTip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
 import { KanbanBoard } from "./kanbanBoard";
@@ -361,6 +361,9 @@ export default function App() {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
+  const [chatIncognito, setChatIncognito] = useState(false);
+  const [handoffModel, setHandoffModel] = useState("");
+  const [handoffProvider, setHandoffProvider] = useState("");
   const [forkDialog, setForkDialog] = useState<{
     open: boolean;
     index: number;
@@ -2135,6 +2138,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2216,6 +2220,7 @@ Procédure:
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2286,6 +2291,7 @@ Procédure:
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       if (queued && activeTask) {
         setChat((c) => [
@@ -2370,6 +2376,7 @@ Procédure:
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [
         ...c,
@@ -4474,6 +4481,29 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               variant="ghost"
               size="sm"
               className="chat-options-toggle"
+              disabled={!selectedId}
+              onClick={async () => {
+                if (!selectedId) return;
+                try {
+                  await api.handoffSession({
+                    session_id: `code-studio-${selectedId}`,
+                    target_model: handoffModel.trim() || undefined,
+                    target_provider: handoffProvider.trim() || undefined,
+                    task_id: taskTrace?.id || undefined,
+                  });
+                  setStatus("Handoff modèle envoyé.");
+                } catch (e) {
+                  setError(String(e));
+                }
+              }}
+              title="Reprendre la session avec un autre modèle"
+            >
+              Reprendre avec un autre modèle
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
               onClick={() => setChatOptionsOpen((v) => !v)}
               title="Afficher ou masquer les options avancées"
             >
@@ -4505,6 +4535,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               <p className="hint">
                 Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
               </p>
+              <label className="field">
+                <span>Handoff provider (optionnel)</span>
+                <Input type="text" value={handoffProvider} onChange={(e) => setHandoffProvider(e.target.value)} />
+              </label>
+              <label className="field">
+                <span>Handoff modèle (optionnel)</span>
+                <Input type="text" value={handoffModel} onChange={(e) => setHandoffModel(e.target.value)} placeholder="gpt-4o-mini, qwen3:8b, ..." />
+              </label>
+              <label className="field checkbox-field">
+                <span>Incognito (ne pas promouvoir en mémoire)</span>
+                <Checkbox checked={chatIncognito} onChange={(e) => setChatIncognito(e.target.checked)} />
+              </label>
               <div className="btn-group code-mode-strip" role="group" aria-label="Mode Code Studio">
                 {CODE_MODE_OPTIONS.map((o) => (
                   <button

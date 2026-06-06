@@ -711,6 +711,7 @@ function defaultCodeStudioSessionId(
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
+  incognito?: boolean;
   message_delivery_mode?: "immediate" | "steering" | "follow_up";
   studio_project_id?: string;
   studio_assigned_agent?: string;
@@ -744,6 +745,7 @@ export async function sendMessage(body: {
       session_id: defaultCodeStudioSessionId(body.session_id, body.studio_project_id),
       message: body.message,
       ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
+      ...(body.incognito ? { incognito: true } : {}),
       ...(body.queue_mode ? { queue_mode: body.queue_mode } : {}),
       ...(body.target_task_id ? { target_task_id: body.target_task_id } : {}),
       ...(body.studio_project_id ? { studio_project_id: body.studio_project_id } : {}),
@@ -776,6 +778,24 @@ export async function sendMessage(body: {
   }
   const j = (await r.json()) as { task_id: string };
   return j;
+}
+
+export async function handoffSession(body: {
+  session_id: string;
+  target_model?: string;
+  target_provider?: string;
+  task_id?: string;
+}): Promise<unknown> {
+  const r = await fetch(api("/api/session/handoff"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`handoffSession ${r.status}: ${t}`);
+  }
+  return r.json();
 }
 
 /** Suggestion « prochaine action » (Code Studio + daemon). */
@@ -1134,6 +1154,25 @@ export async function fetchMcpRuntime(): Promise<unknown> {
 export async function fetchLifecycleHooks(): Promise<unknown> {
   const r = await fetch(api("/api/lifecycle/hooks"));
   if (!r.ok) throw await normalizeHttpError("GET", "/api/lifecycle/hooks", r);
+  return r.json();
+}
+
+export type WebhookDelivery = {
+  idempotency_key: string;
+  seen_at_unix: number;
+  status: string;
+};
+
+export async function fetchWebhookRecent(limit = 20): Promise<{ deliveries: WebhookDelivery[]; count: number }> {
+  const r = await fetch(api(`/api/automation/webhook/recent?limit=${encodeURIComponent(String(limit))}`));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/automation/webhook/recent", r);
+  return r.json() as Promise<{ deliveries: WebhookDelivery[]; count: number }>;
+}
+
+export async function fetchSessionResumeBrief(sessionId: string): Promise<unknown> {
+  const q = new URLSearchParams({ session_id: sessionId });
+  const r = await fetch(api(`/api/session/resume-brief?${q.toString()}`));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/session/resume-brief", r);
   return r.json();
 }
 
