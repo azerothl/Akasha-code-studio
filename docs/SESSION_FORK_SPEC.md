@@ -73,3 +73,33 @@ Résultat actuel: recette validée sur le flux v1 (fork UI + cut de contexte ser
 
 - Priorités roadmap (dépôt **Akasha**) : `spec/dev/roadmap/pi_mono_alignment_priorities.md`
 - Contrat événements client (dépôt **Akasha**) : `spec/dev/runtime/agent_client_event_contract.md`
+
+## Fork tree v2 (draft)
+
+Objectif v2 : visualiser explicitement la filiation des branches au lieu d'une simple timeline remplacée.
+
+- **Nœud** : `task_id`, `session_id`, `fork_parent_task_id`, `fork_cut_index`, `created_at`, `status`.
+- **Arête** : `parent_task_id -> child_task_id` avec méta de coupure.
+- **API minimale visée** :
+  - `GET /api/session/forks?session_id=...` retourne la liste des nœuds et arêtes.
+  - `GET /api/tasks/:id/fork-context` retourne parent + index de coupure (fallback v1).
+- **UI minimale** :
+  - panneau « Arbre de forks » dans le détail tâche ;
+  - clic sur un nœud => ouverture du transcript de la branche sélectionnée ;
+  - badge « branche active ».
+
+## v2 — notes d'implémentation
+
+**Statut (2026-06-06)** : v1 livrée ; v2 **partielle** — traçabilité serveur prête, UI arbre et endpoints dédiés **non implémentés**.
+
+| Composant | Statut | Détail |
+|-----------|--------|--------|
+| Fork UI v1 | Livré | `akasha-code-studio/src/App.tsx` — action « Fork à partir d'ici », dialogue instruction |
+| Cut serveur | Livré | `POST /api/message` avec `fork_from_task_id` + `fork_after_message_index` — `api.rs` |
+| Événement trace | Livré | `session_fork_created` avec `fork_parent_task_id`, `fork_cut_index`, `fork_cut_turns` |
+| Handoff modèle | Livré | `POST /api/session/handoff` — réponse `schema_version: 2` |
+| `GET /api/session/forks` | Reporter | Graphe arbre — reporter v2.1 ; métadonnées fork déjà dans événements tâche |
+| `GET /api/tasks/:id/fork-context` | Reporter | Fallback v1 via événement `session_fork_created` |
+| Panneau arbre Studio | Reporter | Onglet « Arbre de forks » — reporter v2.1 |
+
+**Décision** : la filiation est **auditable** via événements et méta tâche ; la visualisation graphe reste optionnelle (alignement pi-mono `/tree` non bloquant pour clôture roadmap).

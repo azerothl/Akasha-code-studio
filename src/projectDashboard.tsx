@@ -17,8 +17,11 @@ type Props = {
   }[];
   lastSyncedAt?: number | null;
   onStartAgent?: () => void;
+  onOpenKanban?: () => void;
   onOpenPlan?: () => void;
   onOpenDesign?: () => void;
+  onOpenBranches?: () => void;
+  onOpenPreview?: () => void;
 };
 
 function formatGitStatus(clean: boolean | null | undefined, lines?: { status: string; path: string }[]): string {
@@ -69,8 +72,11 @@ export function ProjectDashboard({
   lastActivity,
   lastSyncedAt,
   onStartAgent,
+  onOpenKanban,
   onOpenPlan,
   onOpenDesign,
+  onOpenBranches,
+  onOpenPreview,
 }: Props) {
   if (!project) {
     return (
@@ -206,6 +212,16 @@ export function ProjectDashboard({
             </Button>
             <Button
               className="w-full justify-center text-[0.85rem]"
+              onClick={onOpenKanban}
+              disabled={!onOpenKanban}
+              title="Aller à l’onglet Kanban tickets"
+              variant="secondary"
+              size="sm"
+            >
+              🗂️ Ouvrir Kanban
+            </Button>
+            <Button
+              className="w-full justify-center text-[0.85rem]"
               onClick={onOpenPlan}
               disabled={!onOpenPlan}
               title="Aller à l’onglet Plan (CODE_STUDIO_PLAN.md)"
@@ -223,6 +239,26 @@ export function ProjectDashboard({
               size="sm"
             >
               🎨 Voir design
+            </Button>
+            <Button
+              className="w-full justify-center text-[0.85rem]"
+              onClick={onOpenPreview}
+              disabled={!onOpenPreview}
+              title="Aller à l’onglet Aperçu / serveur dev"
+              variant="secondary"
+              size="sm"
+            >
+              👁️ Ouvrir aperçu
+            </Button>
+            <Button
+              className="w-full justify-center text-[0.85rem]"
+              onClick={onOpenBranches}
+              disabled={!onOpenBranches}
+              title="Aller à l’onglet Branches"
+              variant={meta?.git_worktree_clean === false ? "default" : "secondary"}
+              size="sm"
+            >
+              🌿 Ouvrir branches
             </Button>
           </div>
         </div>

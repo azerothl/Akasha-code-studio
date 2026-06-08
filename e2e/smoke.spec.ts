@@ -168,6 +168,110 @@ test.beforeEach(async ({ page }) => {
     });
   });
 
+  await page.route(`**/api/studio/projects/${demoId}/tickets/**`, async (route) => {
+    const url = route.request().url();
+    const method = route.request().method();
+    if (url.includes("/review") && method === "POST") {
+      const demoTicket = {
+        id: "ticket-1",
+        project_id: demoId,
+        title: "Mock ticket",
+        description: "",
+        status: "done",
+        requested_by: "test",
+        assigned_agent: "studio_fullstack",
+        review_agent: "studio_reviewer",
+        acceptance_criteria: [],
+        evidence: {},
+        created_at: "2020-01-01T00:00:00Z",
+        updated_at: "2020-01-01T00:00:00Z",
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ticket: demoTicket }),
+      });
+      return;
+    }
+    if (method === "PATCH") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      const demoTicket = {
+        id: "ticket-1",
+        project_id: demoId,
+        title: "Mock ticket",
+        description: "",
+        status: (body.status as string) ?? "todo",
+        requested_by: "test",
+        assigned_agent: "studio_fullstack",
+        review_agent: "studio_reviewer",
+        acceptance_criteria: [],
+        evidence: {},
+        created_at: "2020-01-01T00:00:00Z",
+        updated_at: "2020-01-01T00:00:00Z",
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ticket: demoTicket }),
+      });
+      return;
+    }
+    // GET ticket detail
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ticket: {
+          id: "ticket-1",
+          project_id: demoId,
+          title: "Mock ticket",
+          description: "",
+          status: "todo",
+          requested_by: "test",
+          assigned_agent: "studio_fullstack",
+          review_agent: "studio_reviewer",
+          acceptance_criteria: [],
+          evidence: {},
+          created_at: "2020-01-01T00:00:00Z",
+          updated_at: "2020-01-01T00:00:00Z",
+        },
+        timeline: [],
+      }),
+    });
+  });
+
+  await page.route(`**/api/studio/projects/${demoId}/tickets`, async (route) => {
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ticket: {
+            id: "ticket-new",
+            project_id: demoId,
+            title: (body.title as string) ?? "New ticket",
+            description: (body.description as string) ?? "",
+            status: "todo",
+            requested_by: (body.requested_by as string) ?? "test",
+            assigned_agent: (body.assigned_agent as string) ?? "studio_fullstack",
+            review_agent: (body.review_agent as string) ?? "studio_reviewer",
+            acceptance_criteria: [],
+            evidence: {},
+            created_at: "2020-01-01T00:00:00Z",
+            updated_at: "2020-01-01T00:00:00Z",
+          },
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [] }),
+    });
+  });
+
   await page.route(`**/api/studio/projects/${demoId}/code-rag/status`, async (route) => {
     await route.fulfill({
       status: 200,

@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { loader } from "@monaco-editor/react";
+import { NotificationProvider } from "./notifications/NotificationContext";
 import App from "./App";
 import "./index.css";
 
@@ -13,6 +14,8 @@ loader.config({
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <NotificationProvider>
+      <App />
+    </NotificationProvider>
   </React.StrictMode>,
 );

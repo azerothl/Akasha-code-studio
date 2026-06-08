@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
@@ -36,9 +37,12 @@ import {
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
-import { TooltipHint } from "./tooltipHint";
+import { NotificationCenter } from "./components/NotificationCenter";
+import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
+import { InfoTip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
+import { KanbanBoard } from "./kanbanBoard";
 import { Accordion, type AccordionItem } from "./accordion";
 import { StackWizard } from "./stackWizard";
 import { Input } from "./components/ui/input";
@@ -81,12 +85,25 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type CenterTab = "dashboard" | "editor" | "preview" | "plan" | "design" | "branches" | "logs" | "cockpit" | "docs" | "agents" | "settings";
+type CenterTab =
+  | "dashboard"
+  | "kanban"
+  | "editor"
+  | "preview"
+  | "plan"
+  | "design"
+  | "branches"
+  | "logs"
+  | "cockpit"
+  | "docs"
+  | "agents"
+  | "settings";
 
 export type { CenterTab };
 
 const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
   { id: "dashboard", label: "Tableau de bord" },
+  { id: "kanban", label: "Kanban", testId: "studio-kanban-tab" },
   { id: "editor", label: "Éditeur" },
   { id: "preview", label: "Aperçu" },
   { id: "plan", label: "Plan" },
@@ -222,6 +239,40 @@ function isMarkdownPath(path: string | null): boolean {
   return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
 }
 
+function extractTicketDraftsFromPlan(planText: string): { title: string; description: string }[] {
+  const lines = planText.split(/\r?\n/);
+  const drafts: { title: string; description: string }[] = [];
+  let currentSection = "";
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith("## ")) {
+      currentSection = line.replace(/^##\s+/, "").trim();
+      continue;
+    }
+    // Accept TODO markdown checklists and task bullets.
+    if (/^-\s+\[\s?\]\s+/.test(line) || /^-\s+/.test(line)) {
+      const title = line
+        .replace(/^-\s+\[\s?\]\s+/, "")
+        .replace(/^-+\s+/, "")
+        .trim();
+      if (!title || title.length < 3) continue;
+      drafts.push({
+        title: title.slice(0, 200),
+        description: currentSection ? `Source plan section: ${currentSection}` : "Imported from CODE_STUDIO_PLAN.md",
+      });
+    }
+  }
+  // de-duplicate by case-insensitive title
+  const seen = new Set<string>();
+  return drafts.filter((d) => {
+    const k = d.title.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 function dedupeProgressForTrace(
   progress: { progress_pct: number; message: string; task_id?: string | null }[],
   taskId: string,
@@ -277,6 +328,10 @@ export default function App() {
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
+  /** WebContainers-style strict sandbox: iframe without same-origin (static/HTML preview safer). */
+  const [strictWebSandbox, setStrictWebSandbox] = useState(false);
+  /** Libellé de la stack détectée par le daemon lors du dernier `preview/start` ou `preview/install`. */
+  const [previewProfile, setPreviewProfile] = useState<string | null>(null);
   const [devServerLog, setDevServerLog] = useState("");
   const [depsInstallBusy, setDepsInstallBusy] = useState(false);
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
@@ -305,6 +360,10 @@ export default function App() {
   const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
+  const [chatIncognito, setChatIncognito] = useState(false);
+  const [handoffModel, setHandoffModel] = useState("");
+  const [handoffProvider, setHandoffProvider] = useState("");
   const [forkDialog, setForkDialog] = useState<{
     open: boolean;
     index: number;
@@ -372,11 +431,10 @@ export default function App() {
     return window.localStorage.getItem("studio.buildLogOpen") === "1";
   });
   const [taskDetailTab, setTaskDetailTab] = useState<"events" | "progress" | "workflow" | "summary">("events");
-  const [uiTheme, setUiTheme] = useState<"dark" | "light" | "compact-dark">(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiTheme") : null;
-    return stored === "light" || stored === "compact-dark" ? stored : "dark";
-  });
+  const [uiTheme, setUiTheme] = useState<ThemeId>(() => loadThemePrefs().theme);
   const [uiDensity, setUiDensity] = useState<"normal" | "compact">(() => {
+    const prefs = loadThemePrefs();
+    if (prefs.forceCompactDensity) return "compact";
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiDensity") : null;
     return stored === "compact" ? "compact" : "normal";
   });
@@ -387,6 +445,8 @@ export default function App() {
   const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
   const [projectSummaryDraft, setProjectSummaryDraft] = useState("");
   const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  const [ticketEnforcementModeDraft, setTicketEnforcementModeDraft] = useState<"off" | "soft" | "strict">("off");
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   /** Definition of Done : texte libre ou JSON critères (réutilisé pour chaque envoi tant que non vide). */
   const [acceptanceCriteriaDraft, setAcceptanceCriteriaDraft] = useState("");
   const [planDocText, setPlanDocText] = useState("");
@@ -407,6 +467,11 @@ export default function App() {
   const [userGuideDoc, setUserGuideDoc] = useState("");
   const [userGuideLoading, setUserGuideLoading] = useState(false);
   const [userGuideError, setUserGuideError] = useState<string | null>(null);
+
+  useNotifyOnMessage(error, "error", "Code Studio");
+  useNotifyOnMessage(taskDetailError, "error", "Détail tâche");
+  useNotifyOnMessage(userGuideError, "error", "Documentation");
+  useNotifyOnMessage(codeRagStatusError, "error", "Index code");
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
@@ -771,6 +836,8 @@ export default function App() {
       setEvolutionSummaryDraft("");
       setProjectSummaryDraft("");
       setPolicyNotesDraft("");
+      setTicketEnforcementModeDraft("off");
+      setActiveTicketId(null);
       return;
     }
     let cancelled = false;
@@ -784,6 +851,7 @@ export default function App() {
         setProjectSummaryDraft((m.project_summary ?? "").trim());
         setEvolutionSummaryDraft((m.evolution_summary ?? "").trim());
         setPolicyNotesDraft((m.policy_notes ?? "").trim());
+        setTicketEnforcementModeDraft((m.ticket_enforcement_mode ?? "off") as "off" | "soft" | "strict");
         const raw = (m.tech_stack ?? "").trim();
         if (raw) {
           setStackPresetId(STACK_PRESET_CUSTOM);
@@ -806,6 +874,7 @@ export default function App() {
           setProjectSummaryDraft("");
           setEvolutionSummaryDraft("");
           setPolicyNotesDraft("");
+          setTicketEnforcementModeDraft("off");
         }
       });
     return () => {
@@ -864,6 +933,7 @@ export default function App() {
         setProjectSummaryDraft((meta.project_summary ?? "").trim());
         setEvolutionSummaryDraft((meta.evolution_summary ?? "").trim());
         setPolicyNotesDraft((meta.policy_notes ?? "").trim());
+        setTicketEnforcementModeDraft((meta.ticket_enforcement_mode ?? "off") as "off" | "soft" | "strict");
 
         const raw = (meta.tech_stack ?? "").trim();
         if (raw) {
@@ -1236,6 +1306,7 @@ export default function App() {
     try {
       const r = await api.startStudioPreview(selectedId, { force_install: forceInstallBeforePreview });
       setDevPreviewUrl(r.url);
+      setPreviewProfile(r.profile ?? null);
       if (r.install) {
         const { stdout, stderr } = r.install;
         setPreviewLog([stdout, stderr].filter(Boolean).join("\n"));
@@ -1243,7 +1314,8 @@ export default function App() {
         setPreviewLog("");
       }
       setCenterTab("preview");
-      setStatus(`Prévisualisation : ${r.url}`);
+      const profileSuffix = r.profile ? ` (${r.profile})` : "";
+      setStatus(`Prévisualisation${profileSuffix} : ${r.url}`);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -1258,15 +1330,29 @@ export default function App() {
     setPreviewLog("");
     try {
       const r = await api.installStudioDeps(selectedId, { force: forceInstallBeforePreview });
+      setPreviewProfile(r.profile ?? null);
+      const profileSuffix = r.profile ? ` (${r.profile})` : "";
       if (r.skipped) {
-        setPreviewLog(`Dépendances déjà présentes (${r.reason ?? "node_modules"}).`);
-        setStatus("node_modules déjà installé");
+        setPreviewLog(`Dépendances déjà présentes${profileSuffix} : ${r.reason ?? ""}`);
+        setStatus(`Dépendances déjà installées${profileSuffix}`);
       } else if (r.install) {
-        const { stdout, stderr, exit_code } = r.install;
+        const { stdout, stderr, exit_code, argv } = r.install;
+        const cmd = argv?.join(" ") ?? "";
         setPreviewLog(
-          [`Code: ${exit_code}`, stdout, stderr].filter(Boolean).join("\n\n"),
+          [
+            cmd ? `$ ${cmd}` : null,
+            `Code: ${exit_code}`,
+            stdout,
+            stderr,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         );
-        setStatus(r.ok ? "npm install terminé" : "npm install a échoué — voir le journal ci-dessous");
+        setStatus(
+          r.ok
+            ? `Installation terminée${profileSuffix}`
+            : `Installation a échoué${profileSuffix} — voir le journal ci-dessous`,
+        );
       }
       setCenterTab("preview");
     } catch (e) {
@@ -1493,6 +1579,17 @@ export default function App() {
         ...(stack ? { tech_stack: stack } : {}),
         ...(summary ? { project_summary: summary } : {}),
       });
+      void api
+        .sendMessage({
+          session_id: `code-studio-bootstrap-${p.id}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`,
+          studio_project_id: p.id,
+          studio_assigned_agent: "studio_project_manager",
+          message:
+            "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
+        })
+        .catch(() => {
+          /* bootstrap best-effort ; l’utilisateur peut relancer depuis le chat */
+        });
       await refreshProjects();
       setSelectedId(p.id);
       setCenterTab("dashboard");
@@ -1545,6 +1642,7 @@ export default function App() {
         project_summary: projectSummaryDraft.trim() ? projectSummaryDraft.trim() : null,
         evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
         policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+        ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setStatus("Résumés produit / évolution et politique enregistrés (réinjectés dans les prochains messages)");
     } catch (e) {
@@ -1567,6 +1665,33 @@ export default function App() {
       setError(String(e));
     }
   };
+
+  const onCreateTicketsFromPlan = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      const drafts = extractTicketDraftsFromPlan(planDocText);
+      if (drafts.length === 0) {
+        setStatus("Aucune tâche détectée dans le plan.");
+        return;
+      }
+      let created = 0;
+      for (const d of drafts.slice(0, 30)) {
+        await api.createStudioTicket(selectedId, {
+          title: d.title,
+          description: d.description,
+          assigned_agent: agent || "studio_fullstack",
+          review_agent: "studio_reviewer",
+          requested_by: "plan_import",
+        });
+        created += 1;
+      }
+      setStatus(`${created} ticket(s) créés depuis le plan.`);
+      setCenterTab("kanban");
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, planDocText, agent]);
 
   const downloadTextFile = useCallback((filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -2011,6 +2136,9 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2090,6 +2218,9 @@ Procédure:
         studio_design_hint: regenerateDesignHint || undefined,
         studio_design_doc: designDocText.trim() || undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2127,14 +2258,27 @@ Procédure:
     if (!text || !selectedId) return;
     setChatInput("");
     setError(null);
-    pollTaskAbortRef.current?.abort();
-    setPendingHumanInput(null);
-    setHumanReplyDraft("");
-    setTaskTrace(null);
+    const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+    const queued =
+      chatDeliveryMode !== "immediate" && activeTask !== null;
+    if (!queued) {
+      pollTaskAbortRef.current?.abort();
+      setPendingHumanInput(null);
+      setHumanReplyDraft("");
+      setTaskTrace(null);
+    }
     try {
       const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
+      const expanded = await api.expandAtFileRefs(selectedId, text);
       const { task_id } = await api.sendMessage({
-        message: text,
+        message: expanded,
+        ...(queued && activeTask
+          ? {
+              message_delivery_mode: chatDeliveryMode,
+              queue_mode: chatDeliveryMode,
+              target_task_id: activeTask.id,
+            }
+          : {}),
         studio_project_id: selectedId,
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
@@ -2145,7 +2289,21 @@ Procédure:
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
+      if (queued && activeTask) {
+        setChat((c) => [
+          ...c,
+          {
+            role: "user",
+            text: `[${chatDeliveryMode}] ${text}`,
+            task_id: activeTask.id,
+          },
+        ]);
+        return;
+      }
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
       const ac = new AbortController();
@@ -2163,6 +2321,22 @@ Procédure:
       setError(String(e));
     }
   };
+
+  const onLaunchTicket = useCallback((ticket: api.StudioTicket) => {
+    const intro = [
+      `Ticket #${ticket.id}: ${ticket.title}`,
+      ticket.description ? `Description: ${ticket.description}` : "",
+      `Assigned agent: ${ticket.assigned_agent}`,
+      `Review agent: ${ticket.review_agent}`,
+      "Objectif: implémenter la tâche puis laisser le ticket en review.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    setActiveTicketId(ticket.id);
+    setAgent(ticket.assigned_agent || agent);
+    setChatInput(intro);
+    setMainSplit("chat");
+  }, [agent]);
 
   const onOpenForkDialog = useCallback((index: number, msg: ChatMessage) => {
     if (!msg.task_id) return;
@@ -2200,6 +2374,9 @@ Procédure:
         fork_from_task_id: forkDialog.parentTaskId,
         fork_after_message_index: forkDialog.index,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [
         ...c,
@@ -2471,6 +2648,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2522,7 +2701,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
-  const appClass = `app ${uiDensity === "compact" || uiTheme === "compact-dark" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2549,8 +2728,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", uiTheme);
-    try { window.localStorage.setItem("studio.uiTheme", uiTheme); } catch { /* quota / private mode */ }
-  }, [uiTheme]);
+    document.documentElement.setAttribute("data-density", uiDensity === "compact" ? "compact" : "comfortable");
+    saveTheme(uiTheme);
+  }, [uiTheme, uiDensity]);
 
   useEffect(() => {
     try { window.localStorage.setItem("studio.uiDensity", uiDensity); } catch { /* quota / private mode */ }
@@ -2937,7 +3117,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     Exécuter le build
                   </Button>
                 </div>
-                {error ? <div className="banner banner-error">{error}</div> : null}
                 {status ? <div className="banner banner-ok">{status}</div> : null}
               </div>
             </div>
@@ -3003,6 +3182,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="app-header-nav-secondary">
+          <NotificationCenter />
           <label className="field-inline header-agent-inline">
             <span className="header-agent-label">Rôle agent</span>
             <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
@@ -3089,8 +3269,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               onStartAgent={() => {
                 setMainSplit("chat");
               }}
+              onOpenKanban={() => setCenterTab("kanban")}
               onOpenPlan={() => setCenterTab("plan")}
               onOpenDesign={() => setCenterTab("design")}
+              onOpenPreview={() => setCenterTab("preview")}
+              onOpenBranches={() => setCenterTab("branches")}
             />
             {selectedId ? (
               <section className="panel panel-collapsible">
@@ -3176,6 +3359,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
                       />
                     </label>
+                    <label className="field">
+                      <span>Enforcement tickets</span>
+                      <Select
+                        value={ticketEnforcementModeDraft}
+                        onChange={(e) => setTicketEnforcementModeDraft(e.target.value as "off" | "soft" | "strict")}
+                      >
+                        <option value="off">off (aucune contrainte ticket)</option>
+                        <option value="soft">soft (warning sans ticket)</option>
+                        <option value="strict">strict (ticket obligatoire)</option>
+                      </Select>
+                    </label>
                     <Button variant="secondary" size="sm" onClick={() => void onSaveEvolutionAndPolicy()}>
                       Enregistrer résumés &amp; politique
                     </Button>
@@ -3202,12 +3396,31 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         }
                       />
                     </label>
+                    <label className="field" htmlFor="active-ticket-id-dashboard">
+                      <span>Ticket actif (optionnel)</span>
+                      <Input
+                        id="active-ticket-id-dashboard"
+                        value={activeTicketId ?? ""}
+                        onChange={(e) => setActiveTicketId(e.target.value.trim() || null)}
+                        placeholder="UUID ticket (injecté dans les prochains messages)"
+                      />
+                    </label>
                     </div>
                   </div>
                   </div>
                 ) : null}
               </section>
             ) : null}
+          </div>
+        ) : centerTab === "kanban" ? (
+          <div className="center-body">
+            <KanbanBoard
+              projectId={selectedId}
+              defaultAgent={agent || undefined}
+              ticketEnforcementMode={ticketEnforcementModeDraft}
+              onLaunchTicket={onLaunchTicket}
+              onOpenTaskTracking={onOpenTaskDetailModal}
+            />
           </div>
         ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
@@ -3289,18 +3502,39 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body preview-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">Aperçu</span>
-              <label className="preview-checkbox" title="Relance npm install avant le serveur (utile après changement de dépendances).">
+              {previewProfile ? (
+                <span
+                  className="preview-stack-badge"
+                  title="Stack détectée par le daemon depuis les manifestes du projet"
+                >
+                  Stack : {previewProfile}
+                </span>
+              ) : null}
+              <label
+                className="preview-checkbox"
+                title="Relance la commande d’installation détectée (npm install / uv sync / …) avant le serveur, utile après changement de dépendances."
+              >
                 <Checkbox
                   checked={forceInstallBeforePreview}
                   onChange={(e) => setForceInstallBeforePreview(e.target.checked)}
                 />
-                Forcer npm install
+                Forcer la réinstallation des dépendances
+              </label>
+              <label
+                className="preview-checkbox"
+                title="Sandbox iframe strict (sans same-origin) — mode WebContainer léger pour HTML/apercu statique."
+              >
+                <Checkbox
+                  checked={strictWebSandbox}
+                  onChange={(e) => setStrictWebSandbox(e.target.checked)}
+                />
+                Sandbox strict
               </label>
               <Button
                 variant="secondary"
                 size="sm"
                 disabled={!selectedId || depsInstallBusy}
-                title="Exécute uniquement npm install dans le dossier projet (sans démarrer le serveur)."
+                title="Exécute uniquement la commande d’installation détectée (npm install / uv sync / …) sans démarrer le serveur."
                 onClick={() => void onInstallDepsOnly()}
               >
                 {depsInstallBusy ? "Installation…" : "Installer les dépendances"}
@@ -3309,7 +3543,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 variant="default"
                 size="sm"
                 disabled={!selectedId || previewBusy}
-                title="npm install si nécessaire (ou forcé), puis npm run dev (Vite, etc.)"
+                title="Détecte la stack (Node, Python uv …), installe si nécessaire, puis lance le serveur de dev correspondant."
                 onClick={() => void onPlayPreview()}
               >
                 {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
@@ -3334,7 +3568,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </Button>
             </div>
             {previewLog ? (
-              <pre className="preview-install-log" title="Sortie npm install">
+              <pre className="preview-install-log" title="Sortie installation / serveur de dev">
                 {previewLog}
               </pre>
             ) : null}
@@ -3345,17 +3579,35 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 src={devPreviewUrl ?? staticPreviewBlobUrl ?? undefined}
                 sandbox={
                   devPreviewUrl
-                    ? "allow-scripts allow-same-origin allow-forms allow-popups"
+                    ? strictWebSandbox
+                      ? "allow-scripts"
+                      : "allow-scripts allow-same-origin allow-forms allow-popups"
                     : "allow-scripts"
                 }
               />
             ) : (
               <div className="preview-empty">
                 <p>
-                  <strong>Serveur de dev</strong> : cliquez sur « Lancer la prévisualisation » (projet avec{" "}
-                  <code>package.json</code> et script <code>dev</code>). Le daemon exécute <code>npm install</code>{" "}
-                  si <code>node_modules</code> est absent.
+                  <strong>Serveur de dev</strong> : la stack est détectée automatiquement à partir des
+                  manifestes du projet, puis installée et lancée. Cliquez sur « Lancer la prévisualisation ».
                 </p>
+                <ul style={{ margin: "6px 0", paddingLeft: 20 }}>
+                  <li>
+                    <strong>Node.js</strong> — <code>package.json</code> (script <code>dev</code>) :
+                    {" "}
+                    <code>npm install</code> + <code>npm run dev</code>.
+                  </li>
+                  <li>
+                    <strong>Python · uv · Streamlit</strong> — <code>pyproject.toml</code> mentionnant
+                    {" "}
+                    <code>streamlit</code> : <code>uv sync</code> + <code>uv run streamlit run app.py</code>.
+                  </li>
+                  <li>
+                    <strong>Python · uv · FastAPI</strong> — <code>pyproject.toml</code> mentionnant
+                    {" "}
+                    <code>fastapi</code> : <code>uv sync</code> + <code>uv run uvicorn main:app</code>.
+                  </li>
+                </ul>
                 <p>
                   <strong>HTML statique</strong> : ouvrez un fichier <code>.html</code> dans l’arborescence, puis
                   revenez ici — l’aperçu s’affiche sans serveur.
@@ -3390,6 +3642,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }}
               >
                 Référence (diff)
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!selectedId}
+                onClick={() => void onCreateTicketsFromPlan()}
+                title="Crée des tickets Kanban depuis les listes de tâches du plan"
+              >
+                Créer tickets Kanban
               </Button>
               <Button
                 variant="secondary"
@@ -3593,7 +3854,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane branches-pane">
             <div className="preview-toolbar branches-toolbar">
               <span className="pane-title-inline">Gestion des branches</span>
-              <TooltipHint text="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+              <InfoTip content="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
               <Button
                 variant="ghost"
                 size="sm"
@@ -3612,7 +3873,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="branches-layout">
               <section className="panel branches-panel">
                 <h2>
-                  Branches disponibles <TooltipHint text="Liste locale avec état courant, avance/retard et dernier commit." />
+                  Branches disponibles <InfoTip content="Liste locale avec état courant, avance/retard et dernier commit." />
                 </h2>
                 {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
                 <ul className="branches-list">
@@ -3646,7 +3907,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Comparer / merger <TooltipHint text="La branche source est fusionnée dans la branche cible." />
+                  Comparer / merger <InfoTip content="La branche source est fusionnée dans la branche cible." />
                 </h2>
                 <div className="field-row">
                   <label className="field">
@@ -3731,7 +3992,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Conflits de merge <TooltipHint text="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                  Conflits de merge <InfoTip content="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
                 </h2>
                 {gitMergeInProgress ? (
                   <p className="hint branches-warning">
@@ -3789,9 +4050,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             {userGuideLoading ? (
               <p className="hint">Loading documentation…</p>
             ) : userGuideError ? (
-              <div className="banner banner-error" role="alert">
-                Failed to load documentation: {userGuideError}
-              </div>
+              <p className="hint">Consultez le centre de notifications pour le détail.</p>
             ) : (
               <div className="docs-pane-layout">
                 <aside className="docs-pane-toc" aria-label="Documentation table of contents">
@@ -3935,10 +4194,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <div className="field-row">
                         <label className="field">
                           <span>Thème</span>
-                          <Select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
-                            <option value="dark">Dark</option>
-                            <option value="light">Light</option>
-                            <option value="compact-dark">Compact dark</option>
+                          <Select
+                            value={uiTheme}
+                            onChange={(e) => setUiTheme(e.target.value as ThemeId)}
+                          >
+                            {THEME_IDS.map((id) => (
+                              <option key={id} value={id}>
+                                {THEME_LABELS[id]}
+                              </option>
+                            ))}
                           </Select>
                         </label>
                         <label className="field">
@@ -4193,8 +4457,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="chat-panel-footer">
-          <div className="chat-form">
+          <div className="input-group input-group--textarea chat-form">
             <Textarea
+              className="input-group-field input-group-field--textarea"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
@@ -4205,11 +4470,36 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }
               }}
             />
-            <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
-              Envoyer
-            </Button>
+            <div className="input-group-append">
+              <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
+                Envoyer
+              </Button>
+            </div>
           </div>
           <div className="chat-controls-row">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              disabled={!selectedId}
+              onClick={async () => {
+                if (!selectedId) return;
+                try {
+                  await api.handoffSession({
+                    session_id: `code-studio-${selectedId}`,
+                    target_model: handoffModel.trim() || undefined,
+                    target_provider: handoffProvider.trim() || undefined,
+                    task_id: taskTrace?.id || undefined,
+                  });
+                  setStatus("Handoff modèle envoyé.");
+                } catch (e) {
+                  setError(String(e));
+                }
+              }}
+              title="Reprendre la session avec un autre modèle"
+            >
+              Reprendre avec un autre modèle
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -4225,18 +4515,49 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </div>
           {chatOptionsOpen ? (
             <div className="chat-options-panel">
-              <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+              <label className="field">
+                <span>Livraison message (tâche en cours)</span>
+                <div className="input-group field-input-group">
+                  <span className="input-group-addon">Envoi</span>
+                  <select
+                    className="input-group-field"
+                    value={chatDeliveryMode}
+                    onChange={(e) =>
+                      setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
+                    }
+                  >
+                    <option value="immediate">Immédiat (nouvelle tâche)</option>
+                    <option value="steering">Steering (après le tour LLM courant)</option>
+                    <option value="follow_up">Follow-up (après fin du travail)</option>
+                  </select>
+                </div>
+              </label>
+              <p className="hint">
+                Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
+              </p>
+              <label className="field">
+                <span>Handoff provider (optionnel)</span>
+                <Input type="text" value={handoffProvider} onChange={(e) => setHandoffProvider(e.target.value)} />
+              </label>
+              <label className="field">
+                <span>Handoff modèle (optionnel)</span>
+                <Input type="text" value={handoffModel} onChange={(e) => setHandoffModel(e.target.value)} placeholder="gpt-4o-mini, qwen3:8b, ..." />
+              </label>
+              <label className="field checkbox-field">
+                <span>Incognito (ne pas promouvoir en mémoire)</span>
+                <Checkbox checked={chatIncognito} onChange={(e) => setChatIncognito(e.target.checked)} />
+              </label>
+              <div className="btn-group code-mode-strip" role="group" aria-label="Mode Code Studio">
                 {CODE_MODE_OPTIONS.map((o) => (
-                  <Button
+                  <button
                     key={o.value}
-                    variant="ghost"
-                    size="sm"
-                    className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                    type="button"
+                    className={`btn-group-item ${codeMode === o.value ? "active" : ""}`}
                     title={o.hint}
                     onClick={() => setCodeMode(o.value)}
                   >
                     {o.label}
-                  </Button>
+                  </button>
                 ))}
               </div>
               <label className="field chat-policy-hint-field">
@@ -4304,8 +4625,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             <div className="task-detail-scroll">
               {taskDetailLoading ? <p className="hint">Chargement…</p> : null}
-              {taskDetailError ? <div className="banner banner-error">{taskDetailError}</div> : null}
-              {!taskDetailLoading && !taskDetailError && taskDetailPayload ? (
+              {!taskDetailLoading && taskDetailPayload ? (
                 <>
                   <div className="task-detail-tabs" role="tablist" aria-label="Navigation détail tâche">
                     {[

@@ -98,6 +98,15 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 | GET | `/api/studio/projects/:id/preview/logs` | `{ running, log, preview_inactive? }` — tampon borné des stdout/stderr du `npm run dev`. |
 | POST | `/api/studio/projects/:id/preview/install` | Corps `{ "force": bool }`. Exécute `npm install` sans lancer le serveur ; si `force` est faux et `node_modules` existe, `{ ok, skipped, reason }`. |
 
+#### Aperçu local et outil `browser` (tests agent)
+
+Pour qu’un agent Akasha ouvre l’UI servie par `preview/start` (Vite, etc.) avec l’outil **`browser`** du daemon :
+
+1. Lancer le preview depuis Code Studio ou `POST .../preview/start` ; noter l’URL renvoyée (proxy signé vers `http://127.0.0.1:<port>`).
+2. Dans **`tools_policy.yaml`** (répertoire données du daemon) : `browser_enabled: true`, installer Playwright dans `scripts/playwright-runner`, et inclure les hôtes nécessaires dans **`browser_allowed_domains`** — au minimum `127.0.0.1` (et `localhost` si utilisé). Sans cela, `browser navigate http://127.0.0.1:…` est refusé.
+3. Utiliser un **modèle vision** dans `llm_router.yaml` si la tâche doit **interpréter** une capture : après `TOOL: browser screenshot`, la capture complète peut être jointe au tour suivant (voir spec Akasha `spec/39_browser_automation.md`, variables `AKASHA_BROWSER_SCREENSHOT_VISION` / `AKASHA_VISION_INJECT_MAX_CHARS`).
+4. Enchaînement typique : `browser navigate` → `browser snapshot` ou `browser screenshot` → synthèse ; pour le rendu visuel, privilégier screenshot + modèle multimodal.
+
 ### Fichiers & raw
 
 | Méthode | Chemin | Description |

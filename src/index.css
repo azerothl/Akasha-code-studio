@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "./design-system/tokens.css";
+@import "./design-system/semantic.css";
+@import "./design-system/tooltip.css";
+@import "./design-system/notifications.css";
 
 @theme {
   --color-akasha-bg: #0d0d14;
@@ -8,46 +12,13 @@
 
 @layer components {
   .panel {
-    @apply rounded-xl border border-white/10 bg-slate-900/70 p-3 shadow-md shadow-black/20;
+    @apply border border-white/10 bg-slate-900/70 p-3;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
-/*
- * Thème aligné sur l’application Tauri Akasha (`apps/akasha-ui/src/styles.css`, `dark_akasha`).
- * Variables `--akasha-*` + alias `--bg-*` / `--accent` pour le reste de cette feuille.
- */
 :root {
-  --akasha-bg: #0d0d14;
-  --akasha-bg-elevated: #12121e;
-  --akasha-bg-surface: #12121e;
-  --akasha-bg-surface-hover: #1e1e38;
-  --akasha-bg-card: #1a1a2e;
-  --akasha-text: #f1f5f9;
-  --akasha-text-muted: #94a3b8;
-  --akasha-text-dim: #64748b;
-  --akasha-border: rgba(139, 92, 246, 0.25);
-  --akasha-accent: #8b5cf6;
-  --akasha-accent-hover: #7c3aed;
-  --akasha-accent-light: #a78bfa;
-  --akasha-accent-cyan: #06b6d4;
-  --akasha-success: #10b981;
-  --akasha-error: #ef4444;
-  --akasha-warning: #f59e0b;
-  --akasha-warning-hover: #fbbf24;
-  --akasha-gradient: linear-gradient(135deg, #8b5cf6, #06b6d4);
-  --akasha-gradient-hover: linear-gradient(135deg, #7c3aed, #0891b2);
-  --akasha-btn-primary-bg: var(--akasha-gradient);
-  --akasha-btn-primary-hover-bg: var(--akasha-gradient-hover);
-  --akasha-btn-primary-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
-  --akasha-btn-primary-hover-shadow: 0 8px 28px rgba(139, 92, 246, 0.52);
-  --akasha-btn-primary-hover-transform: translateY(-1px);
-  --akasha-radius-button: 12px;
-  --akasha-btn-secondary-border: rgba(139, 92, 246, 0.45);
-  --akasha-btn-secondary-fg: #a78bfa;
-  --akasha-btn-secondary-fg-hover: #f1f5f9;
-  --akasha-btn-secondary-border-hover: rgba(139, 92, 246, 0.65);
-  --akasha-btn-secondary-bg-hover: rgba(139, 92, 246, 0.12);
-
   /* Compatibilité avec les sélecteurs existants de Code Studio */
   --bg-elevated: var(--akasha-bg-elevated);
   --bg-panel: var(--akasha-bg-card);
@@ -57,7 +28,7 @@
   --accent-hover: var(--akasha-accent-hover);
   --success: var(--akasha-success);
   --danger: var(--akasha-error);
-  --radius: 8px;
+  --radius: var(--akasha-radius);
 
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
@@ -65,21 +36,7 @@
   background: var(--akasha-bg);
 }
 
-:root[data-theme="light"] {
-  --akasha-bg: #f4f6fb;
-  --akasha-bg-elevated: #ffffff;
-  --akasha-bg-surface: #eef2ff;
-  --akasha-bg-surface-hover: #e3e8fb;
-  --akasha-bg-card: #ffffff;
-  --akasha-text: #101426;
-  --akasha-text-muted: #50607e;
-  --akasha-text-dim: #6a7896;
-  --akasha-border: rgba(79, 70, 229, 0.18);
-}
-
-:root[data-theme="compact-dark"] {
-  --akasha-radius-button: 9px;
-}
+/* Theme tokens: design-system/tokens.css ([data-theme="dark_akasha" | "dark" | …]) */
 
 [data-theme^="dark"] {
   color-scheme: dark;
@@ -95,17 +52,17 @@
 }
 
 *::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 3px;
+  height: 3px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.35);
-  border-radius: 999px;
+  background: color-mix(in srgb, var(--akasha-text-dim) 35%, transparent);
+  border-radius: 0;
 }
 
 *::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.15);
+  background: transparent;
 }
 
 html,
@@ -3438,6 +3395,20 @@ kbd {
   white-space: nowrap;
 }
 
+.preview-stack-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  white-space: nowrap;
+}
+
 .preview-dev-log {
   flex: 1;
   margin: 0;
@@ -5698,6 +5669,224 @@ textarea.editor {
   font-size: 0.72rem;
 }
 
+.kanban-toolbar {
+  margin-bottom: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.kanban-toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.kanban-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.kanban-column {
+  min-height: min(66vh, 40rem);
+  max-height: min(66vh, 40rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.kanban-column-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+}
+
+.kanban-column-count {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  font-size: 0.72rem;
+}
+
+.kanban-column-body {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  overflow-y: auto;
+  padding-right: 0.1rem;
+}
+
+.kanban-ticket-card {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.35rem;
+  background: var(--bg-elevated);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.kanban-ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.kanban-ticket-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.25;
+}
+
+.kanban-card-actions {
+  margin-top: 0.2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.kanban-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kanban-detail-modal {
+  max-width: min(74rem, 95vw);
+}
+
+.kanban-detail-pill {
+  margin-top: 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.77rem;
+}
+
+.kanban-theme-slate {
+  color: #cbd5e1;
+  background: rgba(100, 116, 139, 0.18);
+}
+
+.kanban-theme-blue {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.kanban-theme-amber {
+  color: #fcd34d;
+  background: rgba(217, 119, 6, 0.22);
+}
+
+.kanban-theme-green {
+  color: #86efac;
+  background: rgba(22, 163, 74, 0.2);
+}
+
+.kanban-theme-red {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.kanban-ticket-card--slate {
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.kanban-ticket-card--blue {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.kanban-ticket-card--amber {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.kanban-ticket-card--green {
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.kanban-ticket-card--red {
+  border-color: rgba(252, 165, 165, 0.45);
+}
+
+.kanban-task-track-failure {
+  max-height: 7rem;
+  overflow: auto;
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.kanban-task-track-progress {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.75rem;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+.kanban-card-prereq {
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+  line-height: 1.3;
+}
+
+.kanban-card-prereq--wait {
+  background: rgba(217, 119, 6, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.kanban-card-prereq--ok {
+  background: rgba(22, 163, 74, 0.14);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.kanban-card-progress {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.kanban-card-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.kanban-card-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  transition: width 240ms ease-out;
+}
+
+.kanban-ticket-card--amber .kanban-card-progress-fill {
+  background: linear-gradient(90deg, #fcd34d, #d97706);
+}
+
+.kanban-card-progress-msg {
+  font-size: 0.7rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .daemon-ops-schedule-table th,
 .daemon-ops-schedule-table td {
   border: 1px solid var(--border);
@@ -5815,4 +6004,183 @@ textarea.editor {
   .chat-log {
     padding: 0.35rem 0.4rem;
   }
+}
+
+.error {
+  padding: var(--akasha-space-sm) var(--akasha-space-md);
+  background: var(--akasha-status-error-bg);
+  border-inline-start: 2px solid var(--akasha-status-error-accent);
+  color: var(--akasha-status-error-fg);
+  font-size: 0.875rem;
+}
+
+.banner-error {
+  background: var(--akasha-status-error-bg);
+  border-inline-start: 2px solid var(--akasha-status-error-accent);
+  color: var(--akasha-status-error-fg);
+  border-radius: var(--akasha-radius);
+}
+
+/* ── Minimalist design system overrides (Code Studio) ── */
+
+.sidebar {
+  background: var(--akasha-bg-surface);
+}
+
+.sidebar-toggle-mobile {
+  background: var(--akasha-bg-elevated);
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  box-shadow: none;
+  color: var(--akasha-text);
+}
+
+.sidebar-toggle-mobile:hover,
+.sidebar-toggle-mobile.sidebar-toggle-mobile--visible:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--akasha-accent);
+  background: var(--akasha-bg-surface-hover);
+}
+
+.sidebar-toggle-mobile.sidebar-toggle-mobile--visible {
+  border-radius: var(--akasha-radius);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.sidebar-logo-img {
+  display: block;
+  width: 1.375rem;
+  height: 1.375rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.sidebar-group-icon .mono-icon,
+.sidebar-item-icon .mono-icon,
+.sidebar-group-chevron .mono-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sidebar-item,
+.sidebar-group-header {
+  border-radius: var(--akasha-radius);
+  box-shadow: none;
+}
+
+.dashboard-card {
+  border-radius: var(--akasha-radius);
+  background: var(--akasha-bg-elevated);
+  box-shadow: none;
+}
+
+.dashboard-card:hover {
+  background: var(--akasha-bg-surface-hover);
+  box-shadow: none;
+}
+
+.center-tab {
+  border-radius: var(--akasha-radius);
+}
+
+.daemon-status-badge {
+  border-radius: var(--akasha-radius);
+}
+
+.daemon-status-badge::before {
+  border-radius: 0;
+}
+
+.chat-suggestion-chip {
+  border-radius: var(--akasha-radius);
+}
+
+.banner,
+.banner-ok,
+.pending-inbox-banner,
+.sandbox-reminder {
+  border-radius: var(--akasha-radius);
+  box-shadow: none;
+}
+
+.banner-ok {
+  background: var(--akasha-status-success-bg);
+  border-inline-start: 2px solid var(--akasha-status-success-accent);
+  color: var(--akasha-status-success-fg);
+}
+
+.banner-error {
+  background: var(--akasha-status-error-bg);
+  border-inline-start: 2px solid var(--akasha-status-error-accent);
+  color: var(--akasha-status-error-fg);
+}
+
+.agent-kind-pill,
+.event-kind-pill,
+.code-mode-pill {
+  border-radius: var(--akasha-radius);
+}
+
+.modal-card {
+  border-radius: var(--akasha-radius);
+  box-shadow: none;
+}
+
+.stack-preset-card {
+  border-radius: var(--akasha-radius);
+  box-shadow: none;
+}
+
+.chat-form.input-group--textarea {
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid var(--akasha-border);
+  background: var(--akasha-bg-elevated);
+}
+
+.chat-form .input-group-field--textarea {
+  border: none;
+  min-height: 4.5rem;
+  resize: vertical;
+  background: transparent;
+  border-radius: 0;
+}
+
+.chat-form .input-group-append {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.chat-form .input-group-append button {
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--akasha-border);
+  min-width: 5.5rem;
+}
+
+.chat-form:focus-within {
+  border-color: var(--akasha-accent);
+}
+
+.field-input-group {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.field-input-group select.input-group-field {
+  cursor: pointer;
+  appearance: auto;
+  font-size: 0.8125rem;
+}
+
+.code-mode-strip.btn-group {
+  width: fit-content;
+}
+
+.input-group-append .btn-primary,
+.input-group-append button[class*="bg-"] {
+  box-shadow: none;
 }

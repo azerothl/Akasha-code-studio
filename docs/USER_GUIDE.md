@@ -212,6 +212,8 @@ When Code Studio sends a task, these fields can be passed to influence daemon be
 
 - `force` (`boolean`, optional) — force install even if dependencies are already present.
 
+**Agent `browser` and local preview:** To let the Akasha daemon navigate the running dev server, enable `browser` in `tools_policy.yaml`, install Playwright for `scripts/playwright-runner`, and allow `127.0.0.1` / `localhost` in `browser_allowed_domains`. Use a vision-capable model in `llm_router.yaml` if the agent should interpret `browser screenshot` output on the next turn. See `docs/CODE_STUDIO_SPEC.md` (subsection “Aperçu local et outil browser”).
+
 ### 11.6 Project Metadata Verification Options
 
 Project metadata (read/write via `PATCH /api/studio/projects/:id`) supports:
