@@ -1,0 +1,477 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import * as api from "./api";
+import { getLastProjectId } from "./lastProjectStorage";
+import { Button } from "./components/ui/button";
+import { Checkbox } from "./components/ui/checkbox";
+
+type RawSection = { title: string; ok: boolean; payload: unknown; error?: string };
+
+/** Cockpit opérateur : endpoints documentés dans `docs/OPERATOR_COCKPIT.md`. */
+export function DaemonOpsPanel() {
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [rawSections, setRawSections] = useState<RawSection[]>([]);
+  const [schedules, setSchedules] = useState<api.OpsSchedule[]>([]);
+  const [taskRuns, setTaskRuns] = useState<api.OpsTaskRun[]>([]);
+  const [processEvents, setProcessEvents] = useState<api.OpsProcessEvent[]>([]);
+  const [terminal, setTerminal] = useState<api.OpsTerminalSummary>({
+    current: "unknown",
+    interactivePty: false,
+    ptyApi: [],
+    shells: [],
+  });
+  const [tools, setTools] = useState<api.OpsToolsSummary>({ profile: "default", allow: 0, deny: 0, approval: 0 });
+  const [mcp, setMcp] = useState<api.OpsMcpSummary>({
+    configPresent: false,
+    serverCount: 0,
+    runtime: "unknown",
+    oauthMode: "unknown",
+  });
+  const [lifecycle, setLifecycle] = useState<api.OpsLifecycleSummary>({
+    present: false,
+    timeoutSec: 0,
+    sandbox: "none",
+    phases: [],
+  });
+  const [scheduleBusy, setScheduleBusy] = useState<string | null>(null);
+  const [scheduleMsg, setScheduleMsg] = useState<string | null>(null);
+  const [opsHealth, setOpsHealth] = useState<string>("");
+  const [permQueue, setPermQueue] = useState<Array<Record<string, unknown>>>([]);
+  const [webhookDeliveries, setWebhookDeliveries] = useState<api.WebhookDelivery[]>([]);
+  const [resumeBriefText, setResumeBriefText] = useState<string | null>(null);
+  const [resumeBriefBusy, setResumeBriefBusy] = useState(false);
+
+  const fetchSection = useCallback(async (title: string, fn: () => Promise<unknown>) => {
+    try {
+      const payload = await fn();
+      return { title, ok: true, payload } as RawSection;
+    } catch (e) {
+      return {
+        title,
+        ok: false,
+        payload: null,
+        error: e instanceof Error ? e.message : String(e),
+      } as RawSection;
+    }
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const [
+        schedulesSection,
+        taskRunsSection,
+        processSection,
+        terminalSection,
+        toolsSection,
+        memorySection,
+        mcpStatusSection,
+        mcpRuntimeSection,
+        lifecycleSection,
+        permissionsSection,
+        webhookSection,
+      ] = await Promise.all([
+        fetchSection("GET /api/schedules", () => api.fetchSchedulesPayload()),
+        fetchSection("GET /api/task_runs", () => api.fetchTaskRunsPayload()),
+        fetchSection("GET /api/process/watch/recent", () => api.fetchProcessWatchRecent(30)),
+        fetchSection("GET /api/terminal/capabilities", () => api.fetchTerminalCapabilities()),
+        fetchSection("GET /api/tools/effective", () => api.fetchToolsEffective()),
+        fetchSection("GET /api/memory/recall-metrics", () => api.fetchMemoryRecallMetrics()),
+        fetchSection("GET /api/mcp/status", () => api.fetchMcpStatus()),
+        fetchSection("GET /api/mcp/runtime", () => api.fetchMcpRuntime()),
+        fetchSection("GET /api/lifecycle/hooks", () => api.fetchLifecycleHooks()),
+        fetchSection("GET /api/permissions/queue", () => api.fetchPermissionsQueue()),
+        fetchSection("GET /api/automation/webhook/recent", () => api.fetchWebhookRecent(20)),
+      ]);
+
+      const schedulesPayload = schedulesSection.ok ? schedulesSection.payload : { schedules: [] };
+      const taskRunsPayload = taskRunsSection.ok ? taskRunsSection.payload : { task_runs: [] };
+      const processPayload = processSection.ok ? processSection.payload : { events: [] };
+      const terminalPayload = terminalSection.ok ? terminalSection.payload : {};
+      const toolsPayload = toolsSection.ok ? toolsSection.payload : {};
+      const mcpStatusPayload = mcpStatusSection.ok ? mcpStatusSection.payload : {};
+      const mcpRuntimePayload = mcpRuntimeSection.ok ? mcpRuntimeSection.payload : {};
+      const lifecyclePayload = lifecycleSection.ok ? lifecycleSection.payload : {};
+      const permPayload = permissionsSection.ok ? permissionsSection.payload : { requests: [] };
+      const webhookPayload = webhookSection.ok ? webhookSection.payload : { deliveries: [] };
+
+      setSchedules(api.parseSchedulesPayload(schedulesPayload));
+      setTaskRuns(api.parseTaskRunsPayload(taskRunsPayload));
+      setProcessEvents(api.parseProcessWatchPayload(processPayload));
+      setTerminal(api.parseTerminalCapabilitiesPayload(terminalPayload));
+      setTools(api.parseToolsEffectivePayload(toolsPayload));
+      setMcp(api.parseMcpSummary(mcpStatusPayload, mcpRuntimePayload));
+      setLifecycle(api.parseLifecycleHooksPayload(lifecyclePayload));
+      const reqs = (permPayload as { requests?: unknown[] }).requests ?? [];
+      setPermQueue(reqs.filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null));
+      const wh = (webhookPayload as { deliveries?: api.WebhookDelivery[] }).deliveries ?? [];
+      setWebhookDeliveries(wh);
+
+      const out = [
+        schedulesSection,
+        taskRunsSection,
+        processSection,
+        terminalSection,
+        toolsSection,
+        memorySection,
+        mcpStatusSection,
+        mcpRuntimeSection,
+        lifecycleSection,
+        permissionsSection,
+        webhookSection,
+      ];
+      setRawSections(out);
+      const okCount = out.filter((x) => x.ok).length;
+      setOpsHealth(`${okCount}/${out.length} endpoints OK`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchSection]);
+
+  const loadLight = useCallback(async () => {
+    try {
+      const [runs, watch] = await Promise.all([api.fetchTaskRunsPayload(), api.fetchProcessWatchRecent(30)]);
+      setTaskRuns(api.parseTaskRunsPayload(runs));
+      setProcessEvents(api.parseProcessWatchPayload(watch));
+    } catch {
+      /* keep previous values */
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = window.setInterval(() => {
+      void loadLight();
+    }, 7_500);
+    return () => window.clearInterval(timer);
+  }, [autoRefresh, loadLight]);
+
+  const onScheduleAction = async (id: string, action: "pause" | "resume" | "run_now") => {
+    setScheduleBusy(`${id}:${action}`);
+    setScheduleMsg(null);
+    try {
+      const j = await api.postScheduleControl(id, action);
+      setScheduleMsg(`${action} → OK: ${JSON.stringify(j).slice(0, 400)}`);
+      await loadAll();
+    } catch (e) {
+      setScheduleMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setScheduleBusy(null);
+    }
+  };
+
+  const processTop = useMemo(() => [...processEvents].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10), [processEvents]);
+  const runsTop = useMemo(() => taskRuns.slice(0, 10), [taskRuns]);
+  const runStatusSummary = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const run of taskRuns) {
+      const key = (run.status || "unknown").toLowerCase();
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [taskRuns]);
+  const swarmGraphRows = useMemo(() => {
+    return taskRuns.slice(0, 12).map((r, idx) => ({
+      id: r.id,
+      label: r.summary || r.task || `run-${idx + 1}`,
+      status: r.status,
+      order: idx + 1,
+    }));
+  }, [taskRuns]);
+
+  const onResumeBrief = async () => {
+    const pid = getLastProjectId();
+    const sessionId = pid ? `code-studio-${pid}` : "code-studio";
+    setResumeBriefBusy(true);
+    setResumeBriefText(null);
+    try {
+      const j = await api.fetchSessionResumeBrief(sessionId);
+      setResumeBriefText(JSON.stringify(j, null, 2));
+    } catch (e) {
+      setResumeBriefText(e instanceof Error ? e.message : String(e));
+    } finally {
+      setResumeBriefBusy(false);
+    }
+  };
+
+  return (
+    <div className="daemon-ops-panel">
+      <div className="daemon-ops-header">
+        <strong>Cockpit opérateur (daemon)</strong>
+        <div className="daemon-ops-header-actions">
+          <label className="field-inline" style={{ fontSize: "0.72rem" }}>
+            <Checkbox checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+            <span>Auto-refresh runs/process</span>
+          </label>
+          <Button variant="ghost" size="sm" disabled={loading} onClick={() => void loadAll()}>
+          {loading ? "Chargement…" : "Rafraîchir"}
+          </Button>
+          <Button variant="secondary" size="sm" disabled={resumeBriefBusy} onClick={() => void onResumeBrief()}>
+            {resumeBriefBusy ? "…" : "Reprendre"}
+          </Button>
+        </div>
+      </div>
+      {err ? <p className="banner banner-error">{err}</p> : null}
+      <p className="hint" style={{ marginBottom: "0.75rem" }}>
+        Scheduler, runs, process watch, terminal, toolsets, recall, MCP (statut disque), hooks lifecycle. Webhooks signés :{" "}
+        <a
+          href="https://github.com/azerothl/Akasha/blob/main/docs/automation-webhooks.md"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          automation-webhooks.md
+        </a>
+        . Voir aussi{" "}
+        <a href="/docs/OPERATOR_COCKPIT.md" target="_blank" rel="noopener">
+          docs/OPERATOR_COCKPIT.md
+        </a>
+        .
+      </p>
+      <p className="hint" style={{ marginBottom: "0.75rem" }}>
+        État cockpit: <strong>{opsHealth || "…"}</strong>
+      </p>
+
+      {resumeBriefText ? (
+        <details open style={{ marginBottom: "1rem" }}>
+          <summary>Brief session (resume-brief)</summary>
+          <pre className="daemon-ops-pre">{resumeBriefText}</pre>
+        </details>
+      ) : null}
+
+      <section className="daemon-ops-structured-grid">
+        <div className="daemon-ops-card" data-testid="ops-task-runs-card">
+          <h4>Task runs</h4>
+          {runStatusSummary.length > 0 ? (
+            <p className="hint">
+              Répartition: {runStatusSummary.map(([s, n]) => `${s}=${n}`).join(" · ")}
+            </p>
+          ) : null}
+          {runsTop.length === 0 ? <p className="hint">Aucun run récent.</p> : (
+            <ul className="daemon-ops-mini-list">
+              {runsTop.map((r) => (
+                <li key={r.id}>
+                  <strong>{r.id.slice(0, 8)}…</strong> · {r.status} · {r.summary || r.task}
+                  <span className="hint"> · start {r.startedAt}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/task_runs"))?.payload, null, 2)}</pre>
+          </details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-swarm-graph-card">
+          <h4>Swarm graph (MVP)</h4>
+          {swarmGraphRows.length === 0 ? (
+            <p className="hint">Aucun worker/runs récents.</p>
+          ) : (
+            <ol className="daemon-ops-mini-list">
+              {swarmGraphRows.map((row) => (
+                <li key={row.id}>
+                  <strong>#{row.order}</strong> · <code>{row.id.slice(0, 8)}…</code> · {row.status} · {row.label}
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="hint">Vue graphe simplifiée basée sur les derniers task runs (coordination swarm opt-in).</p>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-process-watch-card">
+          <h4>Process watch</h4>
+          {processTop.length === 0 ? <p className="hint">Aucun événement.</p> : (
+            <ul className="daemon-ops-mini-list">
+              {processTop.map((e, idx) => (
+                <li key={`${e.at}-${idx}`}>
+                  <strong>{e.status}</strong> · {e.command} · {e.detail}
+                </li>
+              ))}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/process/watch/recent"))?.payload, null, 2)}</pre>
+          </details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-webhooks-card">
+          <h4>Webhooks (idempotence)</h4>
+          {webhookDeliveries.length === 0 ? (
+            <p className="hint">Aucune livraison récente enregistrée (SQLite idempotency).</p>
+          ) : (
+            <ul className="daemon-ops-mini-list">
+              {webhookDeliveries.map((d) => (
+                <li key={`${d.idempotency_key}-${d.seen_at_unix}`}>
+                  <strong>{d.status}</strong> · <code>{d.idempotency_key.slice(0, 48)}{d.idempotency_key.length > 48 ? "…" : ""}</code>
+                  <span className="hint"> · {new Date(d.seen_at_unix * 1000).toISOString()}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">
+              {JSON.stringify(rawSections.find((s) => s.title.includes("/api/automation/webhook/recent"))?.payload, null, 2)}
+            </pre>
+          </details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-terminal-card">
+          <h4>Terminal</h4>
+          <p className="hint">Mode: <strong>{terminal.current}</strong> · PTY interactif: <strong>{terminal.interactivePty ? "oui" : "non"}</strong></p>
+          <p className="hint">API PTY: {terminal.ptyApi.join(", ") || "—"}</p>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/terminal/capabilities"))?.payload, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-permissions-queue-card">
+          <h4>File permissions</h4>
+          {permQueue.length === 0 ? (
+            <p className="hint">Aucune demande en attente.</p>
+          ) : (
+            <ul className="daemon-ops-mini-list">
+              {permQueue.map((item) => {
+                const id = String(item.id ?? "");
+                const tool = String(item.tool_id ?? item.action ?? "tool");
+                const status = String(item.status ?? "pending");
+                return (
+                  <li key={id}>
+                    <strong>{tool}</strong> · {status}
+                    <div style={{ display: "flex", gap: "0.35rem", marginTop: "0.25rem" }}>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={!id || status !== "pending"}
+                        onClick={() => void api.approvePermission(id).then(() => loadAll())}
+                      >
+                        Approuver
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!id || status !== "pending"}
+                        onClick={() => void api.denyPermission(id).then(() => loadAll())}
+                      >
+                        Refuser
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <details>
+            <summary>Raw JSON</summary>
+            <pre className="daemon-ops-pre">
+              {JSON.stringify(rawSections.find((s) => s.title.includes("/api/permissions/queue"))?.payload, null, 2)}
+            </pre>
+          </details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-tools-card">
+          <h4>Tools effective</h4>
+          <p className="hint">Profil: <strong>{tools.profile}</strong></p>
+          <p className="hint">Allow: {tools.allow} · Approval: {tools.approval} · Deny: {tools.deny}</p>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/tools/effective"))?.payload, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-mcp-card">
+          <h4>MCP</h4>
+          <p className="hint">Config: <strong>{mcp.configPresent ? "présente" : "absente"}</strong> · Servers: <strong>{mcp.serverCount}</strong></p>
+          <p className="hint">Runtime: {mcp.runtime} · OAuth: {mcp.oauthMode}</p>
+          <details><summary>Raw JSON status/runtime</summary><pre className="daemon-ops-pre">{JSON.stringify({
+            status: rawSections.find((s) => s.title.includes("/api/mcp/status"))?.payload,
+            runtime: rawSections.find((s) => s.title.includes("/api/mcp/runtime"))?.payload,
+          }, null, 2)}</pre></details>
+        </div>
+
+        <div className="daemon-ops-card" data-testid="ops-lifecycle-card">
+          <h4>Lifecycle hooks</h4>
+          <p className="hint">Présent: <strong>{lifecycle.present ? "oui" : "non"}</strong> · Sandbox: <strong>{lifecycle.sandbox}</strong> · Timeout: <strong>{lifecycle.timeoutSec}s</strong></p>
+          <p className="hint">Phases: {lifecycle.phases.join(", ") || "—"}</p>
+          <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/lifecycle/hooks"))?.payload, null, 2)}</pre></details>
+        </div>
+      </section>
+
+      {schedules.length > 0 ? (
+        <div className="daemon-ops-schedules" style={{ marginBottom: "1rem" }}>
+          <strong className="daemon-ops-schedules-title">Actions planificateur</strong>
+          <table className="daemon-ops-schedule-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>ID</th>
+                <th>Actif</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedules.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.name ?? "—"}</td>
+                  <td>
+                    <code title={s.id}>{s.id.slice(0, 8)}…</code>
+                  </td>
+                  <td>{s.enabled === false ? "non" : "oui"}</td>
+                  <td className="daemon-ops-schedule-actions">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={scheduleBusy !== null}
+                      onClick={() => void onScheduleAction(s.id, "pause")}
+                    >
+                      {scheduleBusy === `${s.id}:pause` ? "…" : "Pause"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={scheduleBusy !== null}
+                      onClick={() => void onScheduleAction(s.id, "resume")}
+                    >
+                      {scheduleBusy === `${s.id}:resume` ? "…" : "Reprendre"}
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      disabled={scheduleBusy !== null}
+                      onClick={() => void onScheduleAction(s.id, "run_now")}
+                    >
+                      {scheduleBusy === `${s.id}:run_now` ? "…" : "Exécuter maintenant"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {scheduleMsg ? <p className="hint daemon-ops-schedule-msg">{scheduleMsg}</p> : null}
+        </div>
+      ) : (
+        <p className="hint" style={{ marginBottom: "1rem" }}>
+          Aucune entrée dans <code>GET /api/schedules</code> — les actions pause / reprise / exécution apparaissent lorsque des
+          plannings existent côté daemon.
+        </p>
+      )}
+
+      <div className="daemon-ops-blocks">
+        {rawSections.map((b) => (
+          <details key={b.title} open={!b.ok}>
+            <summary>
+              {b.ok ? "OK" : "Erreur"} — {b.title}
+            </summary>
+            <pre className="daemon-ops-pre">
+              {b.ok ? JSON.stringify(b.payload, null, 2).slice(0, 12_000) : b.error}
+            </pre>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}

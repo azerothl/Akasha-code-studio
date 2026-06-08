@@ -1,12 +1,24 @@
 import { useMemo, useState } from "react";
 import type { TaskEventEntry } from "./api";
 import { MarkdownBlock } from "./markdownBlock";
+import { Button } from "./components/ui/button";
 
 export type TaskProgressLine = {
   progress_pct: number;
   message: string;
   task_id?: string | null;
 };
+
+function collapseStreamedProgressLines(progress: TaskProgressLine[], fallbackTaskId: string): TaskProgressLine[] {
+  const lastByTaskPct = new Map<string, TaskProgressLine>();
+  for (const line of progress) {
+    const taskId = (line.task_id && String(line.task_id).trim()) || fallbackTaskId;
+    const key = `${taskId}\0${line.progress_pct}`;
+    lastByTaskPct.delete(key);
+    lastByTaskPct.set(key, { ...line, task_id: taskId });
+  }
+  return Array.from(lastByTaskPct.values());
+}
 
 function payloadObject(payload: unknown): Record<string, unknown> | null {
   return payload && typeof payload === "object" && !Array.isArray(payload)
@@ -56,18 +68,16 @@ export function mergeProgressWithEventProgress(
   events: TaskEventEntry[],
   rootTaskId: string,
 ): TaskProgressLine[] {
-  const out = [...progress];
-  const seen = new Set(
-    out.map((p) => `${p.task_id ?? rootTaskId}\0${p.progress_pct}\0${p.message}`),
-  );
-  for (const p of progressLinesFromEvents(events, rootTaskId)) {
-    const k = `${p.task_id ?? rootTaskId}\0${p.progress_pct}\0${p.message}`;
-    if (!seen.has(k)) {
-      seen.add(k);
-      out.push(p);
-    }
+  const byTaskPct = new Map<string, TaskProgressLine>();
+  for (const p of progress) {
+    const key = `${p.task_id ?? rootTaskId}\0${p.progress_pct}`;
+    byTaskPct.set(key, p);
   }
-  return out;
+  for (const p of progressLinesFromEvents(events, rootTaskId)) {
+    const key = `${p.task_id ?? rootTaskId}\0${p.progress_pct}`;
+    byTaskPct.set(key, p);
+  }
+  return Array.from(byTaskPct.values()).sort((a, b) => a.progress_pct - b.progress_pct);
 }
 
 /** Regroupe par `task_id` puis par `progress_pct` ; pour chaque couple on ne garde que le **dernier** message (stream). */
@@ -153,6 +163,47 @@ export function eventTypeDataAttr(eventType: string): string {
   return normalizeEventTypeSlug(eventType);
 }
 
+function normalizeSemanticText(text: string): string {
+  return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function semanticEventPayloadKey(ev: TaskEventEntry): string {
+  const o = payloadObject(ev.payload);
+  const direct = [
+    payloadString(ev.payload, "tool_call_id"),
+    payloadString(ev.payload, "tool_name"),
+    payloadString(ev.payload, "tool"),
+    payloadString(ev.payload, "name"),
+    payloadString(ev.payload, "agent"),
+    payloadString(ev.payload, "agent_type"),
+    payloadString(ev.payload, "subtask_id"),
+    payloadString(ev.payload, "task_id"),
+    payloadString(ev.payload, "step_id"),
+    payloadString(ev.payload, "command"),
+    payloadString(ev.payload, "path"),
+    payloadString(ev.payload, "status"),
+  ]
+    .filter(Boolean)
+    .join("|");
+  if (direct) return direct;
+  const display = extractEventDisplayMessage(ev.payload);
+  if (display) return normalizeSemanticText(display).slice(0, 220);
+  if (!o) return "";
+  const stable = JSON.stringify(o);
+  return stable.length > 280 ? stable.slice(0, 280) : stable;
+}
+
+type EventCategory = "subagents" | "tools" | "other";
+
+function categoryForEventType(eventType: string): EventCategory {
+  const t = eventType.toLowerCase();
+  if (t.includes("tool")) return "tools";
+  if (t.includes("sub_agent") || t.includes("subtask") || t.includes("task_decomposed") || t.includes("task_created")) {
+    return "subagents";
+  }
+  return "other";
+}
+
 function extractFromContentArray(content: unknown): string | null {
   if (!Array.isArray(content)) return null;
   const parts: string[] = [];
@@ -230,12 +281,12 @@ type TaskDetailEventRowProps = {
   hideTypeBadge?: boolean;
 };
 
-/** Une entrée par couple (`event_type`, `task_id`) : garde le dernier événement (ordre `at`), pour absorber le stream. */
+/** Une entrée par couple (`event_type`, `task_id`, clé sémantique payload) : garde le dernier événement (ordre `at`). */
 export function dedupeEventsLastPerTaskAndType(events: TaskEventEntry[], rootTaskId: string): TaskEventEntry[] {
   const sorted = [...events].sort((a, b) => a.at.localeCompare(b.at));
   const last = new Map<string, TaskEventEntry>();
   for (const ev of sorted) {
-    const k = `${ev.event_type}\0${eventTaskKey(ev, rootTaskId)}`;
+    const k = `${ev.event_type}\0${eventTaskKey(ev, rootTaskId)}\0${semanticEventPayloadKey(ev)}`;
     last.set(k, ev);
   }
   return Array.from(last.values()).sort((a, b) => a.at.localeCompare(b.at));
@@ -270,11 +321,22 @@ type WorkflowStep = {
   stepId?: string;
   agent?: string;
   title: string;
-  status: "planned" | "running" | "completed" | "failed" | "info";
+  status: "planned" | "running" | "completed" | "failed" | "blocked" | "info";
   at: string;
   details?: string[];
   progress: TaskProgressLine[];
+  worktreeBranch?: string;
+  worktreePath?: string;
+  worktreeIntegration?: string;
+  worktreeConflict?: string;
 };
+
+const WORKTREE_INTEGRATION_EVENT_TYPES = new Set([
+  "studio_worktree_integration_conflict",
+  "studio_worktree_integration_failed",
+  "studio_worktree_integration_cleaned",
+  "studio_worktree_integration_merged",
+]);
 
 function statusLabel(s: WorkflowStep["status"]): string {
   switch (s) {
@@ -286,16 +348,54 @@ function statusLabel(s: WorkflowStep["status"]): string {
       return "terminé";
     case "failed":
       return "échec";
+    case "blocked":
+      return "bloqué";
     default:
       return "info";
   }
 }
 
 function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
+  if (ev.event_type === "studio_worker_state_changed") {
+    const state = payloadString(ev.payload, "state");
+    if (state === "completed") return "completed";
+    if (state === "failed" || state === "stopped") return "failed";
+    if (state === "blocked") return "blocked";
+    if (state === "spawned" || state === "ready" || state === "running") return "running";
+    return "info";
+  }
   if (ev.event_type === "subtask_completed" || ev.event_type === "task_completed") return "completed";
   if (ev.event_type === "task_failed" || ev.event_type === "task_cancelled") return "failed";
+  if (ev.event_type === "studio_worktree_integration_conflict") return "blocked";
+  if (ev.event_type === "studio_worktree_integration_failed") return "failed";
+  if (
+    ev.event_type === "studio_worktree_integration_cleaned" ||
+    ev.event_type === "studio_worktree_integration_merged"
+  ) {
+    return "completed";
+  }
+  if (ev.event_type === "studio_worktree_created") return "running";
   if (ev.event_type === "subtask_started" || ev.event_type === "sub_agent_spawned") return "running";
   return "info";
+}
+
+function isSupportedWorktreeIntegrationEventType(eventType: string): boolean {
+  return WORKTREE_INTEGRATION_EVENT_TYPES.has(eventType);
+}
+
+function worktreeTitleFromEventType(eventType: string): string {
+  if (eventType === "studio_worktree_created") return "Worktree créé";
+  if (isSupportedWorktreeIntegrationEventType(eventType)) return "Intégration worktree";
+  return "Worktree";
+}
+
+function worktreeDetails(step: WorkflowStep): string[] {
+  return [
+    step.worktreeIntegration ? `Intégration: ${step.worktreeIntegration}` : "",
+    step.worktreeConflict ? `Conflit: ${step.worktreeConflict}` : "",
+    step.worktreeBranch ? `Branche: ${step.worktreeBranch}` : "",
+    step.worktreePath ? `Chemin: ${step.worktreePath}` : "",
+  ].filter(Boolean);
 }
 
 function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
@@ -402,10 +502,76 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
       ].filter(Boolean);
       continue;
     }
+
+    if (ev.event_type === "studio_worker_state_changed") {
+      const taskId = payloadString(ev.payload, "worker_task_id") ?? payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
+      const agent = payloadString(ev.payload, "assigned_agent") ?? undefined;
+      const state = payloadString(ev.payload, "state") ?? "unknown";
+      const key = taskId ? `worker:${taskId}` : `worker:${ev.at}`;
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        agent,
+        title: `Worker ${agent ?? "studio"} · ${state}`,
+        status: workflowStatusFromEvent(ev),
+        at: ev.at,
+        details: taskId ? [`Worker task: ${taskId}`] : undefined,
+      });
+      step.status = workflowStatusFromEvent(ev);
+      step.details = [...(step.details ?? []), `State: ${state}`].slice(-20);
+      continue;
+    }
+
+    if (ev.event_type === "studio_conflict_notice") {
+      const key = `conflict:${ev.at}`;
+      const filesRaw = payloadObject(ev.payload)?.files;
+      const files = Array.isArray(filesRaw) ? filesRaw.map(String).join(", ") : "";
+      ensure(key, {
+        id: key,
+        taskId: eventTaskKey(ev, rootTaskId),
+        title: "Conflit détecté",
+        status: "blocked",
+        at: ev.at,
+        details: [
+          payloadString(ev.payload, "reason") ?? "Touches concurrentes détectées",
+          files ? `Fichiers: ${files}` : "",
+        ].filter(Boolean),
+      });
+      continue;
+    }
+
+    if (ev.event_type === "studio_worktree_created" || isSupportedWorktreeIntegrationEventType(ev.event_type)) {
+      const taskId = payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
+      const branch = payloadString(ev.payload, "worktree_branch");
+      const path = payloadString(ev.payload, "worktree_path");
+      const integration = payloadString(ev.payload, "integration_status");
+      const conflict = payloadString(ev.payload, "conflict_state");
+      const key = taskId ? `worktree:${taskId}` : `worktree:${ev.at}`;
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        title: worktreeTitleFromEventType(ev.event_type),
+        status: workflowStatusFromEvent(ev),
+        at: ev.at,
+        details: [],
+      });
+      step.status = workflowStatusFromEvent(ev);
+      step.title = worktreeTitleFromEventType(ev.event_type);
+      step.at = ev.at;
+      if (branch) step.worktreeBranch = branch;
+      if (path) step.worktreePath = path;
+      if (integration) step.worktreeIntegration = integration;
+      if (conflict) step.worktreeConflict = conflict;
+      step.details = worktreeDetails(step);
+      continue;
+    }
   }
 
   for (const step of steps.values()) {
-    if (step.taskId) step.progress = progressByTask.get(step.taskId) ?? [];
+    if (step.taskId) {
+      const taskProgress = progressByTask.get(step.taskId) ?? [];
+      step.progress = collapseStreamedProgressLines(taskProgress, rootTaskId);
+    }
   }
   return [...steps.values()].sort((a, b) => a.at.localeCompare(b.at));
 }
@@ -462,29 +628,50 @@ export function TaskDetailWorkflowView({
 }
 
 export function TaskDetailEventsGrouped({ events, rootTaskId }: TaskDetailEventsGroupedProps) {
-  const groups = useMemo(() => {
+  const categories = useMemo(() => {
     const deduped = dedupeEventsLastPerTaskAndType(events, rootTaskId);
-    return groupEventsByTypeInOrder(deduped);
+    const groupedByType = groupEventsByTypeInOrder(deduped);
+    const entries: { key: EventCategory; title: string; groups: { eventType: string; items: TaskEventEntry[] }[] }[] = [
+      { key: "subagents", title: "Sous-agents", groups: [] },
+      { key: "tools", title: "Outils", groups: [] },
+      { key: "other", title: "Autres événements", groups: [] },
+    ];
+    for (const g of groupedByType) {
+      const cat = categoryForEventType(g.eventType);
+      entries.find((e) => e.key === cat)?.groups.push(g);
+    }
+    return entries.filter((e) => e.groups.length > 0);
   }, [events, rootTaskId]);
   return (
     <div className="task-detail-events-grouped">
-      {groups.map(({ eventType, items }) => {
-        const slug = eventTypeDataAttr(eventType);
+      {categories.map((category) => {
+        const total = category.groups.reduce((sum, g) => sum + g.items.length, 0);
         return (
-          <section key={eventType} className="task-detail-event-group" data-event-type={slug}>
-            <header className="task-detail-event-group-head">
-              <span className="task-detail-event-group-title">{eventType}</span>
-              <span className="hint task-detail-event-group-count">{items.length}</span>
+          <section key={category.key} className="task-detail-events-category" data-event-category={category.key}>
+            <header className="task-detail-events-category-head">
+              <span className="task-detail-events-category-title">{category.title}</span>
+              <span className="hint task-detail-events-category-count">{total}</span>
             </header>
-            <ul className="task-detail-events task-detail-events--in-group">
-              {items.map((ev) => (
-                <TaskDetailEventRow
-                  key={`ev-${eventType}-${eventTaskKey(ev, rootTaskId)}-${ev.at}`}
-                  ev={ev}
-                  hideTypeBadge
-                />
-              ))}
-            </ul>
+            {category.groups.map(({ eventType, items }) => {
+              const slug = eventTypeDataAttr(eventType);
+              return (
+                <section key={eventType} className="task-detail-event-group" data-event-type={slug}>
+                  <header className="task-detail-event-group-head">
+                    <span className="task-detail-event-group-title">{eventType}</span>
+                    <span className="hint task-detail-event-group-count">{items.length}</span>
+                  </header>
+                  <ul className="task-detail-events task-detail-events--in-group">
+                    {items.map((ev) => (
+                      <TaskDetailEventRow
+                        key={`ev-${eventType}-${eventTaskKey(ev, rootTaskId)}-${semanticEventPayloadKey(ev)}-${ev.at}`}
+                        ev={ev}
+                        hideTypeBadge
+                      />
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
           </section>
         );
       })}
@@ -506,20 +693,26 @@ export function TaskDetailEventRow({ ev, hideTypeBadge }: TaskDetailEventRowProp
             {ev.event_type}
           </span>
         )}
+        {typeof ev.schema_version === "number" ? (
+          <span className="hint" title="Version du schéma événement">
+            v{ev.schema_version}
+          </span>
+        ) : null}
         {ev.task_id ? (
           <code className="task-detail-event-taskid" title={ev.task_id}>
             {ev.task_id.length > 14 ? `${ev.task_id.slice(0, 8)}…` : ev.task_id}
           </code>
         ) : null}
         {hasPayload ? (
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm task-detail-json-toggle"
+          <Button
+            variant="secondary"
+            size="sm"
+            className="task-detail-json-toggle"
             onClick={() => setJsonOpen((o) => !o)}
             aria-expanded={jsonOpen}
           >
             {jsonOpen ? "Masquer JSON" : "Voir JSON"}
-          </button>
+          </Button>
         ) : null}
         <span className="hint task-detail-event-at">{ev.at}</span>
       </div>

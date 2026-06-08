@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
+import { clearLastProjectId, getLastProjectId, setLastProjectId } from "./lastProjectStorage";
 import {
-  BASE_STACK_PRESETS,
-  STACK_ADDON_GROUPS,
   STACK_PRESET_CUSTOM,
   STACK_PRESET_NONE,
   type StackAddonCategoryId,
@@ -36,6 +36,21 @@ import {
   mergeProgressWithEventProgress,
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
+import { DaemonOpsPanel } from "./daemonOpsPanel";
+import { NotificationCenter } from "./components/NotificationCenter";
+import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
+import { InfoTip } from "./components/Tooltip";
+import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
+import { ProjectDashboard } from "./projectDashboard";
+import { KanbanBoard } from "./kanbanBoard";
+import { Accordion, type AccordionItem } from "./accordion";
+import { StackWizard } from "./stackWizard";
+import { Input } from "./components/ui/input";
+import { Textarea } from "./components/ui/textarea";
+import { Select } from "./components/ui/select";
+import { Checkbox } from "./components/ui/checkbox";
+import { Button } from "./components/ui/button";
+import { Bot, Columns2, PanelLeft, PanelRight, Route, ShieldCheck, Sparkles } from "lucide-react";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -70,123 +85,54 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type StackFieldsProps = {
-  selectId: string;
-  presetId: string;
-  onPresetChange: (v: string) => void;
-  customText: string;
-  onCustomTextChange: (v: string) => void;
-  addons: Record<StackAddonCategoryId, string[]>;
-  onToggleAddon: (cat: StackAddonCategoryId, optId: string) => void;
-  composedStack: string;
-};
+type CenterTab =
+  | "dashboard"
+  | "kanban"
+  | "editor"
+  | "preview"
+  | "plan"
+  | "design"
+  | "branches"
+  | "logs"
+  | "cockpit"
+  | "docs"
+  | "agents"
+  | "settings";
 
-function StackFields({
-  selectId,
-  presetId,
-  onPresetChange,
-  customText,
-  onCustomTextChange,
-  addons,
-  onToggleAddon,
-  composedStack,
-}: StackFieldsProps) {
-  const showCustom = presetId === STACK_PRESET_CUSTOM;
-  const showPreview = presetId !== STACK_PRESET_NONE && presetId !== STACK_PRESET_CUSTOM;
+export type { CenterTab };
 
-  return (
-    <>
-      <label className="field stack-select-field">
-        <span>Modèle de stack</span>
-        <select id={selectId} value={presetId} onChange={(e) => onPresetChange(e.target.value)}>
-          <option value={STACK_PRESET_NONE}>— Aucune stack —</option>
-          {BASE_STACK_PRESETS.filter((p) => p.id !== STACK_PRESET_CUSTOM).map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-          <option value={STACK_PRESET_CUSTOM}>Personnalisé (texte libre)</option>
-        </select>
-      </label>
-      {presetId !== STACK_PRESET_NONE ? (
-        <details className="stack-addons-details">
-          <summary>Affiner avec des cases à cocher (optionnel)</summary>
-          <div className="stack-addon-groups">
-            {STACK_ADDON_GROUPS.map((g) => (
-              <fieldset key={g.id} className="stack-addon-group">
-                <legend>{g.title}</legend>
-                <div className="stack-addon-chips">
-                  {g.options.map((o) => {
-                    const checked = (addons[g.id] ?? []).includes(o.id);
-                    return (
-                      <label key={o.id} className="stack-addon-label">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => onToggleAddon(g.id, o.id)}
-                        />
-                        {o.label}
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            ))}
-          </div>
-        </details>
-      ) : (
-        <p className="hint stack-addons-hint">
-          Choisissez un modèle ou « Personnalisé » pour activer les précisions par catégorie.
-        </p>
-      )}
-      {showPreview ? (
-        <label className="field">
-          <span>Aperçu (texte injecté côté daemon)</span>
-          <textarea className="stack-textarea" readOnly rows={6} value={composedStack} spellCheck={false} />
-        </label>
-      ) : null}
-      {showCustom ? (
-        <label className="field">
-          <span>Stack libre</span>
-          <textarea
-            className="stack-textarea"
-            rows={8}
-            value={customText}
-            onChange={(e) => onCustomTextChange(e.target.value)}
-            placeholder="Décrivez langages, frameworks, conventions, outils…"
-            spellCheck={false}
-          />
-        </label>
-      ) : null}
-    </>
-  );
+const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
+  { id: "dashboard", label: "Tableau de bord" },
+  { id: "kanban", label: "Kanban", testId: "studio-kanban-tab" },
+  { id: "editor", label: "Éditeur" },
+  { id: "preview", label: "Aperçu" },
+  { id: "plan", label: "Plan" },
+  { id: "design", label: "Design" },
+  { id: "branches", label: "Branches", testId: "studio-branches-tab" },
+  { id: "logs", label: "Logs serveur" },
+  { id: "cockpit", label: "Cockpit" },
+  { id: "docs", label: "Documentation", testId: "studio-doc-tab" },
+  { id: "agents", label: "Agents", testId: "studio-agents-tab" },
+  { id: "settings", label: "Paramètres", testId: "studio-settings-tab" },
+];
+
+const CENTER_TAB_STORAGE_KEY = "studio.centerTab";
+
+function loadPersistedCenterTab(): CenterTab {
+  if (typeof window === "undefined") return "dashboard";
+  try {
+    const stored = window.localStorage.getItem(CENTER_TAB_STORAGE_KEY);
+    if (!stored) return "dashboard";
+    const allowed = new Set<CenterTab>(CENTER_TAB_ITEMS.map((t) => t.id));
+    return allowed.has(stored as CenterTab) ? (stored as CenterTab) : "dashboard";
+  } catch {
+    return "dashboard";
+  }
 }
 
-function CollapsiblePanel({
-  title,
-  open,
-  onToggle,
-  children,
-  className,
-}: {
-  title: string;
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={["panel", "panel-collapsible", className].filter(Boolean).join(" ")}>
-      <button type="button" className="panel-collapse-trigger" onClick={onToggle} aria-expanded={open}>
-        <span className="panel-collapse-chevron" aria-hidden>
-          {open ? "▼" : "▶"}
-        </span>
-        <h2>{title}</h2>
-      </button>
-      {open ? <div className="panel-collapse-inner">{children}</div> : null}
-    </section>
-  );
-}
+// Deprecated: Use StackWizard instead
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// Deprecated: StackFields and StackFieldsProps have been replaced by StackWizard component
 
 function formatTaskStatusFr(status: string): string {
   const m: Record<string, string> = {
@@ -293,10 +239,73 @@ function isMarkdownPath(path: string | null): boolean {
   return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
 }
 
+function extractTicketDraftsFromPlan(planText: string): { title: string; description: string }[] {
+  const lines = planText.split(/\r?\n/);
+  const drafts: { title: string; description: string }[] = [];
+  let currentSection = "";
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith("## ")) {
+      currentSection = line.replace(/^##\s+/, "").trim();
+      continue;
+    }
+    // Accept TODO markdown checklists and task bullets.
+    if (/^-\s+\[\s?\]\s+/.test(line) || /^-\s+/.test(line)) {
+      const title = line
+        .replace(/^-\s+\[\s?\]\s+/, "")
+        .replace(/^-+\s+/, "")
+        .trim();
+      if (!title || title.length < 3) continue;
+      drafts.push({
+        title: title.slice(0, 200),
+        description: currentSection ? `Source plan section: ${currentSection}` : "Imported from CODE_STUDIO_PLAN.md",
+      });
+    }
+  }
+  // de-duplicate by case-insensitive title
+  const seen = new Set<string>();
+  return drafts.filter((d) => {
+    const k = d.title.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function dedupeProgressForTrace(
+  progress: { progress_pct: number; message: string; task_id?: string | null }[],
+  taskId: string,
+): { progress_pct: number; message: string; task_id?: string | null }[] {
+  const deduped = new Map<string, { progress_pct: number; message: string; task_id?: string | null }>();
+  for (const p of progress) {
+    const raw = (p.message ?? "").trim();
+    if (!raw) continue;
+    // Streamed progress emits many near-identical updates for the same percentage.
+    // Keep only the latest message per (task_id, progress_pct).
+    const k = `${p.task_id ?? taskId}\0${p.progress_pct}`;
+    deduped.set(k, p);
+  }
+  return Array.from(deduped.values()).sort((a, b) => a.progress_pct - b.progress_pct);
+}
+
 export default function App() {
   const [projects, setProjects] = useState<api.StudioProject[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof localStorage !== "undefined") {
+      try {
+        const saved = localStorage.getItem("akasha-studio-sidebar-open");
+        return saved === null ? true : saved === "1";
+      } catch {
+        return true;
+      }
+    }
+    return true;
+  });
+  const [activeGroup, setActiveGroup] = useState<string>(getDefaultGroup());
   const [newProjectName, setNewProjectName] = useState("Mon application");
+  const [newProjectSummary, setNewProjectSummary] = useState("");
   const [newStackPresetId, setNewStackPresetId] = useState(STACK_PRESET_NONE);
   const [newStackCustomText, setNewStackCustomText] = useState("");
   const [newStackAddons, setNewStackAddons] = useState(() => emptyStackAddons());
@@ -315,20 +324,32 @@ export default function App() {
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
   const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<"editor" | "preview" | "logs" | "plan" | "design">("editor");
+  const [centerTab, setCenterTab] = useState<CenterTab>(() => loadPersistedCenterTab());
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
+  /** WebContainers-style strict sandbox: iframe without same-origin (static/HTML preview safer). */
+  const [strictWebSandbox, setStrictWebSandbox] = useState(false);
+  /** Libellé de la stack détectée par le daemon lors du dernier `preview/start` ou `preview/install`. */
+  const [previewProfile, setPreviewProfile] = useState<string | null>(null);
   const [devServerLog, setDevServerLog] = useState("");
   const [depsInstallBusy, setDepsInstallBusy] = useState(false);
   const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
   const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
   const [gitWorktreeLines, setGitWorktreeLines] = useState<{ status: string; path: string }[]>([]);
+  const [gitBranches, setGitBranches] = useState<api.GitBranchEntry[]>([]);
+  const [gitBranchesLoading, setGitBranchesLoading] = useState(false);
+  const [gitCompareBase, setGitCompareBase] = useState("");
+  const [gitCompareTarget, setGitCompareTarget] = useState("");
+  const [gitCompareResult, setGitCompareResult] = useState<api.GitComparePayload | null>(null);
+  const [gitConflicts, setGitConflicts] = useState<string[]>([]);
+  const [gitMergeInProgress, setGitMergeInProgress] = useState(false);
   /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
   const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
   const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
   const [codeRagStatusError, setCodeRagStatusError] = useState<string | null>(null);
   const [codeRagReindexBusy, setCodeRagReindexBusy] = useState(false);
+  const [dashboardLastSyncAt, setDashboardLastSyncAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
@@ -339,7 +360,19 @@ export default function App() {
   const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
+  const [chatIncognito, setChatIncognito] = useState(false);
+  const [handoffModel, setHandoffModel] = useState("");
+  const [handoffProvider, setHandoffProvider] = useState("");
+  const [forkDialog, setForkDialog] = useState<{
+    open: boolean;
+    index: number;
+    parentTaskId: string;
+    sourceText: string;
+  } | null>(null);
+  const [forkInitialInstruction, setForkInitialInstruction] = useState("");
   const [agent, setAgent] = useState<string>("studio_scaffold");
+  const [activeTocSection, setActiveTocSection] = useState<string>("agents-overview");
   const [taskTrace, setTaskTrace] = useState<{
     id: string;
     status: string;
@@ -357,7 +390,6 @@ export default function App() {
   } | null>(null);
   const [humanReplyDraft, setHumanReplyDraft] = useState("");
   const [humanReplyBusy, setHumanReplyBusy] = useState(false);
-  const [taskTraceSectionOpen, setTaskTraceSectionOpen] = useState(true);
   /** Annule le polling en cours (nouveau message ou démontage du composant). */
   const pollTaskAbortRef = useRef<AbortController | null>(null);
   const editorDirtyRef = useRef(false);
@@ -367,10 +399,15 @@ export default function App() {
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
+  const [deleteProjectDialog, setDeleteProjectDialog] = useState<api.StudioProject | null>(null);
+  const [deletePrecheck, setDeletePrecheck] = useState<api.StudioDeletePrecheck | null>(null);
+  const [deletePrecheckLoading, setDeletePrecheckLoading] = useState(false);
+  const [deleteProjectBusy, setDeleteProjectBusy] = useState(false);
   /** Répartition centre / chat : équilibré, plein centre, plein chat. */
   const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("balanced");
   /** Menu header ouvert : null ou id section. */
   const [openHeaderMenu, setOpenHeaderMenu] = useState<null | "project" | "evolutions" | "ops" | "agent">(null);
+  const [dashboardProjectSettingsOpen, setDashboardProjectSettingsOpen] = useState(false);
   const [gitStatusPopoverOpen, setGitStatusPopoverOpen] = useState(false);
   const [designViewMode, setDesignViewMode] = useState<"split" | "visual" | "source">("split");
   const [taskDetailForId, setTaskDetailForId] = useState<string | null>(null);
@@ -380,12 +417,38 @@ export default function App() {
     task: api.TaskStatusResponse;
     events: api.TaskEventEntry[];
   } | null>(null);
+  const [taskDetailLiveMode, setTaskDetailLiveMode] = useState<"sse" | "polling" | null>(null);
+  const [chatOptionsOpen, setChatOptionsOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.chatOptionsOpen") === "1";
+  });
+  const [chatSuggestionsOpen, setChatSuggestionsOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.chatSuggestionsOpen") === "1";
+  });
+  const [buildLogOpen, setBuildLogOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("studio.buildLogOpen") === "1";
+  });
+  const [taskDetailTab, setTaskDetailTab] = useState<"events" | "progress" | "workflow" | "summary">("events");
+  const [uiTheme, setUiTheme] = useState<ThemeId>(() => loadThemePrefs().theme);
+  const [uiDensity, setUiDensity] = useState<"normal" | "compact">(() => {
+    const prefs = loadThemePrefs();
+    if (prefs.forceCompactDensity) return "compact";
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiDensity") : null;
+    return stored === "compact" ? "compact" : "normal";
+  });
 
   const [codeMode, setCodeMode] = useState<StudioCodeMode>(() => loadPersistedCodeMode());
   const [policyHintOneShot, setPolicyHintOneShot] = useState("");
   const [delegateSingleLevel, setDelegateSingleLevel] = useState(false);
   const [evolutionSummaryDraft, setEvolutionSummaryDraft] = useState("");
+  const [projectSummaryDraft, setProjectSummaryDraft] = useState("");
   const [policyNotesDraft, setPolicyNotesDraft] = useState("");
+  const [ticketEnforcementModeDraft, setTicketEnforcementModeDraft] = useState<"off" | "soft" | "strict">("off");
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  /** Definition of Done : texte libre ou JSON critères (réutilisé pour chaque envoi tant que non vide). */
+  const [acceptanceCriteriaDraft, setAcceptanceCriteriaDraft] = useState("");
   const [planDocText, setPlanDocText] = useState("");
   const [planDocSnapshot, setPlanDocSnapshot] = useState("");
   const [planDocLoading, setPlanDocLoading] = useState(false);
@@ -400,9 +463,27 @@ export default function App() {
   const [showAgentMatrix, setShowAgentMatrix] = useState(false);
   /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
   const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
+  const [daemonStatus, setDaemonStatus] = useState<api.DaemonStatus>({ ok: false, label: "Vérification…" });
+  const [userGuideDoc, setUserGuideDoc] = useState("");
+  const [userGuideLoading, setUserGuideLoading] = useState(false);
+  const [userGuideError, setUserGuideError] = useState<string | null>(null);
+
+  useNotifyOnMessage(error, "error", "Code Studio");
+  useNotifyOnMessage(taskDetailError, "error", "Détail tâche");
+  useNotifyOnMessage(userGuideError, "error", "Documentation");
+  useNotifyOnMessage(codeRagStatusError, "error", "Index code");
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
+  const chatLogRef = useRef<HTMLDivElement | null>(null);
+  const chatPinnedByUserRef = useRef(false);
+  /** Buffers live events received before the initial task-detail fetch completes. */
+  const taskDetailLiveSnapshotRef = useRef<api.TaskEventEntry[] | null>(null);
+  /** Incremented each time openDeleteProjectDialog is called; guards against applying a stale
+   *  precheck result to the wrong project when the user quickly opens deletion for another project
+   *  before the first precheck request resolves. */
+  const deletePrecheckGenRef = useRef(0);
+  const [chatHasUnseen, setChatHasUnseen] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedId) ?? null,
@@ -410,11 +491,67 @@ export default function App() {
   );
   const parsedDesignDoc = useMemo(() => parseDesignDoc(designDocText), [designDocText]);
   const designHint = useMemo(() => buildDesignPolicyHint(parsedDesignDoc), [parsedDesignDoc]);
+  const userGuideToc = useMemo(() => {
+    if (!userGuideDoc) return [];
+    return userGuideDoc
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => /^#{1,3}\s+/.test(line))
+      .map((line) => {
+        const match = /^(#{1,3})\s+(.+)$/.exec(line);
+        if (!match) return null;
+        const level = match[1].length;
+        const label = match[2].trim();
+        const id = label
+          .toLowerCase()
+          .replace(/[`*_~()[\]{}<>]/g, "")
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+        return { level, label, id };
+      })
+      .filter((item): item is { level: number; label: string; id: string } => Boolean(item?.id));
+  }, [userGuideDoc]);
 
   const composedStack = useMemo(
     () => composeStackString(stackPresetId, stackCustomText, stackAddons),
     [stackPresetId, stackCustomText, stackAddons],
   );
+
+  const dashboardProjectMeta = useMemo<api.StudioProjectMeta | null>(() => {
+    if (!selectedProject) return null;
+    return {
+      id: selectedProject.id,
+      name: selectedProject.name,
+      created_at: "",
+      tech_stack: composedStack.trim() ? composedStack.trim() : null,
+      git_branch: gitHeadBranch ?? null,
+      git_worktree_clean: gitWorktreeClean ?? null,
+      git_worktree_lines: gitWorktreeLines,
+      project_summary: projectSummaryDraft.trim() ? projectSummaryDraft.trim() : null,
+      evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
+      policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+    };
+  }, [
+    selectedProject,
+    composedStack,
+    gitHeadBranch,
+    gitWorktreeClean,
+    gitWorktreeLines,
+    projectSummaryDraft,
+    evolutionSummaryDraft,
+    policyNotesDraft,
+  ]);
+
+  const dashboardActiveTask = useMemo(() => {
+    if (!selectedId || !taskTrace || taskTrace.done) return null;
+    const stored = loadActiveTask(selectedId);
+    return {
+      taskId: taskTrace.id,
+      startedAt: stored?.startedAt ?? Date.now(),
+    };
+  }, [selectedId, taskTrace]);
 
   const editorDirty = useMemo(
     () => Boolean(filePath && !editorBinary && editorText !== savedEditorText),
@@ -433,6 +570,51 @@ export default function App() {
   useEffect(() => {
     if (!isMarkdownPath(filePath)) setEditorMarkdownPreview(false);
   }, [filePath]);
+
+  useEffect(() => {
+    if (centerTab !== "agents") return;
+
+    const sections = [
+      document.getElementById("agents-overview"),
+      document.getElementById("agents-role-selection"),
+      document.getElementById("agents-practices"),
+      document.getElementById("agents-matrix"),
+    ].filter((el) => el !== null) as HTMLElement[];
+
+    if (sections.length === 0) return;
+
+    const pageContainer = document.querySelector(".agents-page") as HTMLElement | null;
+    if (!pageContainer) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let highestIntersection = 0;
+        let visibleSectionId = "agents-overview";
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > highestIntersection) {
+            highestIntersection = entry.intersectionRatio;
+            visibleSectionId = entry.target.id;
+          }
+        });
+
+        if (visibleSectionId) {
+          setActiveTocSection(visibleSectionId);
+        }
+      },
+      {
+        root: pageContainer,
+        threshold: [0, 0.1, 0.25, 0.5],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      sections.forEach((section) => observer.unobserve(section));
+      observer.disconnect();
+    };
+  }, [centerTab]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -480,18 +662,149 @@ export default function App() {
     }
   }, []);
 
+  const clearSessionSnapsForProject = useCallback((id: string) => {
+    try {
+      sessionStorage.removeItem(`akasha-plan-snap-${id}`);
+      sessionStorage.removeItem(`akasha-design-snap-${id}`);
+    } catch {
+      /* private mode / quota */
+    }
+  }, []);
+
+  const openDeleteProjectDialog = useCallback((p: api.StudioProject) => {
+    setOpenHeaderMenu(null);
+    setModalLoadOpen(false);
+    setDeleteProjectDialog(p);
+    setDeletePrecheck(null);
+    setDeletePrecheckLoading(true);
+    const gen = ++deletePrecheckGenRef.current;
+    void api
+      .getDeletePrecheck(p.id)
+      .then((c) => {
+        if (deletePrecheckGenRef.current !== gen) return;
+        setDeletePrecheck(c);
+      })
+      .catch((e) => {
+        if (deletePrecheckGenRef.current !== gen) return;
+        setError(String(e));
+        setDeleteProjectDialog(null);
+      })
+      .finally(() => {
+        if (deletePrecheckGenRef.current !== gen) return;
+        setDeletePrecheckLoading(false);
+      });
+  }, []);
+
+  const onConfirmDeleteProject = useCallback(
+    async (force: boolean) => {
+      if (!deleteProjectDialog) return;
+      setError(null);
+      setDeleteProjectBusy(true);
+      const id = deleteProjectDialog.id;
+      try {
+        try {
+          await api.stopStudioPreview(id);
+        } catch {
+          /* déjà arrêté ou indisponible */
+        }
+        await api.deleteProject(id, force);
+        clearSessionSnapsForProject(id);
+        if (selectedId === id) {
+          setSelectedId(null);
+        }
+        setDeleteProjectDialog(null);
+        setDeletePrecheck(null);
+        await refreshProjects();
+        setStatus("Projet supprimé");
+      } catch (e) {
+        setError(String(e));
+      } finally {
+        setDeleteProjectBusy(false);
+      }
+    },
+    [deleteProjectDialog, selectedId, refreshProjects, clearSessionSnapsForProject],
+  );
+
   useEffect(() => {
     void refreshProjects();
   }, [refreshProjects]);
 
   useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      const next = await api.fetchDaemonStatus();
+      if (!cancelled) setDaemonStatus(next);
+    };
+    void refresh();
+    const timer = window.setInterval(() => {
+      void refresh();
+    }, 10_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (projects.length === 0) {
+      if (selectedId !== null) setSelectedId(null);
+      return;
+    }
+    if (selectedId && projects.some((p) => p.id === selectedId)) {
+      return;
+    }
+    const lastId = getLastProjectId();
+    const restoredId = lastId && projects.some((p) => p.id === lastId) ? lastId : projects[0]?.id ?? null;
+    setSelectedId(restoredId);
+    if (restoredId) setLastProjectId(restoredId);
+  }, [projects, selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      // Only clear the stored ID once projects have actually been loaded; on the
+      // very first render projects is still [] and selectedId is null, so we must
+      // not wipe the last-project-id before the restore logic has had a chance to
+      // read it.
+      if (projects.length > 0) clearLastProjectId();
+      return;
+    }
+    setLastProjectId(selectedId);
+  }, [selectedId, projects.length]);
+
+  useEffect(() => {
     if (!selectedId) {
       setChat([]);
+      setAcceptanceCriteriaDraft("");
       return;
     }
     skipChatSaveOnce.current = true;
     setChat(loadChatMessages(selectedId));
+    setAcceptanceCriteriaDraft("");
   }, [selectedId]);
+
+  useEffect(() => {
+    const el = chatLogRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+      chatPinnedByUserRef.current = false;
+      setChatHasUnseen(false);
+    });
+  }, [selectedId]);
+
+  useEffect(() => {
+    const el = chatLogRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
+    if (nearBottom || !chatPinnedByUserRef.current) {
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+      setChatHasUnseen(false);
+      return;
+    }
+    setChatHasUnseen(true);
+  }, [chat, taskTrace?.line]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -521,7 +834,10 @@ export default function App() {
       setGitWorktreeClean(null);
       setGitWorktreeLines([]);
       setEvolutionSummaryDraft("");
+      setProjectSummaryDraft("");
       setPolicyNotesDraft("");
+      setTicketEnforcementModeDraft("off");
+      setActiveTicketId(null);
       return;
     }
     let cancelled = false;
@@ -532,8 +848,10 @@ export default function App() {
         setGitHeadBranch(m.git_branch ?? null);
         setGitWorktreeClean(m.git_worktree_clean ?? null);
         setGitWorktreeLines(m.git_worktree_lines ?? []);
+        setProjectSummaryDraft((m.project_summary ?? "").trim());
         setEvolutionSummaryDraft((m.evolution_summary ?? "").trim());
         setPolicyNotesDraft((m.policy_notes ?? "").trim());
+        setTicketEnforcementModeDraft((m.ticket_enforcement_mode ?? "off") as "off" | "soft" | "strict");
         const raw = (m.tech_stack ?? "").trim();
         if (raw) {
           setStackPresetId(STACK_PRESET_CUSTOM);
@@ -553,8 +871,10 @@ export default function App() {
           setGitHeadBranch(null);
           setGitWorktreeClean(null);
           setGitWorktreeLines([]);
+          setProjectSummaryDraft("");
           setEvolutionSummaryDraft("");
           setPolicyNotesDraft("");
+          setTicketEnforcementModeDraft("off");
         }
       });
     return () => {
@@ -564,6 +884,7 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedId) {
+      setDashboardLastSyncAt(null);
       setCodeRagStatus(null);
       setCodeRagStatusError(null);
       setCodeRagStatusLoading(false);
@@ -593,6 +914,64 @@ export default function App() {
       cancelled = true;
     };
   }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId || centerTab !== "dashboard") return;
+    let cancelled = false;
+
+    const refreshDashboardData = async () => {
+      try {
+        const [meta, rag] = await Promise.all([
+          api.getProjectMeta(selectedId),
+          api.getCodeRagStatus(selectedId),
+        ]);
+        if (cancelled) return;
+
+        setGitHeadBranch(meta.git_branch ?? null);
+        setGitWorktreeClean(meta.git_worktree_clean ?? null);
+        setGitWorktreeLines(meta.git_worktree_lines ?? []);
+        setProjectSummaryDraft((meta.project_summary ?? "").trim());
+        setEvolutionSummaryDraft((meta.evolution_summary ?? "").trim());
+        setPolicyNotesDraft((meta.policy_notes ?? "").trim());
+        setTicketEnforcementModeDraft((meta.ticket_enforcement_mode ?? "off") as "off" | "soft" | "strict");
+
+        const raw = (meta.tech_stack ?? "").trim();
+        if (raw) {
+          setStackPresetId(STACK_PRESET_CUSTOM);
+          setStackCustomText(meta.tech_stack ?? "");
+          setStackAddons(emptyStackAddons());
+        } else {
+          setStackPresetId(STACK_PRESET_NONE);
+          setStackCustomText("");
+          setStackAddons(emptyStackAddons());
+        }
+
+        setCodeRagStatus(rag);
+        setCodeRagStatusError(null);
+        setDashboardLastSyncAt(Date.now());
+
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === meta.id
+              ? { ...p, name: meta.name || p.name }
+              : p,
+          ),
+        );
+      } catch {
+        // Silent retry on next poll to avoid noisy UI while dashboard is open.
+      }
+    };
+
+    void refreshDashboardData();
+    const id = window.setInterval(() => {
+      void refreshDashboardData();
+    }, 10_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [selectedId, centerTab]);
 
   const onReindexCodeRag = useCallback(async () => {
     if (!selectedId) return;
@@ -791,6 +1170,13 @@ export default function App() {
       setEvolutions([]);
       return;
     }
+    // Reset Git state immediately so the Branches tab never shows stale data from the previous project
+    setGitBranches([]);
+    setGitCompareBase("");
+    setGitCompareTarget("");
+    setGitCompareResult(null);
+    setGitConflicts([]);
+    setGitMergeInProgress(false);
     let cancelled = false;
     setFilePath(null);
     setEditorText("");
@@ -818,6 +1204,45 @@ export default function App() {
       setEvolutions(evo);
     } catch {
       setEvolutions([]);
+    }
+  }, [selectedId]);
+
+  const refreshGitBranches = useCallback(async () => {
+    if (!selectedId) {
+      setGitBranches([]);
+      return;
+    }
+    setGitBranchesLoading(true);
+    try {
+      const payload = await api.listGitBranches(selectedId);
+      setGitBranches(payload.branches);
+      if (!gitCompareBase && payload.current_branch) {
+        setGitCompareBase(payload.current_branch);
+      }
+      if (!gitCompareTarget) {
+        const fallbackTarget = payload.branches.find((b) => !b.current)?.name ?? "";
+        if (fallbackTarget) setGitCompareTarget(fallbackTarget);
+      }
+    } catch {
+      setGitBranches([]);
+    } finally {
+      setGitBranchesLoading(false);
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget]);
+
+  const refreshGitConflicts = useCallback(async () => {
+    if (!selectedId) {
+      setGitConflicts([]);
+      setGitMergeInProgress(false);
+      return;
+    }
+    try {
+      const payload = await api.getGitConflicts(selectedId);
+      setGitConflicts(payload.conflict_files);
+      setGitMergeInProgress(payload.merge_in_progress);
+    } catch {
+      setGitConflicts([]);
+      setGitMergeInProgress(false);
     }
   }, [selectedId]);
 
@@ -856,6 +1281,10 @@ export default function App() {
       } catch {
         /* ignore */
       }
+      if (centerTab === "branches") {
+        await refreshGitBranches();
+        await refreshGitConflicts();
+      }
       if (filePath && f.includes(filePath) && !editorBinary) {
         if (editorDirty) {
           metaNote = " — éditeur non rechargé (fichier modifié localement)";
@@ -867,7 +1296,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer]);
+  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts, centerTab]);
 
   const onPlayPreview = useCallback(async () => {
     if (!selectedId) return;
@@ -877,6 +1306,7 @@ export default function App() {
     try {
       const r = await api.startStudioPreview(selectedId, { force_install: forceInstallBeforePreview });
       setDevPreviewUrl(r.url);
+      setPreviewProfile(r.profile ?? null);
       if (r.install) {
         const { stdout, stderr } = r.install;
         setPreviewLog([stdout, stderr].filter(Boolean).join("\n"));
@@ -884,7 +1314,8 @@ export default function App() {
         setPreviewLog("");
       }
       setCenterTab("preview");
-      setStatus(`Prévisualisation : ${r.url}`);
+      const profileSuffix = r.profile ? ` (${r.profile})` : "";
+      setStatus(`Prévisualisation${profileSuffix} : ${r.url}`);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -899,15 +1330,29 @@ export default function App() {
     setPreviewLog("");
     try {
       const r = await api.installStudioDeps(selectedId, { force: forceInstallBeforePreview });
+      setPreviewProfile(r.profile ?? null);
+      const profileSuffix = r.profile ? ` (${r.profile})` : "";
       if (r.skipped) {
-        setPreviewLog(`Dépendances déjà présentes (${r.reason ?? "node_modules"}).`);
-        setStatus("node_modules déjà installé");
+        setPreviewLog(`Dépendances déjà présentes${profileSuffix} : ${r.reason ?? ""}`);
+        setStatus(`Dépendances déjà installées${profileSuffix}`);
       } else if (r.install) {
-        const { stdout, stderr, exit_code } = r.install;
+        const { stdout, stderr, exit_code, argv } = r.install;
+        const cmd = argv?.join(" ") ?? "";
         setPreviewLog(
-          [`Code: ${exit_code}`, stdout, stderr].filter(Boolean).join("\n\n"),
+          [
+            cmd ? `$ ${cmd}` : null,
+            `Code: ${exit_code}`,
+            stdout,
+            stderr,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         );
-        setStatus(r.ok ? "npm install terminé" : "npm install a échoué — voir le journal ci-dessous");
+        setStatus(
+          r.ok
+            ? `Installation terminée${profileSuffix}`
+            : `Installation a échoué${profileSuffix} — voir le journal ci-dessous`,
+        );
       }
       setCenterTab("preview");
     } catch (e) {
@@ -1098,6 +1543,15 @@ export default function App() {
   }, [centerTab, filePath, editorBinary, editorDirty, saveEditor]);
 
   useEffect(() => {
+    if (!openHeaderMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenHeaderMenu(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openHeaderMenu]);
+
+  useEffect(() => {
     return () => {
       if (staticPreviewBlobUrl) URL.revokeObjectURL(staticPreviewBlobUrl);
     };
@@ -1119,12 +1573,27 @@ export default function App() {
     try {
       const name = newProjectName.trim() || "Nouveau projet";
       const stack = newProjectComposedStack.trim();
+      const summary = newProjectSummary.trim();
       const p = await api.createProject({
         name,
         ...(stack ? { tech_stack: stack } : {}),
+        ...(summary ? { project_summary: summary } : {}),
       });
+      void api
+        .sendMessage({
+          session_id: `code-studio-bootstrap-${p.id}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`,
+          studio_project_id: p.id,
+          studio_assigned_agent: "studio_project_manager",
+          message:
+            "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
+        })
+        .catch(() => {
+          /* bootstrap best-effort ; l’utilisateur peut relancer depuis le chat */
+        });
       await refreshProjects();
       setSelectedId(p.id);
+      setCenterTab("dashboard");
+      setNewProjectSummary("");
       setNewStackPresetId(STACK_PRESET_NONE);
       setNewStackCustomText("");
       setNewStackAddons(emptyStackAddons());
@@ -1170,10 +1639,12 @@ export default function App() {
     setError(null);
     try {
       await api.patchProjectSettings(selectedId, {
+        project_summary: projectSummaryDraft.trim() ? projectSummaryDraft.trim() : null,
         evolution_summary: evolutionSummaryDraft.trim() ? evolutionSummaryDraft.trim() : null,
         policy_notes: policyNotesDraft.trim() ? policyNotesDraft.trim() : null,
+        ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
-      setStatus("Résumé d’évolution et politique enregistrés (réinjectés dans les prochains messages)");
+      setStatus("Résumés produit / évolution et politique enregistrés (réinjectés dans les prochains messages)");
     } catch (e) {
       setError(String(e));
     }
@@ -1194,6 +1665,33 @@ export default function App() {
       setError(String(e));
     }
   };
+
+  const onCreateTicketsFromPlan = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      const drafts = extractTicketDraftsFromPlan(planDocText);
+      if (drafts.length === 0) {
+        setStatus("Aucune tâche détectée dans le plan.");
+        return;
+      }
+      let created = 0;
+      for (const d of drafts.slice(0, 30)) {
+        await api.createStudioTicket(selectedId, {
+          title: d.title,
+          description: d.description,
+          assigned_agent: agent || "studio_fullstack",
+          review_agent: "studio_reviewer",
+          requested_by: "plan_import",
+        });
+        created += 1;
+      }
+      setStatus(`${created} ticket(s) créés depuis le plan.`);
+      setCenterTab("kanban");
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, planDocText, agent]);
 
   const downloadTextFile = useCallback((filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -1296,17 +1794,74 @@ export default function App() {
     }
   };
 
-  const onNewEvolution = async () => {
+  const onCheckoutBranch = useCallback(async (branch: string) => {
     if (!selectedId) return;
     setError(null);
+    try {
+      await api.checkoutGitBranch(selectedId, branch);
+      setStatus(`Branche active: ${branch}`);
+      await refreshFiles();
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, refreshFiles]);
+
+  const onCompareBranches = useCallback(async () => {
+    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    setError(null);
+    try {
+      const compare = await api.compareGitBranches(selectedId, gitCompareBase, gitCompareTarget);
+      setGitCompareResult(compare);
+    } catch (e) {
+      setError(String(e));
+      setGitCompareResult(null);
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget]);
+
+  const onMergeBranches = useCallback(async () => {
+    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    setError(null);
+    try {
+      const result = await api.mergeGitBranches(selectedId, gitCompareTarget, gitCompareBase);
+      setStatus(result.message || "Merge effectué");
+      await refreshFiles();
+      await refreshGitConflicts();
+    } catch (e) {
+      setError(String(e));
+      await refreshGitConflicts();
+    }
+  }, [selectedId, gitCompareBase, gitCompareTarget, refreshFiles, refreshGitConflicts]);
+
+  const onAbortMerge = useCallback(async () => {
+    if (!selectedId) return;
+    setError(null);
+    try {
+      await api.abortGitMerge(selectedId);
+      setStatus("Merge annulé");
+      await refreshGitConflicts();
+      await refreshFiles();
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [selectedId, refreshGitConflicts, refreshFiles]);
+
+  const onNewEvolution = async () => {
+    if (!selectedId) {
+      setError("Sélectionnez d’abord un projet avant de créer une branche d’évolution.");
+      return;
+    }
+    setError(null);
+    setStatus("Création de la branche d’évolution…");
     try {
       const r = await api.createEvolution(selectedId, evoLabel || undefined);
       setSelectedEvoId(r.evolution_id);
       const evo = await api.listEvolutions(selectedId);
       setEvolutions(evo);
+      setEvoLabel("");
       setStatus(`Branche créée : ${r.branch}`);
     } catch (e) {
       setError(String(e));
+      setStatus("");
     }
   };
 
@@ -1347,7 +1902,8 @@ export default function App() {
             return;
           }
 
-          const last = t.progress?.length ? t.progress[t.progress.length - 1] : undefined;
+          const traceProgress = dedupeProgressForTrace(t.progress ?? [], taskId);
+          const last = traceProgress.length ? traceProgress[traceProgress.length - 1] : undefined;
           const lastMsg = last?.message?.trim() ?? "";
           const fd = (t.failure_detail ?? "").trim();
           const useFailureDetail =
@@ -1359,8 +1915,7 @@ export default function App() {
             : last
               ? `${last.progress_pct}% — ${last.message}`
               : formatTaskStatusFr(t.status);
-          const rawProgress = t.progress ?? [];
-          const progressChips = rawProgress
+          const progressChips = traceProgress
             .filter((p) => p.message && !isStubProgressMessage(p.message))
             .slice(-12)
             .map((p) => {
@@ -1516,6 +2071,44 @@ export default function App() {
     };
   }, [selectedId, centerTab]);
 
+  useEffect(() => {
+    if (!selectedId || centerTab !== "branches") return;
+    void refreshGitBranches();
+    void refreshGitConflicts();
+  }, [selectedId, centerTab, refreshGitBranches, refreshGitConflicts]);
+
+  useEffect(() => {
+    if (centerTab !== "docs") {
+      // Clear any prior fetch error so navigating back will retry.
+      setUserGuideError(null);
+      return;
+    }
+    if (userGuideDoc.trim()) return;
+    if (userGuideError) return;  // fetch already failed this tab visit; guard cleared on tab exit
+    let cancelled = false;
+    setUserGuideLoading(true);
+    setUserGuideError(null);
+    void fetch("/docs/USER_GUIDE.md")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Unable to load documentation (${res.status})`);
+        return res.text();
+      })
+      .then((text) => {
+        if (cancelled) return;
+        setUserGuideDoc(text);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setUserGuideError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setUserGuideLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [centerTab, userGuideDoc, userGuideError]);
+
   const onRegeneratePlan = useCallback(async () => {
     if (!selectedId) return;
     const msg = `[Tâche Code Studio — plan projet (réinitialisation / complétion)]
@@ -1530,6 +2123,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1541,6 +2135,10 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1558,7 +2156,20 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, autoApplyDesign, designHint, designDocText]);
+  }, [
+    selectedId,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    autoApplyDesign,
+    designHint,
+    designDocText,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onRegenerateDesign = useCallback(async (forceRecreateFromProjectStyle = false) => {
     if (!selectedId) return;
@@ -1594,6 +2205,7 @@ Procédure:
       const regenerateDesignHint = [DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN, designHint.trim()]
         .filter(Boolean)
         .join("\n\n");
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1605,6 +2217,10 @@ Procédure:
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: regenerateDesignHint || undefined,
         studio_design_doc: designDocText.trim() || undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1622,20 +2238,47 @@ Procédure:
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, agent, selectedEvoId, activeBranch, pollTask, codeMode, policyHintOneShot, delegateSingleLevel, designDocText, autoApplyDesign, designHint]);
+  }, [
+    selectedId,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    designDocText,
+    autoApplyDesign,
+    designHint,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onSendChat = async () => {
     const text = chatInput.trim();
     if (!text || !selectedId) return;
     setChatInput("");
     setError(null);
-    pollTaskAbortRef.current?.abort();
-    setPendingHumanInput(null);
-    setHumanReplyDraft("");
-    setTaskTrace(null);
+    const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+    const queued =
+      chatDeliveryMode !== "immediate" && activeTask !== null;
+    if (!queued) {
+      pollTaskAbortRef.current?.abort();
+      setPendingHumanInput(null);
+      setHumanReplyDraft("");
+      setTaskTrace(null);
+    }
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
+      const expanded = await api.expandAtFileRefs(selectedId, text);
       const { task_id } = await api.sendMessage({
-        message: text,
+        message: expanded,
+        ...(queued && activeTask
+          ? {
+              message_delivery_mode: chatDeliveryMode,
+              queue_mode: chatDeliveryMode,
+              target_task_id: activeTask.id,
+            }
+          : {}),
         studio_project_id: selectedId,
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
@@ -1645,7 +2288,22 @@ Procédure:
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
+      if (queued && activeTask) {
+        setChat((c) => [
+          ...c,
+          {
+            role: "user",
+            text: `[${chatDeliveryMode}] ${text}`,
+            task_id: activeTask.id,
+          },
+        ]);
+        return;
+      }
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
       const ac = new AbortController();
@@ -1663,6 +2321,103 @@ Procédure:
       setError(String(e));
     }
   };
+
+  const onLaunchTicket = useCallback((ticket: api.StudioTicket) => {
+    const intro = [
+      `Ticket #${ticket.id}: ${ticket.title}`,
+      ticket.description ? `Description: ${ticket.description}` : "",
+      `Assigned agent: ${ticket.assigned_agent}`,
+      `Review agent: ${ticket.review_agent}`,
+      "Objectif: implémenter la tâche puis laisser le ticket en review.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    setActiveTicketId(ticket.id);
+    setAgent(ticket.assigned_agent || agent);
+    setChatInput(intro);
+    setMainSplit("chat");
+  }, [agent]);
+
+  const onOpenForkDialog = useCallback((index: number, msg: ChatMessage) => {
+    if (!msg.task_id) return;
+    setForkDialog({
+      open: true,
+      index,
+      parentTaskId: msg.task_id,
+      sourceText: msg.text,
+    });
+    setForkInitialInstruction(msg.text);
+  }, []);
+
+  const onCreateFork = useCallback(async () => {
+    if (!selectedId || !forkDialog) return;
+    const text = forkInitialInstruction.trim();
+    if (!text) return;
+    setError(null);
+    pollTaskAbortRef.current?.abort();
+    setPendingHumanInput(null);
+    setHumanReplyDraft("");
+    setTaskTrace(null);
+    try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
+      const { task_id } = await api.sendMessage({
+        message: text,
+        studio_project_id: selectedId,
+        studio_assigned_agent: agent || undefined,
+        studio_evolution_id: selectedEvoId ?? undefined,
+        studio_evolution_branch: activeBranch ?? undefined,
+        studio_code_mode: codeMode,
+        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_delegate_single_level: delegateSingleLevel || undefined,
+        studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
+        studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        fork_from_task_id: forkDialog.parentTaskId,
+        fork_after_message_index: forkDialog.index,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
+      });
+      setChat((c) => [
+        ...c,
+        {
+          role: "user",
+          text: `[Fork depuis #${forkDialog.index + 1}] ${text}`,
+          task_id,
+        },
+      ]);
+      setForkDialog(null);
+      setForkInitialInstruction("");
+      const ac = new AbortController();
+      pollTaskAbortRef.current = ac;
+      setTaskTrace({
+        id: task_id,
+        status: "queued",
+        line: `Nouvelle branche créée depuis #${forkDialog.index + 1} — démarrage…`,
+        done: false,
+        progressChips: undefined,
+      });
+      saveActiveTask(selectedId, task_id);
+      void pollTask(task_id, ac.signal, selectedId);
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [
+    selectedId,
+    forkDialog,
+    forkInitialInstruction,
+    agent,
+    selectedEvoId,
+    activeBranch,
+    pollTask,
+    codeMode,
+    policyHintOneShot,
+    delegateSingleLevel,
+    autoApplyDesign,
+    designHint,
+    designDocText,
+    acceptanceCriteriaDraft,
+  ]);
 
   const onSubmitHumanReply = useCallback(async () => {
     if (!pendingHumanInput) return;
@@ -1754,20 +2509,113 @@ Procédure:
     [refreshFiles],
   );
 
+  /** Merges two event arrays: deduplicates by id when available; otherwise keeps all events using positional keys. */
+  const mergeTaskEvents = useCallback(
+    (base: api.TaskEventEntry[], incoming: api.TaskEventEntry[]): api.TaskEventEntry[] => {
+      const byKey = new Map<string, api.TaskEventEntry>();
+      // Base (polling snapshot): preserve all events. Use id as key when available so SSE can dedup against it.
+      for (let i = 0; i < base.length; i++) {
+        const ev = base[i];
+        const k = ev.id
+          ? `id:${ev.id}::${ev.task_id ?? ""}`
+          : `base:${i}::${ev.event_type}::${ev.at}::${ev.task_id ?? ""}`;
+        byKey.set(k, ev);
+      }
+      // Incoming (SSE snapshot): dedup by id against base; otherwise keep all positionally.
+      for (let i = 0; i < incoming.length; i++) {
+        const ev = incoming[i];
+        const k = ev.id
+          ? `id:${ev.id}::${ev.task_id ?? ""}`
+          : `sse:${i}::${ev.event_type}::${ev.at}::${ev.task_id ?? ""}`;
+        byKey.set(k, ev);
+      }
+      return Array.from(byKey.values()).sort((a, b) => a.at.localeCompare(b.at));
+    },
+    [],
+  );
+
   const onOpenTaskDetailModal = useCallback(async (taskId: string) => {
     setTaskDetailForId(taskId);
     setTaskDetailLoading(true);
     setTaskDetailError(null);
     setTaskDetailPayload(null);
+    setTaskDetailLiveMode(null);
+    taskDetailLiveSnapshotRef.current = null;
     try {
       const [task, events] = await Promise.all([api.getTask(taskId), api.getTaskEvents(taskId)]);
-      setTaskDetailPayload({ task, events });
+      // Merge with any live events that arrived while the initial fetch was in flight.
+      const liveSnapshot: api.TaskEventEntry[] | null = taskDetailLiveSnapshotRef.current;
+      taskDetailLiveSnapshotRef.current = null;
+      const merged = liveSnapshot ? mergeTaskEvents(events, liveSnapshot) : events;
+      setTaskDetailPayload({ task, events: merged });
     } catch (e) {
       setTaskDetailError(String(e));
     } finally {
       setTaskDetailLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!taskDetailForId) {
+      setTaskDetailLiveMode(null);
+      return;
+    }
+    let closed = false;
+    // Track the current delivery mode: polling delivers full ordered snapshots (replace), while
+    // SSE provides deduplicated incremental events (merge). Keeping them separate avoids
+    // accumulating id-less duplicate rows each time a polling tick delivers a new full snapshot.
+    let currentMode: "sse" | "polling" = "polling";
+    const sub = api.subscribeTaskEventsLive(
+      taskDetailForId,
+      (liveEvents) => {
+        if (closed) return;
+        setTaskDetailPayload((prev) => {
+          if (!prev) {
+            // Initial fetch not yet complete — buffer so it can be merged on arrival.
+            taskDetailLiveSnapshotRef.current = liveEvents;
+            return prev;
+          }
+          // Polling delivers full snapshots: replace to avoid accumulating id-less duplicates.
+          // SSE accumulates deduplicated incremental events: merge to preserve any that arrived
+          // before the modal's initial fetch completed.
+          if (currentMode === "polling") {
+            return { ...prev, events: liveEvents };
+          }
+          return { ...prev, events: mergeTaskEvents(prev.events, liveEvents) };
+        });
+      },
+      {
+        pollIntervalMs: 1800,
+        preferSse: true,
+        onModeChange: (m) => {
+          currentMode = m;
+          setTaskDetailLiveMode(m);
+        },
+      },
+    );
+    currentMode = sub.mode;
+    setTaskDetailLiveMode(sub.mode);
+
+    const statusTimer = window.setInterval(() => {
+      void api
+        .getTask(taskDetailForId)
+        .then((task) => {
+          if (closed) return;
+          setTaskDetailPayload((prev) =>
+            prev ? { ...prev, task } : { task, events: [] },
+          );
+        })
+        .catch(() => {
+          /* keep current detail snapshot */
+        });
+    }, 1800);
+
+    return () => {
+      closed = true;
+      sub.close();
+      window.clearInterval(statusTimer);
+    };
+  }, [taskDetailForId]);
 
   const onFixDesignDiagnostics = useCallback(async () => {
     if (!selectedId) return;
@@ -1787,6 +2635,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setHumanReplyDraft("");
     setTaskTrace(null);
     try {
+      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
       const { task_id } = await api.sendMessage({
         message: msg,
         studio_project_id: selectedId,
@@ -1798,6 +2647,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         studio_delegate_single_level: delegateSingleLevel || undefined,
         studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
         studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
+        ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
+        studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -1828,6 +2680,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     designHint,
     designDocText,
     parsedDesignDoc.diagnostics,
+    acceptanceCriteriaDraft,
   ]);
 
   const codeRagBadgeTitle = useMemo(() => {
@@ -1848,6 +2701,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -1864,6 +2718,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     if (!taskDetailForId) return;
+    setTaskDetailTab("events");
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setTaskDetailForId(null);
     };
@@ -1871,24 +2726,77 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     return () => window.removeEventListener("keydown", onKey);
   }, [taskDetailForId]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", uiTheme);
+    document.documentElement.setAttribute("data-density", uiDensity === "compact" ? "compact" : "comfortable");
+    saveTheme(uiTheme);
+  }, [uiTheme, uiDensity]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.uiDensity", uiDensity); } catch { /* quota / private mode */ }
+  }, [uiDensity]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.chatOptionsOpen", chatOptionsOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [chatOptionsOpen]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.chatSuggestionsOpen", chatSuggestionsOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [chatSuggestionsOpen]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("studio.buildLogOpen", buildLogOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [buildLogOpen]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem(CENTER_TAB_STORAGE_KEY, centerTab); } catch { /* quota / private mode */ }
+  }, [centerTab]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("akasha-studio-sidebar-open", sidebarOpen ? "1" : "0"); } catch { /* quota / private mode */ }
+  }, [sidebarOpen]);
+
+  const handleSidebarToggle = (open: boolean) => {
+    setSidebarOpen(open);
+  };
+
+  const handleSidebarTabSelect = (tab: CenterTab) => {
+    setCenterTab(tab);
+    if (mainSplit === "chat") {
+      setMainSplit("balanced");
+    }
+  };
+
+  useEffect(() => {
+    const next = getGroupForTab(centerTab);
+    if (next && next !== activeGroup) {
+      setActiveGroup(next);
+    }
+  }, [centerTab, activeGroup]);
+
+  // Get filtered tabs for the active group
+  const visibleTabs = useMemo(
+    () => {
+      const groupTabs = getTabsForGroup(activeGroup);
+      return CENTER_TAB_ITEMS.filter((tab) => groupTabs.includes(tab.id));
+    },
+    [activeGroup]
+  );
+
   return (
-    <div className="app">
+    <>
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={handleSidebarToggle}
+        activeTab={centerTab}
+        onTabSelect={handleSidebarTabSelect}
+        onGroupSelect={setActiveGroup}
+        activeGroup={activeGroup}
+      />
+      <div className={appClass}>
       <header className="app-header app-header--compact">
         <div className="app-header-row">
           <h1>Code Studio</h1>
-          <div className="app-header-studio-actions">
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              data-testid="studio-load-project"
-              onClick={() => setModalLoadOpen(true)}
-            >
-              Charger un projet
-            </button>
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setModalCreateOpen(true)}>
-              Créer un projet
-            </button>
-          </div>
           {selectedProject ? (
             <div className="app-header-meta" aria-label="Projet et branches Git">
               <span className="app-header-project">
@@ -1923,16 +2831,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         : "Indexé"}
                   </span>
                 ) : null}
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm app-header-reindex-btn"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="app-header-reindex-btn"
                   data-testid="studio-code-rag-reindex"
                   disabled={codeRagReindexBusy || codeRagStatusLoading}
                   title="Reconstruire l’index local des sources (recherche et contexte pour l’agent)"
                   onClick={() => void onReindexCodeRag()}
                 >
                   {codeRagReindexBusy ? "Réindexation…" : "Réindexer"}
-                </button>
+                </Button>
               </span>
               <span className="app-header-branches">
                 <span className="app-header-branch" title="Branche Git courante (HEAD)">
@@ -1956,9 +2865,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </span>
                 ) : null}
                 <span className="header-menu-wrap app-header-git-popover">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     data-testid="studio-git-worktree-toggle"
                     disabled={!selectedId}
                     aria-expanded={gitStatusPopoverOpen}
@@ -1966,7 +2875,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     onClick={() => setGitStatusPopoverOpen((v) => !v)}
                   >
                     Git Δ{gitWorktreeLines.length ? ` (${gitWorktreeLines.length})` : ""}
-                  </button>
+                  </Button>
                   {gitStatusPopoverOpen ? (
                     <>
                       <div
@@ -2020,7 +2929,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <span className="hint app-header-placeholder">Aucun projet chargé</span>
           )}
         </div>
-      </header>
       <nav className="app-header-nav" aria-label="Menus Code Studio">
         {openHeaderMenu ? (
           <div
@@ -2032,43 +2940,364 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="header-menu-wrap">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             className="header-menu-trigger"
             data-testid="studio-project-settings-menu"
             aria-expanded={openHeaderMenu === "project"}
             onClick={() => setOpenHeaderMenu((m) => (m === "project" ? null : "project"))}
           >
             Projet
-          </button>
+          </Button>
           {openHeaderMenu === "project" ? (
             <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
               <div className="project-actions-row">
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setModalCreateOpen(true)}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setOpenHeaderMenu(null);
+                    setModalCreateOpen(true);
+                  }}
+                >
                   Créer un projet
-                </button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setModalLoadOpen(true)}>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  data-testid="studio-load-project"
+                  onClick={() => {
+                    setOpenHeaderMenu(null);
+                    void (async () => {
+                      await refreshProjects();
+                      setModalLoadOpen(true);
+                    })();
+                  }}
+                >
                   Charger un projet
-                </button>
+                </Button>
               </div>
               {selectedProject ? (
                 <p className="hint sidebar-project-hint">
                   Projet actif : nom, identifiant court et branches dans l’en-tête.
                 </p>
               ) : (
-                <p className="hint">Aucun projet chargé — utilisez les boutons ci-dessus.</p>
+                <p className="hint">Aucun projet chargé — utilisez les actions ci-dessus.</p>
               )}
               {selectedId ? (
                 <div className="project-settings">
-                  <h2 className="header-menu-section-title">Paramètres du projet</h2>
+                  <div className="studio-danger-zone">
+                    <h3 className="header-menu-section-title">Zone de danger</h3>
+                    <p className="hint">
+                      Supprime définitivement le dossier du projet sur ce poste (fichiers et dépôt Git locaux, index code du
+                      daemon).
+                    </p>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      data-testid="studio-delete-project-settings"
+                      onClick={() => selectedProject && openDeleteProjectDialog(selectedProject)}
+                    >
+                      Supprimer ce projet…
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="header-menu-wrap">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="header-menu-trigger"
+            aria-expanded={openHeaderMenu === "evolutions"}
+            title="Créer/sélectionner une branche d’évolution Git"
+            onClick={() => setOpenHeaderMenu((m) => (m === "evolutions" ? null : "evolutions"))}
+          >
+            Évolutions Git
+          </Button>
+          {openHeaderMenu === "evolutions" ? (
+            <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
+              <p className="hint">
+                Branche de travail isolée pour une évolution (idée ou feature) ; gérez comparaison, merge et abandon depuis
+                l’onglet « Branches ».
+              </p>
+              <label className="field">
+                <span>Label de branche (optionnel)</span>
+                <Input
+                  value={evoLabel}
+                  onChange={(e) => setEvoLabel(e.target.value)}
+                  placeholder="ex. auth-login"
+                />
+              </label>
+              <Button
+                variant="secondary"
+                className="w-full"
+                disabled={!selectedId}
+                title={!selectedId ? "Chargez un projet pour créer une branche d’évolution." : undefined}
+                onClick={() => void onNewEvolution()}
+              >
+                Créer une branche studio/…
+              </Button>
+              <ul className="evo-list">
+                {evolutions.map((e) => (
+                  <li key={e.id}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={e.id === selectedEvoId ? "active" : undefined}
+                      onClick={() => setSelectedEvoId(e.id)}
+                    >
+                      <span className="evo-branch">{e.branch}</span>
+                      <span className="evo-status">{e.status}</span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="header-menu-wrap header-menu-wrap--right">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="header-menu-trigger"
+            aria-expanded={openHeaderMenu === "ops"}
+            title="Importer un dépôt et lancer un build"
+            onClick={() => setOpenHeaderMenu((m) => (m === "ops" ? null : "ops"))}
+          >
+            Import &amp; build
+          </Button>
+          {openHeaderMenu === "ops" ? (
+            <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="ops-panel">
+                <div className="ops-group ops-group--stacked">
+                  <label className="field">
+                    <span>URL du dépôt (HTTPS)</span>
+                    <Input
+                      className="ops-input"
+                      value={cloneUrl}
+                      onChange={(e) => setCloneUrl(e.target.value)}
+                      placeholder="https://github.com/…"
+                      title="Adresse Git distante à cloner dans le dossier du projet Code Studio pour récupérer le code d’un dépôt distant."
+                    />
+                  </label>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled={!selectedId}
+                    title="Exécute git clone dans le répertoire du projet Code Studio pour récupérer le code d’un dépôt distant."
+                    onClick={() => void onClone()}
+                  >
+                    Cloner (HTTPS)
+                  </Button>
+                </div>
+                <div className="ops-group ops-group--stacked">
+                  <label className="field">
+                    <span>Commande de build</span>
+                    <Input
+                      className="ops-input"
+                      value={buildCmd}
+                      onChange={(e) => setBuildCmd(e.target.value)}
+                      placeholder="npm run build"
+                      title="Ligne de commande exécutée dans le dossier projet (ex. npm run build, cargo build)."
+                    />
+                  </label>
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    disabled={!selectedId}
+                    title="Lance la commande sur le serveur Akasha et affiche la sortie dans le journal de build (panneau droit)."
+                    onClick={() => void onBuild()}
+                  >
+                    Exécuter le build
+                  </Button>
+                </div>
+                {status ? <div className="banner banner-ok">{status}</div> : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="header-menu-wrap header-menu-wrap--right">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="header-menu-trigger"
+            aria-expanded={openHeaderMenu === "agent"}
+            title="Actions agent (régénération plan/design, capacités)"
+            onClick={() => setOpenHeaderMenu((m) => (m === "agent" ? null : "agent"))}
+          >
+            Agent / actions
+          </Button>
+          {openHeaderMenu === "agent" ? (
+            <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
+              {agentHint ? <p className="hint agent-hint">{agentHint}</p> : null}
+              {!activeBranch ? (
+                <p className="hint agent-branch-hint">
+                  Aucune branche d’évolution sélectionnée : les messages utilisent la branche <strong>HEAD</strong> affichée
+                  dans l’en-tête. Créez une branche dans « Évolutions Git » pour isoler une évolution.
+                </p>
+              ) : null}
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                disabled={!selectedId}
+                title="Envoie une consigne à l’agent pour créer ou remplir CODE_STUDIO_PLAN.md"
+                onClick={() => void onRegeneratePlan()}
+              >
+                Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                disabled={!selectedId}
+                title="Envoie une consigne à l’agent pour créer ou compléter DESIGN.md"
+                onClick={() => void onRegenerateDesign()}
+              >
+                Initialiser / régénérer le design (DESIGN.md)
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                disabled={!selectedId}
+                title="Force une recréation de DESIGN.md à partir des styles réellement présents dans le dépôt."
+                onClick={() => void onRegenerateDesign(true)}
+              >
+                Recréer DESIGN.md depuis le style du projet
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowAgentMatrix((v) => !v)}>
+                {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
+              </Button>
+              {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="app-header-nav-secondary">
+          <NotificationCenter />
+          <label className="field-inline header-agent-inline">
+            <span className="header-agent-label">Rôle agent</span>
+            <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
+              {AGENT_OPTIONS.map((o) => (
+                <option key={o.value || "auto"} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <span
+            className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
+            title={daemonStatus.detail ?? "Statut du daemon Akasha"}
+            aria-label="Statut du daemon"
+          >
+            Daemon {daemonStatus.label}
+          </span>
+
+          <div className="split-toolbar split-toolbar-group" role="group" aria-label="Répartition éditeur et chat">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`split-toolbar-btn ${mainSplit === "center" ? "is-active" : ""}`}
+              aria-pressed={mainSplit === "center"}
+              aria-label="Plein éditeur"
+              title="Plein éditeur"
+              onClick={() => setMainSplit("center")}
+            >
+              <PanelLeft className="h-4 w-4" aria-hidden />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`split-toolbar-btn ${mainSplit === "balanced" ? "is-active" : ""}`}
+              aria-pressed={mainSplit === "balanced"}
+              aria-label="Vue 50/50"
+              title="Vue 50/50"
+              onClick={() => setMainSplit("balanced")}
+            >
+              <Columns2 className="h-4 w-4" aria-hidden />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`split-toolbar-btn ${mainSplit === "chat" ? "is-active" : ""}`}
+              aria-pressed={mainSplit === "chat"}
+              aria-label="Plein chat"
+              title="Plein chat"
+              onClick={() => setMainSplit("chat")}
+            >
+              <PanelRight className="h-4 w-4" aria-hidden />
+            </Button>
+          </div>
+        </div>
+      </nav>
+      </header>
+
+      <div className={appMainClass}>
+      <div className="center">
+        <div className="center-tabs" role="tablist" aria-label="Navigation principale Code Studio">
+          {visibleTabs.map((tab) => (
+            <Button
+              key={tab.id}
+              variant="ghost"
+              size="sm"
+              role="tab"
+              aria-selected={centerTab === tab.id}
+              className={`center-tab ${centerTab === tab.id ? "active" : ""}`}
+              onClick={() => setCenterTab(tab.id)}
+              data-testid={tab.testId}
+              title={`Ouvrir l’onglet ${tab.label}`}
+            >
+              {tab.label}
+            </Button>
+          ))}
+        </div>
+        {centerTab === "dashboard" ? (
+          <div className="center-body">
+            <ProjectDashboard
+              project={dashboardProjectMeta}
+              codeRagStatus={codeRagStatus ?? undefined}
+              activeTask={dashboardActiveTask}
+              lastSyncedAt={dashboardLastSyncAt}
+              onStartAgent={() => {
+                setMainSplit("chat");
+              }}
+              onOpenKanban={() => setCenterTab("kanban")}
+              onOpenPlan={() => setCenterTab("plan")}
+              onOpenDesign={() => setCenterTab("design")}
+              onOpenPreview={() => setCenterTab("preview")}
+              onOpenBranches={() => setCenterTab("branches")}
+            />
+            {selectedId ? (
+              <section className="panel panel-collapsible">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="panel-collapse-trigger"
+                  aria-expanded={dashboardProjectSettingsOpen}
+                  onClick={() => setDashboardProjectSettingsOpen((v) => !v)}
+                >
+                  <span className="panel-collapse-chevron">{dashboardProjectSettingsOpen ? "▾" : "▸"}</span>
+                  <h2>Paramètres du projet</h2>
+                </Button>
+                {dashboardProjectSettingsOpen ? (
+                  <div className="panel-collapse-inner" style={{ maxHeight: "55vh", overflowY: "auto" }}>
+                    <div className="project-settings">
                   <div className="rename-box">
                     <label className="field">
                       <span>Renommer l’affichage</span>
-                      <input value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} />
+                      <Input value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)} />
                     </label>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onRenameProject()}>
+                    <Button variant="secondary" size="sm" onClick={() => void onRenameProject()}>
                       Enregistrer le nom
-                    </button>
+                    </Button>
                   </div>
                   <div className="stack-box">
                     <div className="field stack-box-intro">
@@ -2078,8 +3307,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         contraire dans le chat. Un projet déjà configuré s’ouvre en « Personnalisé » avec le texte enregistré.
                       </p>
                     </div>
-                    <StackFields
-                      selectId="project-stack-select"
+                    <StackWizard
                       presetId={stackPresetId}
                       onPresetChange={onStackPresetSelect}
                       customText={stackCustomText}
@@ -2088,18 +3316,30 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       onToggleAddon={toggleStackAddon}
                       composedStack={composedStack}
                     />
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveTechStack()}>
+                    <Button variant="secondary" size="sm" onClick={() => void onSaveTechStack()}>
                       Enregistrer la stack
-                    </button>
+                    </Button>
                   </div>
                   <div className="evolution-policy-box">
                     <p className="hint evolution-policy-intro">
-                      Résumé d’évolution et notes de politique : injectés dans les prochains messages (daemon), pour la session
-                      ou l’itération courante — utile après rechargement ou longue session.
+                      Résumé produit (périmètre initial), résumé d’évolution et notes de politique : injectés dans les prochains
+                      messages (daemon). Le résumé produit sert surtout au plan et au périmètre ; le résumé d’évolution à la
+                      session ou à la branche courante.
                     </p>
                     <label className="field">
+                      <span>Résumé produit (objectif de l’application)</span>
+                      <Textarea
+                        className="evolution-policy-textarea"
+                        rows={4}
+                        spellCheck={false}
+                        value={projectSummaryDraft}
+                        onChange={(e) => setProjectSummaryDraft(e.target.value)}
+                        placeholder="Ex. application à réaliser, utilisateurs cibles, fonctionnalités clés, contraintes…"
+                      />
+                    </label>
+                    <label className="field">
                       <span>Résumé d’évolution / session</span>
-                      <textarea
+                      <Textarea
                         className="evolution-policy-textarea"
                         rows={4}
                         spellCheck={false}
@@ -2110,7 +3350,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </label>
                     <label className="field">
                       <span>Notes de politique (outils, périmètre)</span>
-                      <textarea
+                      <Textarea
                         className="evolution-policy-textarea"
                         rows={4}
                         spellCheck={false}
@@ -2119,311 +3359,83 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         placeholder="Ex. ne pas exécuter de commandes hors scripts/ ; pas de dépendances réseau sans accord…"
                       />
                     </label>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onSaveEvolutionAndPolicy()}>
-                      Enregistrer résumé &amp; politique
-                    </button>
+                    <label className="field">
+                      <span>Enforcement tickets</span>
+                      <Select
+                        value={ticketEnforcementModeDraft}
+                        onChange={(e) => setTicketEnforcementModeDraft(e.target.value as "off" | "soft" | "strict")}
+                      >
+                        <option value="off">off (aucune contrainte ticket)</option>
+                        <option value="soft">soft (warning sans ticket)</option>
+                        <option value="strict">strict (ticket obligatoire)</option>
+                      </Select>
+                    </label>
+                    <Button variant="secondary" size="sm" onClick={() => void onSaveEvolutionAndPolicy()}>
+                      Enregistrer résumés &amp; politique
+                    </Button>
                   </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="header-menu-wrap">
-          <button
-            type="button"
-            className="header-menu-trigger"
-            aria-expanded={openHeaderMenu === "evolutions"}
-            onClick={() => setOpenHeaderMenu((m) => (m === "evolutions" ? null : "evolutions"))}
-          >
-            Évolutions Git
-          </button>
-          {openHeaderMenu === "evolutions" ? (
-            <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
-              <p className="hint">
-                Branche de travail isolée pour une évolution (idée ou feature) ; fusionnez vers la branche principale depuis «
-                Import &amp; build ».
-              </p>
-              <label className="field">
-                <span>Label de branche (optionnel)</span>
-                <input
-                  value={evoLabel}
-                  onChange={(e) => setEvoLabel(e.target.value)}
-                  placeholder="ex. auth-login"
-                />
-              </label>
-              <button type="button" className="btn btn-secondary btn-block" onClick={() => void onNewEvolution()}>
-                Créer une branche studio/…
-              </button>
-              <ul className="evo-list">
-                {evolutions.map((e) => (
-                  <li key={e.id}>
-                    <button
-                      type="button"
-                      className={e.id === selectedEvoId ? "active" : ""}
-                      onClick={() => setSelectedEvoId(e.id)}
-                    >
-                      <span className="evo-branch">{e.branch}</span>
-                      <span className="evo-status">{e.status}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="header-menu-wrap">
-          <button
-            type="button"
-            className="header-menu-trigger"
-            aria-expanded={openHeaderMenu === "ops"}
-            onClick={() => setOpenHeaderMenu((m) => (m === "ops" ? null : "ops"))}
-          >
-            Import &amp; build
-          </button>
-          {openHeaderMenu === "ops" ? (
-            <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="ops-panel">
-                <div className="ops-group ops-group--stacked">
-                  <label className="field">
-                    <span>URL du dépôt (HTTPS)</span>
-                    <input
-                      className="ops-input"
-                      value={cloneUrl}
-                      onChange={(e) => setCloneUrl(e.target.value)}
-                      placeholder="https://github.com/…"
-                      title="Adresse Git distante à cloner dans le dossier du projet Code Studio pour récupérer le code d’un dépôt distant."
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-block"
-                    disabled={!selectedId}
-                    title="Exécute git clone dans le répertoire du projet Code Studio pour récupérer le code d’un dépôt distant."
-                    onClick={() => void onClone()}
-                  >
-                    Cloner (HTTPS)
-                  </button>
-                </div>
-                <div className="ops-group ops-group--stacked">
-                  <label className="field">
-                    <span>Commande de build</span>
-                    <input
-                      className="ops-input"
-                      value={buildCmd}
-                      onChange={(e) => setBuildCmd(e.target.value)}
-                      placeholder="npm run build"
-                      title="Ligne de commande exécutée dans le dossier projet (ex. npm run build, cargo build)."
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-block"
-                    disabled={!selectedId}
-                    title="Lance la commande sur le serveur Akasha et affiche la sortie dans le journal de build (panneau droit)."
-                    onClick={() => void onBuild()}
-                  >
-                    Exécuter le build
-                  </button>
-                </div>
-                <div className="ops-group ops-group--stacked">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-block"
-                    disabled={!selectedId || !selectedEvoId}
-                    title="Fusionne la branche de travail sélectionnée dans la branche principale (main ou master, côté daemon)."
-                    onClick={() => {
-                      if (selectedId && selectedEvoId) {
-                        void api
-                          .mergeEvolution(selectedId, selectedEvoId, { design_check: true })
-                          .then(() => refreshEvolutions())
-                          .catch((e) => setError(String(e)));
-                      }
-                    }}
-                  >
-                    Fusionner dans main
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-block"
-                    disabled={!selectedId || !selectedEvoId}
-                    title="Abandonne la branche de travail sans fusion (suppression côté daemon selon la logique Git)."
-                    onClick={() => {
-                      if (selectedId && selectedEvoId) {
-                        void api
-                          .abandonEvolution(selectedId, selectedEvoId)
-                          .then(() => refreshEvolutions())
-                          .catch((e) => setError(String(e)));
-                      }
-                    }}
-                  >
-                    Abandonner la branche
-                  </button>
-                </div>
-                {error ? <div className="banner banner-error">{error}</div> : null}
-                {status ? <div className="banner banner-ok">{status}</div> : null}
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="header-menu-wrap">
-          <button
-            type="button"
-            className="header-menu-trigger"
-            aria-expanded={openHeaderMenu === "agent"}
-            onClick={() => setOpenHeaderMenu((m) => (m === "agent" ? null : "agent"))}
-          >
-            Agent / actions
-          </button>
-          {openHeaderMenu === "agent" ? (
-            <div className="header-menu-panel" onClick={(e) => e.stopPropagation()}>
-              {agentHint ? <p className="hint agent-hint">{agentHint}</p> : null}
-              {!activeBranch ? (
-                <p className="hint agent-branch-hint">
-                  Aucune branche d’évolution sélectionnée : les messages utilisent la branche <strong>HEAD</strong> affichée
-                  dans l’en-tête. Créez une branche dans « Évolutions Git » pour isoler une évolution.
-                </p>
-              ) : null}
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm btn-block"
-                disabled={!selectedId}
-                title="Envoie une consigne à l’agent pour créer ou remplir CODE_STUDIO_PLAN.md"
-                onClick={() => void onRegeneratePlan()}
-              >
-                Initialiser / régénérer le plan (CODE_STUDIO_PLAN.md)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm btn-block"
-                disabled={!selectedId}
-                title="Envoie une consigne à l’agent pour créer ou compléter DESIGN.md"
-                onClick={() => void onRegenerateDesign()}
-              >
-                Initialiser / régénérer le design (DESIGN.md)
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm btn-block"
-                disabled={!selectedId}
-                title="Force une recréation de DESIGN.md à partir des styles réellement présents dans le dépôt."
-                onClick={() => void onRegenerateDesign(true)}
-              >
-                Recréer DESIGN.md depuis le style du projet
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => setShowAgentMatrix((v) => !v)}>
-                {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
-              </button>
-              {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
-            </div>
-          ) : null}
-        </div>
-
-        <label className="field-inline header-agent-inline">
-          <span>Rôle</span>
-          <select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
-            {AGENT_OPTIONS.map((o) => (
-              <option key={o.value || "auto"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="split-toolbar" role="group" aria-label="Répartition éditeur et chat">
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "center" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "center"}
-            onClick={() => setMainSplit("center")}
-          >
-            Plein éditeur
-          </button>
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "balanced" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "balanced"}
-            onClick={() => setMainSplit("balanced")}
-          >
-            50/50
-          </button>
-          <button
-            type="button"
-            className={`btn btn-ghost btn-sm${mainSplit === "chat" ? " is-active" : ""}`}
-            aria-pressed={mainSplit === "chat"}
-            onClick={() => setMainSplit("chat")}
-          >
-            Plein chat
-          </button>
-        </div>
-      </nav>
-
-      <div className={appMainClass}>
-      <div className="center">
-
-        <div className="center-tabs" role="tablist" aria-label="Éditeur, aperçu, plan, design ou logs">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "editor"}
-            className={`center-tab ${centerTab === "editor" ? "active" : ""}`}
-            onClick={() => setCenterTab("editor")}
-          >
-            Éditeur
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "preview"}
-            className={`center-tab ${centerTab === "preview" ? "active" : ""}`}
-            onClick={() => setCenterTab("preview")}
-          >
-            Aperçu
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "plan"}
-            className={`center-tab ${centerTab === "plan" ? "active" : ""}`}
-            onClick={() => setCenterTab("plan")}
-          >
-            Plan
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "design"}
-            className={`center-tab ${centerTab === "design" ? "active" : ""}`}
-            onClick={() => setCenterTab("design")}
-          >
-            Design
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={centerTab === "logs"}
-            className={`center-tab ${centerTab === "logs" ? "active" : ""}`}
-            onClick={() => setCenterTab("logs")}
-          >
-            Logs serveur
-          </button>
-        </div>
-        {centerTab === "editor" ? (
+                  <div className="evolution-policy-box">
+                    <p className="hint evolution-policy-intro">
+                      Critères de fin (Definition of Done) : texte libre ou JSON <code>criteria</code> avec{" "}
+                      <code>manual</code>, <code>file_exists</code>, <code>command_ok</code> — envoyés avec chaque message
+                      agent tant que le champ n’est pas vide (voir spec Code Studio).
+                    </p>
+                    <label className="field" htmlFor="acceptance-criteria-draft-dashboard">
+                      <span>Critères d&apos;acceptation (optionnel)</span>
+                      <Textarea
+                        id="acceptance-criteria-draft-dashboard"
+                        className="evolution-policy-textarea"
+                        rows={5}
+                        spellCheck={false}
+                        aria-label="Critères d'acceptation Code Studio"
+                        data-testid="acceptance-criteria-draft"
+                        value={acceptanceCriteriaDraft}
+                        onChange={(e) => setAcceptanceCriteriaDraft(e.target.value)}
+                        placeholder={
+                          'Ex. liste en texte libre, ou JSON : {"criteria":[{"id":"1","text":"…","kind":"manual"},{"id":"2","text":"…","kind":"file_exists","path":"src/x.ts"}]}'
+                        }
+                      />
+                    </label>
+                    <label className="field" htmlFor="active-ticket-id-dashboard">
+                      <span>Ticket actif (optionnel)</span>
+                      <Input
+                        id="active-ticket-id-dashboard"
+                        value={activeTicketId ?? ""}
+                        onChange={(e) => setActiveTicketId(e.target.value.trim() || null)}
+                        placeholder="UUID ticket (injecté dans les prochains messages)"
+                      />
+                    </label>
+                    </div>
+                  </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+          </div>
+        ) : centerTab === "kanban" ? (
+          <div className="center-body">
+            <KanbanBoard
+              projectId={selectedId}
+              defaultAgent={agent || undefined}
+              ticketEnforcementMode={ticketEnforcementModeDraft}
+              onLaunchTicket={onLaunchTicket}
+              onOpenTaskTracking={onOpenTaskDetailModal}
+            />
+          </div>
+        ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
             <div className="editor-layout">
               <div className="editor-file-pane">
                 <div className="editor-file-pane-header">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     disabled={!selectedId}
                     title="Recharger la liste depuis le daemon"
                     onClick={() => void refreshFiles()}
                   >
                     Rafraîchir
-                  </button>
+                  </Button>
                 </div>
                 {!selectedId ? (
                   <p className="hint editor-file-pane-hint">Sélectionnez un projet pour voir ses fichiers.</p>
@@ -2452,24 +3464,24 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       {filePath}
                     </code>
                   ) : null}
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
+                  <Button
+                    variant="default"
+                    size="sm"
                     data-testid="studio-save-file"
                     disabled={!selectedId || !filePath || editorBinary || !editorDirty}
                     title="Enregistrer sur le disque du projet (Ctrl+S ou Cmd+S)"
                     onClick={() => void saveEditor()}
                   >
                     Enregistrer
-                  </button>
+                  </Button>
                   {isMarkdownPath(filePath) ? (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setEditorMarkdownPreview((v) => !v)}
                     >
                       {editorMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
                 {editorMarkdownPreview && isMarkdownPath(filePath) ? (
@@ -2490,53 +3502,73 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body preview-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">Aperçu</span>
-              <label className="preview-checkbox" title="Relance npm install avant le serveur (utile après changement de dépendances).">
-                <input
-                  type="checkbox"
+              {previewProfile ? (
+                <span
+                  className="preview-stack-badge"
+                  title="Stack détectée par le daemon depuis les manifestes du projet"
+                >
+                  Stack : {previewProfile}
+                </span>
+              ) : null}
+              <label
+                className="preview-checkbox"
+                title="Relance la commande d’installation détectée (npm install / uv sync / …) avant le serveur, utile après changement de dépendances."
+              >
+                <Checkbox
                   checked={forceInstallBeforePreview}
                   onChange={(e) => setForceInstallBeforePreview(e.target.checked)}
                 />
-                Forcer npm install
+                Forcer la réinstallation des dépendances
               </label>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              <label
+                className="preview-checkbox"
+                title="Sandbox iframe strict (sans same-origin) — mode WebContainer léger pour HTML/apercu statique."
+              >
+                <Checkbox
+                  checked={strictWebSandbox}
+                  onChange={(e) => setStrictWebSandbox(e.target.checked)}
+                />
+                Sandbox strict
+              </label>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={!selectedId || depsInstallBusy}
-                title="Exécute uniquement npm install dans le dossier projet (sans démarrer le serveur)."
+                title="Exécute uniquement la commande d’installation détectée (npm install / uv sync / …) sans démarrer le serveur."
                 onClick={() => void onInstallDepsOnly()}
               >
                 {depsInstallBusy ? "Installation…" : "Installer les dépendances"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
                 disabled={!selectedId || previewBusy}
-                title="npm install si nécessaire (ou forcé), puis npm run dev (Vite, etc.)"
+                title="Détecte la stack (Node, Python uv …), installe si nécessaire, puis lance le serveur de dev correspondant."
                 onClick={() => void onPlayPreview()}
               >
                 {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={!selectedId || !devPreviewUrl}
                 title="Arrête le serveur de développement lancé par le daemon."
                 onClick={() => void onStopPreview()}
               >
                 Arrêter le serveur
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 disabled={!previewUrl}
                 title="Ouvre l’URL d’aperçu (serveur dev ou fichier HTML) dans un nouvel onglet ou une nouvelle fenêtre du navigateur."
                 onClick={() => openPreviewInNewWindow()}
               >
                 Nouvelle fenêtre
-              </button>
+              </Button>
             </div>
             {previewLog ? (
-              <pre className="preview-install-log" title="Sortie npm install">
+              <pre className="preview-install-log" title="Sortie installation / serveur de dev">
                 {previewLog}
               </pre>
             ) : null}
@@ -2547,17 +3579,35 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 src={devPreviewUrl ?? staticPreviewBlobUrl ?? undefined}
                 sandbox={
                   devPreviewUrl
-                    ? "allow-scripts allow-same-origin allow-forms allow-popups"
+                    ? strictWebSandbox
+                      ? "allow-scripts"
+                      : "allow-scripts allow-same-origin allow-forms allow-popups"
                     : "allow-scripts"
                 }
               />
             ) : (
               <div className="preview-empty">
                 <p>
-                  <strong>Serveur de dev</strong> : cliquez sur « Lancer la prévisualisation » (projet avec{" "}
-                  <code>package.json</code> et script <code>dev</code>). Le daemon exécute <code>npm install</code>{" "}
-                  si <code>node_modules</code> est absent.
+                  <strong>Serveur de dev</strong> : la stack est détectée automatiquement à partir des
+                  manifestes du projet, puis installée et lancée. Cliquez sur « Lancer la prévisualisation ».
                 </p>
+                <ul style={{ margin: "6px 0", paddingLeft: 20 }}>
+                  <li>
+                    <strong>Node.js</strong> — <code>package.json</code> (script <code>dev</code>) :
+                    {" "}
+                    <code>npm install</code> + <code>npm run dev</code>.
+                  </li>
+                  <li>
+                    <strong>Python · uv · Streamlit</strong> — <code>pyproject.toml</code> mentionnant
+                    {" "}
+                    <code>streamlit</code> : <code>uv sync</code> + <code>uv run streamlit run app.py</code>.
+                  </li>
+                  <li>
+                    <strong>Python · uv · FastAPI</strong> — <code>pyproject.toml</code> mentionnant
+                    {" "}
+                    <code>fastapi</code> : <code>uv sync</code> + <code>uv run uvicorn main:app</code>.
+                  </li>
+                </ul>
                 <p>
                   <strong>HTML statique</strong> : ouvrez un fichier <code>.html</code> dans l’arborescence, puis
                   revenez ici — l’aperçu s’affiche sans serveur.
@@ -2569,17 +3619,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane">
             <div className="preview-toolbar">
               <span className="pane-title-inline">CODE_STUDIO_PLAN.md</span>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
+              <Button
+                variant="default"
+                size="sm"
                 disabled={!selectedId || planDocLoading}
                 onClick={() => void onSavePlanFromTab()}
               >
                 Enregistrer
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 disabled={!selectedId}
                 title="Mémorise la version courante pour comparer (session navigateur)"
                 onClick={() => {
@@ -2592,15 +3642,24 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }}
               >
                 Référence (diff)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!selectedId}
+                onClick={() => void onCreateTicketsFromPlan()}
+                title="Crée des tickets Kanban depuis les listes de tâches du plan"
+              >
+                Créer tickets Kanban
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={planDocLoading}
                 onClick={() => setPlanMarkdownPreview((v) => !v)}
               >
                 {planMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
-              </button>
+              </Button>
             </div>
             {planDocLoading ? (
               <p className="hint">Chargement…</p>
@@ -2620,7 +3679,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <MarkdownBlock text={planDocText} className="md-content" />
                   </div>
                 ) : (
-                  <textarea
+                  <Textarea
                     className="plan-doc-textarea"
                     spellCheck={false}
                     value={planDocText}
@@ -2636,65 +3695,68 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane design-pane-root">
             <div className="preview-toolbar design-toolbar-wrap">
               <span className="pane-title-inline">DESIGN.md</span>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
+              <Button
+                variant="default"
+                size="sm"
                 data-testid="studio-save-design"
                 disabled={!selectedId || designDocLoading}
                 onClick={() => void onSaveDesignFromTab()}
               >
                 Enregistrer
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={!selectedId}
                 onClick={() => onImportDesignFromDisk()}
               >
                 Importer
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignDoc()}>
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!designDocText} onClick={() => onExportDesignDoc()}>
                 Export DESIGN.md
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignTokens()}>
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!designDocText} onClick={() => onExportDesignTokens()}>
                 Export tokens
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!designDocText} onClick={() => onExportDesignCss()}>
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!designDocText} onClick={() => onExportDesignCss()}>
                 Export CSS
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={designDocLoading}
                 onClick={() => setDesignMarkdownPreview((v) => !v)}
               >
                 {designMarkdownPreview ? "Éditer Markdown" : "Preview Markdown"}
-              </button>
+              </Button>
               <span className="design-view-toggle" role="group" aria-label="Affichage design">
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${designViewMode === "split" ? " is-active" : ""}`}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={designViewMode === "split" ? "is-active" : undefined}
                   aria-pressed={designViewMode === "split"}
                   onClick={() => setDesignViewMode("split")}
                 >
                   Les deux
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${designViewMode === "visual" ? " is-active" : ""}`}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={designViewMode === "visual" ? "is-active" : undefined}
                   aria-pressed={designViewMode === "visual"}
                   onClick={() => setDesignViewMode("visual")}
                 >
                   Visuel
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm${designViewMode === "source" ? " is-active" : ""}`}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={designViewMode === "source" ? "is-active" : undefined}
                   aria-pressed={designViewMode === "source"}
                   onClick={() => setDesignViewMode("source")}
                 >
                   Source
-                </button>
+                </Button>
               </span>
             </div>
             {designDocLoading ? (
@@ -2726,16 +3788,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </ul>
                   ) : null}
                   {designHasFixableDiagnostics ? (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm design-fix-diagnostics-btn"
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="design-fix-diagnostics-btn"
                       data-testid="studio-design-fix-diagnostics"
                       disabled={!selectedId}
                       title="Envoie une tâche à l’agent pour corriger uniquement DESIGN.md"
                       onClick={() => void onFixDesignDiagnostics()}
                     >
                       Demander à l’agent de corriger
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
                 {designViewMode === "split" ? (
@@ -2749,7 +3812,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                           <MarkdownBlock text={designDocText} className="md-content" />
                         </div>
                       ) : (
-                        <textarea
+                        <Textarea
                           className="plan-doc-textarea"
                           spellCheck={false}
                           value={designDocText}
@@ -2773,7 +3836,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         <MarkdownBlock text={designDocText} className="md-content" />
                       </div>
                     ) : (
-                      <textarea
+                      <Textarea
                         className="plan-doc-textarea"
                         spellCheck={false}
                         value={designDocText}
@@ -2786,6 +3849,423 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 )}
               </>
             )}
+          </div>
+        ) : centerTab === "branches" ? (
+          <div className="center-body plan-pane branches-pane">
+            <div className="preview-toolbar branches-toolbar">
+              <span className="pane-title-inline">Gestion des branches</span>
+              <InfoTip content="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void refreshGitBranches();
+                  void refreshGitConflicts();
+                }}
+                title="Actualiser la liste des branches et l’état de conflit"
+              >
+                Rafraîchir
+              </Button>
+            </div>
+            <p className="hint plan-pane-hint">
+              Suivez les branches locales, comparez les divergences et pilotez les merges depuis cet écran.
+            </p>
+            <div className="branches-layout">
+              <section className="panel branches-panel">
+                <h2>
+                  Branches disponibles <InfoTip content="Liste locale avec état courant, avance/retard et dernier commit." />
+                </h2>
+                {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
+                <ul className="branches-list">
+                  {gitBranches.map((b) => (
+                    <li key={b.name}>
+                      <div className={`branches-item${b.current ? " is-current" : ""}`}>
+                        <div className="branches-item-main">
+                          <strong>{b.name}</strong>
+                          {b.current ? <span className="branches-badge">active</span> : null}
+                        </div>
+                        <div className="branches-item-meta">
+                          <span>↑ {b.ahead}</span>
+                          <span>↓ {b.behind}</span>
+                          <span>{b.last_commit_subject || "Aucun commit"}</span>
+                        </div>
+                        {!b.current ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => void onCheckoutBranch(b.name)}
+                            title="Passer sur cette branche"
+                          >
+                            Checkout
+                          </Button>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="panel branches-panel">
+                <h2>
+                  Comparer / merger <InfoTip content="La branche source est fusionnée dans la branche cible." />
+                </h2>
+                <div className="field-row">
+                  <label className="field">
+                    <span>Branche cible</span>
+                    <Select value={gitCompareBase} onChange={(e) => { setGitCompareBase(e.target.value); setGitCompareResult(null); }}>
+                      <option value="">Choisir…</option>
+                      {gitBranches.map((b) => (
+                        <option key={`base-${b.name}`} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                  <label className="field">
+                    <span>Branche source</span>
+                    <Select value={gitCompareTarget} onChange={(e) => { setGitCompareTarget(e.target.value); setGitCompareResult(null); }}>
+                      <option value="">Choisir…</option>
+                      {gitBranches.map((b) => (
+                        <option key={`target-${b.name}`} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                </div>
+                <div className="project-actions-row">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!gitCompareBase || !gitCompareTarget}
+                    onClick={() => void onCompareBranches()}
+                    title="Afficher les commits et statistiques de divergence"
+                  >
+                    Comparer
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={!gitCompareBase || !gitCompareTarget || gitCompareBase === gitCompareTarget}
+                    onClick={() => void onMergeBranches()}
+                    title="Fusionner la branche source dans la cible"
+                  >
+                    Merger
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={!selectedId || !selectedEvoId}
+                    title="Abandonne la branche d’évolution sélectionnée sans fusion."
+                    onClick={() => {
+                      if (selectedId && selectedEvoId) {
+                        void api
+                          .abandonEvolution(selectedId, selectedEvoId)
+                          .then(() => refreshEvolutions())
+                          .catch((e) => setError(String(e)));
+                      }
+                    }}
+                  >
+                    Abandonner la branche
+                  </Button>
+                </div>
+                {gitCompareResult ? (
+                  <div className="branches-compare-summary">
+                    <p className="hint">
+                      {gitCompareResult.target} → {gitCompareResult.base} | ahead {gitCompareResult.ahead} / behind{" "}
+                      {gitCompareResult.behind}
+                    </p>
+                    <p className="hint">
+                      {gitCompareResult.files_changed} fichiers, +{gitCompareResult.insertions} / -
+                      {gitCompareResult.deletions}
+                    </p>
+                    <ul className="branches-commit-list">
+                      {gitCompareResult.commits.slice(0, 12).map((c) => (
+                        <li key={c.hash}>
+                          <code>{c.hash.slice(0, 8)}</code> {c.subject}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </section>
+
+              <section className="panel branches-panel">
+                <h2>
+                  Conflits de merge <InfoTip content="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                </h2>
+                {gitMergeInProgress ? (
+                  <p className="hint branches-warning">
+                    Merge en cours avec conflits potentiels. Résolvez les fichiers puis commit, ou annulez le merge.
+                  </p>
+                ) : (
+                  <p className="hint">Aucun merge en conflit détecté.</p>
+                )}
+                {gitConflicts.length > 0 ? (
+                  <ul className="branches-conflict-list">
+                    {gitConflicts.map((f) => (
+                      <li key={f}>
+                        <code>{f}</code>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={!gitMergeInProgress}
+                  onClick={() => void onAbortMerge()}
+                  title="Annuler le merge en cours et revenir à l’état précédent"
+                >
+                  Annuler le merge
+                </Button>
+              </section>
+            </div>
+          </div>
+        ) : centerTab === "cockpit" ? (
+          <div className="center-body preview-pane preview-pane--cockpit">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Cockpit opérateur</span>
+              <p className="hint preview-logs-hint">
+                Vue opérateur: scheduler, task runs, process watch, terminal/PTy, outils, mémoire, MCP et lifecycle.
+              </p>
+            </div>
+            <DaemonOpsPanel />
+          </div>
+        ) : centerTab === "docs" ? (
+          <div className="center-body plan-pane docs-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">User documentation</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void window.open("/docs/USER_GUIDE.md", "_blank", "noopener,noreferrer")}
+              >
+                Open raw markdown
+              </Button>
+            </div>
+            <p className="hint plan-pane-hint">
+              End-user guide rendered directly inside Code Studio, with the application visual theme.
+            </p>
+            {userGuideLoading ? (
+              <p className="hint">Loading documentation…</p>
+            ) : userGuideError ? (
+              <p className="hint">Consultez le centre de notifications pour le détail.</p>
+            ) : (
+              <div className="docs-pane-layout">
+                <aside className="docs-pane-toc" aria-label="Documentation table of contents">
+                  <h3>On this page</h3>
+                  {userGuideToc.length > 0 ? (
+                    <ul className="docs-pane-toc-list">
+                      {userGuideToc.map((item) => (
+                        <li key={`${item.id}-${item.level}`} data-level={item.level}>
+                          <a href={`#${item.id}`}>{item.label}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="hint">No sections found.</p>
+                  )}
+                </aside>
+                <div className="docs-pane-content markdown-doc-preview" data-testid="studio-doc-content">
+                  <MarkdownBlock text={userGuideDoc} className="md-content" />
+                </div>
+              </div>
+            )}
+          </div>
+        ) : centerTab === "agents" ? (
+          <div className="center-body plan-pane docs-pane agents-page">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Agents disponibles</span>
+            </div>
+            <div className="docs-pane-layout agents-page-layout">
+              <aside className="docs-pane-toc agents-page-toc" aria-label="Sommaire agents">
+                <h3>Dans cette page</h3>
+                <ul className="docs-pane-toc-list">
+                  <li><a href="#agents-overview" className={activeTocSection === "agents-overview" ? "is-active" : ""}>Vue d’ensemble</a></li>
+                  <li><a href="#agents-role-selection" className={activeTocSection === "agents-role-selection" ? "is-active" : ""}>Choisir un rôle</a></li>
+                  <li><a href="#agents-practices" className={activeTocSection === "agents-practices" ? "is-active" : ""}>Bonnes pratiques</a></li>
+                  <li><a href="#agents-matrix" className={activeTocSection === "agents-matrix" ? "is-active" : ""}>Matrice des capacités</a></li>
+                </ul>
+              </aside>
+
+              <div className="agents-page-content">
+                <p className="hint plan-pane-hint agents-page-intro">
+                  Cette vue récapitule les rôles des agents Code Studio et la façon dont le daemon les orchestre.
+                  Pratique quand on veut éviter de parler dans le vide cosmique à un mauvais spécialiste.
+                </p>
+                <div className="agents-current-role" role="status" aria-live="polite">
+                  <span className="agents-current-role-label">Rôle actuellement sélectionné</span>
+                  <strong>{AGENT_OPTIONS.find((o) => o.value === agent)?.label ?? "Automatique"}</strong>
+                  {agentHint ? <span className="hint agents-current-role-hint">{agentHint}</span> : null}
+                </div>
+
+                <div className="agents-grid">
+                  <section className="panel agents-panel" id="agents-overview">
+                    <h2 className="agents-section-title">
+                      <Bot className="agents-section-icon" aria-hidden />
+                      <span>Comment ça fonctionne</span>
+                    </h2>
+                    <p className="hint">
+                      Par défaut, Code Studio route les demandes vers un chef de projet qui délègue ensuite au bon spécialiste.
+                      Le sélecteur <strong>Rôle agent</strong> dans l’en-tête sert de préférence de routage pour les demandes envoyées.
+                    </p>
+                    <ul className="agents-bullet-list">
+                      <li><strong>Automatique</strong> : laisse le daemon choisir la meilleure orchestration.</li>
+                      <li><strong>Spécialiste</strong> : biaise la demande vers frontend, backend, full-stack, scaffold ou planner.</li>
+                      <li><strong>Délégation simple</strong> : force une seule passe, sans chaîne de sous-agents.</li>
+                    </ul>
+                  </section>
+
+                  <section className="panel agents-panel" id="agents-role-selection">
+                    <h2 className="agents-section-title">
+                      <Route className="agents-section-icon" aria-hidden />
+                      <span>Quand choisir un rôle</span>
+                    </h2>
+                    <div className="agents-role-grid" role="list" aria-label="Sélection rapide du rôle agent">
+                      {AGENT_OPTIONS.map((option) => {
+                        const isActive = agent === option.value;
+                        return (
+                          <Button
+                            key={option.value || "auto"}
+                            variant="ghost"
+                            size="sm"
+                            className={`agents-role-card ${isActive ? "is-active" : ""}`}
+                            aria-pressed={isActive}
+                            title={`Sélectionner le rôle ${option.label}`}
+                            onClick={() => setAgent(option.value)}
+                            role="listitem"
+                          >
+                            <span className="agents-role-card-title">{option.label}</span>
+                            <span className="agents-role-card-hint">{option.hint}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <ul className="agents-bullet-list">
+                      <li><strong>Scaffold</strong> pour initialiser une app ou créer une structure minimale.</li>
+                      <li><strong>Frontend</strong> pour UI, styles, composants, accessibilité et navigation.</li>
+                      <li><strong>Backend</strong> pour API, config, persistance et logique serveur.</li>
+                      <li><strong>Full-stack</strong> pour une évolution qui traverse UI et backend.</li>
+                      <li><strong>Planner</strong> pour l’analyse du dépôt et la mise à jour du plan en lecture seule.</li>
+                    </ul>
+                  </section>
+
+                  <section className="panel agents-panel" id="agents-practices">
+                    <h2 className="agents-section-title">
+                      <ShieldCheck className="agents-section-icon" aria-hidden />
+                      <span>Bonnes pratiques</span>
+                    </h2>
+                    <ul className="agents-bullet-list">
+                      <li>Décrivez le résultat attendu, pas seulement l’outil à utiliser.</li>
+                      <li>Renseignez la stack et les critères d’acceptation pour guider le routage.</li>
+                      <li>Utilisez une branche d’évolution pour isoler une feature avant merge.</li>
+                      <li>Gardez <code>Automatique</code> si vous n’avez pas besoin de contraindre le spécialiste.</li>
+                    </ul>
+                  </section>
+                </div>
+
+                <section className="panel agents-matrix-panel" id="agents-matrix">
+                  <h2 className="agents-section-title">
+                    <Sparkles className="agents-section-icon" aria-hidden />
+                    <span>Matrice des capacités</span>
+                  </h2>
+                  <p className="hint">
+                    Référence synthétique des agents studio et de leurs limites opérationnelles.
+                  </p>
+                  <AgentCapabilitiesTable />
+                </section>
+              </div>
+            </div>
+          </div>
+        ) : centerTab === "settings" ? (
+          <div className="center-body plan-pane">
+            <div className="preview-toolbar">
+              <span className="pane-title-inline">Paramètres de l’application</span>
+            </div>
+            <Accordion
+              items={[
+                {
+                  id: "appearance",
+                  title: "Apparence",
+                  icon: "🎨",
+                  content: (
+                    <div className="settings-form-group">
+                      <div className="field-row">
+                        <label className="field">
+                          <span>Thème</span>
+                          <Select
+                            value={uiTheme}
+                            onChange={(e) => setUiTheme(e.target.value as ThemeId)}
+                          >
+                            {THEME_IDS.map((id) => (
+                              <option key={id} value={id}>
+                                {THEME_LABELS[id]}
+                              </option>
+                            ))}
+                          </Select>
+                        </label>
+                        <label className="field">
+                          <span>Densité</span>
+                          <Select value={uiDensity} onChange={(e) => setUiDensity(e.target.value as typeof uiDensity)}>
+                            <option value="normal">Normale</option>
+                            <option value="compact">Compacte</option>
+                          </Select>
+                        </label>
+                      </div>
+                    </div>
+                  ),
+                  isOpen: true,
+                },
+                {
+                  id: "conversation",
+                  title: "Conversation",
+                  icon: "💬",
+                  content: (
+                    <div className="settings-form-group">
+                      <label className="field-inline delegate-single">
+                        <Checkbox checked={chatOptionsOpen} onChange={(e) => setChatOptionsOpen(e.target.checked)} />
+                        <span>Options conversation ouvertes par défaut</span>
+                      </label>
+                      <label className="field-inline delegate-single">
+                        <Checkbox checked={chatSuggestionsOpen} onChange={(e) => setChatSuggestionsOpen(e.target.checked)} />
+                        <span>Suggestions ouvertes par défaut</span>
+                      </label>
+                    </div>
+                  ),
+                  isOpen: false,
+                },
+                {
+                  id: "build",
+                  title: "Build & Logs",
+                  icon: "🔨",
+                  content: (
+                    <div className="settings-form-group">
+                      <label className="field-inline delegate-single">
+                        <Checkbox checked={buildLogOpen} onChange={(e) => setBuildLogOpen(e.target.checked)} />
+                        <span>Journal de build ouvert par défaut</span>
+                      </label>
+                    </div>
+                  ),
+                  isOpen: false,
+                },
+                {
+                  id: "info",
+                  title: "Informations",
+                  icon: "ℹ️",
+                  content: (
+                    <div className="settings-form-group">
+                      <p className="hint">
+                        Les paramètres sont persistés localement (navigateur) pour ce poste.
+                      </p>
+                    </div>
+                  ),
+                  isOpen: false,
+                },
+              ] as AccordionItem[]}
+              allowMultiple
+              className="settings-accordion"
+            />
           </div>
         ) : (
           <div className="center-body preview-pane preview-pane--logs">
@@ -2819,175 +4299,132 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="chat-activity-area">
-          <CollapsiblePanel
-            className="chat-task-trace-wrap"
-            title="Suivi de la dernière tâche"
-            open={taskTraceSectionOpen}
-            onToggle={() => setTaskTraceSectionOpen((v) => !v)}
-          >
-            <div className="task-trace-scroll">
-              {taskTrace ? (
-                <div
-                  className={`task-trace ${taskTrace.done ? "done" : "running"}`}
-                  data-task-status={
-                    pendingHumanInput?.taskId === taskTrace.id ? "waiting_user_input" : taskTrace.status
-                  }
+          {taskTrace ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void onOpenTaskDetailModal(taskTrace.id)}
+              title="Ouvrir la modale de détail de la tâche"
+            >
+              Tâche en cours
+            </Button>
+          ) : null}
+          {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
+            <div className="task-human-input">
+              {humanInputRiskLevel ? (
+                <span
+                  className={`risk-badge risk-badge--${humanInputRiskLevel}`}
+                  title="Estimation locale (mots-clés) — pas une analyse serveur"
                 >
-                  <div className="task-trace-header-row">
-                    <span
-                      className={`task-trace-badge task-trace-badge--${
-                        pendingHumanInput?.taskId === taskTrace.id
-                          ? "human"
-                          : taskTrace.done
-                            ? "final"
-                            : "live"
-                      }`}
+                  {riskLabel(humanInputRiskLevel)}
+                </span>
+              ) : null}
+              <p className="task-human-input-question">{pendingHumanInput.question}</p>
+              {pendingHumanInput.context ? <p className="task-human-input-context">{pendingHumanInput.context}</p> : null}
+              {pendingHumanInput.choices?.length ? (
+                <div className="task-human-input-choices">
+                  {pendingHumanInput.choices.map((c) => (
+                    <Button
+                      key={c}
+                      variant="secondary"
+                      size="sm"
+                      disabled={humanReplyBusy}
+                      onClick={() => setHumanReplyDraft(c)}
                     >
-                      {pendingHumanInput?.taskId === taskTrace.id
-                        ? "Réponse requise"
-                        : taskTrace.done
-                          ? "État final"
-                          : "En cours"}
-                    </span>
-                  </div>
-                  <div className="task-trace-id">
-                    ID <code>{taskTrace.id.slice(0, 8)}…</code> — {formatTaskStatusFr(taskTrace.status)}
-                  </div>
-                  <MarkdownBlock text={taskTrace.line} className="task-trace-line md-content" />
-                  {taskTrace.progressChips && taskTrace.progressChips.length > 0 ? (
-                    <ul className="task-progress-chips" aria-label="Étapes récentes">
-                      {taskTrace.progressChips.map((c, i) => (
-                        <li key={`${c}-${i}`} className="task-progress-chip">
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {pendingHumanInput && pendingHumanInput.taskId === taskTrace.id ? (
-                    <div className="task-human-input">
-                      {humanInputRiskLevel ? (
-                        <span
-                          className={`risk-badge risk-badge--${humanInputRiskLevel}`}
-                          title="Estimation locale (mots-clés) — pas une analyse serveur"
-                        >
-                          {riskLabel(humanInputRiskLevel)}
-                        </span>
-                      ) : null}
-                      <p className="task-human-input-question">{pendingHumanInput.question}</p>
-                      {pendingHumanInput.context ? (
-                        <p className="task-human-input-context">{pendingHumanInput.context}</p>
-                      ) : null}
-                      {pendingHumanInput.choices?.length ? (
-                        <div className="task-human-input-choices">
-                          {pendingHumanInput.choices.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              disabled={humanReplyBusy}
-                              onClick={() => setHumanReplyDraft(c)}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                      {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
-                        <p className="denial-loop-hint" role="status">
-                          Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
-                          pour éviter que l’agent réessaie la même action. Au 3ᵉ refus structuré, une note est ajoutée
-                          automatiquement pour l’agent.
-                        </p>
-                      ) : null}
-                      <div className="task-human-input-quick">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Acceptation : vous pouvez poursuivre avec cette approche, en restant dans le périmètre du plan.",
-                            )
-                          }
-                        >
-                          Accepter (modèle)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Refus : merci d’arrêter cette action et de proposer une alternative plus sûre ou conforme au plan.",
-                            )
-                          }
-                        >
-                          Refuser (modèle)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={humanReplyBusy}
-                          onClick={() =>
-                            setHumanReplyDraft(
-                              "Refus collectif : toutes les actions en attente similaires doivent être annulées ; expliquez pourquoi et proposez la suite.",
-                            )
-                          }
-                        >
-                          Tout refuser (message type)
-                        </button>
-                      </div>
-                      <textarea
-                        className="task-human-input-textarea"
-                        value={humanReplyDraft}
-                        onChange={(e) => setHumanReplyDraft(e.target.value)}
-                        placeholder="Saisissez votre réponse (ou choisissez un bouton ci-dessus)…"
-                        rows={3}
-                        disabled={humanReplyBusy}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm task-human-input-submit"
-                        disabled={humanReplyBusy || !humanReplyDraft.trim()}
-                        onClick={() => void onSubmitHumanReply()}
-                      >
-                        {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
-                      </button>
-                    </div>
-                  ) : null}
-                  {!taskTrace.done ? <div className="task-spinner">Mise à jour…</div> : null}
+                      {c}
+                    </Button>
+                  ))}
                 </div>
-              ) : (
-                <div className="task-trace idle">
-                  <p className="hint task-trace-idle-hint">
-                    Après envoi, l’état du daemon s’affiche ici (polling ~1,5 s) jusqu’à un état final ou une attente
-                    utilisateur.
-                  </p>
-                </div>
-              )}
+              ) : null}
+              {humanRefusalStreak >= 2 && looksLikeStructuredRefusal(humanReplyDraft) ? (
+                <p className="denial-loop-hint" role="status">
+                  Plusieurs refus d’affilée : précisez une <strong>question</strong> ou une <strong>alternative</strong>{" "}
+                  pour éviter que l’agent réessaie la même action.
+                </p>
+              ) : null}
+              <Textarea
+                className="task-human-input-textarea"
+                value={humanReplyDraft}
+                onChange={(e) => setHumanReplyDraft(e.target.value)}
+                placeholder="Réponse pour débloquer la tâche…"
+                rows={3}
+                disabled={humanReplyBusy}
+              />
+              <Button
+                variant="default"
+                size="sm"
+                className="task-human-input-submit"
+                disabled={humanReplyBusy || !humanReplyDraft.trim()}
+                onClick={() => void onSubmitHumanReply()}
+              >
+                {humanReplyBusy ? "Envoi…" : "Envoyer la réponse à l’agent"}
+              </Button>
             </div>
-          </CollapsiblePanel>
+          ) : null}
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="pane-title pane-title--compact">Conversation</div>
-            <div className="chat-log">
+            {chatHasUnseen ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="chat-unseen-btn"
+                onClick={() => {
+                  const el = chatLogRef.current;
+                  if (!el) return;
+                  el.scrollTop = el.scrollHeight;
+                  chatPinnedByUserRef.current = false;
+                  setChatHasUnseen(false);
+                }}
+              >
+                Nouveaux messages — aller en bas
+              </Button>
+            ) : null}
+            <div
+              className="chat-log"
+              ref={chatLogRef}
+              onScroll={() => {
+                const el = chatLogRef.current;
+                if (!el) return;
+                const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
+                chatPinnedByUserRef.current = !nearBottom;
+                if (nearBottom) setChatHasUnseen(false);
+              }}
+            >
               {chat.map((m, i) => (
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "user" && m.task_id ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bubble-task-detail-btn"
+                        aria-label="Fork à partir de ce message"
+                        title="Fork à partir d’ici"
+                        onClick={() => onOpenForkDialog(i, m)}
+                      >
+                        ⎇
+                      </Button>
+                    ) : null}
                     {m.role === "assistant" && m.task_id ? (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="bubble-task-detail-btn"
                         aria-label="Détails de la tâche"
                         title="Voir statut, progression et événements daemon"
                         onClick={() => void onOpenTaskDetailModal(m.task_id!)}
                       >
                         ℹ
-                      </button>
+                      </Button>
                     ) : null}
                     {m.role === "assistant" && m.studio_diff?.files?.length ? (
-                      <ChatStudioDiffPanel diff={m.studio_diff} />
+                      <ChatStudioDiffPanel
+                        diff={m.studio_diff}
+                        projectId={selectedId}
+                        onApplied={() => void refreshFiles()}
+                      />
                     ) : null}
                   </div>
                 </div>
@@ -2995,74 +4432,34 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             {lastAssistant?.suggested_actions && lastAssistant.suggested_actions.length > 0 ? (
               <div className="chat-suggestions" aria-label="Prochaines étapes suggérées">
-                <span className="chat-suggestions-label">Suggestions</span>
-                <div className="chat-suggestion-chips">
-                  {lastAssistant.suggested_actions.map((a) => (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className="btn btn-ghost btn-sm chat-suggestion-chip"
-                      onClick={() => {
-                        if (a.kind === "message" && a.message) setChatInput(a.message);
-                        if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
-                      }}
-                    >
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
+                <details open={chatSuggestionsOpen} onToggle={(e) => setChatSuggestionsOpen((e.currentTarget as HTMLDetailsElement).open)}>
+                  <summary className="chat-suggestions-label">Suggestions ({lastAssistant.suggested_actions.length})</summary>
+                  <div className="chat-suggestion-chips">
+                    {lastAssistant.suggested_actions.map((a) => (
+                      <Button
+                        key={a.id}
+                        variant="ghost"
+                        size="sm"
+                        className="chat-suggestion-chip"
+                        onClick={() => {
+                          if (a.kind === "message" && a.message) setChatInput(a.message);
+                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
+                        }}
+                      >
+                        {a.label}
+                      </Button>
+                    ))}
+                  </div>
+                </details>
               </div>
             ) : null}
           </section>
         </div>
 
         <div className="chat-panel-footer">
-          <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
-            {CODE_MODE_OPTIONS.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
-                title={o.hint}
-                onClick={() => setCodeMode(o.value)}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          <label className="field chat-policy-hint-field">
-            <span>Consigne ponctuelle (optionnel, un envoi)</span>
-            <input
-              type="text"
-              value={policyHintOneShot}
-              onChange={(e) => setPolicyHintOneShot(e.target.value)}
-              placeholder="Ex. ne pas toucher au dossier legacy/…"
-              spellCheck={false}
-            />
-          </label>
-          <label className="field-inline delegate-single">
-            <input
-              type="checkbox"
-              checked={delegateSingleLevel}
-              onChange={(e) => setDelegateSingleLevel(e.target.checked)}
-            />
-            <span>Délégation simple (préfixe anti sous-agent)</span>
-          </label>
-          <label className="field-inline delegate-single">
-            <input
-              type="checkbox"
-              checked={autoApplyDesign}
-              onChange={(e) => setAutoApplyDesign(e.target.checked)}
-            />
-            <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
-          </label>
-          {autoApplyDesign && designHint ? (
-            <p className="hint chat-design-hint" title={designHint}>
-              Design actif: {designHint}
-            </p>
-          ) : null}
-          <div className="chat-form">
-            <textarea
+          <div className="input-group input-group--textarea chat-form">
+            <Textarea
+              className="input-group-field input-group-field--textarea"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
@@ -3073,16 +4470,134 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }
               }}
             />
-            <button type="button" className="btn btn-primary" disabled={!selectedId} onClick={() => void onSendChat()}>
-              Envoyer
-            </button>
+            <div className="input-group-append">
+              <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
+                Envoyer
+              </Button>
+            </div>
           </div>
-          <p className="kbd-hint">
-            Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour envoyer
-          </p>
-
-          <div className="pane-title">Journal de build</div>
-          <pre className="build-pre">{buildLog || "—"}</pre>
+          <div className="chat-controls-row">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              disabled={!selectedId}
+              onClick={async () => {
+                if (!selectedId) return;
+                try {
+                  await api.handoffSession({
+                    session_id: `code-studio-${selectedId}`,
+                    target_model: handoffModel.trim() || undefined,
+                    target_provider: handoffProvider.trim() || undefined,
+                    task_id: taskTrace?.id || undefined,
+                  });
+                  setStatus("Handoff modèle envoyé.");
+                } catch (e) {
+                  setError(String(e));
+                }
+              }}
+              title="Reprendre la session avec un autre modèle"
+            >
+              Reprendre avec un autre modèle
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              onClick={() => setChatOptionsOpen((v) => !v)}
+              title="Afficher ou masquer les options avancées"
+            >
+              {chatOptionsOpen ? "Masquer options" : "Options"}
+            </Button>
+            <p className="kbd-hint">
+              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
+            </p>
+          </div>
+          {chatOptionsOpen ? (
+            <div className="chat-options-panel">
+              <label className="field">
+                <span>Livraison message (tâche en cours)</span>
+                <div className="input-group field-input-group">
+                  <span className="input-group-addon">Envoi</span>
+                  <select
+                    className="input-group-field"
+                    value={chatDeliveryMode}
+                    onChange={(e) =>
+                      setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
+                    }
+                  >
+                    <option value="immediate">Immédiat (nouvelle tâche)</option>
+                    <option value="steering">Steering (après le tour LLM courant)</option>
+                    <option value="follow_up">Follow-up (après fin du travail)</option>
+                  </select>
+                </div>
+              </label>
+              <p className="hint">
+                Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
+              </p>
+              <label className="field">
+                <span>Handoff provider (optionnel)</span>
+                <Input type="text" value={handoffProvider} onChange={(e) => setHandoffProvider(e.target.value)} />
+              </label>
+              <label className="field">
+                <span>Handoff modèle (optionnel)</span>
+                <Input type="text" value={handoffModel} onChange={(e) => setHandoffModel(e.target.value)} placeholder="gpt-4o-mini, qwen3:8b, ..." />
+              </label>
+              <label className="field checkbox-field">
+                <span>Incognito (ne pas promouvoir en mémoire)</span>
+                <Checkbox checked={chatIncognito} onChange={(e) => setChatIncognito(e.target.checked)} />
+              </label>
+              <div className="btn-group code-mode-strip" role="group" aria-label="Mode Code Studio">
+                {CODE_MODE_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    className={`btn-group-item ${codeMode === o.value ? "active" : ""}`}
+                    title={o.hint}
+                    onClick={() => setCodeMode(o.value)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <label className="field chat-policy-hint-field">
+                <span>Consigne ponctuelle (optionnel, un envoi)</span>
+                <Input
+                  type="text"
+                  value={policyHintOneShot}
+                  onChange={(e) => setPolicyHintOneShot(e.target.value)}
+                  placeholder="Ex. ne pas toucher au dossier legacy/…"
+                  spellCheck={false}
+                />
+              </label>
+              <label
+                className="field-inline delegate-single"
+                title="Désactivé (défaut) : le chef de projet doit router la demande via delegate_to_agent vers un spécialiste. Activé : une seule passe sans sous-agents."
+              >
+                <Checkbox
+                  checked={delegateSingleLevel}
+                  onChange={(e) => setDelegateSingleLevel(e.target.checked)}
+                />
+                <span>Délégation simple (sans sous-agents)</span>
+              </label>
+              <label className="field-inline delegate-single">
+                <Checkbox
+                  checked={autoApplyDesign}
+                  onChange={(e) => setAutoApplyDesign(e.target.checked)}
+                />
+                <span>Auto-apply DESIGN.md ({parsedDesignDoc.status})</span>
+              </label>
+              {autoApplyDesign && designHint ? (
+                <p className="hint chat-design-hint" title={designHint}>
+                  Design actif: {designHint}
+                </p>
+              ) : null}
+              <details open={buildLogOpen} onToggle={(e) => setBuildLogOpen((e.currentTarget as HTMLDetailsElement).open)}>
+                <summary className="pane-title">Journal de build</summary>
+                <pre className="build-pre">{buildLog || "—"}</pre>
+              </details>
+            </div>
+          ) : null}
         </div>
       </aside>
       </div>
@@ -3104,65 +4619,144 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           >
             <div className="modal-card-head">
               <h3 id="task-detail-title">Détail de la tâche</h3>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setTaskDetailForId(null)}>
+              <Button variant="secondary" size="sm" onClick={() => setTaskDetailForId(null)}>
                 Fermer
-              </button>
+              </Button>
             </div>
             <div className="task-detail-scroll">
               {taskDetailLoading ? <p className="hint">Chargement…</p> : null}
-              {taskDetailError ? <div className="banner banner-error">{taskDetailError}</div> : null}
-              {!taskDetailLoading && !taskDetailError && taskDetailPayload ? (
+              {!taskDetailLoading && taskDetailPayload ? (
                 <>
-                  <section className="task-detail-section">
-                    <h4>Résumé</h4>
-                    <p>
-                      <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
-                    </p>
-                    {taskDetailPayload.task.assigned_agent ? (
-                      <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
-                    ) : null}
-                    {taskDetailPayload.task.failure_detail ? (
-                      <pre className="task-detail-failure">{taskDetailPayload.task.failure_detail}</pre>
-                    ) : null}
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Workflow / sous-agents</h4>
-                    <TaskDetailWorkflowView
-                      events={taskDetailPayload.events}
-                      rootTaskId={taskDetailPayload.task.task_id}
-                    />
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Progression</h4>
-                    {(() => {
-                      const mergedProgress = mergeProgressWithEventProgress(
-                        taskDetailPayload.task.progress ?? [],
-                        taskDetailPayload.events,
-                        taskDetailPayload.task.task_id,
-                      );
-                      return mergedProgress.length > 0 ? (
-                        <TaskDetailProgressView
-                          progress={mergedProgress}
-                          rootTaskId={taskDetailPayload.task.task_id}
-                        />
-                      ) : (
-                        <p className="hint">Aucune entrée de progression.</p>
-                      );
-                    })()}
-                  </section>
-                  <section className="task-detail-section">
-                    <h4>Événements</h4>
-                    {taskDetailPayload.events.length === 0 ? (
-                      <p className="hint">Aucun événement.</p>
-                    ) : (
-                      <TaskDetailEventsGrouped
+                  <div className="task-detail-tabs" role="tablist" aria-label="Navigation détail tâche">
+                    {[
+                      { id: "events", label: "Événements" },
+                      { id: "progress", label: "Progression" },
+                      { id: "workflow", label: "Workflow" },
+                      { id: "summary", label: "Résumé" },
+                    ].map((tab) => (
+                      <Button
+                        key={tab.id}
+                        variant="ghost"
+                        size="sm"
+                        role="tab"
+                        aria-selected={taskDetailTab === tab.id}
+                        className={`task-detail-tab ${taskDetailTab === tab.id ? "is-active" : ""}`}
+                        onClick={() => setTaskDetailTab(tab.id as typeof taskDetailTab)}
+                      >
+                        {tab.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {taskDetailTab === "summary" ? (
+                    <section className="task-detail-section">
+                      <h4>Résumé</h4>
+                      <p>
+                        <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
+                      </p>
+                      {taskDetailLiveMode ? (
+                        <p className="hint">
+                          Flux live: <strong>{taskDetailLiveMode === "sse" ? "SSE (/api/events)" : "polling fallback"}</strong>
+                        </p>
+                      ) : null}
+                      {taskDetailPayload.task.assigned_agent ? (
+                        <p className="hint">Agent assigné : {taskDetailPayload.task.assigned_agent}</p>
+                      ) : null}
+                      {taskDetailPayload.task.failure_detail ? (
+                        <pre className="task-detail-failure">{taskDetailPayload.task.failure_detail}</pre>
+                      ) : null}
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "workflow" ? (
+                    <section className="task-detail-section">
+                      <h4>Workflow / sous-agents</h4>
+                      <TaskDetailWorkflowView
                         events={taskDetailPayload.events}
                         rootTaskId={taskDetailPayload.task.task_id}
                       />
-                    )}
-                  </section>
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "progress" ? (
+                    <section className="task-detail-section">
+                      <h4>Progression</h4>
+                      {(() => {
+                        const mergedProgress = mergeProgressWithEventProgress(
+                          taskDetailPayload.task.progress ?? [],
+                          taskDetailPayload.events,
+                          taskDetailPayload.task.task_id,
+                        );
+                        return mergedProgress.length > 0 ? (
+                          <TaskDetailProgressView
+                            progress={mergedProgress}
+                            rootTaskId={taskDetailPayload.task.task_id}
+                          />
+                        ) : (
+                          <p className="hint">Aucune entrée de progression.</p>
+                        );
+                      })()}
+                    </section>
+                  ) : null}
+                  {taskDetailTab === "events" ? (
+                    <section className="task-detail-section">
+                      <h4>Événements</h4>
+                      {taskDetailPayload.events.length === 0 ? (
+                        <p className="hint">Aucun événement.</p>
+                      ) : (
+                        <TaskDetailEventsGrouped
+                          events={taskDetailPayload.events}
+                          rootTaskId={taskDetailPayload.task.task_id}
+                        />
+                      )}
+                    </section>
+                  ) : null}
                 </>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {forkDialog?.open ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setForkDialog(null)}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-fork-title"
+            tabIndex={-1}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.key === "Escape" && setForkDialog(null)}
+          >
+            <h3 id="modal-fork-title">Nouvelle branche de conversation</h3>
+            <p className="hint">
+              Point de fork: message #{forkDialog.index + 1}. Une nouvelle tâche sera créée avec un contexte
+              tronqué jusqu’à ce point.
+            </p>
+            <label className="field">
+              <span>Instruction initiale</span>
+              <Textarea
+                value={forkInitialInstruction}
+                onChange={(e) => setForkInitialInstruction(e.target.value)}
+                rows={5}
+                spellCheck={false}
+              />
+            </label>
+            <div className="modal-actions">
+              <Button variant="secondary" onClick={() => setForkDialog(null)}>
+                Annuler
+              </Button>
+              <Button
+                variant="default"
+                disabled={!forkInitialInstruction.trim()}
+                onClick={() => void onCreateFork()}
+              >
+                Créer la branche
+              </Button>
             </div>
           </div>
         </div>
@@ -3189,27 +4783,41 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             ) : (
               <ul className="project-list modal-project-list">
                 {projects.map((p) => (
-                  <li key={p.id}>
-                    <button
-                      type="button"
+                  <li key={p.id} className="project-list-row">
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className={`project-item ${p.id === selectedId ? "active" : ""}`}
                       data-testid={`studio-project-${p.id}`}
                       onClick={() => {
                         setSelectedId(p.id);
+                        setCenterTab("dashboard");
                         setModalLoadOpen(false);
                       }}
                     >
                       <span className="project-name">{p.name}</span>
                       <span className="project-id">{p.id.slice(0, 8)}…</span>
-                    </button>
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="project-delete-btn"
+                      aria-label={`Supprimer le projet ${p.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteProjectDialog(p);
+                      }}
+                    >
+                      Supprimer
+                    </Button>
                   </li>
                 ))}
               </ul>
             )}
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setModalLoadOpen(false)}>
+              <Button variant="secondary" onClick={() => setModalLoadOpen(false)}>
                 Fermer
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -3233,7 +4841,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <p className="hint">Un dépôt Git local est initialisé automatiquement dans le dossier du projet.</p>
             <label className="field">
               <span>Nom du projet</span>
-              <input
+              <Input
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder="Ex. Landing vitrine"
@@ -3241,8 +4849,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </label>
             <div className="new-project-stack">
               <span className="field-label-like">Stack à la création (optionnel)</span>
-              <StackFields
-                selectId="modal-new-project-stack-select"
+              <StackWizard
                 presetId={newStackPresetId}
                 onPresetChange={onNewStackPresetSelect}
                 customText={newStackCustomText}
@@ -3252,17 +4859,115 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 composedStack={newProjectComposedStack}
               />
             </div>
+            <label className="field">
+              <span>Résumé de l’application (recommandé)</span>
+              <Textarea
+                value={newProjectSummary}
+                onChange={(e) => setNewProjectSummary(e.target.value)}
+                placeholder="Décrivez ce que l’application doit faire : public, fonctionnalités, contraintes. Sert de base au plan (CODE_STUDIO_PLAN.md), au DESIGN.md et au contexte agent."
+                rows={5}
+                spellCheck={false}
+              />
+            </label>
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setModalCreateOpen(false)}>
+              <Button variant="secondary" onClick={() => setModalCreateOpen(false)}>
                 Annuler
-              </button>
-              <button type="button" className="btn btn-primary" onClick={() => void onCreateProject()}>
+              </Button>
+              <Button variant="default" onClick={() => void onCreateProject()}>
                 Créer
-              </button>
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteProjectDialog ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => !deleteProjectBusy && setDeleteProjectDialog(null)}
+          onKeyDown={(e) => e.key === "Escape" && !deleteProjectBusy && setDeleteProjectDialog(null)}
+        >
+          <div
+            className="modal-card modal-card--wide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-delete-project-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="modal-delete-project-title">Supprimer le projet</h3>
+            <p>
+              <strong>{deleteProjectDialog.name}</strong>
+              <code className="studio-delete-id">{deleteProjectDialog.id.slice(0, 8)}…</code>
+            </p>
+            <p className="hint">Le dossier du projet sur ce poste sera effacé (y compris le dépôt Git local).</p>
+            {deletePrecheckLoading ? (
+              <p className="hint">Analyse Git…</p>
+            ) : deletePrecheck ? (
+              <>
+                {deletePrecheck.note_no_upstream ? (
+                  <p className="hint studio-delete-note">
+                    Branche locale sans suivi distant — impossible de vérifier si des commits ont été poussés. Si vous utilisez
+                    un dépôt distant, configurez le suivi puis <code>git push</code> avant de supprimer.
+                  </p>
+                ) : null}
+                {deletePrecheck.worktree_dirty ? (
+                  <p className="hint studio-delete-warn">
+                    <strong>Attention :</strong> des fichiers ne sont pas commités. Vous perdrez ces modifications si vous
+                    supprimez sans sauvegarder.
+                  </p>
+                ) : null}
+                {deletePrecheck.has_upstream &&
+                deletePrecheck.commits_ahead_of_upstream != null &&
+                deletePrecheck.commits_ahead_of_upstream > 0 ? (
+                  <p className="hint studio-delete-warn">
+                    <strong>Attention :</strong> {deletePrecheck.commits_ahead_of_upstream} commit(s) ne sont pas encore
+                    poussés vers le distant.
+                  </p>
+                ) : null}
+                {deletePrecheck.requires_force ? (
+                  <>
+                    <p className="hint">Pour sauvegarder dans Git avant suppression, dans un terminal à la racine du projet :</p>
+                    <pre className="studio-delete-git-help">
+                      {`git add -A
+git status
+git commit -m "Sauvegarde avant suppression"
+git push`}
+                    </pre>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+            <div className="modal-actions">
+              <Button
+                variant="secondary"
+                disabled={deleteProjectBusy}
+                onClick={() => setDeleteProjectDialog(null)}
+              >
+                Annuler
+              </Button>
+              {!deletePrecheckLoading && deletePrecheck?.requires_force ? (
+                <Button
+                  variant="danger"
+                  disabled={deleteProjectBusy || !deletePrecheck}
+                  onClick={() => void onConfirmDeleteProject(true)}
+                >
+                  {deleteProjectBusy ? "Suppression…" : "Supprimer quand même"}
+                </Button>
+              ) : (
+                <Button
+                  variant="danger"
+                  disabled={deleteProjectBusy || deletePrecheckLoading || !deletePrecheck}
+                  onClick={() => void onConfirmDeleteProject(false)}
+                >
+                  {deleteProjectBusy ? "Suppression…" : "Supprimer"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
       ) : null}
     </div>
+    </>
   );
 }

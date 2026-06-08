@@ -37,12 +37,58 @@ export type StudioProjectMeta = {
   evolution_summary?: string | null;
   /** Notes de politique outils / périmètre (réinjectées). */
   policy_notes?: string | null;
+  /** Résumé produit (intention à la création — réinjecté pour le plan / périmètre). */
+  project_summary?: string | null;
   /** Branche Git courante (`git rev-parse --abbrev-ref HEAD`), si dépôt présent. */
   git_branch?: string | null;
   /** `true` si `git status --porcelain` est vide. */
   git_worktree_clean?: boolean | null;
   /** Lignes `git status --porcelain` (codes + chemin), renvoyées par le daemon (plafonnées). */
   git_worktree_lines?: { status: string; path: string }[];
+  /** Enforced ticket discipline mode for studio tasks. */
+  ticket_enforcement_mode?: "off" | "soft" | "strict";
+};
+
+export type StudioTicketStatus = "todo" | "in_progress" | "review" | "done" | "blocked";
+
+export type StudioTicketAcceptanceCriterion = {
+  id?: string;
+  text: string;
+  kind?: "manual" | "file_exists" | "command_ok" | string;
+  path?: string;
+  argv?: string[];
+};
+
+export type StudioTicket = {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string;
+  status: StudioTicketStatus;
+  requested_by: string;
+  assigned_agent: string;
+  review_agent: string;
+  /** Ticket du même projet à terminer avant de pouvoir lancer celui-ci (alias du premier prérequis). */
+  depends_on_ticket_id?: string | null;
+  /** Prérequis multiples (union avec depends_on_ticket_id côté daemon). */
+  depends_on_ticket_ids?: string[];
+  related_task_id?: string | null;
+  acceptance_criteria: StudioTicketAcceptanceCriterion[];
+  evidence: { files?: string[]; task_ids?: string[]; summary?: string };
+  review_outcome?: "approved" | "changes_requested" | null;
+  review_notes?: string | null;
+  corrective_steps?: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudioTicketEvent = {
+  id: string;
+  ticket_id: string;
+  event_type: string;
+  at: string;
+  actor: string;
+  payload?: unknown;
 };
 
 export async function listProjects(): Promise<StudioProject[]> {
@@ -63,6 +109,8 @@ export async function patchProjectSettings(
     verify_timeout_sec?: number | null;
     evolution_summary?: string | null;
     policy_notes?: string | null;
+    project_summary?: string | null;
+    ticket_enforcement_mode?: "off" | "soft" | "strict" | null;
   },
 ): Promise<void> {
   const r = await fetch(api(`/api/studio/projects/${projectId}`), {
@@ -79,11 +127,14 @@ export async function patchProjectSettings(
 export async function createProject(opts?: {
   name?: string;
   tech_stack?: string;
+  project_summary?: string;
 }): Promise<{ id: string; path: string }> {
   const r = await fetch(api("/api/studio/projects"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(opts && (opts.name || opts.tech_stack) ? { ...opts } : {}),
+    body: JSON.stringify(
+      opts && (opts.name || opts.tech_stack || opts.project_summary) ? { ...opts } : {},
+    ),
   });
   if (!r.ok) throw new Error(`createProject ${r.status}`);
   return r.json() as Promise<{ id: string; path: string }>;
@@ -93,6 +144,39 @@ export async function getProjectMeta(projectId: string): Promise<StudioProjectMe
   const r = await fetch(api(`/api/studio/projects/${projectId}`));
   if (!r.ok) throw new Error(`getProjectMeta ${r.status}`);
   return r.json() as Promise<StudioProjectMeta>;
+}
+
+/** Analyse Git avant suppression (daemon). */
+export type StudioDeletePrecheck = {
+  has_git: boolean;
+  worktree_dirty: boolean;
+  has_upstream: boolean;
+  commits_ahead_of_upstream: number | null;
+  requires_force: boolean;
+  note_no_upstream: boolean;
+};
+
+export async function getDeletePrecheck(projectId: string): Promise<StudioDeletePrecheck> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/delete-check`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getDeletePrecheck ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<StudioDeletePrecheck>;
+}
+
+/** Supprime le répertoire projet. Utiliser `force` après avertissement si le daemon renvoie `requires_force`. */
+export async function deleteProject(projectId: string, force = false): Promise<void> {
+  const q = force ? "?force=1" : "";
+  const r = await fetch(api(`/api/studio/projects/${projectId}${q}`), { method: "DELETE" });
+  if (r.status === 409) {
+    const t = await r.text();
+    throw new Error(`deleteProject 409: ${t}`);
+  }
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`deleteProject ${r.status}: ${t}`);
+  }
 }
 
 export async function getCodeRagStatus(projectId: string): Promise<CodeRagStatus> {
@@ -125,12 +209,127 @@ export async function listFiles(projectId: string): Promise<string[]> {
   return j.files ?? [];
 }
 
+export async function listStudioTickets(
+  projectId: string,
+  filters?: { status?: StudioTicketStatus; assigned_agent?: string; q?: string },
+): Promise<StudioTicket[]> {
+  const q = new URLSearchParams();
+  if (filters?.status) q.set("status", filters.status);
+  if (filters?.assigned_agent?.trim()) q.set("assigned_agent", filters.assigned_agent.trim());
+  if (filters?.q?.trim()) q.set("q", filters.q.trim());
+  const path = q.toString()
+    ? `/api/studio/projects/${projectId}/tickets?${q.toString()}`
+    : `/api/studio/projects/${projectId}/tickets`;
+  const r = await fetch(api(path));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`listStudioTickets ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { items?: StudioTicket[] };
+  return j.items ?? [];
+}
+
+export async function createStudioTicket(
+  projectId: string,
+  body: {
+    title: string;
+    description?: string;
+    assigned_agent: string;
+    review_agent?: string;
+    requested_by?: string;
+    depends_on_ticket_id?: string | null;
+    depends_on_ticket_ids?: string[];
+    acceptance_criteria?: StudioTicketAcceptanceCriterion[];
+  },
+): Promise<StudioTicket> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`createStudioTicket ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { ticket: StudioTicket };
+  return j.ticket;
+}
+
+export async function getStudioTicket(
+  projectId: string,
+  ticketId: string,
+): Promise<{ ticket: StudioTicket; timeline: StudioTicketEvent[] }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getStudioTicket ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<{ ticket: StudioTicket; timeline: StudioTicketEvent[] }>;
+}
+
+export async function patchStudioTicket(
+  projectId: string,
+  ticketId: string,
+  body: {
+    title?: string;
+    description?: string;
+    assigned_agent?: string;
+    review_agent?: string;
+    depends_on_ticket_id?: string | null;
+    depends_on_ticket_ids?: string[] | null;
+    status?: StudioTicketStatus;
+    acceptance_criteria?: StudioTicketAcceptanceCriterion[];
+    /** Remet un ticket « bloqué » après crash daemon : passe en todo et enlève related_task_id. */
+    recover_stuck_execution?: boolean;
+  },
+): Promise<StudioTicket> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`patchStudioTicket ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { ticket: StudioTicket };
+  return j.ticket;
+}
+
+export async function reviewStudioTicket(
+  projectId: string,
+  ticketId: string,
+  body: {
+    reviewer_agent: string;
+    outcome: "approved" | "changes_requested";
+    review_notes?: string;
+    corrective_steps?: string[];
+  },
+): Promise<StudioTicket> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/tickets/${ticketId}/review`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`reviewStudioTicket ${r.status}: ${t}`);
+  }
+  const j = (await r.json()) as { ticket: StudioTicket };
+  return j.ticket;
+}
+
 export type StudioPreviewStartResponse = {
   ok: boolean;
   url: string;
   port: number;
+  proxy_signed?: boolean;
   installed?: boolean;
-  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+  install?: { exit_code: number | null; stdout?: string; stderr?: string; argv?: string[] };
+  /** Libellé de la stack détectée (« Node.js (npm) », « Python · uv · Streamlit », …). */
+  profile?: string;
+  /** Argv concrète utilisée pour démarrer le serveur de dev (debug / journal). */
+  run_argv?: string[];
 };
 
 /** Lance `npm install` si besoin puis `npm run dev` (serveur en arrière-plan sur le daemon). */
@@ -170,7 +369,8 @@ export async function getPreviewLogs(projectId: string): Promise<{
   return r.json() as Promise<{ running: boolean; log: string; preview_inactive?: boolean }>;
 }
 
-/** `npm install` uniquement (sans lancer le serveur de dev). */
+/** Installe les dépendances du projet via la commande détectée pour la stack
+ * (`npm install` pour Node, `uv sync` pour Python uv, …) sans lancer le serveur. */
 export async function installStudioDeps(
   projectId: string,
   opts?: { force?: boolean },
@@ -178,7 +378,9 @@ export async function installStudioDeps(
   ok: boolean;
   skipped?: boolean;
   reason?: string;
-  install?: { exit_code: number | null; stdout?: string; stderr?: string };
+  /** Libellé de la stack détectée (renvoyé par le daemon pour affichage UI). */
+  profile?: string;
+  install?: { exit_code: number | null; stdout?: string; stderr?: string; argv?: string[] };
 }> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/preview/install`), {
     method: "POST",
@@ -193,7 +395,8 @@ export async function installStudioDeps(
       ok: boolean;
       skipped?: boolean;
       reason?: string;
-      install?: { exit_code: number | null; stdout?: string; stderr?: string };
+      profile?: string;
+      install?: { exit_code: number | null; stdout?: string; stderr?: string; argv?: string[] };
     };
     if (!r.ok && !j.install) {
       throw new Error(`installStudioDeps ${r.status}`);
@@ -297,6 +500,110 @@ export async function gitClone(projectId: string, repoUrl: string, branch?: stri
   }
 }
 
+export type GitBranchEntry = {
+  name: string;
+  current: boolean;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  last_commit_subject: string | null;
+};
+
+export type GitBranchesPayload = {
+  current_branch: string | null;
+  branches: GitBranchEntry[];
+};
+
+export async function listGitBranches(projectId: string): Promise<GitBranchesPayload> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/branches`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`listGitBranches ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<GitBranchesPayload>;
+}
+
+export async function checkoutGitBranch(projectId: string, branch: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/checkout`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ branch }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`checkoutGitBranch ${r.status}: ${t}`);
+  }
+}
+
+export type GitComparePayload = {
+  base: string;
+  target: string;
+  ahead: number;
+  behind: number;
+  files_changed: number;
+  insertions: number;
+  deletions: number;
+  commits: { hash: string; subject: string }[];
+};
+
+export async function compareGitBranches(
+  projectId: string,
+  base: string,
+  target: string,
+): Promise<GitComparePayload> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/compare`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ base, target }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`compareGitBranches ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<GitComparePayload>;
+}
+
+export async function mergeGitBranches(
+  projectId: string,
+  source: string,
+  target: string,
+): Promise<{ ok: boolean; message: string }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/merge`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source, target }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`mergeGitBranches ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<{ ok: boolean; message: string }>;
+}
+
+export type GitConflictPayload = {
+  merge_in_progress: boolean;
+  conflict_files: string[];
+};
+
+export async function getGitConflicts(projectId: string): Promise<GitConflictPayload> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/conflicts`));
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`getGitConflicts ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<GitConflictPayload>;
+}
+
+export async function abortGitMerge(projectId: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/git/merge/abort`), {
+    method: "POST",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`abortGitMerge ${r.status}: ${t}`);
+  }
+}
+
 export async function runBuild(
   projectId: string,
   argv: string[],
@@ -329,7 +636,10 @@ export async function createEvolution(projectId: string, label?: string): Promis
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(label ? { label } : {}),
   });
-  if (!r.ok) throw new Error(`createEvolution ${r.status}`);
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`createEvolution ${r.status}${t ? `: ${t}` : ""}`);
+  }
   return r.json() as Promise<{ evolution_id: string; branch: string }>;
 }
 
@@ -360,13 +670,58 @@ export async function abandonEvolution(projectId: string, evolutionId: string): 
 /** Mode Code Studio injecté dans le message (daemon). */
 export type StudioCodeMode = "plan" | "implement" | "build" | "free";
 
+export type StudioAcceptanceCriterion = {
+  id?: string;
+  text: string;
+  kind: "manual" | "file_exists" | "command_ok";
+  path?: string;
+  argv?: string[];
+};
+
+export type StudioAcceptancePayload = { criteria: StudioAcceptanceCriterion[] };
+
+/** Texte libre (critères manuels) ou JSON `{ "criteria": [...] }` / tableau de critères. */
+export function parseStudioAcceptanceCriteriaInput(
+  raw: string,
+): string | StudioAcceptancePayload | StudioAcceptanceCriterion[] | undefined {
+  const t = raw.trim();
+  if (!t) return undefined;
+  if ((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))) {
+    try {
+      return JSON.parse(t) as StudioAcceptancePayload | StudioAcceptanceCriterion[];
+    } catch {
+      return t;
+    }
+  }
+  return t;
+}
+
+/** Session state / budget / compaction: one id per Code Studio project (not a global `code-studio` bucket). */
+function defaultCodeStudioSessionId(
+  explicit: string | undefined,
+  studioProjectId: string | undefined,
+): string {
+  const e = explicit?.trim();
+  if (e) return e;
+  const pid = studioProjectId?.trim();
+  if (pid) return `code-studio-${pid}`;
+  return "code-studio";
+}
+
 export async function sendMessage(body: {
   message: string;
   session_id?: string;
+  incognito?: boolean;
+  message_delivery_mode?: "immediate" | "steering" | "follow_up";
   studio_project_id?: string;
   studio_assigned_agent?: string;
   studio_evolution_branch?: string;
   studio_evolution_id?: string;
+  fork_from_task_id?: string;
+  fork_after_message_index?: number;
+  /** When steering/follow_up: target running task (defaults to latest root task in session). */
+  target_task_id?: string;
+  queue_mode?: "steering" | "follow_up";
   studio_code_mode?: StudioCodeMode;
   /** Consigne ponctuelle pour cette requête uniquement. */
   studio_policy_hint?: string;
@@ -376,17 +731,31 @@ export async function sendMessage(body: {
   studio_design_hint?: string;
   /** Contrat design complet (DESIGN.md), borné côté serveur. */
   studio_design_doc?: string;
+  /** Definition of Done : texte ou critères structurés (voir spec daemon). */
+  studio_acceptance_criteria?: string | StudioAcceptancePayload | StudioAcceptanceCriterion[];
+  /** Ticket Kanban rattaché à la demande (enforcement optionnel côté daemon). */
+  studio_ticket_id?: string;
+  /** Override ponctuel du mode enforcement ticket. */
+  studio_ticket_enforcement_mode?: "off" | "soft" | "strict";
 }): Promise<{ task_id: string }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      session_id: body.session_id ?? "code-studio",
+      session_id: defaultCodeStudioSessionId(body.session_id, body.studio_project_id),
       message: body.message,
+      ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
+      ...(body.incognito ? { incognito: true } : {}),
+      ...(body.queue_mode ? { queue_mode: body.queue_mode } : {}),
+      ...(body.target_task_id ? { target_task_id: body.target_task_id } : {}),
       ...(body.studio_project_id ? { studio_project_id: body.studio_project_id } : {}),
       ...(body.studio_assigned_agent ? { studio_assigned_agent: body.studio_assigned_agent } : {}),
       ...(body.studio_evolution_branch ? { studio_evolution_branch: body.studio_evolution_branch } : {}),
       ...(body.studio_evolution_id ? { studio_evolution_id: body.studio_evolution_id } : {}),
+      ...(body.fork_from_task_id ? { fork_from_task_id: body.fork_from_task_id } : {}),
+      ...(Number.isFinite(body.fork_after_message_index)
+        ? { fork_after_message_index: body.fork_after_message_index }
+        : {}),
       ...(body.studio_code_mode && body.studio_code_mode !== "free"
         ? { studio_code_mode: body.studio_code_mode }
         : {}),
@@ -394,6 +763,13 @@ export async function sendMessage(body: {
       ...(body.studio_delegate_single_level ? { studio_delegate_single_level: true } : {}),
       ...(body.studio_design_hint?.trim() ? { studio_design_hint: body.studio_design_hint.trim() } : {}),
       ...(body.studio_design_doc?.trim() ? { studio_design_doc: body.studio_design_doc } : {}),
+      ...(body.studio_acceptance_criteria !== undefined && body.studio_acceptance_criteria !== null
+        ? { studio_acceptance_criteria: body.studio_acceptance_criteria }
+        : {}),
+      ...(body.studio_ticket_id?.trim() ? { studio_ticket_id: body.studio_ticket_id.trim() } : {}),
+      ...(body.studio_ticket_enforcement_mode && body.studio_ticket_enforcement_mode !== "off"
+        ? { studio_ticket_enforcement_mode: body.studio_ticket_enforcement_mode }
+        : {}),
     }),
   });
   if (!r.ok) {
@@ -402,6 +778,24 @@ export async function sendMessage(body: {
   }
   const j = (await r.json()) as { task_id: string };
   return j;
+}
+
+export async function handoffSession(body: {
+  session_id: string;
+  target_model?: string;
+  target_provider?: string;
+  task_id?: string;
+}): Promise<unknown> {
+  const r = await fetch(api("/api/session/handoff"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`handoffSession ${r.status}: ${t}`);
+  }
+  return r.json();
 }
 
 /** Suggestion « prochaine action » (Code Studio + daemon). */
@@ -418,8 +812,15 @@ export type TaskStatusResponse = {
   status: string;
   assigned_agent?: string;
   progress?: { progress_pct: number; message: string; task_id?: string | null }[];
+  tokens_used?: number;
+  cost_usd?: number;
+  last_turn_tokens_in?: number;
+  last_turn_tokens_out?: number;
+  last_turn_cost_usd?: number;
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
+  /** Revue critères post-tâche (optionnel, tâche terminée avec points manuels signalés). */
+  acceptance_review?: { missing?: string[] } | null;
   suggested_actions?: TaskSuggestedAction[];
 };
 
@@ -427,6 +828,41 @@ export async function getTask(taskId: string): Promise<TaskStatusResponse> {
   const r = await fetch(api(`/api/tasks/${taskId}`));
   if (!r.ok) throw new Error(`getTask ${r.status}`);
   return r.json() as Promise<TaskStatusResponse>;
+}
+
+/** `null` si la tâche n’existe plus (404) — pour détecter exécution orpheline côté Kanban. */
+export async function tryGetTask(taskId: string): Promise<TaskStatusResponse | null> {
+  const r = await fetch(api(`/api/tasks/${taskId}`));
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`tryGetTask ${r.status}: ${t}`);
+  }
+  return r.json() as Promise<TaskStatusResponse>;
+}
+
+export async function pauseTask(taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/pause`), { method: "POST" });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`pauseTask ${r.status}: ${t}`);
+  }
+}
+
+export async function resumeTask(taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/resume`), { method: "POST" });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`resumeTask ${r.status}: ${t}`);
+  }
+}
+
+export async function cancelTask(taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/tasks/${taskId}/cancel`), { method: "POST" });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`cancelTask ${r.status}: ${t}`);
+  }
 }
 
 /** Une entrée de diff fichier ↔ snapshot de début de tâche Code Studio. */
@@ -454,9 +890,35 @@ export async function getTaskStudioDiff(taskId: string): Promise<TaskStudioDiffP
   return r.json() as Promise<TaskStudioDiffPayload>;
 }
 
+export async function applyStudioPatchHunks(
+  projectId: string,
+  body: { patches: string[]; dry_run?: boolean },
+): Promise<{ ok: boolean; dry_run: boolean; requested: number; applied: number; errors: string[] }> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/patch/hunks`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`applyStudioPatchHunks ${r.status}: ${t}`);
+  }
+  const payload = (await r.json()) as { ok: boolean; dry_run: boolean; requested: number; applied: number; errors?: string[] };
+  return {
+    ok: payload.ok,
+    dry_run: payload.dry_run,
+    requested: payload.requested,
+    applied: payload.applied,
+    errors: payload.errors ?? [],
+  };
+}
+
 export type TaskEventEntry = {
+  schema_version?: number;
+  kind?: string;
   event_type: string;
   at: string;
+  id?: string;
   task_id?: string | null;
   payload?: unknown;
 };
@@ -465,7 +927,124 @@ export async function getTaskEvents(taskId: string): Promise<TaskEventEntry[]> {
   const r = await fetch(api(`/api/tasks/${taskId}/events`));
   if (!r.ok) throw new Error(`getTaskEvents ${r.status}`);
   const j = (await r.json()) as { events?: TaskEventEntry[] };
-  return j.events ?? [];
+  return (j.events ?? []).map((ev) => ({
+    ...ev,
+    event_type: ev.event_type || ev.kind || "unknown",
+    kind: ev.kind || ev.event_type || "unknown",
+  }));
+}
+
+export type TaskEventsLiveSubscription = {
+  close: () => void;
+  mode: "sse" | "polling";
+};
+
+function asLiveEventRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+/**
+ * Live task events stream:
+ * - preferred: SSE over `/api/events` (global bus, filtered by `correlation_id`)
+ * - fallback: polling `GET /api/tasks/:id/events`
+ */
+export function subscribeTaskEventsLive(
+  taskId: string,
+  onSnapshot: (events: TaskEventEntry[]) => void,
+  opts?: { pollIntervalMs?: number; preferSse?: boolean; onModeChange?: (mode: "sse" | "polling") => void },
+): TaskEventsLiveSubscription {
+  const pollIntervalMs = Math.max(800, opts?.pollIntervalMs ?? 2000);
+  const preferSse = opts?.preferSse ?? true;
+  let closed = false;
+  let timer: number | null = null;
+  let es: EventSource | null = null;
+  let pollInFlight = false;
+
+  const close = () => {
+    closed = true;
+    if (timer != null) {
+      window.clearTimeout(timer);
+      timer = null;
+    }
+    if (es) {
+      es.close();
+      es = null;
+    }
+  };
+
+  const startPolling = () => {
+    const tick = async () => {
+      if (closed || pollInFlight) return;
+      pollInFlight = true;
+      try {
+        const rows = await getTaskEvents(taskId);
+        if (!closed) onSnapshot(rows);
+      } catch {
+        // keep previous snapshot; next tick may recover
+      } finally {
+        pollInFlight = false;
+        if (!closed) timer = window.setTimeout(() => void tick(), pollIntervalMs);
+      }
+    };
+    void tick();
+  };
+
+  if (!preferSse || typeof window === "undefined" || typeof EventSource === "undefined") {
+    startPolling();
+    return { close, mode: "polling" };
+  }
+
+  try {
+    const MAX_SSE_EVENTS = 2000;
+    const nextByKey = new Map<string, TaskEventEntry>();
+    es = new EventSource(api("/api/events"));
+    es.onmessage = (ev) => {
+      if (closed) return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      const o = asLiveEventRecord(parsed);
+      const correlationId = typeof o?.correlation_id === "string" ? o.correlation_id : "";
+      if (correlationId !== taskId) return;
+      const at = typeof o?.timestamp === "string" ? o.timestamp : new Date().toISOString();
+      const eventType = typeof o?.event_type === "string" ? o.event_type : "unknown";
+      const key = `${eventType}\0${at}\0${typeof o?.id === "string" ? o.id : ""}`;
+      if (nextByKey.size >= MAX_SSE_EVENTS && !nextByKey.has(key)) {
+        // Evict the oldest inserted entry to keep memory bounded
+        const firstKey = nextByKey.keys().next().value;
+        if (firstKey !== undefined) nextByKey.delete(firstKey);
+      }
+      nextByKey.set(key, {
+        schema_version: typeof o?.schema_version === "number" ? o.schema_version : 1,
+        kind: eventType,
+        event_type: eventType,
+        at,
+        id: typeof o?.id === "string" && o.id ? o.id : undefined,
+        task_id: typeof o?.task_id === "string" && o.task_id ? o.task_id : taskId,
+        payload: o?.payload,
+      });
+      onSnapshot(
+        Array.from(nextByKey.values()).sort((a, b) => a.at.localeCompare(b.at)),
+      );
+    };
+    es.onerror = () => {
+      if (closed) return;
+      if (es) {
+        es.close();
+        es = null;
+      }
+      opts?.onModeChange?.("polling");
+      startPolling();
+    };
+    return { close, mode: "sse" };
+  } catch {
+    opts?.onModeChange?.("polling");
+    startPolling();
+    return { close, mode: "polling" };
+  }
 }
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */
@@ -509,4 +1088,315 @@ export function isTaskTerminal(status: string): boolean {
 
 export function isTaskNeedsUser(status: string): boolean {
   return status === "waiting_user_input";
+}
+
+/** --- Operator cockpit (daemon HTTP) --- */
+
+export async function normalizeHttpError(method: string, path: string, r: Response): Promise<Error> {
+  let details = "";
+  try {
+    const body = (await r.text()).trim();
+    if (body) details = ` — ${body}`;
+  } catch {
+    // Ignore body read failures and fall back to status-only error details.
+  }
+  return new Error(`${method} ${path} → ${r.status}${details}`);
+}
+
+export async function fetchSchedulesPayload(): Promise<unknown> {
+  const r = await fetch(api("/api/schedules"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/schedules", r);
+  return r.json();
+}
+
+export async function fetchTaskRunsPayload(): Promise<unknown> {
+  const r = await fetch(api("/api/task_runs"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/task_runs", r);
+  return r.json();
+}
+
+export async function fetchProcessWatchRecent(limit = 20): Promise<unknown> {
+  const r = await fetch(api(`/api/process/watch/recent?limit=${encodeURIComponent(String(limit))}`));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/process/watch/recent", r);
+  return r.json();
+}
+
+export async function fetchTerminalCapabilities(): Promise<unknown> {
+  const r = await fetch(api("/api/terminal/capabilities"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/terminal/capabilities", r);
+  return r.json();
+}
+
+export async function fetchToolsEffective(): Promise<unknown> {
+  const r = await fetch(api("/api/tools/effective"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/tools/effective", r);
+  return r.json();
+}
+
+export async function fetchMemoryRecallMetrics(): Promise<unknown> {
+  const r = await fetch(api("/api/memory/recall-metrics"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/memory/recall-metrics", r);
+  return r.json();
+}
+
+export async function fetchMcpStatus(): Promise<unknown> {
+  const r = await fetch(api("/api/mcp/status"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/mcp/status", r);
+  return r.json();
+}
+
+export async function fetchMcpRuntime(): Promise<unknown> {
+  const r = await fetch(api("/api/mcp/runtime"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/mcp/runtime", r);
+  return r.json();
+}
+
+export async function fetchLifecycleHooks(): Promise<unknown> {
+  const r = await fetch(api("/api/lifecycle/hooks"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/lifecycle/hooks", r);
+  return r.json();
+}
+
+export type WebhookDelivery = {
+  idempotency_key: string;
+  seen_at_unix: number;
+  status: string;
+};
+
+export async function fetchWebhookRecent(limit = 20): Promise<{ deliveries: WebhookDelivery[]; count: number }> {
+  const r = await fetch(api(`/api/automation/webhook/recent?limit=${encodeURIComponent(String(limit))}`));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/automation/webhook/recent", r);
+  return r.json() as Promise<{ deliveries: WebhookDelivery[]; count: number }>;
+}
+
+export async function fetchSessionResumeBrief(sessionId: string): Promise<unknown> {
+  const q = new URLSearchParams({ session_id: sessionId });
+  const r = await fetch(api(`/api/session/resume-brief?${q.toString()}`));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/session/resume-brief", r);
+  return r.json();
+}
+
+export async function fetchPermissionsQueue(): Promise<{ requests: unknown[] }> {
+  const r = await fetch(api("/api/permissions/queue"));
+  if (!r.ok) throw await normalizeHttpError("GET", "/api/permissions/queue", r);
+  return r.json() as Promise<{ requests: unknown[] }>;
+}
+
+export async function approvePermission(id: string): Promise<void> {
+  const r = await fetch(api(`/api/permissions/queue/${encodeURIComponent(id)}/approve`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) throw await normalizeHttpError("POST", `/api/permissions/queue/${id}/approve`, r);
+}
+
+export async function denyPermission(id: string): Promise<void> {
+  const r = await fetch(api(`/api/permissions/queue/${encodeURIComponent(id)}/deny`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!r.ok) throw await normalizeHttpError("POST", `/api/permissions/queue/${id}/deny`, r);
+}
+
+/** Expand `@relative/path` tokens using project raw file API (phase 8 @fichier). */
+export async function expandAtFileRefs(
+  projectId: string,
+  message: string,
+): Promise<string> {
+  const re = /@([^\s@][^\s]*)/g;
+  let out = message;
+  const seen = new Set<string>();
+  for (const m of message.matchAll(re)) {
+    const path = m[1]?.trim();
+    if (!path || seen.has(path)) continue;
+    seen.add(path);
+    try {
+      const r = await fetch(
+        api(`/api/studio/projects/${encodeURIComponent(projectId)}/raw?path=${encodeURIComponent(path)}`),
+      );
+      if (!r.ok) continue;
+      const text = await r.text();
+      const clip = text.length > 8000 ? `${text.slice(0, 8000)}\n…[tronqué]` : text;
+      out += `\n\n[@fichier ${path}]\n\`\`\`\n${clip}\n\`\`\``;
+    } catch {
+      // skip unreadable refs
+    }
+  }
+  return out;
+}
+
+export type DaemonStatus = {
+  ok: boolean;
+  label: string;
+  detail?: string;
+};
+
+/** Lightweight daemon health probe for header badge. */
+export async function fetchDaemonStatus(): Promise<DaemonStatus> {
+  try {
+    const r = await fetch(api("/api/status"));
+    if (!r.ok) return { ok: false, label: "Hors ligne", detail: `HTTP ${r.status}` };
+    const text = (await r.text()).trim();
+    if (!text) return { ok: true, label: "En ligne" };
+    try {
+      const j = JSON.parse(text) as Record<string, unknown>;
+      const status = typeof j.status === "string" ? j.status : "ok";
+      const version = typeof j.version === "string" ? j.version : null;
+      return { ok: true, label: "En ligne", detail: version ? `${status} · v${version}` : status };
+    } catch {
+      return { ok: true, label: "En ligne", detail: text.slice(0, 80) };
+    }
+  } catch (e) {
+    return { ok: false, label: "Hors ligne", detail: String(e) };
+  }
+}
+
+/** Pause / resume / run-now — `POST /api/schedules/{id}/{pause|resume|run_now}`. */
+export async function postScheduleControl(
+  scheduleId: string,
+  action: "pause" | "resume" | "run_now",
+): Promise<unknown> {
+  const path = `/api/schedules/${encodeURIComponent(scheduleId)}/${action}`;
+  const r = await fetch(api(path), { method: "POST" });
+  if (!r.ok) throw await normalizeHttpError("POST", path, r);
+  return r.json();
+}
+
+function asRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+function asBool(v: unknown): boolean | undefined {
+  return typeof v === "boolean" ? v : undefined;
+}
+
+function asNum(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+function asStr(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() ? v.trim() : undefined;
+}
+
+function asStrArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x) => (typeof x === "string" ? x.trim() : "")).filter(Boolean);
+}
+
+export type OpsSchedule = { id: string; name: string; enabled: boolean };
+export type OpsTaskRun = { id: string; task: string; status: string; startedAt: string; endedAt: string; summary: string };
+export type OpsProcessEvent = { at: string; status: string; command: string; detail: string };
+export type OpsTerminalSummary = { current: string; interactivePty: boolean; ptyApi: string[]; shells: string[] };
+export type OpsToolsSummary = { profile: string; allow: number; deny: number; approval: number };
+export type OpsMcpSummary = { configPresent: boolean; serverCount: number; runtime: string; oauthMode: string };
+export type OpsLifecycleSummary = { present: boolean; timeoutSec: number; sandbox: string; phases: string[] };
+
+export function parseSchedulesPayload(data: unknown): OpsSchedule[] {
+  const o = asRecord(data);
+  const rows = Array.isArray(o?.schedules) ? o?.schedules : [];
+  const out: OpsSchedule[] = [];
+  for (const row of rows) {
+    const r = asRecord(row);
+    const id = asStr(r?.id);
+    if (!id) continue;
+    out.push({
+      id,
+      name: asStr(r?.name) ?? id,
+      enabled: asBool(r?.enabled) ?? true,
+    });
+  }
+  return out;
+}
+
+export function parseTaskRunsPayload(data: unknown): OpsTaskRun[] {
+  const o = asRecord(data);
+  const rows = Array.isArray(o?.task_runs) ? o?.task_runs : [];
+  return rows
+    .map((row) => {
+      const r = asRecord(row);
+      const id = asStr(r?.id) ?? asStr(r?.run_id) ?? "";
+      if (!id) return null;
+      return {
+        id,
+        task: asStr(r?.task_id) ?? asStr(r?.task_name) ?? "—",
+        status: asStr(r?.status) ?? "unknown",
+        startedAt: asStr(r?.started_at) ?? "—",
+        endedAt: asStr(r?.ended_at) ?? "—",
+        summary: asStr(r?.summary) ?? asStr(r?.message) ?? "",
+      };
+    })
+    .filter((x): x is OpsTaskRun => Boolean(x));
+}
+
+export function parseProcessWatchPayload(data: unknown): OpsProcessEvent[] {
+  const o = asRecord(data);
+  const rows = Array.isArray(o?.events) ? o?.events : [];
+  return rows
+    .map((row) => {
+      const r = asRecord(row);
+      if (!r) return null;
+      const exit = asNum(r.exit_code);
+      return {
+        at: asStr(r.at) ?? asStr(r.ended_at) ?? "—",
+        status: exit == null ? "running" : exit === 0 ? "ok" : "error",
+        command: asStr(r.command) ?? asStr(r.cmd) ?? "—",
+        detail: exit == null ? "en cours" : `exit ${exit}`,
+      };
+    })
+    .filter((x): x is OpsProcessEvent => Boolean(x));
+}
+
+export function parseTerminalCapabilitiesPayload(data: unknown): OpsTerminalSummary {
+  const o = asRecord(data) ?? {};
+  return {
+    current: asStr(o.current) ?? "unknown",
+    interactivePty: asBool(o.interactive_pty) ?? false,
+    ptyApi: asStrArray(o.pty_api),
+    shells: asStrArray(o.shells),
+  };
+}
+
+export function parseToolsEffectivePayload(data: unknown): OpsToolsSummary {
+  const o = asRecord(data) ?? {};
+  const tools = Array.isArray(o.tools) ? o.tools : [];
+  let allow = 0;
+  let deny = 0;
+  let approval = 0;
+  for (const tool of tools) {
+    const t = asRecord(tool);
+    const p = asStr(t?.policy)?.toLowerCase() ?? "";
+    if (p.includes("deny")) deny += 1;
+    else if (p.includes("approval")) approval += 1;
+    else allow += 1;
+  }
+  return {
+    profile: asStr(o.profile) ?? asStr(o.active_profile) ?? "default",
+    allow,
+    deny,
+    approval,
+  };
+}
+
+export function parseMcpSummary(statusPayload: unknown, runtimePayload: unknown): OpsMcpSummary {
+  const s = asRecord(statusPayload) ?? {};
+  const r = asRecord(runtimePayload) ?? {};
+  const oauth = asRecord(r.oauth);
+  return {
+    configPresent: asBool(s.config_present) ?? false,
+    serverCount: asNum(s.server_count) ?? 0,
+    runtime: asStr(s.runtime) ?? "unknown",
+    oauthMode: asStr(oauth?.mode) ?? "unknown",
+  };
+}
+
+export function parseLifecycleHooksPayload(data: unknown): OpsLifecycleSummary {
+  const o = asRecord(data) ?? {};
+  return {
+    present: asBool(o.present) ?? false,
+    timeoutSec: asNum(o.timeout_sec) ?? 0,
+    sandbox: asStr(o.sandbox) ?? "none",
+    phases: asStrArray(o.executed_phases),
+  };
 }
