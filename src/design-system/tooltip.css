@@ -32,10 +32,15 @@
 .akasha-tooltip-bubble {
   position: absolute;
   z-index: 1100;
+  box-sizing: border-box;
+  width: max-content;
   max-width: min(280px, 90vw);
+  min-width: 0;
   padding: var(--akasha-space-sm) var(--akasha-space-md);
   font-size: 0.8125rem;
   line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: break-word;
   color: var(--akasha-text);
   background: var(--akasha-bg-card);
   border: 1px solid var(--akasha-border);
@@ -57,7 +62,11 @@
 }
 
 .akasha-tooltip-bubble--floating {
+  position: fixed;
   z-index: 1400;
+  /* Floating UI sets top/left/transform inline — do not keep static placement offsets */
+  inset: auto;
+  transform: none;
 }
 
 .akasha-tooltip-bubble--top {
@@ -84,14 +93,20 @@
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
+  box-sizing: border-box;
+  width: max-content;
   max-width: min(240px, 90vw);
+  min-width: 0;
   padding: var(--akasha-space-sm) var(--akasha-space-md);
   font-size: 0.8125rem;
   line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: break-word;
   color: var(--akasha-text);
   background: var(--akasha-bg-card);
   border: 1px solid var(--akasha-border);
-  white-space: normal;
+  border-radius: var(--akasha-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   text-align: center;
   opacity: 0;
   visibility: hidden;
