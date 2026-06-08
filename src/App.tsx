@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
 import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
 import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
@@ -36,7 +37,9 @@ import {
 } from "./taskDetailUi";
 import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
-import { TooltipHint } from "./tooltipHint";
+import { NotificationCenter } from "./components/NotificationCenter";
+import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
+import { InfoTip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
 import { KanbanBoard } from "./kanbanBoard";
@@ -325,6 +328,8 @@ export default function App() {
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewLog, setPreviewLog] = useState("");
   const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
+  /** WebContainers-style strict sandbox: iframe without same-origin (static/HTML preview safer). */
+  const [strictWebSandbox, setStrictWebSandbox] = useState(false);
   /** Libellé de la stack détectée par le daemon lors du dernier `preview/start` ou `preview/install`. */
   const [previewProfile, setPreviewProfile] = useState<string | null>(null);
   const [devServerLog, setDevServerLog] = useState("");
@@ -355,6 +360,10 @@ export default function App() {
   const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
+  const [chatIncognito, setChatIncognito] = useState(false);
+  const [handoffModel, setHandoffModel] = useState("");
+  const [handoffProvider, setHandoffProvider] = useState("");
   const [forkDialog, setForkDialog] = useState<{
     open: boolean;
     index: number;
@@ -422,11 +431,10 @@ export default function App() {
     return window.localStorage.getItem("studio.buildLogOpen") === "1";
   });
   const [taskDetailTab, setTaskDetailTab] = useState<"events" | "progress" | "workflow" | "summary">("events");
-  const [uiTheme, setUiTheme] = useState<"dark" | "light" | "compact-dark">(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiTheme") : null;
-    return stored === "light" || stored === "compact-dark" ? stored : "dark";
-  });
+  const [uiTheme, setUiTheme] = useState<ThemeId>(() => loadThemePrefs().theme);
   const [uiDensity, setUiDensity] = useState<"normal" | "compact">(() => {
+    const prefs = loadThemePrefs();
+    if (prefs.forceCompactDensity) return "compact";
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("studio.uiDensity") : null;
     return stored === "compact" ? "compact" : "normal";
   });
@@ -459,6 +467,11 @@ export default function App() {
   const [userGuideDoc, setUserGuideDoc] = useState("");
   const [userGuideLoading, setUserGuideLoading] = useState(false);
   const [userGuideError, setUserGuideError] = useState<string | null>(null);
+
+  useNotifyOnMessage(error, "error", "Code Studio");
+  useNotifyOnMessage(taskDetailError, "error", "Détail tâche");
+  useNotifyOnMessage(userGuideError, "error", "Documentation");
+  useNotifyOnMessage(codeRagStatusError, "error", "Index code");
 
   const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
@@ -2125,6 +2138,7 @@ Le plan doit suivre le **gabarit fixe** à sections : **Titre** (ligne \`# Titre
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2206,6 +2220,7 @@ Procédure:
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [...c, { role: "user", text: msg, task_id }]);
       setPolicyHintOneShot("");
@@ -2243,14 +2258,27 @@ Procédure:
     if (!text || !selectedId) return;
     setChatInput("");
     setError(null);
-    pollTaskAbortRef.current?.abort();
-    setPendingHumanInput(null);
-    setHumanReplyDraft("");
-    setTaskTrace(null);
+    const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+    const queued =
+      chatDeliveryMode !== "immediate" && activeTask !== null;
+    if (!queued) {
+      pollTaskAbortRef.current?.abort();
+      setPendingHumanInput(null);
+      setHumanReplyDraft("");
+      setTaskTrace(null);
+    }
     try {
       const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
+      const expanded = await api.expandAtFileRefs(selectedId, text);
       const { task_id } = await api.sendMessage({
-        message: text,
+        message: expanded,
+        ...(queued && activeTask
+          ? {
+              message_delivery_mode: chatDeliveryMode,
+              queue_mode: chatDeliveryMode,
+              target_task_id: activeTask.id,
+            }
+          : {}),
         studio_project_id: selectedId,
         studio_assigned_agent: agent || undefined,
         studio_evolution_id: selectedEvoId ?? undefined,
@@ -2263,7 +2291,19 @@ Procédure:
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
+      if (queued && activeTask) {
+        setChat((c) => [
+          ...c,
+          {
+            role: "user",
+            text: `[${chatDeliveryMode}] ${text}`,
+            task_id: activeTask.id,
+          },
+        ]);
+        return;
+      }
       setChat((c) => [...c, { role: "user", text, task_id }]);
       setPolicyHintOneShot("");
       const ac = new AbortController();
@@ -2336,6 +2376,7 @@ Procédure:
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
+        incognito: chatIncognito || undefined,
       });
       setChat((c) => [
         ...c,
@@ -2660,7 +2701,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
   const appMainClass =
     "app-main app-main--" +
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
-  const appClass = `app ${uiDensity === "compact" || uiTheme === "compact-dark" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
+  const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {
@@ -2687,8 +2728,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", uiTheme);
-    try { window.localStorage.setItem("studio.uiTheme", uiTheme); } catch { /* quota / private mode */ }
-  }, [uiTheme]);
+    document.documentElement.setAttribute("data-density", uiDensity === "compact" ? "compact" : "comfortable");
+    saveTheme(uiTheme);
+  }, [uiTheme, uiDensity]);
 
   useEffect(() => {
     try { window.localStorage.setItem("studio.uiDensity", uiDensity); } catch { /* quota / private mode */ }
@@ -3075,7 +3117,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     Exécuter le build
                   </Button>
                 </div>
-                {error ? <div className="banner banner-error">{error}</div> : null}
                 {status ? <div className="banner banner-ok">{status}</div> : null}
               </div>
             </div>
@@ -3141,6 +3182,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="app-header-nav-secondary">
+          <NotificationCenter />
           <label className="field-inline header-agent-inline">
             <span className="header-agent-label">Rôle agent</span>
             <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
@@ -3478,6 +3520,16 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 />
                 Forcer la réinstallation des dépendances
               </label>
+              <label
+                className="preview-checkbox"
+                title="Sandbox iframe strict (sans same-origin) — mode WebContainer léger pour HTML/apercu statique."
+              >
+                <Checkbox
+                  checked={strictWebSandbox}
+                  onChange={(e) => setStrictWebSandbox(e.target.checked)}
+                />
+                Sandbox strict
+              </label>
               <Button
                 variant="secondary"
                 size="sm"
@@ -3527,7 +3579,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 src={devPreviewUrl ?? staticPreviewBlobUrl ?? undefined}
                 sandbox={
                   devPreviewUrl
-                    ? "allow-scripts allow-same-origin allow-forms allow-popups"
+                    ? strictWebSandbox
+                      ? "allow-scripts"
+                      : "allow-scripts allow-same-origin allow-forms allow-popups"
                     : "allow-scripts"
                 }
               />
@@ -3800,7 +3854,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane branches-pane">
             <div className="preview-toolbar branches-toolbar">
               <span className="pane-title-inline">Gestion des branches</span>
-              <TooltipHint text="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+              <InfoTip content="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
               <Button
                 variant="ghost"
                 size="sm"
@@ -3819,7 +3873,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="branches-layout">
               <section className="panel branches-panel">
                 <h2>
-                  Branches disponibles <TooltipHint text="Liste locale avec état courant, avance/retard et dernier commit." />
+                  Branches disponibles <InfoTip content="Liste locale avec état courant, avance/retard et dernier commit." />
                 </h2>
                 {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
                 <ul className="branches-list">
@@ -3853,7 +3907,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Comparer / merger <TooltipHint text="La branche source est fusionnée dans la branche cible." />
+                  Comparer / merger <InfoTip content="La branche source est fusionnée dans la branche cible." />
                 </h2>
                 <div className="field-row">
                   <label className="field">
@@ -3938,7 +3992,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Conflits de merge <TooltipHint text="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                  Conflits de merge <InfoTip content="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
                 </h2>
                 {gitMergeInProgress ? (
                   <p className="hint branches-warning">
@@ -3996,9 +4050,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             {userGuideLoading ? (
               <p className="hint">Loading documentation…</p>
             ) : userGuideError ? (
-              <div className="banner banner-error" role="alert">
-                Failed to load documentation: {userGuideError}
-              </div>
+              <p className="hint">Consultez le centre de notifications pour le détail.</p>
             ) : (
               <div className="docs-pane-layout">
                 <aside className="docs-pane-toc" aria-label="Documentation table of contents">
@@ -4142,10 +4194,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <div className="field-row">
                         <label className="field">
                           <span>Thème</span>
-                          <Select value={uiTheme} onChange={(e) => setUiTheme(e.target.value as typeof uiTheme)}>
-                            <option value="dark">Dark</option>
-                            <option value="light">Light</option>
-                            <option value="compact-dark">Compact dark</option>
+                          <Select
+                            value={uiTheme}
+                            onChange={(e) => setUiTheme(e.target.value as ThemeId)}
+                          >
+                            {THEME_IDS.map((id) => (
+                              <option key={id} value={id}>
+                                {THEME_LABELS[id]}
+                              </option>
+                            ))}
                           </Select>
                         </label>
                         <label className="field">
@@ -4400,8 +4457,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="chat-panel-footer">
-          <div className="chat-form">
+          <div className="input-group input-group--textarea chat-form">
             <Textarea
+              className="input-group-field input-group-field--textarea"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
@@ -4412,11 +4470,36 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 }
               }}
             />
-            <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
-              Envoyer
-            </Button>
+            <div className="input-group-append">
+              <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
+                Envoyer
+              </Button>
+            </div>
           </div>
           <div className="chat-controls-row">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              disabled={!selectedId}
+              onClick={async () => {
+                if (!selectedId) return;
+                try {
+                  await api.handoffSession({
+                    session_id: `code-studio-${selectedId}`,
+                    target_model: handoffModel.trim() || undefined,
+                    target_provider: handoffProvider.trim() || undefined,
+                    task_id: taskTrace?.id || undefined,
+                  });
+                  setStatus("Handoff modèle envoyé.");
+                } catch (e) {
+                  setError(String(e));
+                }
+              }}
+              title="Reprendre la session avec un autre modèle"
+            >
+              Reprendre avec un autre modèle
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -4432,18 +4515,49 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </div>
           {chatOptionsOpen ? (
             <div className="chat-options-panel">
-              <div className="code-mode-strip" role="group" aria-label="Mode Code Studio">
+              <label className="field">
+                <span>Livraison message (tâche en cours)</span>
+                <div className="input-group field-input-group">
+                  <span className="input-group-addon">Envoi</span>
+                  <select
+                    className="input-group-field"
+                    value={chatDeliveryMode}
+                    onChange={(e) =>
+                      setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
+                    }
+                  >
+                    <option value="immediate">Immédiat (nouvelle tâche)</option>
+                    <option value="steering">Steering (après le tour LLM courant)</option>
+                    <option value="follow_up">Follow-up (après fin du travail)</option>
+                  </select>
+                </div>
+              </label>
+              <p className="hint">
+                Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
+              </p>
+              <label className="field">
+                <span>Handoff provider (optionnel)</span>
+                <Input type="text" value={handoffProvider} onChange={(e) => setHandoffProvider(e.target.value)} />
+              </label>
+              <label className="field">
+                <span>Handoff modèle (optionnel)</span>
+                <Input type="text" value={handoffModel} onChange={(e) => setHandoffModel(e.target.value)} placeholder="gpt-4o-mini, qwen3:8b, ..." />
+              </label>
+              <label className="field checkbox-field">
+                <span>Incognito (ne pas promouvoir en mémoire)</span>
+                <Checkbox checked={chatIncognito} onChange={(e) => setChatIncognito(e.target.checked)} />
+              </label>
+              <div className="btn-group code-mode-strip" role="group" aria-label="Mode Code Studio">
                 {CODE_MODE_OPTIONS.map((o) => (
-                  <Button
+                  <button
                     key={o.value}
-                    variant="ghost"
-                    size="sm"
-                    className={`code-mode-pill ${codeMode === o.value ? "active" : ""}`}
+                    type="button"
+                    className={`btn-group-item ${codeMode === o.value ? "active" : ""}`}
                     title={o.hint}
                     onClick={() => setCodeMode(o.value)}
                   >
                     {o.label}
-                  </Button>
+                  </button>
                 ))}
               </div>
               <label className="field chat-policy-hint-field">
@@ -4511,8 +4625,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
             <div className="task-detail-scroll">
               {taskDetailLoading ? <p className="hint">Chargement…</p> : null}
-              {taskDetailError ? <div className="banner banner-error">{taskDetailError}</div> : null}
-              {!taskDetailLoading && !taskDetailError && taskDetailPayload ? (
+              {!taskDetailLoading && taskDetailPayload ? (
                 <>
                   <div className="task-detail-tabs" role="tablist" aria-label="Navigation détail tâche">
                     {[

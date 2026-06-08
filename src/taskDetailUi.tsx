@@ -325,7 +325,18 @@ type WorkflowStep = {
   at: string;
   details?: string[];
   progress: TaskProgressLine[];
+  worktreeBranch?: string;
+  worktreePath?: string;
+  worktreeIntegration?: string;
+  worktreeConflict?: string;
 };
+
+const WORKTREE_INTEGRATION_EVENT_TYPES = new Set([
+  "studio_worktree_integration_conflict",
+  "studio_worktree_integration_failed",
+  "studio_worktree_integration_cleaned",
+  "studio_worktree_integration_merged",
+]);
 
 function statusLabel(s: WorkflowStep["status"]): string {
   switch (s) {
@@ -355,8 +366,36 @@ function workflowStatusFromEvent(ev: TaskEventEntry): WorkflowStep["status"] {
   }
   if (ev.event_type === "subtask_completed" || ev.event_type === "task_completed") return "completed";
   if (ev.event_type === "task_failed" || ev.event_type === "task_cancelled") return "failed";
+  if (ev.event_type === "studio_worktree_integration_conflict") return "blocked";
+  if (ev.event_type === "studio_worktree_integration_failed") return "failed";
+  if (
+    ev.event_type === "studio_worktree_integration_cleaned" ||
+    ev.event_type === "studio_worktree_integration_merged"
+  ) {
+    return "completed";
+  }
+  if (ev.event_type === "studio_worktree_created") return "running";
   if (ev.event_type === "subtask_started" || ev.event_type === "sub_agent_spawned") return "running";
   return "info";
+}
+
+function isSupportedWorktreeIntegrationEventType(eventType: string): boolean {
+  return WORKTREE_INTEGRATION_EVENT_TYPES.has(eventType);
+}
+
+function worktreeTitleFromEventType(eventType: string): string {
+  if (eventType === "studio_worktree_created") return "Worktree créé";
+  if (isSupportedWorktreeIntegrationEventType(eventType)) return "Intégration worktree";
+  return "Worktree";
+}
+
+function worktreeDetails(step: WorkflowStep): string[] {
+  return [
+    step.worktreeIntegration ? `Intégration: ${step.worktreeIntegration}` : "",
+    step.worktreeConflict ? `Conflit: ${step.worktreeConflict}` : "",
+    step.worktreeBranch ? `Branche: ${step.worktreeBranch}` : "",
+    step.worktreePath ? `Chemin: ${step.worktreePath}` : "",
+  ].filter(Boolean);
 }
 
 function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): WorkflowStep[] {
@@ -498,6 +537,32 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
           files ? `Fichiers: ${files}` : "",
         ].filter(Boolean),
       });
+      continue;
+    }
+
+    if (ev.event_type === "studio_worktree_created" || isSupportedWorktreeIntegrationEventType(ev.event_type)) {
+      const taskId = payloadString(ev.payload, "task_id") ?? eventTaskKey(ev, rootTaskId);
+      const branch = payloadString(ev.payload, "worktree_branch");
+      const path = payloadString(ev.payload, "worktree_path");
+      const integration = payloadString(ev.payload, "integration_status");
+      const conflict = payloadString(ev.payload, "conflict_state");
+      const key = taskId ? `worktree:${taskId}` : `worktree:${ev.at}`;
+      const step = ensure(key, {
+        id: key,
+        taskId,
+        title: worktreeTitleFromEventType(ev.event_type),
+        status: workflowStatusFromEvent(ev),
+        at: ev.at,
+        details: [],
+      });
+      step.status = workflowStatusFromEvent(ev);
+      step.title = worktreeTitleFromEventType(ev.event_type);
+      step.at = ev.at;
+      if (branch) step.worktreeBranch = branch;
+      if (path) step.worktreePath = path;
+      if (integration) step.worktreeIntegration = integration;
+      if (conflict) step.worktreeConflict = conflict;
+      step.details = worktreeDetails(step);
       continue;
     }
   }

@@ -1,0 +1,241 @@
+/* DO NOT EDIT — source: Akasha/design-system/semantic.css */
+
+.surface {
+  background: var(--akasha-bg-elevated);
+  border: none;
+  border-radius: var(--akasha-radius);
+  padding: var(--akasha-space-md);
+}
+
+.surface--elevated {
+  background: var(--akasha-bg-card);
+}
+
+.surface--status-error {
+  background: var(--akasha-status-error-bg);
+  border-inline-start: 2px solid var(--akasha-status-error-accent);
+  color: var(--akasha-status-error-fg);
+}
+
+.surface--status-warning {
+  background: var(--akasha-status-warning-bg);
+  border-inline-start: 2px solid var(--akasha-status-warning-accent);
+  color: var(--akasha-status-warning-fg);
+}
+
+.surface--status-success {
+  background: var(--akasha-status-success-bg);
+  border-inline-start: 2px solid var(--akasha-status-success-accent);
+  color: var(--akasha-status-success-fg);
+}
+
+.surface--status-info {
+  background: var(--akasha-status-info-bg);
+  border-inline-start: 2px solid var(--akasha-status-info-accent);
+  color: var(--akasha-status-info-fg);
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--akasha-space-xs);
+  padding: 2px var(--akasha-space-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--akasha-radius);
+  background: var(--akasha-bg-surface);
+  color: var(--akasha-text-muted);
+}
+
+.status-chip--error {
+  background: var(--akasha-status-error-bg);
+  color: var(--akasha-status-error-fg);
+}
+
+.status-chip--warning {
+  background: var(--akasha-status-warning-bg);
+  color: var(--akasha-status-warning-fg);
+}
+
+.status-chip--success {
+  background: var(--akasha-status-success-bg);
+  color: var(--akasha-status-success-fg);
+}
+
+.status-chip--info {
+  background: var(--akasha-status-info-bg);
+  color: var(--akasha-status-info-fg);
+}
+
+.btn-primary {
+  background: var(--akasha-btn-primary-bg);
+  color: #fff;
+  border: none;
+  border-radius: var(--akasha-radius-button);
+  box-shadow: var(--akasha-btn-primary-shadow);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--akasha-btn-primary-hover-bg);
+  box-shadow: var(--akasha-btn-primary-hover-shadow);
+  transform: var(--akasha-btn-primary-hover-transform);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--akasha-btn-secondary-fg);
+  border: 1px solid var(--akasha-btn-secondary-border);
+  border-radius: var(--akasha-radius-button);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  color: var(--akasha-btn-secondary-fg-hover);
+  border-color: var(--akasha-btn-secondary-border-hover);
+  background: var(--akasha-btn-secondary-bg-hover);
+}
+
+/* Input group — joined field + button addons (Bootstrap / shadcn pattern) */
+.input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid var(--akasha-border);
+  background: var(--akasha-bg-elevated);
+  border-radius: var(--akasha-radius);
+}
+
+.input-group-prepend,
+.input-group-append {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.input-group-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--akasha-text);
+  font-size: 0.9375rem;
+}
+
+.input-group-field:focus {
+  outline: none;
+}
+
+.input-group-field:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.input-group:focus-within {
+  border-color: var(--akasha-accent);
+}
+
+.input-group-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  border-radius: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--akasha-text-muted);
+  background: transparent;
+}
+
+.input-group-prepend .input-group-btn {
+  border-right: 1px solid var(--akasha-border);
+}
+
+.input-group-append .input-group-btn {
+  border-left: 1px solid var(--akasha-border);
+}
+
+.input-group-btn.btn-primary {
+  color: #fff;
+  background: var(--akasha-btn-primary-bg, var(--akasha-accent));
+}
+
+.input-group-btn.btn-primary:hover:not(:disabled) {
+  background: var(--akasha-btn-primary-hover-bg, var(--akasha-accent-hover));
+}
+
+.input-group-btn.btn-secondary:hover:not(:disabled) {
+  color: var(--akasha-text);
+  background: var(--akasha-bg-surface-hover);
+}
+
+.input-group-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.input-group-btn .mono-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Button group — segmented toggles */
+.btn-group {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  background: var(--akasha-bg-elevated);
+}
+
+.btn-group-item {
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-right: 1px solid var(--akasha-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--akasha-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-group-item:last-child {
+  border-right: none;
+}
+
+.btn-group-item:hover:not(:disabled) {
+  color: var(--akasha-text);
+  background: var(--akasha-bg-surface-hover);
+}
+
+.btn-group-item.active {
+  color: var(--akasha-accent);
+  background: color-mix(in srgb, var(--akasha-accent) 10%, transparent);
+}
+
+.btn-group-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-group .akasha-tooltip-wrap,
+.btn-group .akasha-tooltip-trigger-host {
+  display: flex;
+}
+
+.mono-icon {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  color: currentColor;
+}

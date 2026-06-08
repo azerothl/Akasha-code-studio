@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import type { CenterTab } from "./App";
 import { Button } from "./components/ui/button";
+import { MonoIcon } from "./components/MonoIcon";
+import { StudioNavIcon } from "./components/StudioNavIcon";
 
 export type NavItem = {
   id: string;
@@ -240,10 +242,10 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
         onClick={() => onToggle(!isOpen)}
         aria-label="Ouvrir/fermer le menu"
         title="Menu de navigation"
-        variant="default"
+        variant="secondary"
         size="icon"
       >
-        ☰
+        <MonoIcon name="menu" />
       </Button>
 
       {/* Overlay pour mobile */}
@@ -254,7 +256,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
         {/* Header */}
         <div className="sidebar-header">
           <div className="sidebar-title">
-            <span className="sidebar-logo">⚡</span>
+            <img src="/akasha-icon.png" alt="" className="sidebar-logo-img" width={22} height={22} />
             <span className="sidebar-app-name">Code Studio</span>
           </div>
           <Button
@@ -265,7 +267,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
             variant="ghost"
             size="icon"
           >
-            ✕
+            <MonoIcon name="close" />
           </Button>
         </div>
 
@@ -281,10 +283,12 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                 variant="ghost"
                 size="sm"
               >
-                <span className="sidebar-group-icon" aria-hidden="true">{group.icon}</span>
+                <span className="sidebar-group-icon" aria-hidden="true">
+                  <StudioNavIcon id={group.id} />
+                </span>
                 <span className="sidebar-group-title">{group.title}</span>
                 <span className="sidebar-group-chevron" aria-hidden="true">
-                  {expandedGroup === group.id ? "▼" : "▶"}
+                  <MonoIcon name={expandedGroup === group.id ? "chevron-down" : "chevron-right"} />
                 </span>
               </Button>
 
@@ -307,7 +311,9 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                       variant="ghost"
                       size="sm"
                     >
-                      <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
+                      <span className="sidebar-item-icon" aria-hidden="true">
+                        <StudioNavIcon id={item.id} />
+                      </span>
                       <span className="sidebar-item-label">{item.label}</span>
                       {item.hint && (
                         <span className="sidebar-item-hint" role="tooltip">

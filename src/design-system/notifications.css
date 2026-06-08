@@ -1,0 +1,227 @@
+/* DO NOT EDIT — source: Akasha/design-system/notifications.css */
+
+.notification-center-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.notification-center-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  background: var(--akasha-bg-elevated);
+  color: var(--akasha-text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.notification-center-trigger:hover,
+.notification-center-trigger[aria-expanded="true"] {
+  color: var(--akasha-text);
+  border-color: var(--akasha-accent);
+  background: var(--akasha-bg-surface-hover);
+}
+
+.notification-center-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 3px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1rem;
+  text-align: center;
+  color: #fff;
+  background: var(--akasha-error);
+  border-radius: var(--akasha-radius);
+}
+
+.notification-center-drawer {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 1200;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: min(480px, 70vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--akasha-bg-elevated);
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.notification-center-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--akasha-space-sm);
+  padding: var(--akasha-space-sm) var(--akasha-space-md);
+  border-bottom: 1px solid var(--akasha-border);
+}
+
+.notification-center-drawer-head strong {
+  font-size: 0.875rem;
+}
+
+.notification-center-drawer-actions {
+  display: flex;
+  gap: var(--akasha-space-xs);
+}
+
+.notification-center-drawer-actions button {
+  padding: 2px var(--akasha-space-sm);
+  font-size: 0.75rem;
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  background: transparent;
+  color: var(--akasha-text-muted);
+  cursor: pointer;
+}
+
+.notification-center-drawer-actions button:hover {
+  color: var(--akasha-text);
+  border-color: var(--akasha-accent);
+}
+
+.notification-center-list {
+  overflow-y: auto;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification-center-empty {
+  padding: var(--akasha-space-lg);
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--akasha-text-muted);
+}
+
+.notification-center-item {
+  padding: var(--akasha-space-sm) var(--akasha-space-md);
+  border-bottom: 1px solid var(--akasha-border);
+  cursor: pointer;
+}
+
+.notification-center-item:last-child {
+  border-bottom: none;
+}
+
+.notification-center-item:hover {
+  background: var(--akasha-bg-surface-hover);
+}
+
+.notification-center-item--unread {
+  border-inline-start: 2px solid var(--akasha-accent);
+}
+
+.notification-center-item--error {
+  border-inline-start-color: var(--akasha-status-error-accent);
+  background: color-mix(in srgb, var(--akasha-status-error-bg) 50%, transparent);
+}
+
+.notification-center-item--warning {
+  border-inline-start-color: var(--akasha-status-warning-accent);
+}
+
+.notification-center-item--success {
+  border-inline-start-color: var(--akasha-status-success-accent);
+}
+
+.notification-center-item--info {
+  border-inline-start-color: var(--akasha-status-info-accent);
+}
+
+.notification-center-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--akasha-space-sm);
+}
+
+.notification-center-item-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--akasha-text);
+}
+
+.notification-center-item-meta {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--akasha-text-dim);
+}
+
+.notification-center-item-detail {
+  margin: var(--akasha-space-xs) 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--akasha-text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.notification-center-item-source {
+  margin: var(--akasha-space-xs) 0 0;
+  font-size: 0.6875rem;
+  color: var(--akasha-text-dim);
+}
+
+.notification-center-item-dismiss {
+  margin-top: var(--akasha-space-xs);
+  padding: 2px var(--akasha-space-sm);
+  font-size: 0.6875rem;
+  border: 1px solid var(--akasha-border);
+  border-radius: var(--akasha-radius);
+  background: transparent;
+  color: var(--akasha-text-muted);
+  cursor: pointer;
+}
+
+.notification-center-item-dismiss:hover {
+  color: var(--akasha-error);
+  border-color: var(--akasha-error);
+}
+
+/* Akasha_app nav drawer variant */
+.notification-center-drawer--nav {
+  position: fixed;
+  top: var(--nav-height, 70px);
+  right: 0;
+  bottom: 0;
+  width: min(360px, 100vw);
+  max-height: none;
+  border-radius: 0;
+  border-top: none;
+  border-right: none;
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+}
+
+.notification-center-drawer--nav.open {
+  transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .notification-center-drawer {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 60vh;
+    border-radius: 0;
+  }
+}

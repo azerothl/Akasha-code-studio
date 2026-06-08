@@ -1,0 +1,188 @@
+/* DO NOT EDIT — source: Akasha/design-system/tokens.css — run sync-design-system.mjs */
+
+/* ── Layout & spacing ─────────────────────────────────────────── */
+:root {
+  --akasha-radius: 0;
+  --akasha-radius-button: 0;
+  --akasha-space-xs: 4px;
+  --akasha-space-sm: 8px;
+  --akasha-space-md: 16px;
+  --akasha-space-lg: 24px;
+  --akasha-space-xl: 32px;
+  --akasha-chat-max-width: 800px;
+  --akasha-sidebar-width: 240px;
+  --akasha-sidebar-collapsed-width: 3.25rem;
+  --akasha-sidebar-right-width: 280px;
+  --akasha-bp-sm: 480px;
+  --akasha-bp-md: 768px;
+  --akasha-bp-lg: 1024px;
+  --akasha-bp-xl: 1280px;
+}
+
+[data-density="compact"] {
+  --akasha-space-xs: 2px;
+  --akasha-space-sm: 6px;
+  --akasha-space-md: 12px;
+  --akasha-space-lg: 18px;
+  --akasha-space-xl: 24px;
+}
+
+[data-density="spacious"] {
+  --akasha-space-xs: 6px;
+  --akasha-space-sm: 10px;
+  --akasha-space-md: 20px;
+  --akasha-space-lg: 28px;
+  --akasha-space-xl: 40px;
+}
+
+/* ── Theme: dark_akasha (default) ───────────────────────────────── */
+:root,
+[data-theme="dark_akasha"] {
+  --akasha-bg: #0d0d14;
+  --akasha-bg-elevated: #12121e;
+  --akasha-bg-surface: #12121e;
+  --akasha-bg-surface-hover: #1e1e38;
+  --akasha-bg-card: #1a1a2e;
+  --akasha-text: #f1f5f9;
+  --akasha-text-muted: #94a3b8;
+  --akasha-text-dim: #64748b;
+  --akasha-border: rgba(139, 92, 246, 0.25);
+  --akasha-accent: #8b5cf6;
+  --akasha-accent-hover: #7c3aed;
+  --akasha-accent-light: #a78bfa;
+  --akasha-accent-cyan: #06b6d4;
+  --akasha-success: #10b981;
+  --akasha-error: #ef4444;
+  --akasha-warning: #f59e0b;
+  --akasha-warning-hover: #fbbf24;
+  --akasha-info: #06b6d4;
+  --akasha-btn-primary-bg: var(--akasha-accent);
+  --akasha-btn-primary-hover-bg: var(--akasha-accent-hover);
+  --akasha-btn-primary-shadow: none;
+  --akasha-btn-primary-hover-shadow: none;
+  --akasha-btn-primary-hover-transform: none;
+  --akasha-btn-secondary-border: rgba(139, 92, 246, 0.45);
+  --akasha-btn-secondary-fg: #a78bfa;
+  --akasha-btn-secondary-fg-hover: #f1f5f9;
+  --akasha-btn-secondary-border-hover: rgba(139, 92, 246, 0.65);
+  --akasha-btn-secondary-bg-hover: rgba(139, 92, 246, 0.12);
+  --akasha-status-error-fg: var(--akasha-error);
+  --akasha-status-error-bg: color-mix(in srgb, var(--akasha-error) 10%, transparent);
+  --akasha-status-error-accent: var(--akasha-error);
+  --akasha-status-warning-fg: var(--akasha-warning);
+  --akasha-status-warning-bg: color-mix(in srgb, var(--akasha-warning) 10%, transparent);
+  --akasha-status-warning-accent: var(--akasha-warning);
+  --akasha-status-success-fg: var(--akasha-success);
+  --akasha-status-success-bg: color-mix(in srgb, var(--akasha-success) 10%, transparent);
+  --akasha-status-success-accent: var(--akasha-success);
+  --akasha-status-info-fg: var(--akasha-info);
+  --akasha-status-info-bg: color-mix(in srgb, var(--akasha-info) 10%, transparent);
+  --akasha-status-info-accent: var(--akasha-info);
+}
+
+[data-theme="dark"] {
+  --akasha-bg: #0f0f12;
+  --akasha-bg-elevated: #18181b;
+  --akasha-bg-surface: #27272a;
+  --akasha-bg-surface-hover: #3f3f46;
+  --akasha-bg-card: #27272a;
+  --akasha-text: #e4e4e7;
+  --akasha-text-muted: #a1a1aa;
+  --akasha-text-dim: #71717a;
+  --akasha-border: #27272a;
+  --akasha-accent: #6366f1;
+  --akasha-accent-hover: #4f46e5;
+  --akasha-success: #22c55e;
+  --akasha-error: #ef4444;
+  --akasha-warning: #b45309;
+  --akasha-warning-hover: #d97706;
+  --akasha-info: #38bdf8;
+}
+
+[data-theme="dark_nord"] {
+  --akasha-bg: #2e3440;
+  --akasha-bg-elevated: #3b4252;
+  --akasha-bg-surface: #434c5e;
+  --akasha-bg-surface-hover: #4c566a;
+  --akasha-bg-card: #434c5e;
+  --akasha-text: #eceff4;
+  --akasha-text-muted: #d8dee9;
+  --akasha-text-dim: #88c0d0;
+  --akasha-border: #434c5e;
+  --akasha-accent: #88c0d0;
+  --akasha-accent-hover: #81a1c1;
+  --akasha-success: #a3be8c;
+  --akasha-error: #bf616a;
+  --akasha-warning: #ebcb8b;
+  --akasha-warning-hover: #d08770;
+  --akasha-info: #88c0d0;
+}
+
+[data-theme="light"] {
+  --akasha-bg: #f4f4f5;
+  --akasha-bg-elevated: #ffffff;
+  --akasha-bg-surface: #e4e4e7;
+  --akasha-bg-surface-hover: #d4d4d8;
+  --akasha-bg-card: #ffffff;
+  --akasha-text: #18181b;
+  --akasha-text-muted: #52525b;
+  --akasha-text-dim: #71717a;
+  --akasha-border: #d4d4d8;
+  --akasha-accent: #4f46e5;
+  --akasha-accent-hover: #4338ca;
+  --akasha-success: #16a34a;
+  --akasha-error: #dc2626;
+  --akasha-warning: #b45309;
+  --akasha-warning-hover: #d97706;
+  --akasha-info: #0284c7;
+}
+
+[data-theme="light_latte"] {
+  --akasha-bg: #eff1f5;
+  --akasha-bg-elevated: #e6e9ef;
+  --akasha-bg-surface: #ccd0da;
+  --akasha-bg-surface-hover: #bcc0cc;
+  --akasha-bg-card: #e6e9ef;
+  --akasha-text: #4c4f69;
+  --akasha-text-muted: #6c6f85;
+  --akasha-text-dim: #9ca0b0;
+  --akasha-border: #bcc0cc;
+  --akasha-accent: #8839ef;
+  --akasha-accent-hover: #7c3aed;
+  --akasha-success: #40a02b;
+  --akasha-error: #d20f39;
+  --akasha-warning: #df8e1d;
+  --akasha-warning-hover: #e6a117;
+  --akasha-info: #209fb5;
+}
+
+[data-theme^="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme^="light"] {
+  color-scheme: light;
+}
+
+/* Akasha_app marketing aliases */
+:root {
+  --bg-primary: var(--akasha-bg);
+  --bg-secondary: var(--akasha-bg-elevated);
+  --bg-card: var(--akasha-bg-card);
+  --bg-card-hover: var(--akasha-bg-surface-hover);
+  --border: var(--akasha-border);
+  --purple: var(--akasha-accent);
+  --purple-light: var(--akasha-accent-light);
+  --purple-dark: var(--akasha-accent-hover);
+  --cyan: var(--akasha-accent-cyan);
+  --green: var(--akasha-success);
+  --yellow: var(--akasha-warning);
+  --red: var(--akasha-error);
+  --text-primary: var(--akasha-text);
+  --text-secondary: var(--akasha-text-muted);
+  --text-muted: var(--akasha-text-dim);
+  --radius-sm: var(--akasha-radius);
+  --radius: var(--akasha-radius);
+  --radius-lg: var(--akasha-radius);
+  --radius-xl: var(--akasha-radius);
+}

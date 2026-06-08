@@ -3,18 +3,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-none text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akasha-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--akasha-bg)] disabled:pointer-events-none disabled:opacity-50 shadow-none",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/25 hover:from-violet-400 hover:to-cyan-400",
+          "bg-[var(--akasha-accent)] text-white border border-transparent hover:bg-[var(--akasha-accent-hover)]",
         secondary:
-          "border border-violet-400/35 bg-violet-500/5 text-violet-200 hover:border-violet-300/60 hover:bg-violet-500/15 hover:text-white",
+          "border border-[var(--akasha-border)] bg-transparent text-[var(--akasha-text-muted)] hover:border-[var(--akasha-accent)] hover:bg-[var(--akasha-bg-surface-hover)] hover:text-[var(--akasha-text)]",
         ghost:
-          "border border-white/15 bg-transparent text-slate-300 hover:border-violet-300/60 hover:bg-violet-500/10 hover:text-white",
+          "border border-transparent bg-transparent text-[var(--akasha-text-muted)] hover:bg-[var(--akasha-bg-surface-hover)] hover:text-[var(--akasha-text)]",
         danger:
-          "border border-rose-400/45 bg-rose-600/20 text-rose-200 hover:bg-rose-600/35 hover:text-white",
+          "border border-[var(--akasha-status-error-accent)] bg-[var(--akasha-status-error-bg)] text-[var(--akasha-status-error-fg)] hover:opacity-90",
       },
       size: {
         default: "h-10 px-4 py-2",
