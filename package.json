@@ -1,12 +1,29 @@
 {
   "name": "akasha-code-studio",
-  "private": true,
-  "version": "0.1.0",
+  "version": "0.9.0",
+  "private": false,
+  "description": "Akasha Code Studio — operator cockpit for project-scoped agents",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/azerothl/akasha-code-studio.git"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "docs/USER_GUIDE.md"
+  ],
+  "bin": {
+    "akasha-code-studio": "./bin/akasha-code-studio.mjs"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "prepublishOnly": "npm run build",
+    "start": "node ./bin/akasha-code-studio.mjs",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:daemon": "vitest run --config vitest.daemon.config.ts",

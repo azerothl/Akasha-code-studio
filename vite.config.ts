@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 const daemon = process.env.VITE_DAEMON_URL ?? "http://127.0.0.1:3876";
 
 export default defineConfig({
+  base: "./",
   plugins: [react(), tailwindcss()],
   server: {
     host: "127.0.0.1",
