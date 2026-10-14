@@ -32,13 +32,19 @@ export function languageFromPath(path: string | null): string {
   return map[ext] ?? "plaintext";
 }
 
+type EditorMarker = {
+  startLineNumber: number;
+  message: string;
+};
+
 type CodeEditorProps = {
   path: string | null;
   value: string;
   onChange: (v: string) => void;
+  onValidate?: (markers: EditorMarker[]) => void;
 };
 
-export function CodeEditor({ path, value, onChange }: CodeEditorProps) {
+export function CodeEditor({ path, value, onChange, onValidate }: CodeEditorProps) {
   const lang = languageFromPath(path);
   return (
     <div className="monaco-container">
@@ -50,6 +56,14 @@ export function CodeEditor({ path, value, onChange }: CodeEditorProps) {
         language={lang}
         value={value}
         onChange={(v) => onChange(v ?? "")}
+        onValidate={(markers) =>
+          onValidate?.(
+            markers.map((marker) => ({
+              startLineNumber: marker.startLineNumber,
+              message: marker.message,
+            })),
+          )
+        }
         options={{
           minimap: { enabled: true },
           wordWrap: "on",

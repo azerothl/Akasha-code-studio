@@ -332,6 +332,7 @@ type WorkflowStep = {
 };
 
 const WORKTREE_INTEGRATION_EVENT_TYPES = new Set([
+  "studio_worktree_awaiting_review",
   "studio_worktree_integration_conflict",
   "studio_worktree_integration_failed",
   "studio_worktree_integration_cleaned",
@@ -385,6 +386,7 @@ function isSupportedWorktreeIntegrationEventType(eventType: string): boolean {
 
 function worktreeTitleFromEventType(eventType: string): string {
   if (eventType === "studio_worktree_created") return "Worktree créé";
+  if (eventType === "studio_worktree_awaiting_review") return "Worktree en attente de revue";
   if (isSupportedWorktreeIntegrationEventType(eventType)) return "Intégration worktree";
   return "Worktree";
 }
@@ -563,6 +565,14 @@ function buildWorkflowSteps(events: TaskEventEntry[], rootTaskId: string): Workf
       if (integration) step.worktreeIntegration = integration;
       if (conflict) step.worktreeConflict = conflict;
       step.details = worktreeDetails(step);
+      const baseBranch = payloadString(ev.payload, "base_branch");
+      const baseSha = payloadString(ev.payload, "base_sha");
+      if (baseBranch) {
+        step.details = [
+          ...step.details,
+          `Référence de départ: ${baseBranch}${baseSha ? ` @ ${baseSha.slice(0, 8)}` : ""}`,
+        ];
+      }
       continue;
     }
   }

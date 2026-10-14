@@ -98,8 +98,8 @@ Objectif v2 : visualiser explicitement la filiation des branches au lieu d'une s
 | Cut serveur | Livré | `POST /api/message` avec `fork_from_task_id` + `fork_after_message_index` — `api.rs` |
 | Événement trace | Livré | `session_fork_created` avec `fork_parent_task_id`, `fork_cut_index`, `fork_cut_turns` |
 | Handoff modèle | Livré | `POST /api/session/handoff` — réponse `schema_version: 2` |
-| `GET /api/session/forks` | Reporter | Graphe arbre — reporter v2.1 ; métadonnées fork déjà dans événements tâche |
-| `GET /api/tasks/:id/fork-context` | Reporter | Fallback v1 via événement `session_fork_created` |
-| Panneau arbre Studio | Reporter | Onglet « Arbre de forks » — reporter v2.1 |
+| `GET /api/session/forks` | Non retenu pour l’UI actuelle | Le panneau reconstruit l’arbre depuis le chat local et l’événement `session_fork_created` |
+| `GET /api/tasks/:id/fork-context` | Repli v1 | Même événement : `fork_parent_task_id`, `fork_cut_index` |
+| Panneau arbre Studio | Livré | `src/forkTreePanel.tsx` — ouvre un transcript sans remplacer la conversation ; badge de branche active ; retour au parent |
 
 **Décision** : la filiation est **auditable** via événements et méta tâche ; la visualisation graphe reste optionnelle (alignement pi-mono `/tree` non bloquant pour clôture roadmap).

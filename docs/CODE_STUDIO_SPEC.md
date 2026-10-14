@@ -10,12 +10,12 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 |-------|----------|----------|-------------|---------|
 | 1 MVP | Racine projet sandboxée, listing, raw, agent scaffold | In: `studio-projects/<UUID>`, APIs fichiers, `POST /api/message` studio_* | Daemon + UI minimale | Chemins `..`, symlinks |
 | 2 Build réel | Commande contrôlée + logs + timeout | In: `POST .../build` | Git/npm sur hôte | Supply chain, pas de conteneur par défaut |
-| 3 Dev live | `npm run dev` + proxy preview signé | Out (partiel): non implémenté dans le daemon | Réseau, auth | Exposition LAN |
+| 3 Dev live | `npm run dev` + proxy preview signé | Livré (UI + daemon) : STU-016, STU-012, STU-017. Le processus reste sur l’hôte, l’UI passe par une URL signée. | Réseau, auth | Exposition LAN |
 | 4 GitHub | Clone HTTPS, push via agent + vault | In: `POST .../git/clone` | git, credentials | Secrets hors vault |
 | 5 Branches évolution | `studio/*`, merge / abandon | In: évolutions API + meta JSON | git | Conflits merge |
 | 6 Parallélisme | Plusieurs évolutions, limite jobs | In: `AKASHA_STUDIO_MAX_PARALLEL_OPS` | Tokio semaphore | Saturation disque / CPU |
 | 7 Qualité UI | Templates React/Tailwind, tokens | UI repo | Design system | Dette UI |
-| 8 Contrôle fin | Diff par hunk, @fichier | Out: roadmap | UI + API | Complexité |
+| 8 Contrôle fin | Diff par hunk, @fichier | Livré (MVP UI + daemon) : STU-013 et injection `@fichier`. L’éditeur multi-fichiers est livré dans l’UI. | UI + API | Complexité |
 | 9 Avancé | WebContainers, canvas | Out: roadmap | Client lourd | — |
 
 ---
@@ -171,12 +171,13 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 |------|----------------------|
 | Liste projets | Création `POST /projects`, sélection charge fichiers + évolutions |
 | Arbre fichiers | **Uniquement dans l’onglet Éditeur** (colonne fichiers) : `GET /files` ; clic → `GET /raw` |
-| Zone centrale | Grille **50/50** (éditeur/onglets \| chat) avec modes **plein éditeur** / **plein chat** ; pas de colonne latérale gauche historique. Onglets: **Éditeur / Aperçu / Plan / Design / Logs serveur / Cockpit**. |
+| Zone centrale | Grille **50/50** (onglets \| chat) avec modes **plein centre** / **plein chat**. Navigation latérale par groupes. Onglets livrés : **Tableau de bord, Kanban, Éditeur, Aperçu, Plan, Design, Branches, Logs serveur, Cockpit, Documentation, Agents, Paramètres**. |
 | Menus en-tête | **Projet** (créer/charger, paramètres stack & politique), **Évolutions Git**, **Import & build**, **Agent / actions** (plan, design, matrice) ; sélecteur d’agent compact + badge de statut daemon dans la barre de navigation. |
-| Éditeur | **Monaco Editor** (`@monaco-editor/react`) + liste fichiers à gauche ; thème sombre ; sauvegarde via `PUT .../raw`. Workers Monaco depuis jsDelivr (`monaco-editor@0.52.2`). |
+| Tableau de bord | Cycle **demander → suivre → examiner → vérifier → fusionner**, tâche active et prochaine action. Sans projet, le cycle reste visible et demande de créer ou charger un projet. | 
+| Éditeur | **Monaco** + onglets multi-fichiers (brouillon indépendant, confirmation à la fermeture). Ouverture rapide et recherche texte. Diagnostics syntaxiques Monaco ; aucun LSP n’est configuré, le repli est affiché. Sauvegarde `PUT .../raw`. Workers depuis jsDelivr (`monaco-editor@0.52.2`). |
 | Aperçu | **▶ Lancer la prévisualisation** : `POST .../preview/start` — serveur dev sur `127.0.0.1` ; **Arrêter le serveur** : `POST .../preview/stop`. Sinon, fichier `.html` ouvert : aperçu statique (blob + iframe `sandbox`). Priorité : URL serveur dev si actif, sinon blob. |
 | Barre ops | Menus **Import & build** : clone HTTPS, build argv, merge / abandon évolution |
-| Chat | `POST /api/message` avec `studio_project_id`, agent, évolution ; bulles assistant avec `task_id` → icône **détail tâche** (modal `GET /api/tasks/:id` + `GET /api/tasks/:id/events`) ; **chips** « Suggestions » alimentées par `suggested_actions` du daemon sur la dernière bulle assistant ; après fin de tâche, bloc pliable **fichiers modifiés** (`GET /api/tasks/:id/studio-diff`) sous la bulle concernée. |
+| Chat | `POST /api/message` avec `studio_project_id`, agent, évolution ; résumé de contexte avant envoi (fichiers `@`, critères, design, index, agent, modèle s’il est connu, profil de permissions) avec retrait des contextes facultatifs. Les secrets repérés dans le résumé sont masqués. Bulles assistant : détail tâche, suggestions, **revue** (diff, critères, vérifications, branche Git). Dry-run n’écrit pas ; une seconde application des mêmes hunks est bloquée. |
 | Design | Édition `DESIGN.md`, planche visuelle (tokens), mode d’affichage **Les deux / Visuel / Source**, diagnostics, bouton **Demander à l’agent de corriger** (errors/warnings), import/export, export artefacts, auto-apply contexte design |
 | Cockpit | Vue opérateur structurée (scheduler actions, task runs, process watch, terminal, tools, MCP, lifecycle), raw JSON repliable par section, refresh manuel + auto-refresh ciblé runs/process |
 | Cockpit (swarm studio) | Quand le mode swarm est actif: graphe coordinateur/workers/sous-tâches + états (`running`, `blocked`, etc.) + événements de conflit et reprise |
@@ -193,7 +194,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 
 - **Disque** : IDs projet = UUID validés ; `raw` refuse `..` et chemins hors racine canonique.
 - **Build API** : arguments filtrés (pas de `|`, `;`, `&`, retours ligne, `..`).
-- **Hôte** : `npm install` / scripts post-install sur le poste = risque résiduel — **STU-011** reporté vers conteneur.
+- **Hôte** : `npm install` / scripts post-install sur le poste restent un risque résiduel. **STU-011** est livré en MVP : build conteneurisé par défaut, repli hôte seulement si `allow_host_fallback=true`.
 - **Builds** : mode conteneur actif par défaut ; fallback hôte autorisé explicitement pour compatibilité.
 - **Réseau** : non restreint par le daemon pour les commandes build (contrairement à un runner conteneurisé idéal).
 - **Prévisualisation** : accès UI via URL proxy signée courte durée ; le daemon lance toujours `npm run dev` sur l’hôte (`127.0.0.1:<port>`). L’UI charge les workers Monaco depuis un CDN (accès Internet requis pour l’éditeur en production build).
@@ -215,6 +216,9 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Recette fork (`SESSION_FORK_SPEC`) | Manuel | Fait |
 | Scénarios swarm (succès + conflit) | Manuel | Fait (MVP) |
 | `studio_evolution_id` résolu → branche | Intégration | Fait (daemon) |
+| Création projet, Git, plan, DESIGN | Intégration daemon réelle | Fait `integration/daemon-studio.test.ts` — pas un mock Playwright |
+| Tâche agent jusqu’au fichier `RECIPE_OK.txt` | Intégration daemon réelle, opt-in | `npm run test:daemon:task` (pose `CODE_STUDIO_E2E_TASK=1`). Échec conservé (statut, `failure_detail`, diff). `npm run test:daemon` ignore ce cas. Les tests Playwright restent mockés |
+| Playwright (`e2e/`) | Mock `/api` | Ne prouve pas une recette daemon |
 
 ### Given / When / Then (exemple)
 
@@ -231,6 +235,19 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 - [ ] Manuel : créer projet, message agent `studio_scaffold`, vérifier tâche dans UI Akasha principale si besoin.
 
 ---
+
+## Statut des écarts récents
+
+| Sujet | UI | Daemon | Reste |
+|-------|----|--------|-------|
+| Cycle de livraison sur le tableau de bord | Livré | — | — |
+| Revue unifiée (diff, critères, vérif, branche) | Livré | Diff et `acceptance_review` déjà exposés | — |
+| Éditeur multi-fichiers, recherche, diagnostics | Livré | Contrôle de chemin inchangé | Pas de LSP |
+| Contexte avant envoi | Livré | Champs `POST /api/message` existants | Le modèle effectif n’est affiché que s’il est saisi (handoff) |
+| Arbre de forks | Livré, à partir du chat local et de `session_fork_created` | Champs fork v1 | `GET /api/session/forks` non requis pour cette UI |
+| Isolation swarm | Panneau cockpit : liste, intégrer, abandonner | Worktree par **sous-tâche** si `AKASHA_STUDIO_WORKTREE_ENABLED=1`. Intégration **explicite** (`POST .../worktrees/:task_id/integrate`). Référence de départ : `base_branch` + `base_sha`. Nettoyage : abandon ou intégration retire le worktree ; le registre mémoire des états terminaux est purgé après 24 h. Concurrence : `AKASHA_STUDIO_MAX_PARALLEL_OPS`. | Désactivé tant que le flag n’est pas posé |
+| Découpage de `App.tsx` | Partiel : domaines extraits, voir `docs/UI_BOUNDARIES.md` | — | `App.tsx` garde la composition et le polling |
+| Recette bout en bout | — | Opt-in documentée ci-dessus | Nécessite un modèle |
 
 ## Gouvernance
 

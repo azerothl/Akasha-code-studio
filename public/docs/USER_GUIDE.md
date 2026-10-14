@@ -68,13 +68,18 @@ The daemon status badge in the header should report that the daemon is up.
 
 ### Center Tabs
 
-- **Editor**: file tree + Monaco editor.
+- **Dashboard**: delivery path from request to merge, with the active task and the next action. With no project selected, the path stays visible and asks you to create or load one.
+- **Kanban**: tickets, review, and follow-up.
+- **Settings**: stack, agents, and acceptance criteria.
+- **Editor**: file tree + Monaco editor, with several open files, quick open, and project search. Syntax markers come from Monaco; no language server is configured.
 - **Preview**: static HTML preview or live dev server preview.
 - **Plan**: edit/preview `CODE_STUDIO_PLAN.md`.
 - **Design**: edit/preview `DESIGN.md`, diagnostics, exports.
 - **Logs serveur**: backend/runtime logs view.
-- **Cockpit**: operational panel (scheduler/task runs/process watch/tools/MCP/lifecycle).
+- **Branches**: Git branches and evolutions.
+- **Cockpit**: operational panel (scheduler/task runs/process watch/tools/MCP/lifecycle) plus swarm worktree isolation when the daemon flag is enabled.
 - **Documentation**: integrated user guide (this document).
+- **Agents**: capability matrix.
 
 ### Chat Area
 
@@ -89,11 +94,13 @@ The daemon status badge in the header should report that the daemon is up.
 2. (Optional) Set the project technical stack in **Project**.
 3. If needed, clone a repo in **Import & build**.
 4. Start an evolution branch in **Evolutions Git**.
-5. Send a task in chat (implementation/refactor/fix).
-6. Review generated changes in **Editor** and task details.
-7. Validate in **Preview**.
-8. Run build in **Import & build**.
-9. Merge evolution when validated.
+5. Read the context summary under the composer (files, criteria, design, index, agent, permissions). Remove optional context before sending. Secret-looking values are masked in that summary.
+6. Send a task in chat (implementation/refactor/fix) and follow it from the dashboard step **Follow**.
+7. Review the task panel (diff, checks, branch). Dry-run does not write files.
+8. Validate in **Preview** and run build in **Import & build**.
+9. Merge the evolution from **Branches** when validated.
+
+Forks stay beside the conversation: opening another branch shows its transcript without replacing the one you are reading.
 
 ## 7) Projects and Files
 
