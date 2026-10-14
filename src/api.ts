@@ -913,6 +913,62 @@ export async function applyStudioPatchHunks(
   };
 }
 
+export type StudioWorktreeRecord = {
+  task_id: string;
+  root_task_id: string;
+  project_id: string;
+  project_root: string;
+  base_branch: string;
+  base_sha: string;
+  worktree_branch: string;
+  worktree_path: string;
+  lifecycle_state: string;
+  integration_status?: string | null;
+  conflict_state?: string | null;
+};
+
+export async function listStudioWorktrees(projectId: string): Promise<StudioWorktreeRecord[]> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/worktrees`));
+  if (r.status === 404) return [];
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`listStudioWorktrees ${r.status}: ${t}`);
+  }
+  const payload = (await r.json()) as { worktrees?: StudioWorktreeRecord[] };
+  return payload.worktrees ?? [];
+}
+
+export async function integrateStudioWorktree(projectId: string, taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/worktrees/${taskId}/integrate`), {
+    method: "POST",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`integrateStudioWorktree ${r.status}: ${t}`);
+  }
+}
+
+export async function abandonStudioWorktree(projectId: string, taskId: string): Promise<void> {
+  const r = await fetch(api(`/api/studio/projects/${projectId}/worktrees/${taskId}/abandon`), {
+    method: "POST",
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`abandonStudioWorktree ${r.status}: ${t}`);
+  }
+}
+
+export async function fetchChannelPermissionMode(): Promise<string | null> {
+  try {
+    const r = await fetch(api("/api/trust-access"));
+    if (!r.ok) return null;
+    const payload = (await r.json()) as { channel_permissions_mode?: unknown };
+    return typeof payload.channel_permissions_mode === "string" ? payload.channel_permissions_mode : null;
+  } catch {
+    return null;
+  }
+}
+
 export type TaskEventEntry = {
   schema_version?: number;
   kind?: string;

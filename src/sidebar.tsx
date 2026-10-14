@@ -29,7 +29,7 @@ export const SIDEBAR_NAV_GROUPS: NavGroup[] = [
         id: "project-dashboard",
         label: "Tableau de bord",
         icon: "📊",
-        hint: "Vue d'ensemble du projet",
+        hint: "Cycle de livraison : demander, suivre, examiner, vérifier, fusionner",
         tabs: ["dashboard"],
       },
       {

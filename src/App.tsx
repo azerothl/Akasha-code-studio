@@ -35,7 +35,24 @@ import {
   TaskDetailWorkflowView,
   mergeProgressWithEventProgress,
 } from "./taskDetailUi";
-import { ChatStudioDiffPanel } from "./chatStudioDiff";
+import type { DeliveryStepId } from "./deliveryCycle";
+import { DeliveryCycle } from "./deliveryCyclePanel";
+import {
+  bufferDirty,
+  closeBuffer,
+  filterPaths,
+  markBufferSaved,
+  searchTextFiles,
+  touchBufferText,
+  upsertBuffer,
+  type EditorBuffer,
+  type SearchHit,
+} from "./editorSession";
+import { ForkTreePanel } from "./forkTreePanel";
+import { summarizeSendContext } from "./sendContext";
+import { SendContextSummaryPanel } from "./sendContextSummary";
+import { SwarmIsolationPanel } from "./swarmIsolationPanel";
+import { TaskReviewPanel } from "./taskReview";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { NotificationCenter } from "./components/NotificationCenter";
 import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
@@ -320,6 +337,22 @@ export default function App() {
   const [savedEditorText, setSavedEditorText] = useState("");
   /** Fichier ouvert en mode binaire (pas de champ `content` dans la réponse raw). */
   const [editorBinary, setEditorBinary] = useState(false);
+  const [editorBuffers, setEditorBuffers] = useState<EditorBuffer[]>([]);
+  const [editorQuickQuery, setEditorQuickQuery] = useState("");
+  const [editorSearchQuery, setEditorSearchQuery] = useState("");
+  const [editorSearchHits, setEditorSearchHits] = useState<SearchHit[]>([]);
+  const [editorSearchBusy, setEditorSearchBusy] = useState(false);
+  const [editorDiagnostics, setEditorDiagnostics] = useState<{ line: number; message: string }[]>([]);
+  const [includeFileRefs, setIncludeFileRefs] = useState(true);
+  const [includeCriteriaOnSend, setIncludeCriteriaOnSend] = useState(true);
+  const [includeDesignOnSend, setIncludeDesignOnSend] = useState(true);
+  const [includePolicyOnSend, setIncludePolicyOnSend] = useState(true);
+  const [permissionMode, setPermissionMode] = useState<string | null>(null);
+  const [inspectedForkTaskId, setInspectedForkTaskId] = useState<string | null>(null);
+  const [forkEvents, setForkEvents] = useState<api.TaskEventEntry[]>([]);
+  const [worktrees, setWorktrees] = useState<api.StudioWorktreeRecord[]>([]);
+  const [worktreeBusy, setWorktreeBusy] = useState(false);
+  const [worktreeNotice, setWorktreeNotice] = useState<string | null>(null);
   /** Aperçu HTML statique (blob) depuis un fichier ouvert. */
   const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
   /** URL du serveur dev lancé par le daemon (`npm run dev`). */
@@ -395,6 +428,7 @@ export default function App() {
   const editorDirtyRef = useRef(false);
   const filePathRef = useRef<string | null>(null);
   const editorBinaryRef = useRef(false);
+  const editorBuffersRef = useRef<EditorBuffer[]>([]);
   const selectedIdRef = useRef<string | null>(null);
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
@@ -567,6 +601,24 @@ export default function App() {
   useEffect(() => {
     editorBinaryRef.current = editorBinary;
   }, [editorBinary]);
+  useEffect(() => {
+    editorBuffersRef.current = editorBuffers;
+  }, [editorBuffers]);
+  useEffect(() => {
+    setEditorBuffers([]);
+    setEditorSearchHits([]);
+    setEditorQuickQuery("");
+    setEditorDiagnostics([]);
+  }, [selectedId]);
+  useEffect(() => {
+    let cancelled = false;
+    void api.fetchChannelPermissionMode().then((mode) => {
+      if (!cancelled) setPermissionMode(mode);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
   useEffect(() => {
     if (!isMarkdownPath(filePath)) setEditorMarkdownPreview(false);
   }, [filePath]);
@@ -1375,14 +1427,21 @@ export default function App() {
     }
   }, [selectedId]);
 
+  const activateBuffer = useCallback((buffer: EditorBuffer) => {
+    setFilePath(buffer.path);
+    setEditorText(buffer.text);
+    setSavedEditorText(buffer.savedText);
+    setEditorBinary(buffer.binary);
+    setEditorDiagnostics([]);
+  }, []);
+
   const openFile = useCallback(
     async (path: string) => {
-      if (!selectedId) return;
-      if (filePath && editorDirty) {
-        const ok = window.confirm(
-          "Des modifications non enregistrées dans le fichier ouvert seront perdues. Continuer ?",
-        );
-        if (!ok) return;
+      if (!selectedId || !path) return;
+      const existing = editorBuffersRef.current.find((buffer) => buffer.path === path);
+      if (existing) {
+        activateBuffer(existing);
+        return;
       }
       setError(null);
       setFilePath(path);
@@ -1391,18 +1450,27 @@ export default function App() {
         const text = raw.content;
         const isBinary = text === undefined && Boolean(raw.content_base64);
         if (isBinary) {
+          const buffer: EditorBuffer = {
+            path,
+            text: "(binaire — enregistrement depuis l’éditeur non disponible)",
+            savedText: "",
+            binary: true,
+          };
           setEditorBinary(true);
-          setEditorText("(binaire — enregistrement depuis l’éditeur non disponible)");
+          setEditorText(buffer.text);
           setSavedEditorText("");
+          setEditorBuffers((prev) => upsertBuffer(prev, buffer));
           setStaticPreviewBlobUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return null;
           });
         } else {
-          setEditorBinary(false);
           const body = text ?? "";
+          const buffer: EditorBuffer = { path, text: body, savedText: body, binary: false };
+          setEditorBinary(false);
           setEditorText(body);
           setSavedEditorText(body);
+          setEditorBuffers((prev) => upsertBuffer(prev, buffer));
           const ext = path.toLowerCase();
           if (ext.endsWith(".html") || ext.endsWith(".htm")) {
             const blob = new Blob([body], { type: "text/html" });
@@ -1418,8 +1486,84 @@ export default function App() {
         setError(String(e));
       }
     },
-    [selectedId, filePath, editorDirty],
+    [selectedId, activateBuffer],
   );
+
+  const closeEditorTab = useCallback(
+    (path: string) => {
+      const buffer = editorBuffersRef.current.find((row) => row.path === path);
+      if (buffer && bufferDirty(buffer)) {
+        const ok = window.confirm(`Fermer « ${path} » et perdre les modifications non enregistrées ?`);
+        if (!ok) return;
+      }
+      const next = closeBuffer(editorBuffersRef.current, path);
+      setEditorBuffers(next);
+      if (filePathRef.current !== path) return;
+      const fallback = next[next.length - 1];
+      if (fallback) activateBuffer(fallback);
+      else {
+        setFilePath(null);
+        setEditorText("");
+        setSavedEditorText("");
+        setEditorBinary(false);
+      }
+    },
+    [activateBuffer],
+  );
+
+  const onEditorChange = useCallback((value: string) => {
+    setEditorText(value);
+    setEditorBuffers((prev) => touchBufferText(prev, filePathRef.current, value));
+  }, []);
+
+  const onSearchProject = useCallback(async () => {
+    if (!selectedId || !editorSearchQuery.trim()) {
+      setEditorSearchHits([]);
+      return;
+    }
+    setEditorSearchBusy(true);
+    try {
+      const candidates = files.filter((path) => !/\.(png|jpg|jpeg|gif|webp|ico|woff2?|pdf)$/i.test(path)).slice(0, 25);
+      const entries: { path: string; text: string }[] = [];
+      for (const buffer of editorBuffersRef.current) {
+        if (!buffer.binary) entries.push({ path: buffer.path, text: buffer.text });
+      }
+      for (const path of candidates) {
+        if (entries.some((entry) => entry.path === path)) continue;
+        try {
+          const raw = await api.readRawFile(selectedId, path);
+          if (typeof raw.content === "string") entries.push({ path, text: raw.content });
+        } catch {
+          /* fichier illisible */
+        }
+      }
+      setEditorSearchHits(searchTextFiles(entries, editorSearchQuery));
+    } finally {
+      setEditorSearchBusy(false);
+    }
+  }, [selectedId, editorSearchQuery, files]);
+
+  const refreshWorktrees = useCallback(async () => {
+    if (!selectedId) {
+      setWorktrees([]);
+      return;
+    }
+    try {
+      setWorktrees(await api.listStudioWorktrees(selectedId));
+      setWorktreeNotice(null);
+    } catch (error) {
+      setWorktrees([]);
+      setWorktreeNotice(String(error));
+    }
+  }, [selectedId]);
+
+  const confirmDiscardDrafts = useCallback(() => {
+    const dirty = editorBuffersRef.current.filter(bufferDirty);
+    if (dirty.length === 0) return true;
+    return window.confirm(
+      `Des brouillons non enregistrés (${dirty.map((row) => row.path).join(", ")}) seront perdus. Continuer ?`,
+    );
+  }, []);
 
   const handleStudioRename = useCallback(
     async (from: string, to: string) => {
@@ -1445,6 +1589,15 @@ export default function App() {
         if (opened === from) nextOpen = to;
         else if (opened?.startsWith(`${from}/`)) nextOpen = to + opened.slice(from.length);
         if (nextOpen !== opened) setFilePath(nextOpen);
+        setEditorBuffers((prev) =>
+          prev.map((buffer) => {
+            if (buffer.path === from) return { ...buffer, path: to };
+            if (buffer.path.startsWith(`${from}/`)) {
+              return { ...buffer, path: to + buffer.path.slice(from.length) };
+            }
+            return buffer;
+          }),
+        );
         const fl = await api.listFiles(selectedId);
         setFiles(fl);
         syncCodeRagAfterFileChange(selectedId);
@@ -1487,11 +1640,22 @@ export default function App() {
       setError(null);
       try {
         await api.deleteRawFile(selectedId, path);
+        setEditorBuffers((prev) => closeBuffer(prev, path));
         if (filePath === path) {
-          setFilePath(null);
-          setEditorText("");
-          setSavedEditorText("");
-          setEditorBinary(false);
+          const next = closeBuffer(editorBuffersRef.current, path);
+          setEditorBuffers(next);
+          const fallback = next[next.length - 1];
+          if (fallback) {
+            setFilePath(fallback.path);
+            setEditorText(fallback.text);
+            setSavedEditorText(fallback.savedText);
+            setEditorBinary(fallback.binary);
+          } else {
+            setFilePath(null);
+            setEditorText("");
+            setSavedEditorText("");
+            setEditorBinary(false);
+          }
           setStaticPreviewBlobUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return null;
@@ -1514,6 +1678,7 @@ export default function App() {
     try {
       await api.writeRawFile(selectedId, filePath, editorText);
       setSavedEditorText(editorText);
+      setEditorBuffers((prev) => markBufferSaved(prev, filePath, editorText));
       syncCodeRagAfterFileChange(selectedId);
       const ext = filePath.toLowerCase();
       if (ext.endsWith(".html") || ext.endsWith(".htm")) {
@@ -2078,6 +2243,28 @@ export default function App() {
   }, [selectedId, centerTab, refreshGitBranches, refreshGitConflicts]);
 
   useEffect(() => {
+    if (!selectedId || (centerTab !== "cockpit" && centerTab !== "branches")) return;
+    void refreshWorktrees();
+  }, [selectedId, centerTab, refreshWorktrees]);
+
+  useEffect(() => {
+    const taskId = taskTrace?.id;
+    if (!taskId) {
+      setForkEvents([]);
+      return;
+    }
+    let cancelled = false;
+    void api.getTaskEvents(taskId).then((events) => {
+      if (!cancelled) setForkEvents(events.filter((event) => event.event_type === "session_fork_created"));
+    }).catch(() => {
+      if (!cancelled) setForkEvents([]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [taskTrace?.id]);
+
+  useEffect(() => {
     if (centerTab !== "docs") {
       // Clear any prior fetch error so navigating back will retry.
       setUserGuideError(null);
@@ -2268,8 +2455,10 @@ Procédure:
       setTaskTrace(null);
     }
     try {
-      const acc = api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft);
-      const expanded = await api.expandAtFileRefs(selectedId, text);
+      const acc = includeCriteriaOnSend
+        ? api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft)
+        : undefined;
+      const expanded = includeFileRefs ? await api.expandAtFileRefs(selectedId, text) : text;
       const { task_id } = await api.sendMessage({
         message: expanded,
         ...(queued && activeTask
@@ -2284,10 +2473,10 @@ Procédure:
         studio_evolution_id: selectedEvoId ?? undefined,
         studio_evolution_branch: activeBranch ?? undefined,
         studio_code_mode: codeMode,
-        studio_policy_hint: policyHintOneShot.trim() || undefined,
+        studio_policy_hint: includePolicyOnSend ? policyHintOneShot.trim() || undefined : undefined,
         studio_delegate_single_level: delegateSingleLevel || undefined,
-        studio_design_hint: autoApplyDesign ? designHint || undefined : undefined,
-        studio_design_doc: autoApplyDesign ? designDocText.trim() || undefined : undefined,
+        studio_design_hint: includeDesignOnSend && autoApplyDesign ? designHint || undefined : undefined,
+        studio_design_doc: includeDesignOnSend && autoApplyDesign ? designDocText.trim() || undefined : undefined,
         ...(acc !== undefined ? { studio_acceptance_criteria: acc } : {}),
         ...(activeTicketId ? { studio_ticket_id: activeTicketId } : {}),
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
@@ -2384,6 +2573,8 @@ Procédure:
           role: "user",
           text: `[Fork depuis #${forkDialog.index + 1}] ${text}`,
           task_id,
+          fork_parent_task_id: forkDialog.parentTaskId,
+          fork_cut_index: forkDialog.index,
         },
       ]);
       setForkDialog(null);
@@ -3261,6 +3452,19 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
         {centerTab === "dashboard" ? (
           <div className="center-body">
+            <DeliveryCycle
+              hasProject={Boolean(selectedId)}
+              taskRunning={Boolean(dashboardActiveTask)}
+              taskFinished={Boolean(taskTrace?.done)}
+              dirty={gitWorktreeClean === false}
+              hasEvolution={Boolean(selectedEvoId)}
+              verifyRan={Boolean(buildLog.trim()) && buildLog !== "…"}
+              onStep={(_step: DeliveryStepId, target) => {
+                if (target === "chat") setMainSplit("chat");
+                if (target === "preview") setCenterTab("preview");
+                if (target === "branches") setCenterTab("branches");
+              }}
+            />
             <ProjectDashboard
               project={dashboardProjectMeta}
               codeRagStatus={codeRagStatus ?? undefined}
@@ -3427,6 +3631,19 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <div className="editor-layout">
               <div className="editor-file-pane">
                 <div className="editor-file-pane-header">
+                  <input
+                    className="editor-quick-open"
+                    value={editorQuickQuery}
+                    disabled={!selectedId}
+                    placeholder="Ouvrir un fichier…"
+                    aria-label="Ouverture rapide"
+                    onChange={(event) => setEditorQuickQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      const match = filterPaths(files, editorQuickQuery)[0];
+                      if (match) void openFile(match);
+                    }}
+                  />
                   <Button
                     variant="ghost"
                     size="sm"
@@ -3437,6 +3654,17 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     Rafraîchir
                   </Button>
                 </div>
+                {editorQuickQuery.trim() && selectedId ? (
+                  <ul className="editor-quick-open-list">
+                    {filterPaths(files, editorQuickQuery).map((path) => (
+                      <li key={path}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void openFile(path)}>
+                          {path}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 {!selectedId ? (
                   <p className="hint editor-file-pane-hint">Sélectionnez un projet pour voir ses fichiers.</p>
                 ) : files.length === 0 ? (
@@ -3457,6 +3685,26 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 )}
               </div>
               <div className="editor-editor-pane">
+                <div className="editor-tabs" role="tablist" aria-label="Fichiers ouverts">
+                  {editorBuffers.map((buffer) => (
+                    <div key={buffer.path} className={`editor-tab ${buffer.path === filePath ? "is-active" : ""}`}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        role="tab"
+                        aria-selected={buffer.path === filePath}
+                        onClick={() => activateBuffer(buffer)}
+                      >
+                        {buffer.path.split("/").pop()}
+                        {bufferDirty(buffer) ? " •" : ""}
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" aria-label={`Fermer ${buffer.path}`} onClick={() => closeEditorTab(buffer.path)}>
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
                 <div className="editor-toolbar">
                   <span className="pane-title-inline">Éditeur</span>
                   {filePath ? (
@@ -3489,11 +3737,52 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <MarkdownBlock text={editorText} className="md-content" />
                   </div>
                 ) : (
-                  <CodeEditor path={filePath} value={editorText} onChange={setEditorText} />
+                  <CodeEditor
+                    path={filePath}
+                    value={editorText}
+                    onChange={onEditorChange}
+                    onValidate={(markers) => {
+                      const next = markers.slice(0, 8).map((marker) => ({ line: marker.startLineNumber, message: marker.message }));
+                      setEditorDiagnostics((prev) => {
+                        const same =
+                          prev.length === next.length &&
+                          prev.every((row, index) => row.line === next[index]?.line && row.message === next[index]?.message);
+                        return same ? prev : next;
+                      });
+                    }}
+                  />
                 )}
+                <div className="editor-search">
+                  <input
+                    className="editor-quick-open"
+                    value={editorSearchQuery}
+                    placeholder="Rechercher dans les fichiers du projet"
+                    aria-label="Recherche dans le projet"
+                    onChange={(event) => setEditorSearchQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") void onSearchProject();
+                    }}
+                  />
+                  <Button type="button" size="sm" variant="secondary" disabled={!selectedId || editorSearchBusy} onClick={() => void onSearchProject()}>
+                    {editorSearchBusy ? "Recherche…" : "Rechercher"}
+                  </Button>
+                </div>
+                {editorSearchHits.length > 0 ? (
+                  <ul className="editor-search-hits">
+                    {editorSearchHits.map((hit) => (
+                      <li key={`${hit.path}:${hit.line}`}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void openFile(hit.path)}>
+                          {hit.path}:{hit.line} {hit.text}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 <p className="hint editor-hint">
-                  Les fichiers texte peuvent être enregistrés sur le disque du projet (bouton ou Ctrl+S). Le chat reste
-                  utile pour des changements plus larges ou revus par l’agent.
+                  Diagnostics : {editorDiagnostics.length > 0
+                    ? editorDiagnostics.map((marker) => `L${marker.line} ${marker.message}`).join(" · ")
+                    : "aucun marqueur Monaco. Aucun serveur de langage n’est configuré ; seuls les diagnostics syntaxiques intégrés sont disponibles."}
+                  {" "}Les chemins restent contrôlés par le daemon. Les fichiers binaires ne sont pas éditables.
                 </p>
               </div>
             </div>
@@ -4030,6 +4319,34 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 Vue opérateur: scheduler, task runs, process watch, terminal/PTy, outils, mémoire, MCP et lifecycle.
               </p>
             </div>
+            <SwarmIsolationPanel
+              worktrees={worktrees}
+              busy={worktreeBusy}
+              notice={worktreeNotice}
+              onRefresh={() => void refreshWorktrees()}
+              onIntegrate={(taskId) => {
+                if (!selectedId) return;
+                setWorktreeBusy(true);
+                void api.integrateStudioWorktree(selectedId, taskId)
+                  .then(() => {
+                    setWorktreeNotice("Intégration demandée.");
+                    return refreshWorktrees();
+                  })
+                  .catch((error: unknown) => setWorktreeNotice(String(error)))
+                  .finally(() => setWorktreeBusy(false));
+              }}
+              onAbandon={(taskId) => {
+                if (!selectedId) return;
+                setWorktreeBusy(true);
+                void api.abandonStudioWorktree(selectedId, taskId)
+                  .then(() => {
+                    setWorktreeNotice("Worktree abandonné.");
+                    return refreshWorktrees();
+                  })
+                  .catch((error: unknown) => setWorktreeNotice(String(error)))
+                  .finally(() => setWorktreeBusy(false));
+              }}
+            />
             <DaemonOpsPanel />
           </div>
         ) : centerTab === "docs" ? (
@@ -4364,6 +4681,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="pane-title pane-title--compact">Conversation</div>
+            <ForkTreePanel
+              messages={chat}
+              events={forkEvents}
+              activeTaskId={taskTrace?.id ?? null}
+              inspectedTaskId={inspectedForkTaskId}
+              onInspect={setInspectedForkTaskId}
+            />
             {chatHasUnseen ? (
               <Button
                 variant="secondary"
@@ -4420,10 +4744,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       </Button>
                     ) : null}
                     {m.role === "assistant" && m.studio_diff?.files?.length ? (
-                      <ChatStudioDiffPanel
+                      <TaskReviewPanel
                         diff={m.studio_diff}
                         projectId={selectedId}
+                        gitBranch={gitHeadBranch}
+                        buildLog={buildLog}
                         onApplied={() => void refreshFiles()}
+                        onOpenEditor={(path) => {
+                          setCenterTab("editor");
+                          if (path) void openFile(path);
+                        }}
+                        onOpenPreview={() => setCenterTab("preview")}
+                        onOpenBranches={() => setCenterTab("branches")}
                       />
                     ) : null}
                   </div>
@@ -4457,6 +4789,35 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         <div className="chat-panel-footer">
+          {selectedId ? (
+            <SendContextSummaryPanel
+              summary={summarizeSendContext({
+                message: chatInput,
+                files,
+                includeFileRefs,
+                includeCriteria: includeCriteriaOnSend,
+                criteriaRaw: acceptanceCriteriaDraft,
+                includeDesign: includeDesignOnSend && autoApplyDesign,
+                includePolicy: includePolicyOnSend,
+                policyHint: policyHintOneShot,
+                agent,
+                codeMode,
+                modelLabel: handoffModel,
+                providerLabel: handoffProvider,
+                permissionMode,
+                ragStatus: codeRagStatus?.status ?? null,
+                ragError: codeRagStatusError,
+              })}
+              includeFileRefs={includeFileRefs}
+              includeCriteria={includeCriteriaOnSend}
+              includeDesign={includeDesignOnSend}
+              includePolicy={includePolicyOnSend}
+              onIncludeFileRefs={setIncludeFileRefs}
+              onIncludeCriteria={setIncludeCriteriaOnSend}
+              onIncludeDesign={setIncludeDesignOnSend}
+              onIncludePolicy={setIncludePolicyOnSend}
+            />
+          ) : null}
           <div className="input-group input-group--textarea chat-form">
             <Textarea
               className="input-group-field input-group-field--textarea"
@@ -4790,6 +5151,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       className={`project-item ${p.id === selectedId ? "active" : ""}`}
                       data-testid={`studio-project-${p.id}`}
                       onClick={() => {
+                        if (p.id !== selectedId && !confirmDiscardDrafts()) return;
                         setSelectedId(p.id);
                         setCenterTab("dashboard");
                         setModalLoadOpen(false);

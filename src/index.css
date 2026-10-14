@@ -6184,3 +6184,98 @@ textarea.editor {
 .input-group-append button[class*="bg-"] {
   box-shadow: none;
 }
+
+.delivery-cycle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.delivery-cycle-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.delivery-cycle-next {
+  margin: 0;
+}
+
+.send-context,
+.fork-tree,
+.task-review,
+.swarm-isolation {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  margin: 0.4rem 0;
+  background: var(--akasha-bg-elevated);
+}
+
+.send-context-list,
+.task-review-checks,
+.swarm-isolation-list,
+.editor-quick-open-list,
+.editor-search-hits,
+.fork-tree-list {
+  margin: 0.25rem 0;
+  padding-left: 1rem;
+}
+
+.send-context-toggles,
+.task-review-actions,
+.editor-search,
+.editor-tabs,
+.swarm-isolation-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.editor-tabs {
+  padding: 0.35rem 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-tab {
+  display: inline-flex;
+  align-items: center;
+}
+
+.editor-tab.is-active {
+  background: var(--akasha-bg-surface);
+}
+
+.editor-quick-open {
+  flex: 1;
+  min-width: 8rem;
+  background: var(--akasha-bg);
+  color: var(--akasha-text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+}
+
+.editor-file-pane-header {
+  gap: 0.35rem;
+}
+
+.editor-search {
+  padding: 0.35rem 0.45rem;
+}
+
+@media (max-width: 720px) {
+  .delivery-cycle,
+  .delivery-cycle-steps,
+  .editor-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editor-layout {
+    display: flex;
+  }
+}

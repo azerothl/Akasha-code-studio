@@ -10,6 +10,8 @@ export type ChatMessage = {
   suggested_actions?: TaskSuggestedAction[];
   /** Diff fichiers / snapshot de tâche (assistant uniquement). */
   studio_diff?: TaskStudioDiffPayload | null;
+  fork_parent_task_id?: string;
+  fork_cut_index?: number;
 };
 
 function normalizeMessage(m: unknown): ChatMessage | null {
@@ -56,7 +58,9 @@ function normalizeMessage(m: unknown): ChatMessage | null {
       };
     }
   }
-  return { role: o.role, text: o.text, task_id, suggested_actions, studio_diff };
+  const fork_parent_task_id = typeof o.fork_parent_task_id === "string" ? o.fork_parent_task_id : undefined;
+  const fork_cut_index = typeof o.fork_cut_index === "number" ? o.fork_cut_index : undefined;
+  return { role: o.role, text: o.text, task_id, suggested_actions, studio_diff, fork_parent_task_id, fork_cut_index };
 }
 
 export function loadChatMessages(projectId: string): ChatMessage[] {

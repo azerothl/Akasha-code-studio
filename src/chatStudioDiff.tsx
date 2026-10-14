@@ -35,6 +35,7 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
+  const [appliedSignature, setAppliedSignature] = useState<string | null>(null);
   if (!diff.files.length) return null;
 
   const splitHunks = (patch: string): { preamble: string[]; hunks: string[] } => {
@@ -89,8 +90,15 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
     try {
       const r = await api.applyStudioPatchHunks(projectId, { patches, dry_run: dryRun });
       if (r.ok) {
-        setResultMsg(`${dryRun ? "Dry-run" : "Patch"} OK (${r.applied}/${r.requested}).`);
-        if (!dryRun) onApplied?.();
+        setResultMsg(
+          dryRun
+            ? `Dry-run OK (${r.applied}/${r.requested}) : aucun fichier écrit.`
+            : `Patch appliqué (${r.applied}/${r.requested}).`,
+        );
+        if (!dryRun) {
+          setAppliedSignature(patches.join("\n"));
+          onApplied?.();
+        }
       } else {
         setResultMsg(`Partiel: ${r.applied}/${r.requested}. ${r.errors.join(" | ")}`);
       }
@@ -115,11 +123,19 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
       </Button>
       {open ? (
         <div className="chat-studio-diff-body">
+          <p className="hint">
+            Vérifier simule l’application. Appliquer écrit les hunks cochés. Si l’agent a déjà modifié ces fichiers, une nouvelle application des mêmes hunks est refusée ici.
+          </p>
           <div className="chat-studio-diff-actions">
             <Button variant="secondary" size="sm" disabled={busy || !projectId} onClick={() => void onApply(true)}>
               Vérifier (dry-run)
             </Button>
-            <Button variant="default" size="sm" disabled={busy || !projectId} onClick={() => void onApply(false)}>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={busy || !projectId || (appliedSignature !== null && appliedSignature === buildSelectedPatches().join("\n"))}
+              onClick={() => void onApply(false)}
+            >
               Appliquer sélection
             </Button>
             {resultMsg ? <span className="hint">{resultMsg}</span> : null}
