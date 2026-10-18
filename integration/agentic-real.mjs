@@ -353,6 +353,78 @@ try {
     return { id: project.id, head: git(root, "rev-parse", "HEAD") };
   });
   const root = join(data, "studio-projects", project.id);
+  await check(
+    "TypeScript build failure stays failed when Vite fallback succeeds",
+    async () => {
+      const previous = project;
+      try {
+        project = await api(
+          "/api/studio/projects",
+          "POST",
+          { name: "Build truth", tech_stack: "TypeScript Vite" },
+          201,
+        );
+        const buildRoot = join(data, "studio-projects", project.id);
+        await symlink(
+          resolve("node_modules"),
+          join(buildRoot, "node_modules"),
+          process.platform === "win32" ? "junction" : "dir",
+        );
+        await writeFile(
+          join(buildRoot, "package.json"),
+          JSON.stringify({
+            name: "build-truth",
+            private: true,
+            type: "module",
+            scripts: { build: "tsc --noEmit && vite build" },
+          }),
+        );
+        await writeFile(
+          join(buildRoot, "tsconfig.json"),
+          JSON.stringify({
+            compilerOptions: {
+              target: "ES2020",
+              module: "ESNext",
+              moduleResolution: "bundler",
+              skipLibCheck: true,
+              types: [],
+              noEmit: true,
+            },
+            include: ["main.ts"],
+          }),
+        );
+        await writeFile(
+          join(buildRoot, "index.html"),
+          '<script type="module" src="/main.ts"></script>',
+        );
+        await writeFile(
+          join(buildRoot, "main.ts"),
+          'const bad: number = "intentional TS2322"; document.body.textContent = String(bad);',
+        );
+        const id = await task("build-truth", [
+          { text: "La modification demandée est terminée." },
+        ]);
+        const row = await finished(id);
+        assert.equal(row.status, "failed");
+        assert.equal(row.outcome.termination_reason, "verification_failed");
+        assert.equal(row.outcome.acceptance_verified, false);
+        assert(
+          row.outcome.verification.some(
+            (check) =>
+              check.kind === "project_build" && check.status === "failed",
+          ),
+        );
+        assert.match(row.failure_detail, /Vite fallback passed/);
+        assert.match(
+          await readFile(join(buildRoot, "dist/index.html"), "utf8"),
+          /assets/,
+        );
+        return { id, outcome: row.outcome, failure: row.failure_detail };
+      } finally {
+        project = previous;
+      }
+    },
+  );
   await check("empty model fails without inventing verification", async () => {
     const id = await task("empty", [{ text: "" }], "studio_scaffold", {
       studio_delegate_single_level: false,

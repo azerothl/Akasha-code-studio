@@ -29,6 +29,7 @@ Les deux essais utilisent un daemon et des données isolés, fallback désactiv�
 
 | Parcours | Preuve vérifiée |
 | --- | --- |
+| Build TypeScript invalide, bundle Vite réussi | Tâche en échec `verification_failed`, build configuré non validé, bundle de secours réellement produit |
 | Projet | Fichiers initiaux, commit initial, arbre propre |
 | Réponse vide, erreur fournisseur | Échec structuré persistant ; aucune réussite inventée |
 | Appel natif Unicode, puis réponse vide | Fichier et diff conservés, résultat partiel |
@@ -91,6 +92,6 @@ Les rapports compacts joints à ce document et les captures sont issus des exéc
 
 ## Preuves archivées
 
-- [Rapport des 19 parcours et de la publication](agentic-real-2026-10-18.json).
+- [Rapport des 20 parcours et de la publication](agentic-real-2026-10-18.json).
 - [Recettes des deux modèles](agentic-model-recipes-2026-10-18.json).
 - [Bureau](agentic-real-2026-10-18/desktop.png), [mobile](agentic-real-2026-10-18/mobile.png), [éditeur LSP](agentic-real-2026-10-18/editor-lsp.png), [preuves de tâche](agentic-real-2026-10-18/task-evidence.png).

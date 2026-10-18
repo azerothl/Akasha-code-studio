@@ -1,104 +1,109 @@
 {
-  "at": "2026-10-18T16:35:32.025Z",
+  "at": "2026-10-18T16:39:16.684Z",
   "status": "passed",
   "model": "deterministic protocol fixture (not an LLM evaluation)",
-  "source_run": "studio-agentic-real-ivQOiQ",
-  "native_requests": 48,
+  "source_run": "studio-agentic-real-qM0Dsv",
+  "native_requests": 50,
   "cases": [
     {
       "name": "real project creation and clean initial Git",
       "status": "passed",
-      "duration_ms": 448
+      "duration_ms": 399
+    },
+    {
+      "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+      "status": "passed",
+      "duration_ms": 2988
     },
     {
       "name": "empty model fails without inventing verification",
       "status": "passed",
-      "duration_ms": 295
+      "duration_ms": 280
     },
     {
       "name": "provider failure keeps explicit structured failure",
       "status": "passed",
-      "duration_ms": 280
+      "duration_ms": 281
     },
     {
       "name": "native Unicode write, partial failure and retained diff",
       "status": "passed",
-      "duration_ms": 556
+      "duration_ms": 557
     },
     {
       "name": "reviewer and planner refuse command effects",
       "status": "passed",
-      "duration_ms": 1525
+      "duration_ms": 1771
     },
     {
       "name": "planner writes only exact plan path",
       "status": "passed",
-      "duration_ms": 822
+      "duration_ms": 555
     },
     {
       "name": "real user PTY input, cursor, resize, isolation and close",
       "status": "passed",
-      "duration_ms": 573
+      "duration_ms": 553
     },
     {
       "name": "agent PTY remains task-owned and archives its transcript",
       "status": "passed",
-      "duration_ms": 1378
+      "duration_ms": 1363
     },
     {
       "name": "MCP real stdio pagination validation and task invocation",
       "status": "passed",
-      "duration_ms": 724
+      "duration_ms": 662
     },
     {
       "name": "agent browser desktop mobile logs PNG and denied redirect",
       "status": "passed",
-      "duration_ms": 2192
+      "duration_ms": 1616
     },
     {
       "name": "TypeScript real server diagnostics definition references rename",
       "status": "passed",
-      "duration_ms": 2144
+      "duration_ms": 1325
     },
     {
       "name": "Python real server navigation and explicit diagnostics",
       "status": "passed",
-      "duration_ms": 931
+      "duration_ms": 857
     },
     {
       "name": "Rust real server definition with build scripts disabled",
       "status": "passed",
-      "duration_ms": 1439
+      "duration_ms": 1123
     },
     {
       "name": "nested rules defer the first mutation and skill activations are auditable",
       "status": "passed",
-      "duration_ms": 623
+      "duration_ms": 611
     },
     {
       "name": "selected commit preserves unrelated staged paths and idempotency",
       "status": "passed",
-      "duration_ms": 1488
+      "duration_ms": 1412
     },
     {
       "name": "daemon restart interrupts and explicitly resumes same checkpoint",
       "status": "passed",
-      "duration_ms": 1060
+      "duration_ms": 1068
     },
     {
       "name": "crash after an external effect blocks mutations until inspected",
       "status": "passed",
-      "duration_ms": 1519
+      "duration_ms": 1545
     },
     {
       "name": "crash after a recorded tool result does not repeat its effect",
       "status": "passed",
-      "duration_ms": 1071
+      "duration_ms": 1196
     },
     {
       "name": "real UI desktop/mobile consumes daemon APIs",
       "status": "passed",
-      "duration_ms": 7509
+      "duration_ms": 7113
     }
   ],
   "publication": {
@@ -117,5 +122,26 @@
     "frontend_unit_passed": 20,
     "frontend_playwright_mocked_passed": 30
   },
-  "gpu": "not_run: no runner, explicit user waiver"
+  "gpu": "not_run: no runner, explicit user waiver",
+  "build_fallback_case": {
+    "id": "777fafbe-31da-499f-9ebb-3d5b19ab9a40",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\nVite fallback passed, but the configured build still failed (TypeScript step not verified).",
+      "result": "failed",
+      "schema_version": 1,
+      "status": "failed",
+      "successful_tool_calls": 0,
+      "termination_reason": "verification_failed",
+      "verification": [
+        {
+          "detail": "Vérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\nVite fallback passed, but the configured build still failed (TypeScript step not verified).",
+          "kind": "project_build",
+          "status": "failed"
+        }
+      ]
+    },
+    "failure": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\nVite fallback passed, but the configured build still failed (TypeScript step not verified)."
+  }
 }
