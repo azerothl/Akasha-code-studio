@@ -353,7 +353,7 @@ export default function App() {
     filePath,
     editorBinary,
     editorDirty,
-    reloadOpenFileFromServer,
+    reloadOpenFileFromServer, reloadChangedEditorFiles,
     filePathRef,
     editorDirtyRef,
     editorBinaryRef,
@@ -2655,6 +2655,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </div>
                 ) : (
                   <CodeEditor
+                    key={selectedId}
+                    projectId={selectedId}
+                    hasDirtyBuffers={editorBuffers.some(bufferDirty)}
+                    onOpenLocation={async (path) => { await openFile(path); }}
+                    onFilesApplied={reloadChangedEditorFiles}
                     path={filePath}
                     value={editorText}
                     onChange={onEditorChange}
