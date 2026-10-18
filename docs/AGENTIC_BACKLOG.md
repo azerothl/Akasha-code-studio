@@ -34,7 +34,7 @@ Un ticket ouvert ou une correction locale ne signifie pas livraison validée. Le
 
 ## Implémentations proposées
 
-Les 14 tickets restent ouverts. Les 12 PR sont des brouillons empilés : leur périmètre de code est proposé à la revue, sans fusion ni validation exhaustive des parcours réels.
+Les 12 PR sont empilées et prêtes à la revue après validation. Voir [les tests et parcours réels](validation/agentic-real-2026-10-18.md) et les preuves archivées. Les clôtures suivent la fusion et les critères observés ; #158 reste ouvert pour REC-04 à REC-09. Le nouveau suivi [Akasha #179](https://github.com/azerothl/Akasha/issues/179) conserve le défaut de conclusion LFM2.
 
 | Priorité | Ticket | PR d’implémentation |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Les 14 tickets restent ouverts. Les 12 PR sont des brouillons empilés : leur p�
 - Compilation Windows du daemon avec `cargo check -p akasha-daemon --no-default-features --features embedded` : réussie sur les branches proposées. Le mode sans fonctionnalités, sans `embedded`, conserve un défaut préexistant distinct.
 - Build TypeScript/Vite : réussi. Avertissement du bundle principal >500 Ko persistant ; xterm est chargé séparément.
 - Les workflows CI automatiques sont consultables dans les PR. Ils ne remplacent pas les recettes MCP/PTY/LSP/publication ou crash/reprise ; le job GPU peut rester en attente.
-- Aucune nouvelle suite locale ni recette réelle des nouvelles capacités n’a été exécutée pendant cette implémentation. Les états de CI et les validations manuelles restent distincts.
+- Validation ultérieure : 20 tests unitaires UI, 30 Playwright simulés, 391 daemon + 101 bibliothèques Rust, 19 parcours techniques réels et une vraie publication GitHub de test. Recette Ollama Qwen réussie ; LFM2 en échec partiel suivi dans #179. CUDA non exécuté, avec accord utilisateur.
 - Première tranche : MCP stdio (un serveur attaché), transports natifs Chat Completions sur trois providers, contrôle de version sur les outils de fichier documentés, reprise de la boucle Studio, LSP sur trois familles de langages, livraison GitHub.com. Les limites complémentaires sont explicites dans les contrats daemon et empêchent une clôture globale comme « solution agentique complète ».
 
 Documents de validation : [P0](validation/agentic-p0-implementation-2026-10-18.md), [capacités/skills](validation/agentic-capabilities-skills-2026-10-18.md), [observation](validation/agentic-observation-2026-10-18.md), [reprise](validation/agentic-recovery-2026-10-18.md), [LSP/livraison](validation/agentic-semantic-delivery-2026-10-18.md).

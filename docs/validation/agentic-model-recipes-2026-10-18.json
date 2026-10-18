@@ -1,0 +1,63 @@
+[
+  {
+    "at": "2026-10-18T16:35:43.813Z",
+    "taskId": "8e35c7c1-2692-4299-ba9d-fe29a52698d4",
+    "status": "completed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": null,
+      "result": "succeeded",
+      "schema_version": 1,
+      "status": "completed",
+      "successful_tool_calls": 1,
+      "termination_reason": "success",
+      "verification": [
+        {
+          "exit_code": null,
+          "kind": "project_build",
+          "status": "not_run"
+        }
+      ]
+    },
+    "modelUsed": "qwen2.5-coder:14b",
+    "failureDetail": null,
+    "diffStatus": 200,
+    "diff": {
+      "captured_at": "2026-10-18T16:35:25.692762400+00:00",
+      "files": [
+        {
+          "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
+          "path": "RECIPE_OK.md",
+          "status": "added",
+          "truncated": false
+        }
+      ],
+      "task_id": "8e35c7c1-2692-4299-ba9d-fe29a52698d4"
+    },
+    "rawContent": null,
+    "source_run": "studio-real-model-mm_zx3km"
+  },
+  {
+    "at": "2026-10-18T16:36:26.436Z",
+    "taskId": "3c59d800-3a16-42bf-9b87-07edcf7f0a60",
+    "status": "failed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+      "result": "partial",
+      "schema_version": 1,
+      "status": "failed",
+      "successful_tool_calls": 5,
+      "termination_reason": "tool_loop",
+      "verification": []
+    },
+    "modelUsed": "lfm2:24b",
+    "failureDetail": "Loop detected: same tool and arguments repeated. Stopping.",
+    "diffStatus": 200,
+    "diff": "{\"captured_at\":\"2026-10-18T16:36:06.261907800+00:00\",\"files\":[{\"diff\":\"diff --git a/RECIPE_OK.md b/RECIPE_OK.md\\n--- /dev/null\\n+++ b/RECIPE_OK.md\\n@@ -0,0 +1 @@\\n+recipe-ok\\n\",\"path\":\"RECIPE_OK.md\",\"status\":\"added\",\"truncated\":false}],\"task_id\":\"3c59d800-3a16-42bf-9b87-07edcf7f0a60\"}",
+    "rawContent": null,
+    "source_run": "studio-real-model-r7a_jd4j"
+  }
+]

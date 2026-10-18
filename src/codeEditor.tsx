@@ -176,7 +176,7 @@ export function CodeEditor({ path, value, onChange, onValidate, projectId, hasDi
         <p className="hint">Serveur préinstallé et autorisé requis : TypeScript/JavaScript, Rust ou Python. Curseur : {cursor.line}:{cursor.column}.</p>
         <form onSubmit={event => { event.preventDefault(); void prepareRename(); }}>
           <label>Nouveau nom <input value={newName} onChange={event => setNewName(event.target.value)} maxLength={256} required /></label>
-          <Button size="sm" variant="secondary" disabled={!enabled || busy || hasDirtyBuffers || !newName.trim()}>Préparer le renommage</Button>
+          <Button type="submit" size="sm" variant="secondary" disabled={!enabled || busy || hasDirtyBuffers || !newName.trim()}>Préparer le renommage</Button>
         </form>
         {plan ? <div>{plan.files?.map(file => <details key={file.path}><summary>{file.path} · {file.edit_count} modification(s)</summary><h4>Avant</h4><pre className="build-pre">{file.before}</pre><h4>Après</h4><pre className="build-pre">{file.after}</pre></details>)}<Button size="sm" disabled={busy || hasDirtyBuffers || !plan.plan_id} onClick={() => void applyRename()}>Appliquer ce plan</Button></div> : null}
       </details> : null}

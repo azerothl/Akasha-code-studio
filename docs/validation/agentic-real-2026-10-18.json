@@ -1,0 +1,121 @@
+{
+  "at": "2026-10-18T16:35:32.025Z",
+  "status": "passed",
+  "model": "deterministic protocol fixture (not an LLM evaluation)",
+  "source_run": "studio-agentic-real-ivQOiQ",
+  "native_requests": 48,
+  "cases": [
+    {
+      "name": "real project creation and clean initial Git",
+      "status": "passed",
+      "duration_ms": 448
+    },
+    {
+      "name": "empty model fails without inventing verification",
+      "status": "passed",
+      "duration_ms": 295
+    },
+    {
+      "name": "provider failure keeps explicit structured failure",
+      "status": "passed",
+      "duration_ms": 280
+    },
+    {
+      "name": "native Unicode write, partial failure and retained diff",
+      "status": "passed",
+      "duration_ms": 556
+    },
+    {
+      "name": "reviewer and planner refuse command effects",
+      "status": "passed",
+      "duration_ms": 1525
+    },
+    {
+      "name": "planner writes only exact plan path",
+      "status": "passed",
+      "duration_ms": 822
+    },
+    {
+      "name": "real user PTY input, cursor, resize, isolation and close",
+      "status": "passed",
+      "duration_ms": 573
+    },
+    {
+      "name": "agent PTY remains task-owned and archives its transcript",
+      "status": "passed",
+      "duration_ms": 1378
+    },
+    {
+      "name": "MCP real stdio pagination validation and task invocation",
+      "status": "passed",
+      "duration_ms": 724
+    },
+    {
+      "name": "agent browser desktop mobile logs PNG and denied redirect",
+      "status": "passed",
+      "duration_ms": 2192
+    },
+    {
+      "name": "TypeScript real server diagnostics definition references rename",
+      "status": "passed",
+      "duration_ms": 2144
+    },
+    {
+      "name": "Python real server navigation and explicit diagnostics",
+      "status": "passed",
+      "duration_ms": 931
+    },
+    {
+      "name": "Rust real server definition with build scripts disabled",
+      "status": "passed",
+      "duration_ms": 1439
+    },
+    {
+      "name": "nested rules defer the first mutation and skill activations are auditable",
+      "status": "passed",
+      "duration_ms": 623
+    },
+    {
+      "name": "selected commit preserves unrelated staged paths and idempotency",
+      "status": "passed",
+      "duration_ms": 1488
+    },
+    {
+      "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+      "status": "passed",
+      "duration_ms": 1060
+    },
+    {
+      "name": "crash after an external effect blocks mutations until inspected",
+      "status": "passed",
+      "duration_ms": 1519
+    },
+    {
+      "name": "crash after a recorded tool result does not repeat its effect",
+      "status": "passed",
+      "duration_ms": 1071
+    },
+    {
+      "name": "real UI desktop/mobile consumes daemon APIs",
+      "status": "passed",
+      "duration_ms": 7509
+    }
+  ],
+  "publication": {
+    "at": "2026-10-18T16:09:21.546Z",
+    "status": "passed",
+    "pull_request": "https://github.com/azerothl/Akasha-code-studio/pull/36",
+    "cleanup": "closed without merge; remote branch deleted",
+    "source_run": "studio-agentic-real-t11bYw"
+  },
+  "cpu_tests": {
+    "daemon_passed": 391,
+    "daemon_ignored": 1,
+    "llm_passed": 44,
+    "store_passed": 29,
+    "tools_passed": 28,
+    "frontend_unit_passed": 20,
+    "frontend_playwright_mocked_passed": 30
+  },
+  "gpu": "not_run: no runner, explicit user waiver"
+}

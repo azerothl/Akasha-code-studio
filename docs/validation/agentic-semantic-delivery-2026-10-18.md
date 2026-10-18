@@ -1,5 +1,7 @@
 # Diagnostics et livraison — #30
 
+> Validation ultérieure : [tests et parcours réels](agentic-real-2026-10-18.md). Les résultats initiaux ci-dessous sont conservés comme historique.
+
 ## Éditeur
 
 Section LSP fermée par défaut : activation explicite par projet, diagnostics serveur séparés de Monaco local, F12 et références, puis préparation d’un renommage avec aperçu avant/après. L’application exige des buffers enregistrés et un plan non périmé ; les buffers affectés sont relus sans écraser un brouillon devenu modifié. Les URI Monaco incluent le projet pour séparer les modèles de deux dépôts. Serveurs préinstallés/autorisation et états d’indexation restent visibles.

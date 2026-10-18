@@ -1,5 +1,7 @@
 # Premier lot de correction agentique — 18 octobre 2026
 
+> Validation ultérieure : [tests et parcours réels](agentic-real-2026-10-18.md). Les résultats initiaux ci-dessous sont conservés comme historique.
+
 Tickets : [Akasha #151](https://github.com/azerothl/Akasha/issues/151), [Akasha #152](https://github.com/azerothl/Akasha/issues/152), [Code Studio #27](https://github.com/azerothl/Akasha-code-studio/issues/27).
 
 ## Changements

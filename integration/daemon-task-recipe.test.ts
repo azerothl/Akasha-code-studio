@@ -21,6 +21,8 @@ const DAEMON_URL = (
 
 type TaskPayload = {
   status?: string;
+  outcome?: { schema_version: number; termination_reason: string; result: string; acceptance_verified: boolean };
+  last_turn_model_used?: string | null;
   failure_detail?: string | null;
   progress?: { message?: string }[];
 };
@@ -76,6 +78,7 @@ describe("Code Studio — recette tâche réelle", () => {
           session_id: `code-studio-recipe-${created.id}`,
           studio_project_id: created.id,
           studio_assigned_agent: "studio_scaffold",
+          studio_delegate_single_level: true,
           message:
             "Crée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
         }),
@@ -99,13 +102,16 @@ describe("Code Studio — recette tâche réelle", () => {
       await mkdir("test-results", { recursive: true });
       await writeFile("test-results/daemon-task-report.json", JSON.stringify({
         at: new Date().toISOString(), daemonUrl: DAEMON_URL, projectId: created.id, taskId: sent.task_id,
-        status: task.status, failureDetail: task.failure_detail, progress: task.progress, diffStatus: diffRes.status, diff: diffBody,
+        status: task.status, outcome: task.outcome, modelUsed: task.last_turn_model_used, failureDetail: task.failure_detail, progress: task.progress, diffStatus: diffRes.status, diff: diffBody,
       }, null, 2), "utf8");
       const progress = (task.progress ?? []).map((row) => row.message ?? "").slice(-8).join("\n");
       expect(
         task.status,
         `statut=${task.status ?? "timeout"} failure=${task.failure_detail ?? ""} diff=${diffRes.status} ${diffBody.slice(0, 500)}\n${progress}`,
       ).toBe("completed");
+      expect(task.outcome?.schema_version).toBe(1);
+      expect(task.outcome?.termination_reason).toBe("success");
+      expect(task.outcome?.result).toBe("succeeded");
 
       const rawRes = await fetch(
         `${DAEMON_URL}/api/studio/projects/${created.id}/raw?path=${encodeURIComponent("RECIPE_OK.md")}`,
@@ -117,7 +123,7 @@ describe("Code Studio — recette tâche réelle", () => {
       expect(diff.files?.some((file) => file.path === "RECIPE_OK.md"), diffBody).toBe(true);
       await writeFile("test-results/daemon-task-report.json", JSON.stringify({
         at: new Date().toISOString(), daemonUrl: DAEMON_URL, projectId: created.id, taskId: sent.task_id,
-        status: task.status, failureDetail: task.failure_detail, progress: task.progress, diffStatus: diffRes.status,
+        status: task.status, outcome: task.outcome, modelUsed: task.last_turn_model_used, failureDetail: task.failure_detail, progress: task.progress, diffStatus: diffRes.status,
         diff: JSON.parse(diffBody), verifiedFile: { path: "RECIPE_OK.md", content: raw.content },
       }, null, 2), "utf8");
     },

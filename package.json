@@ -28,6 +28,7 @@
     "test:unit": "vitest run",
     "test:daemon": "vitest run --config vitest.daemon.config.ts",
     "test:daemon:task": "vitest run --config vitest.daemon-task.config.ts",
+    "test:daemon:agentic": "node integration/agentic-real.mjs",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium"
   },

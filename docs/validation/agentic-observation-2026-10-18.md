@@ -1,5 +1,7 @@
 # Terminal et preuves — issue #29
 
+> Validation ultérieure : [tests et parcours réels](agentic-real-2026-10-18.md). Les résultats initiaux ci-dessous sont conservés comme historique.
+
 Branche empilée sur `codex/studio-effective-capabilities`, dépend du daemon #156 et de son runner protocole 2.
 
 - Cockpit > Terminal > Ouvrir le terminal du projet : xterm chargé à la demande, liste des shells autorisés, création explicite, saisie sérialisée, redimensionnement, reconnexion et fermeture explicite. Changer d’écran ne tue pas le shell ; le daemon impose l’expiration après inactivité.

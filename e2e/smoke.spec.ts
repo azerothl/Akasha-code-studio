@@ -2,6 +2,28 @@ import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
+test("semantic rename button submits the preview request before applying edits", async ({ page }) => {
+  await page.route(`**/api/studio/projects/${demoId}/files`, route => route.fulfill({ json: { files: ["sample.ts"] } }));
+  await page.route(`**/api/studio/projects/${demoId}/raw**`, route => route.fulfill({ json: { content: "const value = 1;\n" } }));
+  await page.route(`**/api/studio/projects/${demoId}/lsp/query`, route => {
+    const request = route.request().postDataJSON() as { action: string };
+    return route.fulfill({ json: { schema_version: 1, result: request.action === "diagnostics"
+      ? { status: "ready", diagnostics: [] }
+      : { status: "planned", plan_id: "00000000-0000-4000-8000-000000000099", files: [{ path: "sample.ts", before: "const value = 1;", after: "const renamed = 1;", edit_count: 1 }] } } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("button", { name: "sample.ts", exact: true }).click();
+  await page.locator(".monaco-editor").waitFor();
+  await page.getByText("Analyse sémantique LSP", { exact: true }).click();
+  await page.getByRole("checkbox", { name: "Activer le serveur pour ce projet" }).check();
+  await page.getByLabel("Nouveau nom", { exact: true }).fill("renamed");
+  const sent = page.waitForRequest(request => request.url().endsWith("/lsp/query") && request.postDataJSON()?.action === "rename");
+  await page.getByRole("button", { name: "Préparer le renommage", exact: true }).click();
+  expect((await sent).postDataJSON()).toMatchObject({ action: "rename", path: "sample.ts", new_name: "renamed" });
+  await expect(page.getByRole("button", { name: "Appliquer ce plan", exact: true })).toBeVisible();
+});
+
 test("project tools stay disclosed on demand and restore keyboard focus", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");

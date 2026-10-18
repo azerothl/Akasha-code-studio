@@ -1,5 +1,7 @@
 # Reprise explicite — complément de #27 / daemon #158
 
+> Validation ultérieure : [tests et parcours réels](agentic-real-2026-10-18.md). Les résultats initiaux ci-dessous sont conservés comme historique.
+
 La revue et le résumé de tâche disposent d’une section fermée par défaut : checkpoint, tour, sous-tâches et opérations interrompues. Une opération inconnue peut recevoir une décision humaine après inspection, avec choix explicite et note obligatoire. Le daemon refuse la résolution pendant une exécution active ou hors état arrêté. Aucune commande n’est rejouée et aucune reprise n’est déclenchée par cette décision.
 
 Les questions en attente sont historiques : elles ne valent pas approbation. Le bouton de reprise existant reste une action distincte. Le prompt complet n’est pas demandé par l’interface.
