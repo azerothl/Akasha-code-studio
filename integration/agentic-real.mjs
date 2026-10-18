@@ -437,6 +437,37 @@ try {
     return { id, outcome: row.outcome };
   });
   await check(
+    "native reads continue after the default 500-line window",
+    async () => {
+      await writeFile(
+        join(root, "large-read.txt"),
+        Array.from({ length: 700 }, (_, i) => `LINE_${i + 1}`).join("\n"),
+      );
+      const id = await task("read-window", [
+        tool("read_file", { path: "workspace:/large-read.txt" }),
+        {
+          tool: "read_file",
+          args: {
+            path: "workspace:/large-read.txt",
+            offset_line: 501,
+            limit_lines: 4,
+          },
+          verify: (text) => assert(text.includes("read_file partial")),
+        },
+        {
+          tool: "read_file",
+          args: { path: "workspace:/large-read.txt", full: true },
+          verify: (text) => assert(text.includes("LINE_501")),
+        },
+        { text: "Lecture complète terminée." },
+      ]);
+      const row = await finished(id);
+      assert.equal(row.status, "completed", JSON.stringify(row));
+      assert.equal(row.outcome.failed_tool_calls, 0);
+      return { id, outcome: row.outcome };
+    },
+  );
+  await check(
     "mechanical acceptance preserves each criterion result",
     async () => {
       const id = await task(
@@ -751,6 +782,27 @@ try {
             "MUST_BE_DENIED",
           ),
         );
+        await writeFile(
+          policyPath,
+          JSON.stringify({
+            ...JSON.parse(originalPolicy),
+            default_profile: "none",
+            tool_profiles: { none: [] },
+          }),
+        );
+        await api("/api/tools/reload", "POST", {});
+        const empty = await task("empty-profile", [
+          { text: "Aucun outil requis." },
+        ]);
+        assert.equal((await finished(empty)).status, "completed");
+        const emptyRequests = requests.filter(
+          (request) => request.case === "empty-profile",
+        );
+        assert(
+          emptyRequests.length > 0 &&
+            emptyRequests.every((request) => !request.native),
+          "Empty profiles must omit native function definitions",
+        );
       } finally {
         await writeFile(policyPath, originalPolicy);
         await api("/api/tools/reload", "POST", {});
@@ -961,8 +1013,27 @@ try {
         "NESTED_RULE_VALIDATION: inspect this instruction before editing the nested fixture.\n",
       );
       const op = randomUUID();
+      await writeFile(
+        join(root, "nested/inspect.txt"),
+        "UNIQUE_RECURSIVE_READ_PROOF\n",
+      );
       const id = await task("rules-skills", [
-        tool("write_file", fileArgs("nested/note.md", "rules respected\n"), op),
+        tool("grep_content", {
+          argv: ["workspace:/", "UNIQUE_RECURSIVE_READ_PROOF"],
+        }),
+        {
+          tool: "write_file",
+          args: fileArgs("nested/note.md", "rules respected\n"),
+          id: op,
+          verify: (text) => {
+            const rule = text.indexOf("NESTED_RULE_VALIDATION");
+            const result = text.indexOf("inspect.txt:1:");
+            assert(
+              rule >= 0 && result > rule,
+              "Nested instructions must precede recursive file contents",
+            );
+          },
+        },
         {
           tool: "write_file",
           id: op,
@@ -1130,6 +1201,76 @@ try {
     },
   );
   await check(
+    "task manifest loads skills and rules from its persisted Git worktree",
+    async () => {
+      const id = await task(
+        "worktree-manifest",
+        [{ text: "Préparation terminée." }],
+        "studio_reviewer",
+      );
+      await finished(id);
+      const suffix = id.replaceAll("-", "").slice(0, 8);
+      const worktreeBranch = `wt/${id.replaceAll("-", "")}/${suffix}`;
+      const worktree = join(data, "studio-worktrees", id, suffix);
+      await mkdir(join(data, "studio-worktrees", id), { recursive: true });
+      git(root, "worktree", "add", "-b", worktreeBranch, worktree, "HEAD");
+      await mkdir(join(worktree, ".agents/skills/worktree-only"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(worktree, ".agents/skills/worktree-only/SKILL.md"),
+        "---\nname: worktree-only\ndescription: Visible only in the task worktree.\n---\nRead this task worktree before making changes.\n",
+      );
+      await writeFile(
+        join(worktree, "AGENTS.md"),
+        "WORKTREE_MANIFEST_RULE: use the task branch instructions.\n",
+      );
+      const registry = join(data, "studio-worktrees/registry.json");
+      const previous = await readFile(registry, "utf8").catch(() => "[]");
+      try {
+        await writeFile(
+          registry,
+          JSON.stringify([
+            ...JSON.parse(previous),
+            {
+              task_id: id,
+              root_task_id: id,
+              project_id: project.id,
+              project_root: root,
+              base_branch: "main",
+              base_sha: git(root, "rev-parse", "HEAD"),
+              worktree_branch: worktreeBranch,
+              worktree_path: worktree,
+              lifecycle_state: "awaiting_review",
+              integration_status: null,
+              conflict_state: null,
+            },
+          ]),
+        );
+        const manifest = await api(
+          `/api/tools/effective?project_id=${project.id}&task_id=${id}`,
+        );
+        assert(
+          manifest.skills.some((skill) => skill.name === "worktree-only"),
+          JSON.stringify(manifest.skills),
+        );
+        assert(
+          manifest.rules.some(
+            (rule) => rule.path.includes(id) && rule.path.endsWith("AGENTS.md"),
+          ),
+        );
+        assert(!manifest.skills.some((skill) => skill.source_root === root));
+        return {
+          id,
+          workspace: manifest.workspace,
+          skills: manifest.skills.map((skill) => skill.name),
+        };
+      } finally {
+        await writeFile(registry, previous);
+      }
+    },
+  );
+  await check(
     "daemon restart interrupts and explicitly resumes same checkpoint",
     async () => {
       const id = await task(
@@ -1193,6 +1334,49 @@ try {
       const row = await finished(id);
       assert.equal(row.status, "completed", JSON.stringify(row));
       return { id, round: before.checkpoint.round };
+    },
+  );
+  await check(
+    "restart during ask_user preserves the consumed round and asks again",
+    async () => {
+      const question = {
+        question: "Confirmer le scénario de validation ?",
+        choices: ["Continuer", "Arrêter"],
+      };
+      const id = await task("question-wait", [
+        { text: `TOOL: ask_user\n${JSON.stringify(question)}` },
+        { text: "Question traitée." },
+      ]);
+      const pending = async () => {
+        for (let i = 0; i < 120; i++) {
+          const r = await fetch(`${base}/api/tasks/${id}/human-input`);
+          if (r.ok) return r.json();
+          await pause(100);
+        }
+        throw Error("Question missing");
+      };
+      await pending();
+      const before = await api(`/api/tasks/${id}/recovery`);
+      assert.equal(before.checkpoint.round, 1);
+      assert.equal(before.checkpoint.max_tool_rounds, 16);
+      daemon.kill();
+      await new Promise((resolve) => daemon.once("exit", resolve));
+      start();
+      await ready();
+      scripts.set("question-wait", [
+        { text: `TOOL: ask_user\n${JSON.stringify(question)}` },
+        { text: "Réponse fraîche constatée." },
+      ]);
+      await api(`/api/tasks/${id}/resume`, "POST", {});
+      await pending();
+      await api(`/api/tasks/${id}/human-reply`, "POST", {
+        response: "Continuer",
+      });
+      const row = await finished(id);
+      assert.equal(row.status, "completed", JSON.stringify(row));
+      const after = await api(`/api/tasks/${id}/recovery`);
+      assert(after.checkpoint.round >= 2);
+      return { id, round: after.checkpoint.round };
     },
   );
   await check(
