@@ -4,12 +4,14 @@ export type ForkNode = {
   cutIndex: number | null;
   label: string;
   active: boolean;
+  status: string | null;
 };
 
 type ForkMessage = {
   role: string;
   text: string;
   task_id?: string;
+  task_status?: string;
   fork_parent_task_id?: string;
   fork_cut_index?: number;
 };
@@ -47,6 +49,7 @@ export function buildForkNodes(
       cutIndex: null,
       label: taskId.slice(0, 8),
       active: taskId === activeTaskId,
+      status: null,
     };
     nodes.set(taskId, created);
     return created;
@@ -55,6 +58,7 @@ export function buildForkNodes(
   for (const message of messages) {
     if (!message.task_id) continue;
     const node = ensure(message.task_id);
+    if (message.task_status) node.status = message.task_status;
     if (message.role === "user" && message.text.trim()) {
       node.label = message.text.trim().slice(0, 80);
     }

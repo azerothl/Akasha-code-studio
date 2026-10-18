@@ -39,7 +39,6 @@ function NotificationItem({
   return (
     <li
       className={`notification-center-item notification-center-item--${item.level}${item.read ? "" : " notification-center-item--unread"}`}
-      role="alert"
     >
       <div
         className="notification-center-item-head"
@@ -108,6 +107,7 @@ export function NotificationCenter() {
         aria-expanded={open}
         aria-haspopup="dialog"
         title={LABELS.title}
+        aria-label={unreadCount ? `${LABELS.title}, ${unreadCount} non lues` : LABELS.title}
       >
         <MonoIcon name="bell" />
         {unreadCount > 0 ? (

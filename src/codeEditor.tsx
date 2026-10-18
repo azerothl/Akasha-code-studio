@@ -1,4 +1,5 @@
 import Editor from "@monaco-editor/react";
+import { AsyncState } from "./asyncState";
 
 export function languageFromPath(path: string | null): string {
   if (!path) return "plaintext";
@@ -49,6 +50,7 @@ export function CodeEditor({ path, value, onChange, onValidate }: CodeEditorProp
   return (
     <div className="monaco-container">
       <Editor
+        loading={<AsyncState kind="loading" title="Chargement de l’éditeur…" />}
         height="100%"
         theme="vs-dark"
         path={path ?? "untitled"}

@@ -1,5 +1,7 @@
 import type { StudioWorktreeRecord } from "./api";
 import { Button } from "./components/ui/button";
+import { useState } from "react";
+import { Checkbox } from "./components/ui/checkbox";
 
 type Props = {
   worktrees: StudioWorktreeRecord[];
@@ -31,7 +33,7 @@ export function SwarmIsolationPanel({ worktrees, busy, notice, onRefresh, onInte
       ) : (
         <ul className="swarm-isolation-list">
           {worktrees.map((row) => {
-            const pending = row.lifecycle_state === "awaiting_review" || row.lifecycle_state === "needs_user_resolution" || row.lifecycle_state === "active";
+            const pending = row.lifecycle_state === "awaiting_review" || row.lifecycle_state === "needs_user_resolution";
             return (
               <li key={row.task_id} className="swarm-isolation-item">
                 <p>
@@ -43,14 +45,7 @@ export function SwarmIsolationPanel({ worktrees, busy, notice, onRefresh, onInte
                   {row.integration_status ? ` · ${row.integration_status}` : ""}
                 </p>
                 {pending ? (
-                  <div className="task-review-actions">
-                    <Button type="button" size="sm" disabled={busy} onClick={() => onIntegrate(row.task_id)}>
-                      Intégrer
-                    </Button>
-                    <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={() => onAbandon(row.task_id)}>
-                      Abandonner
-                    </Button>
-                  </div>
+                  <WorktreeReview key={`${row.task_id}:${row.base_sha}:${row.lifecycle_state}`} row={row} busy={busy} onIntegrate={onIntegrate} onAbandon={onAbandon} />
                 ) : null}
               </li>
             );
@@ -59,4 +54,23 @@ export function SwarmIsolationPanel({ worktrees, busy, notice, onRefresh, onInte
       )}
     </section>
   );
+}
+
+function WorktreeReview({ row, busy, onIntegrate, onAbandon }: {
+  row: StudioWorktreeRecord; busy: boolean; onIntegrate: (id: string) => void; onAbandon: (id: string) => void;
+}) {
+  const [reviewed, setReviewed] = useState(false);
+  return <div>
+    <details>
+      <summary>Examiner avant intégration</summary>
+      <p className="hint">La revue de ce worker se fait dans son dossier isolé. Examinez les modifications et les fichiers non suivis avant de confirmer.</p>
+      <code>{row.worktree_path}</code>
+      <pre className="build-pre">{`git -C '${row.worktree_path.replace(/'/g, "''")}' status --short\ngit -C '${row.worktree_path.replace(/'/g, "''")}' diff ${row.base_sha} --`}</pre>
+      <label className="field-inline"><Checkbox checked={reviewed} onChange={event => setReviewed(event.target.checked)} /> J’ai examiné les fichiers de ce worker et les conflits éventuels.</label>
+    </details>
+    <div className="task-review-actions">
+      <Button type="button" size="sm" disabled={busy || !reviewed} onClick={() => onIntegrate(row.task_id)}>Intégrer</Button>
+      <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={() => onAbandon(row.task_id)}>Abandonner</Button>
+    </div>
+  </div>;
 }

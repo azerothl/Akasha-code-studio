@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { CenterTab } from "./App";
+import type { CenterTab } from "./studioNavigation";
 import { Button } from "./components/ui/button";
 import { MonoIcon } from "./components/MonoIcon";
 import { StudioNavIcon } from "./components/StudioNavIcon";

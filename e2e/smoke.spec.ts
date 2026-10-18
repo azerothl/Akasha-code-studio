@@ -2,7 +2,162 @@ import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
+test("worker integration requires a terminal worker and an explicit review", async ({ page }) => {
+  const record = { root_task_id: "root", project_id: demoId, project_root: "/fixture", base_branch: "main", base_sha: "a".repeat(40), worktree_path: "/fixture/worker" };
+  await page.route(`**/api/studio/projects/${demoId}/worktrees`, route => route.fulfill({ json: { worktrees: [
+    { ...record, task_id: "ready", worktree_branch: "wt/ready", lifecycle_state: "awaiting_review" },
+    { ...record, task_id: "active", worktree_branch: "wt/active", lifecycle_state: "active" },
+  ] } }));
+  await page.route(`**/api/studio/projects/${demoId}/worktrees/ready/integrate`, route => route.fulfill({ json: { ok: true } }));
+  await page.goto("/");
+  await selectDemoProject(page);
+  await openSection(page, /Opérations & Monitoring/i, /^Cockpit$/);
+  const ready = page.locator(".swarm-isolation-item").filter({ hasText: "wt/ready" });
+  const active = page.locator(".swarm-isolation-item").filter({ hasText: "wt/active" });
+  await expect(ready.getByRole("button", { name: "Intégrer", exact: true })).toBeDisabled();
+  await expect(active.getByRole("button", { name: "Intégrer", exact: true })).toHaveCount(0);
+  await ready.getByText("Examiner avant intégration", { exact: true }).click();
+  await ready.getByRole("checkbox").check();
+  const request = page.waitForRequest(req => req.url().endsWith("/worktrees/ready/integrate") && req.method() === "POST");
+  await ready.getByRole("button", { name: "Intégrer", exact: true }).click();
+  await request;
+});
+
+test("fork branches show hierarchy, statuses and the complete retained transcript", async ({ page }) => {
+  await page.addInitScript(({ id }) => {
+    localStorage.setItem("akasha-code-studio-chat-v2:" + id, JSON.stringify([
+      { role: "user", text: "Parent demande", task_id: "parent", task_status: "completed" },
+      { role: "assistant", text: "Réponse parent", task_id: "parent", task_status: "completed" },
+      { role: "user", text: "Enfant demande", task_id: "child", fork_parent_task_id: "parent", fork_cut_index: 0 },
+      { role: "assistant", text: "Texte conservé ".repeat(30) + "fin-transcript", task_id: "child", task_status: "completed" },
+    ]));
+  }, { id: demoId });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await expect(page.locator(".fork-tree-children")).toHaveCount(1);
+  await page.locator(".fork-tree-children").getByRole("button", { name: /Enfant demande/ }).click();
+  const transcript = page.getByRole("region", { name: "Transcript de la branche consultée" });
+  await expect(transcript).toContainText("fin-transcript");
+  await transcript.getByRole("button", { name: "Revenir au parent" }).click();
+  await expect(transcript).toContainText("Réponse parent");
+  await expect(page.locator(".chat-log")).toContainText("fin-transcript");
+});
+
+test("empty project state guides creation on a narrow window", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/studio/projects", route => route.fulfill({ json: { projects: [] } }));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Aucun projet chargé" })).toBeVisible();
+  const createBounds = await page.getByRole("button", { name: "Créer un projet", exact: true }).boundingBox();
+  expect(createBounds && createBounds.x >= 0 && createBounds.x + createBounds.width <= 390).toBe(true);
+  await page.screenshot({ path: "test-results/ui-mobile-empty.png" });
+  await page.getByRole("button", { name: "Créer un projet", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("failed sends preserve the draft and expose recovery details", async ({ page }) => {
+  await page.route("**/api/message", route => route.fulfill({ status: 503, json: { error: "fixture unavailable" } }));
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Conserver cette demande");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "L’action n’a pas abouti" })).toBeVisible();
+  await expect(page.locator(".chat-form textarea")).toHaveValue("Conserver cette demande");
+  await expect(page.getByRole("button", { name: "Envoyer", exact: true })).toBeEnabled();
+  await page.screenshot({ path: "test-results/ui-desktop-recovery.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Plein chat", exact: true }).click();
+  await expect(page.locator(".chat-form textarea")).toBeVisible();
+  const composerBounds = await page.locator(".chat-form textarea").boundingBox();
+  expect(composerBounds && composerBounds.x >= 0 && composerBounds.x + composerBounds.width <= 390).toBe(true);
+  await page.screenshot({ path: "test-results/ui-mobile-chat.png" });
+  const options = page.getByRole("button", { name: "Options", exact: true });
+  await options.scrollIntoViewIfNeeded();
+  const optionsBounds = await options.boundingBox();
+  expect(optionsBounds && optionsBounds.y >= 0 && optionsBounds.y + optionsBounds.height <= 844).toBe(true);
+});
+
+test("offline daemon has an explicit reconnect action", async ({ page }) => {
+  let online = false;
+  await page.route("**/api/status", route => route.fulfill({ status: online ? 200 : 503, json: online ? { status: "ok" } : { error: "offline" } }));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Daemon hors ligne" })).toBeVisible();
+  await page.screenshot({ path: "test-results/ui-desktop-offline.png" });
+  online = true;
+  await page.getByRole("button", { name: "Reconnexion", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Daemon hors ligne" })).toHaveCount(0);
+  await expect(page.getByLabel("Statut du daemon")).toContainText("En ligne");
+});
+
+test("project search examines files after the first 25", async ({ page }) => {
+  await page.route(`**/api/studio/projects/${demoId}/files`, route => route.fulfill({ json: { files: Array.from({ length: 42 }, (_, i) => `file-${i}.txt`) } }));
+  await page.route(`**/api/studio/projects/${demoId}/raw**`, async route => {
+    const path = new URL(route.request().url()).searchParams.get("path") || "";
+    if (!path.endsWith(".txt")) { await route.fallback(); return; }
+    await route.fulfill({ json: { content: path === "file-41.txt" ? "only-match-here" : "other" } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByLabel("Recherche dans le projet").fill("only-match-here");
+  await page.getByRole("button", { name: "Rechercher", exact: true }).click();
+  await expect(page.locator(".editor-search-hits")).toContainText("file-41.txt:1");
+  await expect(page.getByText(/42 fichiers examinés/)).toBeVisible();
+});
+
+test("a late file response cannot replace the file opened afterwards", async ({ page }) => {
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route(`**/api/studio/projects/${demoId}/files`, route => route.fulfill({ json: { files: ["slow.ts", "fast.ts"] } }));
+  await page.route(`**/api/studio/projects/${demoId}/raw**`, async route => {
+    const path = new URL(route.request().url()).searchParams.get("path") || "";
+    if (!path.endsWith(".ts")) { await route.fallback(); return; }
+    if (path === "slow.ts") await gate;
+    await route.fulfill({ json: { content: `// ${path}` } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".editor-file-pane").getByRole("button", { name: "slow.ts", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Ouverture du fichier…" })).toBeVisible();
+  await page.locator(".editor-file-pane").getByRole("button", { name: "fast.ts", exact: true }).click();
+  await expect(page.locator(".editor-editor-pane")).toContainText("fast.ts");
+  const response = page.waitForResponse(res => res.url().includes("path=slow.ts"));
+  release();
+  await response;
+  await expect(page.locator(".editor-editor-pane")).not.toContainText("slow.ts");
+});
+
+test("preview failures can be retried without leaving the view", async ({ page }) => {
+  let attempts = 0;
+  await page.route(`**/api/studio/projects/${demoId}/preview/start`, route => {
+    attempts++;
+    return route.fulfill(attempts === 1 ? { status: 500, json: { error: "start failed" } } : { json: { ok: true, url: "http://127.0.0.1:5180" } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await openSection(page, /Développement/i, /^Aperçu \/ Dev/);
+  await page.getByRole("button", { name: /Lancer la prévisualisation/ }).click();
+  await expect(page.getByRole("heading", { name: "L’aperçu n’est pas prêt" })).toBeVisible();
+  await page.getByRole("button", { name: "Réessayer", exact: true }).click();
+  await expect(page.locator('iframe[title="Aperçu"]')).toHaveAttribute("src", "http://127.0.0.1:5180");
+  await expect(page.getByRole("heading", { name: "L’aperçu n’est pas prêt" })).toHaveCount(0);
+});
+
+test("a nonzero build exit is an error even without stderr", async ({ page }) => {
+  await page.route(`**/api/studio/projects/${demoId}/build`, route => route.fulfill({ status: 500, json: { exit_code: 17, stdout: "", stderr: "" } }));
+  await page.goto("/");
+  await selectDemoProject(page);
+  await openSection(page, /Développement/i, /^Aperçu \/ Dev/);
+  await page.getByRole("button", { name: "Exécuter le build", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "La vérification a échoué" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Relancer le build", exact: true })).toBeVisible();
+});
+
 test.beforeEach(async ({ page }) => {
+  await page.route("**/api/**", route => route.fulfill({ status: 404, json: { error: "unconfigured_fixture" } }));
+  await page.route("**/api/trust-access", route => route.fulfill({ json: { channel_permissions_mode: "ask_me" } }));
+  await page.route("**/api/studio/projects/*/git/conflicts", route => route.fulfill({ json: { conflict_files: [], merge_in_progress: false } }));
+  await page.route("**/api/studio/projects/*/worktrees", route => route.fulfill({ json: { worktrees: [] } }));
   let scheduleEnabled = true;
   const rawFiles: Record<string, string> = {
     "index.html": "<!DOCTYPE html><html><body><h1>Studio</h1></body></html>",
@@ -327,7 +482,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/api/tasks/**", async (route) => {
     const url = route.request().url();
     if (url.endsWith("/human-input") || url.endsWith("/human-reply")) {
-      await route.continue();
+      await route.fallback();
       return;
     }
     if (route.request().method() !== "GET") {
@@ -582,6 +737,18 @@ async function selectDemoProject(page: Page) {
   await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
   await page.getByTestId(`studio-project-${demoId}`).click();
+  await openSection(page, /Développement/i, /^Éditeur/);
+}
+
+async function openSection(page: Page, group: RegExp, destination: RegExp) {
+  const header = page.locator(".sidebar-group-header").filter({ hasText: group });
+  if (await header.getAttribute("aria-expanded") !== "true") await header.click();
+  await page.locator(".sidebar-item-label").filter({ hasText: destination }).click();
+}
+
+async function projectSettings(page: Page) {
+  await openSection(page, /^Projet$/i, /^Tableau de bord/);
+  await page.getByRole("button", { name: /Paramètres du projet/ }).click();
 }
 
 test("loads layout and lists mocked project", async ({ page }) => {
@@ -594,6 +761,7 @@ test("loads layout and lists mocked project", async ({ page }) => {
 
 test("opens integrated documentation tab", async ({ page }) => {
   await page.goto("/");
+  await openSection(page, /^Aide$/i, /^Documentation/);
   const docTab = page.getByTestId("studio-doc-tab");
   await expect(docTab).toBeVisible();
   await docTab.click();
@@ -604,8 +772,8 @@ test("opens integrated documentation tab", async ({ page }) => {
 test("loads project tech stack from metadata", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByTestId("studio-project-settings-menu").click();
-  const stackArea = page.locator(".stack-textarea");
+  await projectSettings(page);
+  const stackArea = page.locator(".stack-wizard-textarea");
   await expect(stackArea).toBeVisible();
   await expect(stackArea).toHaveValue("React + Vite");
 });
@@ -650,9 +818,8 @@ test("sends chat message to daemon (mocked)", async ({ page }) => {
 test("POST /api/message includes studio_acceptance_criteria when draft is set", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByTestId("studio-project-settings-menu").click();
+  await projectSettings(page);
   await page.getByTestId("acceptance-criteria-draft").fill("README doit mentionner E2E");
-  await page.locator(".header-menu-backdrop").click({ force: true });
   const post = page.waitForRequest(
     (r) => r.url().includes("/api/message") && r.method() === "POST",
   );
@@ -666,7 +833,7 @@ test("POST /api/message includes studio_acceptance_criteria when draft is set", 
 test("opens Design tab and saves DESIGN.md", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("tab", { name: /^Design$/i }).click();
+  await openSection(page, /Design & Planification/i, /^Design$/);
   const area = page.getByLabel("Contenu de DESIGN.md");
   await expect(area).toBeVisible();
   await area.fill("---\nname: Updated\ncolors:\n  primary: \"#06b6d4\"\ntypography:\n  body: {}\n---\n\n## Overview\nUpdated\n");
@@ -715,6 +882,7 @@ test("opens task detail modal and shows mocked event", async ({ page }) => {
   });
   await expect(modal.locator(".task-detail-events-category-title").filter({ hasText: /^Outils$/ })).toBeVisible();
   await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /^tool_call$/ })).toBeVisible();
+  await modal.getByRole("tab", { name: "Workflow", exact: true }).click();
   const subAgentWorkflowCard = modal
     .locator(".task-detail-workflow-item")
     .filter({ hasText: /Sous-agent/i })
@@ -736,6 +904,7 @@ test("shows suggested action chips and clicking message chip fills input", async
   const suggestionsArea = page.locator(".chat-suggestions");
   await expect(suggestionsArea).toBeVisible({ timeout: 10_000 });
   const messageChip = suggestionsArea.getByRole("button", { name: /Continuer/i });
+  await suggestionsArea.locator("summary").click();
   await expect(messageChip).toBeVisible();
   await messageChip.click();
   await expect(page.locator(".chat-form textarea")).toHaveValue("Poursuivre le scaffold");
@@ -744,7 +913,7 @@ test("shows suggested action chips and clicking message chip fills input", async
 test("shows operator cockpit in dedicated section and endpoint blocks", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
-  await page.getByRole("tab", { name: /^Cockpit$/i }).click();
+  await openSection(page, /Opérations & Monitoring/i, /^Cockpit$/);
   const panel = page.locator(".preview-pane--cockpit .daemon-ops-panel");
   await expect(panel).toBeVisible({ timeout: 5_000 });
   await expect(panel.getByTestId("ops-task-runs-card")).toContainText(/run-1|Build \+ tests/i);
@@ -838,6 +1007,7 @@ test("hunk selection applies selected hunks via POST /patch/hunks", async ({ pag
   await page.getByRole("button", { name: "Envoyer" }).click();
 
   // Wait for task to complete and the diff panel toggle to appear.
+  await page.getByRole("button", { name: /Revue de la tâche — afficher/ }).click();
   const diffToggle = page.locator(".chat-studio-diff-toggle");
   await expect(diffToggle).toBeVisible({ timeout: 10_000 });
   await diffToggle.click();
@@ -849,6 +1019,8 @@ test("hunk selection applies selected hunks via POST /patch/hunks", async ({ pag
   const hunkCheckbox = page.locator(".chat-studio-diff-hunk input[type=checkbox]").first();
   await expect(hunkCheckbox).toBeVisible();
   await hunkCheckbox.check();
+  await page.getByRole("button", { name: "Vérifier (dry-run)" }).click();
+  await expect(page.getByRole("button", { name: "Appliquer sélection" })).toBeEnabled();
 
   // Capture the POST to /patch/hunks.
   const patchRequest = page.waitForRequest(
@@ -859,7 +1031,8 @@ test("hunk selection applies selected hunks via POST /patch/hunks", async ({ pag
   const body = req.postDataJSON() as { patches: string[]; dry_run?: boolean };
   expect(body.patches.length).toBeGreaterThan(0);
   expect(body.dry_run).not.toBe(true);
-  await expect(page.locator(".hint").filter({ hasText: /Patch OK/i })).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator(".hint").filter({ hasText: /Patch appliqué/i })).toBeVisible({ timeout: 5_000 });
+  await expect(hunkCheckbox).toBeDisabled();
 });
 
 test("SSE success path delivers live events to task detail modal", async ({ page }) => {

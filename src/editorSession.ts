@@ -29,7 +29,7 @@ export function touchBufferText(list: EditorBuffer[], path: string | null, text:
 }
 
 export function markBufferSaved(list: EditorBuffer[], path: string, text: string): EditorBuffer[] {
-  return list.map((row) => (row.path === path ? { ...row, text, savedText: text } : row));
+  return list.map((row) => (row.path === path ? { ...row, savedText: text } : row));
 }
 
 export function closeBuffer(list: EditorBuffer[], path: string): EditorBuffer[] {

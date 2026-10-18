@@ -9,7 +9,7 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | Phase | Objectif | In / out | Dépendances | Risques |
 |-------|----------|----------|-------------|---------|
 | 1 MVP | Racine projet sandboxée, listing, raw, agent scaffold | In: `studio-projects/<UUID>`, APIs fichiers, `POST /api/message` studio_* | Daemon + UI minimale | Chemins `..`, symlinks |
-| 2 Build réel | Commande contrôlée + logs + timeout | In: `POST .../build` | Git/npm sur hôte | Supply chain, pas de conteneur par défaut |
+| 2 Build réel | Commande contrôlée + logs + timeout | Livré : `POST .../build`, conteneur par défaut (`containerized=true`), repli hôte seulement si demandé (`allow_host_fallback=true`) | Docker et image de toolchain ; outil hôte si repli explicite | Scripts et dépendances du projet |
 | 3 Dev live | `npm run dev` + proxy preview signé | Livré (UI + daemon) : STU-016, STU-012, STU-017. Le processus reste sur l’hôte, l’UI passe par une URL signée. | Réseau, auth | Exposition LAN |
 | 4 GitHub | Clone HTTPS, push via agent + vault | In: `POST .../git/clone` | git, credentials | Secrets hors vault |
 | 5 Branches évolution | `studio/*`, merge / abandon | In: évolutions API + meta JSON | git | Conflits merge |
@@ -37,7 +37,7 @@ Document de référence pour l’UI [Akasha-code-studio](https://github.com/azer
 | STU-010b | 1 | Désactiver le garde-fou **small-talk** (suppression des réponses « outil ») pour les tâches dont le disque outil est sous `studio-projects/` | Fait (`run_message_via_llm`) |
 | STU-014 | 1 | Liste projets avec **nom lisible** + `PATCH .../projects/:id` pour renommer l’affichage | Fait |
 | STU-015 | 1 | Champ **stack technique** en méta (POST/PATCH, GET méta) ; préfixe injecté dans `POST /api/message` pour les agents `studio_*` | Fait |
-| STU-016 | 3 | UI : onglets **Éditeur** / **Aperçu** / **Logs** ; éditeur **Monaco** (workers via CDN) ; **Play** lance `npm install` si besoin puis `npm run dev` côté daemon ; logs dev via `GET .../preview/logs` | Fait |
+| STU-016 | 3 | UI : onglets **Éditeur** / **Aperçu** / **Logs** ; éditeur **Monaco** (workers via CDN) ; **Play** installe si besoin puis lance le serveur du profil détecté (Node ou Python uv) côté daemon ; logs via `GET .../preview/logs` | Fait |
 | STU-017 | 3 | `GET .../preview/logs`, `POST .../preview/install`, `git_branch` sur GET méta projet | Fait |
 | STU-018 | 1 | Fichier `CODE_STUDIO_PLAN.md` à la création ; garde-fou `write_file` anti-markdown sur fichiers code studio ; vérif post-tâche optionnelle (méta `verify_*`) | Fait |
 | STU-019 | 1 | Tâches studio : prompt système **dédié** (`CODE_STUDIO_APP_CONTEXT` + instructions outils compactes, sans bloc général Akasha TUI/skills) ; `strip_markdown_fences` sur `write_file` ; persistance UI du `task_id` (rechargement) ; `DELETE .../raw` + outil `delete_file` côté agent | Fait |
@@ -92,11 +92,11 @@ Réponse typique : `{ "ack": true, "task_id": "…", "session_id": "…", "messa
 | POST | `/api/studio/projects` | Crée un UUID ; corps optionnel `{ "name": "…", "tech_stack": "…" }` → `{ id, path }` ; initialise `CODE_STUDIO_PLAN.md`, le dossier **`specs/`**, repo Git local et branche primaire `main` (fallback `master` selon environnement) |
 | PATCH | `/api/studio/projects/:id` | Corps : `name`, `tech_stack`, et/ou options de vérif post-tâche : `verify_skip` (bool), `verify_argv` (tableau de chaînes ou `null`), `verify_timeout_sec` (nombre 1–3600 ou `null`) |
 | GET | `/api/studio/projects/:id` | Lit méta + évolutions (`tech_stack`, champs `verify_*`). Garantit une branche primaire (`main`/`master`) au moment de la reprise si le dépôt Git existe. Ajoute `git_branch`, `git_worktree_clean` et **`git_worktree_lines`** (tableau borné, max 200 entrées `{ "status": string, "path": string }` dérivées de `git status --porcelain`, même source que « propre » / indicateur dirty) lorsque le dépôt Git est valide. |
-| POST | `/api/studio/projects/:id/preview/start` | Corps JSON optionnel `{ "force_install": bool, "port": number }`. Exige `package.json` : si `node_modules` absent ou `force_install`, exécute `npm install` (timeout 900 s) ; puis lance en arrière-plan `npm run dev -- --host 127.0.0.1 --port <p>` (tue un serveur précédent pour ce projet). Réponse `{ ok, url, port, proxy_signed, installed?, install? }` où `url` pointe vers `/preview/proxy` signé (TTL court). **Windows** : `npm` est invoqué via `cmd.exe /c` (même logique que le build). Les sorties du serveur dev sont capturées pour `GET .../preview/logs`. |
+| POST | `/api/studio/projects/:id/preview/start` | Corps optionnel `{ "force_install": bool, "port": number }`. Détecte le profil depuis les manifestes : Node (`package.json`, script `dev`) ou Python uv (Streamlit/FastAPI via `pyproject.toml`). Installe les dépendances si nécessaire puis lance le serveur correspondant sur localhost. Réponse `{ ok, url, port, profile?, proxy_signed, installed?, install? }` ; `url` utilise le proxy signé à durée limitée. Les logs sont disponibles via `preview/logs`. |
 | GET | `/api/studio/projects/:id/preview/proxy?token=...` | Vérifie un jeton signé court TTL et redirige vers `http://127.0.0.1:<port>` du projet. Scope projet strict. |
 | POST | `/api/studio/projects/:id/preview/stop` | Arrête le processus dev enregistré pour ce projet (`{ ok, stopped }`). |
 | GET | `/api/studio/projects/:id/preview/logs` | `{ running, log, preview_inactive? }` — tampon borné des stdout/stderr du `npm run dev`. |
-| POST | `/api/studio/projects/:id/preview/install` | Corps `{ "force": bool }`. Exécute `npm install` sans lancer le serveur ; si `force` est faux et `node_modules` existe, `{ ok, skipped, reason }`. |
+| POST | `/api/studio/projects/:id/preview/install` | Corps `{ "force": bool }`. Exécute l’installation du profil détecté (`npm install`, `uv sync`, …) sans démarrer de serveur. Réponse `{ ok, profile?, skipped?, reason?, install? }`. |
 
 #### Aperçu local et outil `browser` (tests agent)
 
@@ -171,7 +171,7 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 |------|----------------------|
 | Liste projets | Création `POST /projects`, sélection charge fichiers + évolutions |
 | Arbre fichiers | **Uniquement dans l’onglet Éditeur** (colonne fichiers) : `GET /files` ; clic → `GET /raw` |
-| Zone centrale | Grille **50/50** (onglets \| chat) avec modes **plein centre** / **plein chat**. Navigation latérale par groupes. Onglets livrés : **Tableau de bord, Kanban, Éditeur, Aperçu, Plan, Design, Branches, Logs serveur, Cockpit, Documentation, Agents, Paramètres**. |
+| Zone centrale | Grille **50/50** (onglets \| chat) sur grand écran ; sous 900 px, la vue adaptative affiche l’espace de travail, avec bascule **Plein chat**. Modes **plein centre** / **plein chat** conservés. Navigation par groupes. Onglets livrés : **Tableau de bord, Kanban, Éditeur, Aperçu, Plan, Design, Branches, Logs serveur, Cockpit, Documentation, Agents, Paramètres**. |
 | Menus en-tête | **Projet** (créer/charger, paramètres stack & politique), **Évolutions Git**, **Import & build**, **Agent / actions** (plan, design, matrice) ; sélecteur d’agent compact + badge de statut daemon dans la barre de navigation. |
 | Tableau de bord | Cycle **demander → suivre → examiner → vérifier → fusionner**, tâche active et prochaine action. Sans projet, le cycle reste visible et demande de créer ou charger un projet. | 
 | Éditeur | **Monaco** + onglets multi-fichiers (brouillon indépendant, confirmation à la fermeture). Ouverture rapide et recherche texte. Diagnostics syntaxiques Monaco ; aucun LSP n’est configuré, le repli est affiché. Sauvegarde `PUT .../raw`. Workers depuis jsDelivr (`monaco-editor@0.52.2`). |
@@ -210,14 +210,14 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Envoi message (mock `/api/message`) | Playwright | Fait |
 | `studio_acceptance_criteria` dans le corps `POST /api/message` (UI Projet) | Playwright (mock) | Fait `e2e/smoke.spec.ts` |
 | Cockpit structuré + action scheduler | Playwright (mock) | Fait |
-| Clone réel HTTPS | Manuel | Fait |
-| Build `npm` sur template | Manuel / CI optionnel | Fait |
-| Évolution + merge sans conflit | Manuel | Fait |
-| Recette fork (`SESSION_FORK_SPEC`) | Manuel | Fait |
-| Scénarios swarm (succès + conflit) | Manuel | Fait (MVP) |
+| Clone réel HTTPS | Manuel | Implémenté ; non réexécuté dans l’audit du 18/10/2026 |
+| Build `npm` sur template | Manuel / CI optionnel | Implémenté ; le build de cette UI est vérifié séparément du build d’un projet via daemon |
+| Évolution + merge sans conflit | Manuel | Implémenté ; non réexécuté dans l’audit du 18/10/2026 |
+| Recette fork (`SESSION_FORK_SPEC`) | Navigateur mocké + manuel | Parcours UI automatisé ; contexte serveur réel non réexécuté le 18/10/2026 |
+| Scénarios swarm (succès + conflit) | Navigateur mocké + daemon | Implémentés dans Akasha (PR #138) ; concurrence réelle multi-worker non mesurée le 18/10/2026 |
 | `studio_evolution_id` résolu → branche | Intégration | Fait (daemon) |
 | Création projet, Git, plan, DESIGN | Intégration daemon réelle | Fait `integration/daemon-studio.test.ts` — pas un mock Playwright |
-| Tâche agent jusqu’au fichier `RECIPE_OK.txt` | Intégration daemon réelle, opt-in | `npm run test:daemon:task` (pose `CODE_STUDIO_E2E_TASK=1`). Échec conservé (statut, `failure_detail`, diff). `npm run test:daemon` ignore ce cas. Les tests Playwright restent mockés |
+| Tâche agent jusqu’au fichier `RECIPE_OK.md` | Intégration daemon réelle, opt-in | `npm run test:daemon:task` (pose `CODE_STUDIO_E2E_TASK=1`). Vérifie le contenu exact et la présence du fichier dans le diff (les `.txt` sont exclus du contrat de snapshot). Rapport dans `test-results/daemon-task-report.json`. `npm run test:daemon` ignore ce cas. Les tests Playwright restent mockés |
 | Playwright (`e2e/`) | Mock `/api` | Ne prouve pas une recette daemon |
 
 ### Given / When / Then (exemple)
@@ -243,10 +243,11 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | Cycle de livraison sur le tableau de bord | Livré | — | — |
 | Revue unifiée (diff, critères, vérif, branche) | Livré | Diff et `acceptance_review` déjà exposés | — |
 | Éditeur multi-fichiers, recherche, diagnostics | Livré | Contrôle de chemin inchangé | Pas de LSP |
-| Contexte avant envoi | Livré | Champs `POST /api/message` existants | Le modèle effectif n’est affiché que s’il est saisi (handoff) |
+| Contexte avant envoi | Livré | Champs `POST /api/message` existants | Agent demandé, permissions et dernier modèle observé ; un handoff saisi ne prouve pas le modèle du prochain tour |
 | Arbre de forks | Livré, à partir du chat local et de `session_fork_created` | Champs fork v1 | `GET /api/session/forks` non requis pour cette UI |
 | Isolation swarm | Panneau cockpit : liste, intégrer, abandonner | Worktree par **sous-tâche** si `AKASHA_STUDIO_WORKTREE_ENABLED=1`. Intégration **explicite** (`POST .../worktrees/:task_id/integrate`). Référence de départ : `base_branch` + `base_sha`. Nettoyage : abandon ou intégration retire le worktree ; le registre mémoire des états terminaux est purgé après 24 h. Concurrence : `AKASHA_STUDIO_MAX_PARALLEL_OPS`. | Désactivé tant que le flag n’est pas posé |
-| Découpage de `App.tsx` | Partiel : domaines extraits, voir `docs/UI_BOUNDARIES.md` | — | `App.tsx` garde la composition et le polling |
+| Découpage de `App.tsx` | Cinq hooks de domaines, voir `docs/UI_BOUNDARIES.md` | — | `App.tsx` garde la composition et la coordination transversale ; le polling vit dans `useStudioTasks` |
+| États UI et reprise | Livré | Composant `AsyncState` | Attente, vide, partiel, hors ligne, erreur, succès ; actions contextuelles et détails accessibles |
 | Recette bout en bout | — | Opt-in documentée ci-dessus | Nécessite un modèle |
 
 ## Gouvernance

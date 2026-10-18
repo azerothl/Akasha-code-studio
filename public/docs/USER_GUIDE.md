@@ -267,7 +267,7 @@ These options control automatic post-task validation behavior for Code Studio ta
 ## 13) Security and Safety Notes
 
 - Studio file operations are constrained to project root by daemon checks.
-- Build/preview commands run on host environment (not full container isolation by default).
+- Builds request container execution by default. Running on the host requires an explicit backend option; preview servers and dependency installation still run on the host.
 - Treat dependencies and scripts as untrusted unless reviewed.
 
 ## 14) Quick Reference
@@ -281,3 +281,15 @@ These options control automatic post-task validation behavior for Code Studio ta
 ---
 
 If you are onboarding a new teammate, start with sections **5**, **6**, and **11** first.
+
+## 15) Loading, empty and recovery states
+
+Connection failures offer **Reconnexion** while keeping local drafts. Project, file, index, preview and build panels show their own loading/error state with a recovery action. A failed send keeps the message in the composer. A failed build shows its exit status and a retry button.
+
+Project search examines all listed text candidates, with up to four concurrent reads. It uses unsaved buffers when available, reports unreadable files, and displays at most 40 matching lines.
+
+The send context is expandable above the composer. It shows the requested agent, the last observed model, permissions, file references and optional context. Model handoff fields are preferences until the server confirms their use.
+
+On narrow windows, the adaptive view displays the workspace. Use **Plein chat** to switch to the conversation, or the sidebar to return to a workspace view.
+
+Worker integration is available only after the worker has finished and you have explicitly acknowledged the review of its isolated directory. Inspect changed and untracked files before choosing **Intégrer**. The root task diff does not cover every child worktree.

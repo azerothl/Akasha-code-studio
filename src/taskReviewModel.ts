@@ -8,6 +8,14 @@ export type ReviewCheck = {
 
 const VERIFY_LINE = /vérif|verify|command_ok|exit code|exit status|npm run|cargo check/i;
 const FAIL_LINE = /fail|erreur|error|non-zero|échou/i;
+const EXIT_CODE = /(?:exit (?:code|status)|code(?: de sortie)?)\s*[:=]?\s*(-?\d+)/i;
+
+function executionState(line: string): ReviewCheckState {
+  const exit = EXIT_CODE.exec(line);
+  if (exit) return Number(exit[1]) === 0 ? "executed" : "failed";
+  if (FAIL_LINE.test(line)) return "failed";
+  return "not_run";
+}
 
 export function redactReviewDetail(text: string): string {
   return text.replace(/((?:api[_-]?key|secret|token|password|bearer)\s*[:=]\s*)(\S+)/gi, "$1[masqué]").slice(0, 220);
@@ -24,15 +32,15 @@ export function classifyReviewChecks(input: {
     if (!trimmed || !VERIFY_LINE.test(trimmed)) continue;
     checks.push({
       label: "Vérification de tâche",
-      state: FAIL_LINE.test(trimmed) ? "failed" : "executed",
+      state: executionState(trimmed),
       detail: redactReviewDetail(trimmed),
     });
   }
   const build = input.buildLog.trim();
-  if (build && build !== "—") {
+  if (build && build !== "—" && build !== "…") {
     checks.push({
-      label: "Build lancé depuis l’interface",
-      state: FAIL_LINE.test(build) ? "failed" : "executed",
+      label: "Build du projet depuis l’interface (indépendant de la tâche)",
+      state: executionState(build),
       detail: redactReviewDetail(build),
     });
   }
@@ -49,7 +57,7 @@ export function classifyReviewChecks(input: {
     checks.push({
       label: "Contrôles",
       state: "not_run",
-      detail: "Aucune commande de vérification n’a été lancée pour cette tâche.",
+      detail: "Aucun résultat de commande disponible pour cette tâche.",
     });
   }
   return checks;

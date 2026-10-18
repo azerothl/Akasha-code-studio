@@ -6,6 +6,8 @@ const runTaskId = "10000000-0000-4000-8000-000000000099";
 let taskGetCount = 0;
 
 async function mockStudioBase(page: Page) {
+  await page.route("**/api/**", route => route.fulfill({ status: 404, json: { error: "unconfigured_fixture" } }));
+  await page.route("**/api/trust-access", route => route.fulfill({ json: { channel_permissions_mode: "ask_me" } }));
   await page.route("**/api/studio/projects", async (route) => {
     if (route.request().method() === "GET") {
       await route.fulfill({

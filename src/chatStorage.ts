@@ -7,6 +7,9 @@ export type ChatMessage = {
   role: "user" | "assistant";
   text: string;
   task_id?: string;
+  task_status?: string;
+  acceptance_criteria?: string;
+  git_branch?: string;
   suggested_actions?: TaskSuggestedAction[];
   /** Diff fichiers / snapshot de tâche (assistant uniquement). */
   studio_diff?: TaskStudioDiffPayload | null;
@@ -60,7 +63,10 @@ function normalizeMessage(m: unknown): ChatMessage | null {
   }
   const fork_parent_task_id = typeof o.fork_parent_task_id === "string" ? o.fork_parent_task_id : undefined;
   const fork_cut_index = typeof o.fork_cut_index === "number" ? o.fork_cut_index : undefined;
-  return { role: o.role, text: o.text, task_id, suggested_actions, studio_diff, fork_parent_task_id, fork_cut_index };
+  return { role: o.role, text: o.text, task_id, task_status: typeof o.task_status === "string" ? o.task_status : undefined,
+    acceptance_criteria: typeof o.acceptance_criteria === "string" ? o.acceptance_criteria : undefined,
+    git_branch: typeof o.git_branch === "string" ? o.git_branch : undefined,
+    suggested_actions, studio_diff, fork_parent_task_id, fork_cut_index };
 }
 
 export function loadChatMessages(projectId: string): ChatMessage[] {
