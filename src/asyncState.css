@@ -58,3 +58,13 @@
 .editor-semantic-tools { flex:0 0 auto; max-height:45%; overflow:auto; padding:.4rem .75rem; border-bottom:1px solid var(--border, #414652); }
 .editor-semantic-tools form { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-block:.5rem; }
 .editor-semantic-tools input:not([type=checkbox]) { max-width:100%; background:var(--surface, #20242b); color:inherit; border:1px solid var(--border, #414652); border-radius:6px; padding:.35rem; }
+
+.task-delivery { margin-block:.75rem; min-width:0; }
+.task-delivery > p, .task-delivery label, .task-delivery code { overflow-wrap:anywhere; }
+.task-delivery details { margin-block:.6rem; }
+.task-delivery details > label { display:flex; flex-direction:column; gap:.25rem; margin-block:.5rem; }
+.task-delivery textarea { min-height:5rem; width:100%; max-width:100%; }
+.task-delivery input:not([type=checkbox]), .task-delivery textarea { background:var(--surface, #20242b); color:inherit; border:1px solid var(--border, #414652); border-radius:6px; padding:.4rem; }
+.task-delivery-files { padding:0; max-height:16rem; overflow:auto; list-style:none; }
+.task-delivery-files li { margin-block:.35rem; }
+.task-delivery-files label { display:flex; gap:.5rem; align-items:baseline; }

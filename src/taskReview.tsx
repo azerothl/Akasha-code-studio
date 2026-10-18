@@ -1,3 +1,4 @@
+import { TaskDeliveryPanel } from "./taskDelivery";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import { useEffect, useState } from "react";
 import * as api from "./api";
@@ -79,6 +80,7 @@ export function TaskReviewPanel({ diff, projectId, gitBranch, acceptanceCriteria
         {loadError ? <AsyncState kind="partial" title="Revue partielle" description="Le diff reste consultable ; certains contrôles sont indisponibles." detail={loadError} action={{ label: "Réessayer", onClick: () => setRetry(value => value + 1) }} /> : null}
         <TaskArtifactsPanel key={diff.task_id} taskId={diff.task_id} />
         <TaskRecoveryPanel key={`recovery-${diff.task_id}`} taskId={diff.task_id} />
+        {projectId ? <TaskDeliveryPanel key={`${projectId}-${diff.task_id}`} projectId={projectId} taskId={diff.task_id} /> : null}
         <h4>Critères envoyés avec la tâche</h4>
         {acceptanceCriteria?.trim() ? <pre className="build-pre">{redactSecrets(acceptanceCriteria)}</pre> : <p className="hint">Aucun critère enregistré pour cette tâche.</p>}
         <ul className="task-review-checks">{checks.map((check, index) => (

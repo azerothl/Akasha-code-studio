@@ -141,7 +141,7 @@ export function CodeEditor({ path, value, onChange, onValidate, projectId, hasDi
         binding.monaco.editor.setModelMarkers(model, "akasha-lsp", diagnostics.map(item => ({
           startLineNumber: item.range.start.line + 1, startColumn: item.range.start.character + 1,
           endLineNumber: item.range.end.line + 1, endColumn: item.range.end.character + 1,
-          message: item.message, severity: item.severity === 1 ? 8 : item.severity === 2 ? 4 : 2,
+          message: item.message, source: "Akasha LSP", severity: item.severity === 1 ? 8 : item.severity === 2 ? 4 : 2,
         })));
         setLspStatus(`${diagnostics.length} diagnostic(s) serveur · F12 : définition · Maj+F12 : références.`);
       }).catch(reason => { if (!controller.signal.aborted) { binding.monaco.editor.setModelMarkers(model, "akasha-lsp", []); setLspStatus(`LSP indisponible : ${String(reason)}`); } });

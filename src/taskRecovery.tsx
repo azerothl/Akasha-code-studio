@@ -55,7 +55,7 @@ export function TaskRecoveryPanel({ taskId }: { taskId: string }) {
           {item.state === "started" ? <Button size="sm" variant="secondary" disabled={busy || data.execution_active} onClick={() => { setOperation(item.operation_id); setDecision(""); setNote(""); }}>Consigner mon inspection</Button> : null}
         </li>)}</ul>
         {operation ? <form onSubmit={event => { event.preventDefault(); void resolve(); }}>
-          <p className="hint">Mettez la tâche en pause et vérifiez ses effets. Cette décision est enregistrée ; elle ne relance aucune commande.</p>
+          <p className="hint">Attendez l’arrêt de la tâche et vérifiez ses effets. Cette décision est enregistrée ; elle ne relance aucune commande.</p>
           <label>Résultat observé <select required value={decision} onChange={event => setDecision(event.target.value)}><option value="">Choisir après inspection</option><option value="applied">Effets appliqués</option><option value="not_applied">Effets non appliqués</option></select></label>
           <label>Constat <textarea required minLength={8} maxLength={2000} value={note} onChange={event => setNote(event.target.value)} /></label>
           <Button type="submit" size="sm" disabled={busy || data.execution_active || !decision || note.trim().length < 8}>Enregistrer la décision</Button>
