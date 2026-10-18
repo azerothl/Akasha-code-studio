@@ -30,6 +30,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
     status: string;
     line: string;
     done: boolean;
+    outcome?: api.TaskOutcome | null;
     /** Étiquettes courtes dérivées des progressions daemon. */
     progressChips?: string[];
   } | null>(null);
@@ -197,12 +198,13 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
             line,
             done: api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status),
             progressChips: progressChips.length ? progressChips : undefined,
+            outcome: t.outcome,
           });
           if (api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status)) {
             if (studioProjectId && api.isTaskTerminal(t.status)) {
               clearActiveTask(studioProjectId);
             }
-            if (api.isTaskTerminal(t.status) && t.status === "completed" && selectedId) {
+            if (api.isTaskTerminal(t.status) && selectedId) {
               try {
                 const fl = await api.listFiles(selectedId);
                 if (signal.aborted) return;
@@ -248,6 +250,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
                 text: summary,
                 task_id: taskId,
                 task_status: t.status,
+                task_outcome: t.outcome,
                 suggested_actions: t.suggested_actions,
               },
             ]);

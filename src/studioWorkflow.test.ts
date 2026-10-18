@@ -128,14 +128,14 @@ describe("task review checks", () => {
     expect(classifyReviewChecks({ progress: ["À faire : npm run test"], missingManual: [], buildLog: "" })[0].state).toBe("not_run");
     expect(classifyReviewChecks({ progress: [], missingManual: [], buildLog: "Code de sortie: 17" })[0].state).toBe("failed");
   });
-  it("separates executed, failed, manual and not-run checks", () => {
+  it("keeps model progress unverified and separates independent build failures and manual checks", () => {
     expect(classifyReviewChecks({ progress: [], missingManual: [], buildLog: "" })[0].state).toBe("not_run");
     const mixed = classifyReviewChecks({
       progress: ["verify command_ok exit code 0"],
       missingManual: ["relire le texte"],
       buildLog: "npm run build failed",
     });
-    expect(mixed.map((row) => row.state)).toEqual(["executed", "failed", "manual"]);
+    expect(mixed.map((row) => row.state)).toEqual(["not_run", "failed", "manual"]);
   });
 });
 

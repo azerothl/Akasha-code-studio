@@ -1,4 +1,4 @@
-import type { TaskStudioDiffPayload, TaskSuggestedAction } from "./api";
+import type { TaskStudioDiffPayload, TaskSuggestedAction, TaskOutcome } from "./api";
 
 /** Persistance locale de l’historique de chat par projet (navigateur). */
 const PREFIX = "akasha-code-studio-chat-v2:";
@@ -8,6 +8,7 @@ export type ChatMessage = {
   text: string;
   task_id?: string;
   task_status?: string;
+  task_outcome?: TaskOutcome | null;
   acceptance_criteria?: string;
   git_branch?: string;
   suggested_actions?: TaskSuggestedAction[];
@@ -66,6 +67,7 @@ function normalizeMessage(m: unknown): ChatMessage | null {
   return { role: o.role, text: o.text, task_id, task_status: typeof o.task_status === "string" ? o.task_status : undefined,
     acceptance_criteria: typeof o.acceptance_criteria === "string" ? o.acceptance_criteria : undefined,
     git_branch: typeof o.git_branch === "string" ? o.git_branch : undefined,
+    task_outcome: o.task_outcome && typeof o.task_outcome === "object" ? o.task_outcome as TaskOutcome : undefined,
     suggested_actions, studio_diff, fork_parent_task_id, fork_cut_index };
 }
 

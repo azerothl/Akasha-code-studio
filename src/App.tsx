@@ -32,6 +32,7 @@ import { redactSecrets, summarizeSendContext } from "./sendContext";
 import { SendContextSummaryPanel } from "./sendContextSummary";
 import { SwarmIsolationPanel } from "./swarmIsolationPanel";
 import { TaskReviewPanel } from "./taskReview";
+import { TaskOutcomeSummary, taskFeedbackKind, taskFeedbackTitle } from "./taskOutcome";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { WorkspaceHeader, WorkspaceTools, MobileWorkspaceNav, ChatWelcome } from "./workspaceChrome";
 import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
@@ -3536,8 +3537,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="chat-activity-area">
-          {taskTrace ? <AsyncState kind={!taskTrace.done ? "loading" : taskTrace.status === "failed" || taskTrace.status === "interrupted" ? "error" : taskTrace.status === "completed" ? "success" : "partial"}
-            title={formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
+          {taskTrace ? <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
+            title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
             secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Reprendre la demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
@@ -3639,6 +3640,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "assistant" && m.task_id ? <TaskOutcomeSummary outcome={m.task_outcome} status={m.task_status} /> : null}
                     {m.role === "user" && m.task_id ? (
                       <Button
                         variant="ghost"
@@ -3939,6 +3941,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   {taskDetailTab === "summary" ? (
                     <section className="task-detail-section">
                       <h4>Résumé</h4>
+                      <TaskOutcomeSummary outcome={taskDetailPayload.task.outcome} status={taskDetailPayload.task.status} />
                       <p>
                         <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                       </p>

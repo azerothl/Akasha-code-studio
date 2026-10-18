@@ -812,6 +812,29 @@ export type TaskSuggestedAction = {
   ui_action?: string;
 };
 
+export type TaskVerification = {
+  kind: string;
+  status: string;
+  id?: string;
+  text?: string;
+  detail?: string;
+  tool?: string;
+  exit_code?: number | null;
+};
+
+/** Résultat de la boucle daemon ; acceptance_verified porte sur les critères configurés. */
+export type TaskOutcome = {
+  schema_version: number;
+  termination_reason: string;
+  status?: string;
+  result: string;
+  reason?: string | null;
+  successful_tool_calls?: number;
+  failed_tool_calls?: number;
+  acceptance_verified?: boolean;
+  verification: TaskVerification[];
+};
+
 export type TaskStatusResponse = {
   task_id: string;
   status: string;
@@ -825,6 +848,7 @@ export type TaskStatusResponse = {
   last_turn_model_used?: string | null;
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
+  outcome?: TaskOutcome | null;
   /** Revue critères post-tâche (optionnel, tâche terminée avec points manuels signalés). */
   acceptance_review?: { missing?: string[] } | null;
   suggested_actions?: TaskSuggestedAction[];
