@@ -31,3 +31,40 @@ Source : [audit des outils et skills](AGENTIC_CAPABILITY_AUDIT.md). Tickets publ
 - [Akasha #143 — évaluations reproductibles](https://github.com/azerothl/Akasha/issues/143) : héberge les parcours de validation transverses ; aucun doublon créé.
 
 Un ticket ouvert ou une correction locale ne signifie pas livraison validée. Les PR et les contrôles exécutés sont à référencer dans chaque ticket concerné.
+
+## Implémentations proposées
+
+Les 14 tickets restent ouverts. Les 12 PR sont des brouillons empilés : leur périmètre de code est proposé à la revue, sans fusion ni validation exhaustive des parcours réels.
+
+| Priorité | Ticket | PR d’implémentation |
+| --- | --- | --- |
+| P0 | Akasha #151 — terminaison | [#162](https://github.com/azerothl/Akasha/pull/162) |
+| P0 | Akasha #152 — rôles | [#162](https://github.com/azerothl/Akasha/pull/162), [#164](https://github.com/azerothl/Akasha/pull/164) |
+| P1 | Akasha #153 — capacités | [#164](https://github.com/azerothl/Akasha/pull/164) |
+| P1 | Akasha #154 — règles/skills | [#164](https://github.com/azerothl/Akasha/pull/164), [#170](https://github.com/azerothl/Akasha/pull/170) pour les nouvelles mutations |
+| P1 | Akasha #155 — sept workflows | [#164](https://github.com/azerothl/Akasha/pull/164) |
+| P1 | Akasha #156 — observation | [#166](https://github.com/azerothl/Akasha/pull/166) |
+| P1 | Akasha #157 — contrats | [#167](https://github.com/azerothl/Akasha/pull/167), [#170](https://github.com/azerothl/Akasha/pull/170) |
+| P1 | Akasha #158 — reprise | [#168](https://github.com/azerothl/Akasha/pull/168), [#170](https://github.com/azerothl/Akasha/pull/170) pour les publications incertaines |
+| P1 | Code Studio #27 — résultats/reprise | [#31](https://github.com/azerothl/Akasha-code-studio/pull/31), [#34](https://github.com/azerothl/Akasha-code-studio/pull/34) |
+| P1 | Code Studio #28 — capacités | [#32](https://github.com/azerothl/Akasha-code-studio/pull/32) |
+| P1 | Code Studio #29 — PTY/preuves | [#33](https://github.com/azerothl/Akasha-code-studio/pull/33) |
+| P2 | Akasha #159 — LSP | [#169](https://github.com/azerothl/Akasha/pull/169), [#170](https://github.com/azerothl/Akasha/pull/170) pour les règles imbriquées |
+| P2 | Akasha #160 — livraison | [#170](https://github.com/azerothl/Akasha/pull/170) |
+| P2 | Code Studio #30 — sémantique/livraison | [#35](https://github.com/azerothl/Akasha-code-studio/pull/35) |
+
+### Ordre de revue et d’intégration
+
+- Daemon : `main` → #162 → #164 → #166 → #167 → #168 → #169 → #170.
+- Interface : `main` → #31 → #32 → #33 → #34 → #35.
+- Chaque PR doit être revue avec les API de son lot daemon ; compiler l’interface seule ne prouve pas la présence du backend correspondant.
+
+### Contrôles et limites
+
+- Compilation Windows du daemon avec `cargo check -p akasha-daemon --no-default-features --features embedded` : réussie sur les branches proposées. Le mode sans fonctionnalités, sans `embedded`, conserve un défaut préexistant distinct.
+- Build TypeScript/Vite : réussi. Avertissement du bundle principal >500 Ko persistant ; xterm est chargé séparément.
+- Les workflows CI automatiques sont consultables dans les PR. Ils ne remplacent pas les recettes MCP/PTY/LSP/publication ou crash/reprise ; le job GPU peut rester en attente.
+- Aucune nouvelle suite locale ni recette réelle des nouvelles capacités n’a été exécutée pendant cette implémentation. Les états de CI et les validations manuelles restent distincts.
+- Première tranche : MCP stdio (un serveur attaché), transports natifs Chat Completions sur trois providers, contrôle de version sur les outils de fichier documentés, reprise de la boucle Studio, LSP sur trois familles de langages, livraison GitHub.com. Les limites complémentaires sont explicites dans les contrats daemon et empêchent une clôture globale comme « solution agentique complète ».
+
+Documents de validation : [P0](validation/agentic-p0-implementation-2026-10-18.md), [capacités/skills](validation/agentic-capabilities-skills-2026-10-18.md), [observation](validation/agentic-observation-2026-10-18.md), [reprise](validation/agentic-recovery-2026-10-18.md), [LSP/livraison](validation/agentic-semantic-delivery-2026-10-18.md).
