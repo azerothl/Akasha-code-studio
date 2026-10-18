@@ -1,7 +1,10 @@
 import { Button } from "./components/ui/button";
+import { useState } from "react";
+import { AgentCapabilitiesTable } from "./agentCapabilities";
 import type { SendContextSummary } from "./sendContext";
 
 type Props = {
+  projectId?: string | null;
   summary: SendContextSummary;
   includeFileRefs: boolean;
   includeCriteria: boolean;
@@ -14,6 +17,7 @@ type Props = {
 };
 
 export function SendContextSummaryPanel({
+  projectId,
   summary,
   includeFileRefs,
   includeCriteria,
@@ -24,8 +28,9 @@ export function SendContextSummaryPanel({
   onIncludeDesign,
   onIncludePolicy,
 }: Props) {
+  const [open, setOpen] = useState(false);
   return (
-    <details className="send-context" aria-label="Contexte envoyé avec le message">
+    <details className="send-context" aria-label="Contexte envoyé avec le message" onToggle={event => setOpen(event.currentTarget.open)}>
       <summary className="send-context-title">Contexte{summary.fileRefs.length ? ` · ${summary.fileRefs.length} fichier(s)` : " et permissions"}</summary>
       <ul className="send-context-list">
         <li>Agent demandé : {summary.agent}</li>
@@ -41,6 +46,7 @@ export function SendContextSummaryPanel({
         <li>Critères : {summary.criteriaIncluded ? "inclus" : "non inclus"}</li>
         <li>Références @fichier : {includeFileRefs ? "incluses" : "retirées"}</li>
       </ul>
+      {open ? <AgentCapabilitiesTable projectId={projectId} codeMode={summary.codeMode} /> : null}
       <div className="send-context-refs">
         {summary.fileRefs.length === 0 ? (
           <p className="hint">Aucune référence @fichier dans le message.</p>

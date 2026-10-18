@@ -10,6 +10,7 @@ const REASONS: Record<string, string> = {
   timeout: "Délai dépassé",
   tool_round_limit: "Limite de tours d’outils atteinte",
   verification_failed: "Vérification en échec",
+  context_unavailable: "Règles ou skills du projet indisponibles",
   subtask_failed: "Sous-tâche non aboutie",
   missing_deliverables: "Livrables manquants",
   failed: "Échec enregistré par le daemon",
