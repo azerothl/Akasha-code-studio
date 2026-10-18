@@ -26,7 +26,7 @@ export function SendContextSummaryPanel({
 }: Props) {
   return (
     <details className="send-context" aria-label="Contexte envoyé avec le message">
-      <summary className="send-context-title">Contexte de l’envoi · {summary.agent} · {summary.permissionMode} · {summary.fileRefs.length} référence(s)</summary>
+      <summary className="send-context-title">Contexte{summary.fileRefs.length ? ` · ${summary.fileRefs.length} fichier(s)` : " et permissions"}</summary>
       <ul className="send-context-list">
         <li>Agent demandé : {summary.agent}</li>
         <li>Mode : {summary.codeMode}</li>

@@ -46,11 +46,17 @@ npm run dev
 
 Open `http://127.0.0.1:5178`.
 
-The daemon status badge in the header should report that the daemon is up.
+The small connection indicator in the header reports the daemon status through its tooltip and accessible label. An offline daemon also displays a reconnect action.
 
 ## 5) Core UI Areas
 
-### Header Menus
+### Workspace and Tools
+
+Code Studio opens on **Discussion**. The sidebar provides **Discussion**, **Fichiers**, **Aperçu**, and **Tâches**. Expand **Plus d’outils** for the dashboard, settings, branches, design, plan, cockpit, documentation, and agent capabilities.
+
+On mobile, the bottom navigation switches between **Discussion / Fichiers / Aperçu**. The menu button opens the other destinations. Only one work area is visible at a time. The file tree collapses after opening a file; expand **Fichiers du projet** to choose another. Search and diagnostics are under **Recherche et diagnostics**.
+
+The project name in the header opens the project chooser. **Outils du projet** (sliders icon) opens the index, Git status and the following menus:
 
 - **Project**
   - Create/load a project.
@@ -94,7 +100,7 @@ The daemon status badge in the header should report that the daemon is up.
 2. (Optional) Set the project technical stack in **Project**.
 3. If needed, clone a repo in **Import & build**.
 4. Start an evolution branch in **Evolutions Git**.
-5. Read the context summary under the composer (files, criteria, design, index, agent, permissions). Remove optional context before sending. Secret-looking values are masked in that summary.
+5. Expand **Contexte et permissions** above the composer (files, criteria, design, index, agent, permissions). Remove optional context before sending. Secret-looking values are masked in that summary. The agent selector is beside **Options**; model handoff controls are inside those options.
 6. Send a task in chat (implementation/refactor/fix) and follow it from the dashboard step **Follow**.
 7. Review the task panel (diff, checks, branch). Dry-run does not write files.
 8. Validate in **Preview** and run build in **Import & build**.

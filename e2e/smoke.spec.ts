@@ -47,7 +47,7 @@ test("empty project state guides creation on a narrow window", async ({ page }) 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/studio/projects", route => route.fulfill({ json: { projects: [] } }));
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Aucun projet chargé" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Votre prochain projet commence ici." })).toBeVisible();
   const createBounds = await page.getByRole("button", { name: "Créer un projet", exact: true }).boundingBox();
   expect(createBounds && createBounds.x >= 0 && createBounds.x + createBounds.width <= 390).toBe(true);
   await page.screenshot({ path: "test-results/ui-mobile-empty.png" });
@@ -62,12 +62,12 @@ test("failed sends preserve the draft and expose recovery details", async ({ pag
   await selectDemoProject(page);
   await page.locator(".chat-form textarea").fill("Conserver cette demande");
   await page.getByRole("button", { name: "Envoyer", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "L’action n’a pas abouti" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Envoi ou action interrompue" })).toBeVisible();
   await expect(page.locator(".chat-form textarea")).toHaveValue("Conserver cette demande");
   await expect(page.getByRole("button", { name: "Envoyer", exact: true })).toBeEnabled();
   await page.screenshot({ path: "test-results/ui-desktop-recovery.png" });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Plein chat", exact: true }).click();
+  await page.getByRole("navigation", { name: "Navigation mobile" }).getByRole("button", { name: "Discussion" }).click();
   await expect(page.locator(".chat-form textarea")).toBeVisible();
   const composerBounds = await page.locator(".chat-form textarea").boundingBox();
   expect(composerBounds && composerBounds.x >= 0 && composerBounds.x + composerBounds.width <= 390).toBe(true);
@@ -87,7 +87,7 @@ test("offline daemon has an explicit reconnect action", async ({ page }) => {
   online = true;
   await page.getByRole("button", { name: "Reconnexion", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Daemon hors ligne" })).toHaveCount(0);
-  await expect(page.getByLabel("Statut du daemon")).toContainText("En ligne");
+  await expect(page.getByRole("img", { name: "Daemon : En ligne" })).toBeVisible();
 });
 
 test("project search examines files after the first 25", async ({ page }) => {
@@ -99,6 +99,7 @@ test("project search examines files after the first 25", async ({ page }) => {
   });
   await page.goto("/");
   await selectDemoProject(page);
+  await page.locator(".editor-inspection > summary").click();
   await page.getByLabel("Recherche dans le projet").fill("only-match-here");
   await page.getByRole("button", { name: "Rechercher", exact: true }).click();
   await expect(page.locator(".editor-search-hits")).toContainText("file-41.txt:1");
@@ -734,6 +735,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function selectDemoProject(page: Page) {
+  await page.getByRole("button", { name: "Outils du projet", exact: true }).click();
   await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
   await page.getByTestId(`studio-project-${demoId}`).click();
@@ -741,6 +743,8 @@ async function selectDemoProject(page: Page) {
 }
 
 async function openSection(page: Page, group: RegExp, destination: RegExp) {
+  if (!await page.getByRole("navigation", { name: "Navigation principale", exact: true }).isVisible()) await page.getByRole("button", { name: "Ouvrir/fermer le menu" }).click();
+  if (!await page.locator(".sidebar-more").evaluate(element => (element as HTMLDetailsElement).open)) await page.locator(".sidebar-more > summary").click();
   const header = page.locator(".sidebar-group-header").filter({ hasText: group });
   if (await header.getAttribute("aria-expanded") !== "true") await header.click();
   await page.locator(".sidebar-item-label").filter({ hasText: destination }).click();
@@ -753,7 +757,8 @@ async function projectSettings(page: Page) {
 
 test("loads layout and lists mocked project", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Code Studio/i })).toBeVisible();
+  await expect(page.locator(".workspace-header")).toBeVisible();
+  await page.getByRole("button", { name: "Outils du projet", exact: true }).click();
   await page.getByTestId("studio-project-settings-menu").click();
   await page.getByTestId("studio-load-project").click();
   await expect(page.getByTestId(`studio-project-${demoId}`)).toBeVisible();
@@ -861,6 +866,7 @@ test("deletes file via DELETE /raw (mocked)", async ({ page }) => {
 test("opens Git worktree popover (empty state)", async ({ page }) => {
   await page.goto("/");
   await selectDemoProject(page);
+  await page.getByRole("button", { name: "Outils du projet", exact: true }).click();
   await page.getByTestId("studio-git-worktree-toggle").click();
   const popover = page.getByRole("dialog", { name: /État du worktree Git/i });
   await expect(popover).toBeVisible();

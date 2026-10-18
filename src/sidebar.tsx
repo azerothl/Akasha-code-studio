@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { CenterTab } from "./studioNavigation";
 import { Button } from "./components/ui/button";
 import { MonoIcon } from "./components/MonoIcon";
 import { StudioNavIcon } from "./components/StudioNavIcon";
+import { Code2, Files, MessageSquare, ListTodo, ChevronDown } from "lucide-react";
 
 export type NavItem = {
   id: string;
@@ -191,9 +192,14 @@ type SidebarProps = {
   onTabSelect: (tab: CenterTab) => void;
   onGroupSelect?: (groupId: string) => void;
   activeGroup?: string | null;
+  chatActive?: boolean;
+  onChatSelect?: () => void;
 };
 
-export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelect, activeGroup }: SidebarProps) {
+export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelect, activeGroup, chatActive, onChatSelect }: SidebarProps) {
+  const navRef = useRef<HTMLElement>(null);
+  const onToggleRef = useRef(onToggle);
+  onToggleRef.current = onToggle;
   const [expandedGroup, setExpandedGroup] = useState<string | null>(activeGroup || getDefaultGroup());
 
   useEffect(() => {
@@ -211,14 +217,26 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
 
   useEffect(() => {
     if (!isOpen) return;
+    const mobile = window.matchMedia("(max-width: 900px)").matches;
+    const previousFocus = document.activeElement;
+    if (mobile) navRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onToggle(false);
+        onToggleRef.current(false);
+      }
+      if (mobile && e.key === "Tab") {
+        const controls = [...(navRef.current?.querySelectorAll<HTMLElement>("button, summary, [tabindex='0']") ?? [])].filter(element => element.getClientRects().length && !element.matches(":disabled"));
+        const first = controls[0], last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
       }
     };
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onToggle]);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (mobile && previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [isOpen]);
 
   const handleGroupClick = (groupId: string) => {
     setExpandedGroup(expandedGroup === groupId ? null : groupId);
@@ -252,7 +270,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
       {isOpen && <div className="sidebar-overlay" onClick={() => onToggle(false)} />}
 
       {/* Sidebar */}
-      <nav className={`sidebar ${isOpen ? "sidebar--open" : ""}`} aria-label="Navigation principale">
+      <nav ref={navRef} className={`sidebar ${isOpen ? "sidebar--open" : ""}`} aria-label="Navigation principale">
         {/* Header */}
         <div className="sidebar-header">
           <div className="sidebar-title">
@@ -272,7 +290,15 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
         </div>
 
         {/* Navigation Groups */}
-        <div className="sidebar-content" role="list">
+        <div className="sidebar-content">
+          <div className="sidebar-primary" aria-label="Espace de travail">
+            <Button variant="ghost" className={`sidebar-item ${chatActive ? "sidebar-item--active" : ""}`} aria-current={chatActive ? "page" : undefined} onClick={onChatSelect}><MessageSquare size={17} aria-hidden="true" />Discussion</Button>
+            {([{ tab: "editor", label: "Fichiers", icon: Files }, { tab: "preview", label: "Aperçu", icon: Code2 }, { tab: "kanban", label: "Tâches", icon: ListTodo }] as const).map(({ tab, label, icon: Icon }) =>
+              <Button key={tab} variant="ghost" className={`sidebar-item ${!chatActive && activeTab === tab ? "sidebar-item--active" : ""}`} aria-current={!chatActive && activeTab === tab ? "page" : undefined} onClick={() => onTabSelect(tab)}><Icon size={17} aria-hidden="true" />{label}</Button>)}
+          </div>
+          <details className="sidebar-more">
+          <summary>Plus d’outils<ChevronDown size={14} aria-hidden="true" /></summary>
+          <div role="list">
           {SIDEBAR_NAV_GROUPS.map((group) => (
             <div key={group.id} className="sidebar-group" role="listitem">
               <Button
@@ -297,7 +323,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
                   {group.items.map((item) => (
                     (() => {
                       const isActionable = Boolean(item.tabs && item.tabs.length > 0);
-                      const isActive = item.tabs?.some((t) => t === activeTab);
+                      const isActive = !chatActive && item.tabs?.some((t) => t === activeTab);
                       return (
                     <Button
                       key={item.id}
@@ -328,6 +354,8 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
               )}
             </div>
           ))}
+          </div>
+          </details>
         </div>
 
         {/* Footer */}
@@ -340,7 +368,7 @@ export function Sidebar({ isOpen, onToggle, activeTab, onTabSelect, onGroupSelec
             variant="secondary"
             size="sm"
           >
-            ◀ Masquer
+            Masquer la navigation
           </Button>
         </div>
       </nav>

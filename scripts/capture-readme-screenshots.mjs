@@ -6,6 +6,7 @@
  */
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 
 const baseURL = process.env.CODE_STUDIO_URL ?? "http://127.0.0.1:5178";
@@ -65,7 +66,7 @@ function json(route, body, status = 200) {
   });
 }
 
-async function installApi(page) {
+export async function installApi(page) {
   const unknown = new Set();
   await page.route("**/api/**", async (route) => {
     const request = route.request();
@@ -341,6 +342,7 @@ const SIDEBAR_GROUPS = {
 };
 
 async function openSidebarItem(page, label) {
+  if (!await page.locator(".sidebar-more").evaluate(element => element.open)) await page.locator(".sidebar-more > summary").click();
   const group = SIDEBAR_GROUPS[label];
   const header = page.getByRole("button", { name: new RegExp(`^${group},`) });
   if ((await header.getAttribute("aria-expanded")) !== "true") {
@@ -454,7 +456,7 @@ async function main() {
   await reviewButton.evaluate((element) => element.scrollIntoView({ block: "center" }));
   await reviewButton.click({ force: true });
   await page.getByText("exécuté").first().waitFor();
-  await page.getByPlaceholder("Décrivez ce que l’agent doit créer ou modifier").fill(
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill(
     "Ajuste le badge dans @src/App.tsx sans toucher au reste.",
   );
   await page.getByRole("button", { name: "Options" }).click();
@@ -473,7 +475,7 @@ async function main() {
   console.log(`Screenshots written to ${outDir}`);
 }
 
-main().catch((error) => {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch((error) => {
   console.error(error);
   process.exit(1);
 });

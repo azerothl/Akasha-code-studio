@@ -17,6 +17,8 @@ La base inclut les PR fusionnées [Code Studio #23](https://github.com/azerothl/
 
 ## Vérifications
 
+Les résultats ci-dessous correspondent au commit `785a4e7`, avant la simplification visuelle demandée ensuite. Cette simplification est décrite dans [DESIGN.md](../DESIGN.md) : compilation et revue visuelle effectuées, sélecteurs existants adaptés, suites de tests non réexécutées.
+
 Exécutions du 18 octobre 2026 sous Windows :
 
 - `npm run test:unit` : **20 tests réussis** dans 4 fichiers.

@@ -33,7 +33,7 @@ import { SendContextSummaryPanel } from "./sendContextSummary";
 import { SwarmIsolationPanel } from "./swarmIsolationPanel";
 import { TaskReviewPanel } from "./taskReview";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
-import { NotificationCenter } from "./components/NotificationCenter";
+import { WorkspaceHeader, WorkspaceTools, MobileWorkspaceNav, ChatWelcome } from "./workspaceChrome";
 import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
 import { InfoTip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
@@ -46,7 +46,7 @@ import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
 import { Checkbox } from "./components/ui/checkbox";
 import { Button } from "./components/ui/button";
-import { Bot, Columns2, PanelLeft, PanelRight, Route, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, ArrowUp, Route, ShieldCheck, Sparkles } from "lucide-react";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -113,8 +113,10 @@ function loadPersistedCenterTab(): CenterTab {
 }
 
 export default function App() {
+  const [workspaceToolsOpen, setWorkspaceToolsOpen] = useState(false);
+  const [editorTreeOpen, setEditorTreeOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) return false;
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) return false;
     if (typeof localStorage !== "undefined") {
       try {
         const saved = localStorage.getItem("akasha-studio-sidebar-open");
@@ -127,8 +129,8 @@ export default function App() {
   });
   const [activeGroup, setActiveGroup] = useState<string>(getDefaultGroup());
   useEffect(() => {
-    const narrowWindow = window.matchMedia("(max-width: 768px)");
-    const onResize = () => { if (narrowWindow.matches) setSidebarOpen(false); };
+    const narrowWindow = window.matchMedia("(max-width: 900px)");
+    const onResize = () => { if (narrowWindow.matches) setSidebarOpen(false); else setEditorTreeOpen(true); };
     narrowWindow.addEventListener("change", onResize);
     return () => narrowWindow.removeEventListener("change", onResize);
   }, []);
@@ -151,7 +153,7 @@ export default function App() {
   const [worktrees, setWorktrees] = useState<api.StudioWorktreeRecord[]>([]);
   const [worktreeBusy, setWorktreeBusy] = useState(false);
   const [worktreeNotice, setWorktreeNotice] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<CenterTab>(() => loadPersistedCenterTab());
+  const [centerTab, setCenterTabState] = useState<CenterTab>(() => loadPersistedCenterTab());
   /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
   const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
   const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
@@ -182,7 +184,11 @@ export default function App() {
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
   /** Répartition centre / chat : équilibré, plein centre, plein chat. */
-  const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("balanced");
+  const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("chat");
+  const setCenterTab = useCallback<React.Dispatch<React.SetStateAction<CenterTab>>>((tab) => {
+    setCenterTabState(tab);
+    setMainSplit(previous => previous === "chat" ? "balanced" : previous);
+  }, []);
   /** Menu header ouvert : null ou id section. */
   const [openHeaderMenu, setOpenHeaderMenu] = useState<null | "project" | "evolutions" | "ops" | "agent">(null);
   const [dashboardProjectSettingsOpen, setDashboardProjectSettingsOpen] = useState(false);
@@ -371,6 +377,9 @@ export default function App() {
     editorDiagnostics,
     confirmDiscardDrafts
   } = useStudioEditor({ selectedId, setStaticPreviewBlobUrl, setError, syncCodeRagAfterFileChange, setStatus, centerTab });
+  useEffect(() => {
+    if (filePath && window.innerWidth <= 900) setEditorTreeOpen(false);
+  }, [filePath]);
 
   const {
     resumeTaskTracking,
@@ -1879,8 +1888,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setSidebarOpen(open);
   };
 
+  useEffect(() => {
+    if (modalCreateOpen || modalLoadOpen || deleteProjectDialog) setWorkspaceToolsOpen(false);
+  }, [modalCreateOpen, modalLoadOpen, deleteProjectDialog]);
+
   const handleSidebarTabSelect = (tab: CenterTab) => {
     setCenterTab(tab);
+    if (window.innerWidth <= 900) setSidebarOpen(false);
     if (mainSplit === "chat") {
       setMainSplit("balanced");
     }
@@ -1892,6 +1906,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
       setActiveGroup(next);
     }
   }, [centerTab, activeGroup]);
+
+  useEffect(() => { setWorkspaceToolsOpen(false); }, [centerTab]);
 
   // Get filtered tabs for the active group
   const visibleTabs = useMemo(
@@ -1911,11 +1927,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         onTabSelect={handleSidebarTabSelect}
         onGroupSelect={setActiveGroup}
         activeGroup={activeGroup}
+        chatActive={mainSplit === "chat"}
+        onChatSelect={() => { setMainSplit("chat"); if (window.innerWidth <= 900) setSidebarOpen(false); }}
       />
       <div className={appClass}>
-      <header className="app-header app-header--compact">
+      <WorkspaceHeader projectName={selectedProject?.name} branch={gitHeadBranch} online={daemonStatus.ok} connectionLabel={daemonChecking ? "connexion…" : daemonStatus.label}
+        split={mainSplit} onSplit={setMainSplit} onProject={() => setModalLoadOpen(true)} onTools={() => setWorkspaceToolsOpen(true)} />
+      <WorkspaceTools open={workspaceToolsOpen} onClose={() => setWorkspaceToolsOpen(false)}>
         <div className="app-header-row">
-          <h1>Code Studio</h1>
+
           {selectedProject ? (
             <div className="app-header-meta" aria-label="Projet et branches Git">
               <span className="app-header-project">
@@ -2099,7 +2119,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </div>
               {selectedProject ? (
                 <p className="hint sidebar-project-hint">
-                  Projet actif : nom, identifiant court et branches dans l’en-tête.
+                  Projet actif : {selectedProject.name}.
                 </p>
               ) : (
                 <p className="hint">Aucun projet chargé — utilisez les actions ci-dessus.</p>
@@ -2300,64 +2320,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <div className="app-header-nav-secondary">
-          <NotificationCenter />
-          <label className="field-inline header-agent-inline">
-            <span className="header-agent-label">Rôle agent</span>
-            <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
-              {AGENT_OPTIONS.map((o) => (
-                <option key={o.value || "auto"} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <span
-            className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
-            title={daemonStatus.detail ?? "Statut du daemon Akasha"}
-            aria-label="Statut du daemon"
-          >
-            Daemon {daemonStatus.label}
-          </span>
-
-          <div className="split-toolbar split-toolbar-group" role="group" aria-label="Répartition éditeur et chat">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`split-toolbar-btn ${mainSplit === "center" ? "is-active" : ""}`}
-              aria-pressed={mainSplit === "center"}
-              aria-label="Plein éditeur"
-              title="Plein éditeur"
-              onClick={() => setMainSplit("center")}
-            >
-              <PanelLeft className="h-4 w-4" aria-hidden />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`split-toolbar-btn ${mainSplit === "balanced" ? "is-active" : ""}`}
-              aria-pressed={mainSplit === "balanced"}
-              aria-label="Vue adaptative"
-              title="Vue partagée sur grand écran, espace de travail sur fenêtre étroite"
-              onClick={() => setMainSplit("balanced")}
-            >
-              <Columns2 className="h-4 w-4" aria-hidden />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`split-toolbar-btn ${mainSplit === "chat" ? "is-active" : ""}`}
-              aria-pressed={mainSplit === "chat"}
-              aria-label="Plein chat"
-              title="Plein chat"
-              onClick={() => setMainSplit("chat")}
-            >
-              <PanelRight className="h-4 w-4" aria-hidden />
-            </Button>
-          </div>
-        </div>
       </nav>
-      </header>
+      </WorkspaceTools>
 
       <div className="app-feedback">
         {daemonChecking ? <AsyncState kind="loading" title="Connexion au daemon…" /> : !daemonStatus.ok ? (
@@ -2366,7 +2330,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             secondaryAction={{ label: "Ouvrir le cockpit", onClick: () => setCenterTab("cockpit") }} />
         ) : null}
         {projectsError && daemonStatus.ok ? <AsyncState kind="error" title="Projets indisponibles" detail={projectsError} action={{ label: "Réessayer", onClick: () => void refreshProjects(), disabled: projectsLoading }} /> : null}
-        {error ? <AsyncState kind="error" title="L’action n’a pas abouti" description="Vos saisies sont conservées. Consultez les détails pour reprendre l’opération." detail={error}
+        {error ? <AsyncState kind="error" title="Envoi ou action interrompue" description="Vos saisies sont conservées." detail={error}
           action={{ label: "Voir les logs", onClick: () => setCenterTab("logs") }} secondaryAction={{ label: "Fermer le message", onClick: () => setError(null) }} /> : null}
       </div>
       <div className={appMainClass}>
@@ -2573,7 +2537,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
             <div className="editor-layout">
-              <div className="editor-file-pane">
+              <details className="editor-file-pane" open={editorTreeOpen} onToggle={event => setEditorTreeOpen(event.currentTarget.open)}>
+                <summary className="editor-tree-toggle">Fichiers du projet</summary>
                 <div className="editor-file-pane-header">
                   <input
                     className="editor-quick-open"
@@ -2630,7 +2595,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </>
                   </div>
                 )}
-              </div>
+              </details>
               <div className="editor-editor-pane">
                 {editorLoading ? <AsyncState kind="loading" title="Ouverture du fichier…" /> : null}
                 {editorError ? <AsyncState kind="error" title="Fichier indisponible" detail={editorError} action={{ label: "Actualiser les fichiers", onClick: () => void loadFiles() }} /> : null}
@@ -2701,6 +2666,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     }}
                   />
                 )}
+                <details className="editor-inspection">
+                <summary>Recherche et diagnostics{editorDiagnostics.length ? ` · ${editorDiagnostics.length}` : ""}</summary>
                 <div className="editor-search">
                   <input
                     className="editor-quick-open"
@@ -2734,6 +2701,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     : "aucun marqueur Monaco. Aucun serveur de langage n’est configuré ; seuls les diagnostics syntaxiques intégrés sont disponibles."}
                   {" "}Les chemins restent contrôlés par le daemon. Les fichiers binaires ne sont pas éditables.
                 </p>
+                </details>
               </div>
             </div>
           </div>
@@ -3560,12 +3528,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
       <div className="chat-column">
         <aside className="chat-panel">
-        {selectedId ? (
-          <div className="sandbox-reminder" role="status">
-            Sandbox disque : <code>{selectedId.slice(0, 8)}…</code> — les outils agent sont limités à ce dossier projet
-            (voir daemon / policy).
-          </div>
-        ) : null}
         {pendingInbox.length > 1 ? (
           <div className="pending-inbox-banner" role="status">
             {pendingInbox.length} tâche(s) en attente de réponse (file globale — ouvrez la bonne dans l’UI principale
@@ -3636,7 +3598,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
-            <div className="pane-title pane-title--compact">Conversation</div>
+            <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>
             <ForkTreePanel
               messages={chat}
               events={forkEvents}
@@ -3672,6 +3634,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 if (nearBottom) setChatHasUnseen(false);
               }}
             >
+              {chat.length === 0 ? <ChatWelcome hasProject={Boolean(selectedId)} onCreate={() => setModalCreateOpen(true)} onLoad={() => setModalLoadOpen(true)} onPrompt={text => { setChatInput(text); document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus(); }} /> : null}
               {chat.map((m, i) => (
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
@@ -3746,7 +3709,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </section>
         </div>
 
-        <div className="chat-panel-footer">
+        {selectedId ? <div className="chat-panel-footer">
           {selectedId ? (
             <SendContextSummaryPanel
               summary={summarizeSendContext({
@@ -3779,9 +3742,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="input-group input-group--textarea chat-form">
             <Textarea
               className="input-group-field input-group-field--textarea"
+              aria-label="Message à l’agent"
+              rows={3}
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
+              placeholder={selectedId ? "Demandez une modification… @ pour citer un fichier" : "Ouvrez un projet pour commencer"}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
@@ -3790,12 +3755,31 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               }}
             />
             <div className="input-group-append">
-              <Button variant="default" disabled={!selectedId || chatSendBusy} onClick={() => void onSendChat()}>
-                {chatSendBusy ? "Envoi…" : "Envoyer"}
+              <Button variant="default" className="composer-send" aria-label={chatSendBusy ? "Envoi en cours" : "Envoyer"} title="Envoyer (Ctrl + Entrée)" disabled={!selectedId || chatSendBusy || !chatInput.trim()} onClick={() => void onSendChat()}>
+                <ArrowUp size={19} aria-hidden="true" />
               </Button>
             </div>
           </div>
           <div className="chat-controls-row">
+            <label className="composer-agent"><span className="sr-only">Rôle agent</span><Bot size={15} aria-hidden="true" /><Select aria-label="Rôle agent" value={agent} onChange={event => setAgent(event.target.value)}>{AGENT_OPTIONS.map(option => <option key={option.value || "auto"} value={option.value}>{option.label}</option>)}</Select></label>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              onClick={() => setChatOptionsOpen((v) => !v)}
+              aria-expanded={chatOptionsOpen}
+              title="Afficher ou masquer les options avancées"
+            >
+              {chatOptionsOpen ? "Masquer options" : "Options"}
+            </Button>
+            <p className="kbd-hint">
+              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
+            </p>
+          </div>
+          {chatOptionsOpen ? (
+            <div className="chat-options-panel">
+              <p className="hint">Les outils de l’agent restent limités au dossier de ce projet. Consultez le contexte pour les permissions effectives.</p>
             <Button
               variant="ghost"
               size="sm"
@@ -3819,21 +3803,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             >
               Reprendre avec un autre modèle
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="chat-options-toggle"
-              onClick={() => setChatOptionsOpen((v) => !v)}
-              title="Afficher ou masquer les options avancées"
-            >
-              {chatOptionsOpen ? "Masquer options" : "Options"}
-            </Button>
-            <p className="kbd-hint">
-              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
-            </p>
-          </div>
-          {chatOptionsOpen ? (
-            <div className="chat-options-panel">
               <label className="field">
                 <span>Livraison message (tâche en cours)</span>
                 <div className="input-group field-input-group">
@@ -3917,10 +3886,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </details>
             </div>
           ) : null}
-        </div>
+        </div> : null}
       </aside>
       </div>
     </div>
+      <MobileWorkspaceNav active={mainSplit === "chat" ? "chat" : centerTab === "editor" || centerTab === "preview" ? centerTab : null} onSelect={view => { if (view === "chat") setMainSplit("chat"); else { setCenterTab(view); setMainSplit("center"); } }} />
 
       {taskDetailForId ? (
         <div
