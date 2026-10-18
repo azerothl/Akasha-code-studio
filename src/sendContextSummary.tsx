@@ -25,15 +25,16 @@ export function SendContextSummaryPanel({
   onIncludePolicy,
 }: Props) {
   return (
-    <section className="send-context" aria-label="Contexte envoyé avec le message">
-      <p className="send-context-title">Contexte effectif</p>
+    <details className="send-context" aria-label="Contexte envoyé avec le message">
+      <summary className="send-context-title">Contexte{summary.fileRefs.length ? ` · ${summary.fileRefs.length} fichier(s)` : " et permissions"}</summary>
       <ul className="send-context-list">
-        <li>Agent : {summary.agent}</li>
+        <li>Agent demandé : {summary.agent}</li>
         <li>Mode : {summary.codeMode}</li>
         <li>
-          Modèle : {summary.modelLabel || "non indiqué"}
+          Modèle du dernier tour : {summary.modelLabel || "indisponible avant le premier tour"}
           {summary.providerLabel ? ` · ${summary.providerLabel}` : ""}
         </li>
+        <li>Le prochain modèle dépend du routage et des préférences de session confirmées.</li>
         <li>Permissions : {summary.permissionMode}</li>
         <li>Index code : {summary.ragLabel}</li>
         <li>Design : {summary.designIncluded ? "inclus" : "non inclus"}</li>
@@ -67,6 +68,6 @@ export function SendContextSummaryPanel({
           {includePolicy ? "Retirer consigne" : "Inclure consigne"}
         </Button>
       </div>
-    </section>
+    </details>
   );
 }

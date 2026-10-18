@@ -67,7 +67,7 @@ Les champs existants `POST /api/message` incluent déjà `session_id`, `studio_p
 2. Fork depuis le **premier** message utilisateur ; vérifier que la nouvelle tâche ne contient pas la réponse postérieure au point de coupure.
 3. Vérifier que l’ancienne tâche reste consultable via son `task_id`.
 
-Résultat actuel: recette validée sur le flux v1 (fork UI + cut de contexte serveur + trace parent/cut).
+Validation du 18/10/2026 : parcours UI et payload de fork vérifiés avec API simulée ; le cut de contexte serveur réel n’a pas été réexécuté dans ce passage.
 
 ## Références
 
@@ -90,7 +90,7 @@ Objectif v2 : visualiser explicitement la filiation des branches au lieu d'une s
 
 ## v2 — notes d'implémentation
 
-**Statut (2026-06-06)** : v1 livrée ; v2 **partielle** — traçabilité serveur prête, UI arbre et endpoints dédiés **non implémentés**.
+**Statut (2026-10-18)** : v1 livrée ; le panneau UI reconstruit la hiérarchie locale, affiche les statuts disponibles et ouvre les messages conservés sans les tronquer. Les endpoints de graphe dédiés restent planifiés et ne sont pas requis par ce panneau.
 
 | Composant | Statut | Détail |
 |-----------|--------|--------|

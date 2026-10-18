@@ -4,6 +4,7 @@ import { loader } from "@monaco-editor/react";
 import { NotificationProvider } from "./notifications/NotificationContext";
 import App from "./App";
 import "./index.css";
+import "./workspace.css";
 
 /** Workers chargés depuis le CDN (évite les soucis de bundle Rollup avec monaco-editor ESM). */
 loader.config({

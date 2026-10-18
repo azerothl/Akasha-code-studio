@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bufferDirty, filterPaths, searchTextFiles, upsertBuffer } from "./editorSession";
+import { bufferDirty, filterPaths, markBufferSaved, searchTextFiles, upsertBuffer } from "./editorSession";
 import { resolveDeliveryFocus } from "./deliveryCycle";
 import { buildForkNodes } from "./forkTree";
 import { parseAtFileRefs, redactSecrets, summarizeSendContext } from "./sendContext";
@@ -124,6 +124,10 @@ describe("fork tree", () => {
 });
 
 describe("task review checks", () => {
+  it("does not treat a proposed command as execution evidence or a nonzero exit as success", () => {
+    expect(classifyReviewChecks({ progress: ["À faire : npm run test"], missingManual: [], buildLog: "" })[0].state).toBe("not_run");
+    expect(classifyReviewChecks({ progress: [], missingManual: [], buildLog: "Code de sortie: 17" })[0].state).toBe("failed");
+  });
   it("separates executed, failed, manual and not-run checks", () => {
     expect(classifyReviewChecks({ progress: [], missingManual: [], buildLog: "" })[0].state).toBe("not_run");
     const mixed = classifyReviewChecks({
@@ -133,4 +137,18 @@ describe("task review checks", () => {
     });
     expect(mixed.map((row) => row.state)).toEqual(["executed", "failed", "manual"]);
   });
+});
+
+it("keeps text typed while a save is in flight as a dirty draft", () => {
+  const buffers = [{ path: "app.ts", text: "newer text", savedText: "old text", binary: false }];
+  const saved = markBufferSaved(buffers, "app.ts", "sent text");
+  expect(saved[0].text).toBe("newer text");
+  expect(saved[0].savedText).toBe("sent text");
+  expect(bufferDirty(saved[0])).toBe(true);
+});
+
+it("redacts headers, quoted secrets, provider tokens and URL credentials", () => {
+  const output = redactSecrets('Authorization: Bearer my-secret\npassword="two words" token=hf_123456789abcdef https://user:pwd@example.test');
+  for (const value of ["my-secret", "two words", "hf_123456789abcdef", "user:pwd"]) expect(output).not.toContain(value);
+  expect(output).toContain("[masqué]");
 });

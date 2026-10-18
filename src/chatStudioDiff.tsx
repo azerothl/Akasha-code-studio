@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as api from "./api";
 import type { TaskStudioDiffPayload } from "./api";
 import { Button } from "./components/ui/button";
@@ -8,6 +8,7 @@ type Props = {
   diff: TaskStudioDiffPayload;
   projectId: string | null;
   onApplied?: () => void;
+  disabled?: boolean;
 };
 
 const STATUS_SLUG_MAP: Record<string, string> = {
@@ -30,12 +31,14 @@ function diffStatusSlug(status: string): string {
 }
 
 /** Bloc pliable sous une réponse assistant : fichiers modifiés + diff unifié. */
-export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
+export function ChatStudioDiffPanel({ diff, projectId, onApplied, disabled = false }: Props) {
   const [open, setOpen] = useState(false);
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
-  const [appliedSignature, setAppliedSignature] = useState<string | null>(null);
+  const [appliedHunks, setAppliedHunks] = useState<Set<string>>(new Set());
+  const [verifiedSignature, setVerifiedSignature] = useState<string | null>(null);
+  const applyLock = useRef(false);
   if (!diff.files.length) return null;
 
   const splitHunks = (patch: string): { preamble: string[]; hunks: string[] } => {
@@ -70,7 +73,7 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
       const { preamble, hunks } = splitHunks(file.diff);
       const selected = hunks
         .map((h, idx) => ({ h, idx }))
-        .filter(({ idx }) => selection[`${file.path}::${idx}`] ?? false)
+        .filter(({ idx }) => !file.truncated && !appliedHunks.has(`${file.path}::${idx}`) && (selection[`${file.path}::${idx}`] ?? false))
         .map((x) => x.h);
       if (selected.length === 0) continue;
       out.push(`${preamble.join("\n")}\n${selected.join("\n")}\n`);
@@ -79,32 +82,42 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
   };
 
   const onApply = async (dryRun: boolean) => {
-    if (!projectId) return;
+    if (!projectId || disabled || applyLock.current) return;
     const patches = buildSelectedPatches();
     if (patches.length === 0) {
       setResultMsg("Sélectionnez au moins un hunk.");
       return;
     }
+    if (!dryRun && verifiedSignature !== patches.join("\n")) {
+      setResultMsg("Vérifiez cette sélection avec le dry-run avant de l’appliquer.");
+      return;
+    }
+    applyLock.current = true;
+    const selectedKeys = Object.keys(selection).filter(key => selection[key]);
     setBusy(true);
     setResultMsg(null);
     try {
       const r = await api.applyStudioPatchHunks(projectId, { patches, dry_run: dryRun });
+      if (dryRun) setVerifiedSignature(r.ok ? patches.join("\n") : null);
+      if (!dryRun && r.applied > 0) {
+        setAppliedHunks(previous => new Set([...previous, ...selectedKeys]));
+        setVerifiedSignature(null);
+        setSelection({});
+        onApplied?.();
+      }
       if (r.ok) {
         setResultMsg(
           dryRun
             ? `Dry-run OK (${r.applied}/${r.requested}) : aucun fichier écrit.`
             : `Patch appliqué (${r.applied}/${r.requested}).`,
         );
-        if (!dryRun) {
-          setAppliedSignature(patches.join("\n"));
-          onApplied?.();
-        }
       } else {
         setResultMsg(`Partiel: ${r.applied}/${r.requested}. ${r.errors.join(" | ")}`);
       }
     } catch (e) {
       setResultMsg(String(e));
     } finally {
+      applyLock.current = false;
       setBusy(false);
     }
   };
@@ -116,6 +129,7 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
         size="sm"
         className="chat-studio-diff-toggle"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => setOpen((v) => !v)}
       >
         Fichiers modifiés ({diff.files.length})
@@ -124,16 +138,16 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
       {open ? (
         <div className="chat-studio-diff-body">
           <p className="hint">
-            Vérifier simule l’application. Appliquer écrit les hunks cochés. Si l’agent a déjà modifié ces fichiers, une nouvelle application des mêmes hunks est refusée ici.
+            Vérifier simule l’application. Appliquer écrit les hunks cochés après un dry-run réussi. Les hunks appliqués ou tronqués ne peuvent pas être réappliqués dans cette revue.
           </p>
           <div className="chat-studio-diff-actions">
-            <Button variant="secondary" size="sm" disabled={busy || !projectId} onClick={() => void onApply(true)}>
+            <Button variant="secondary" size="sm" disabled={disabled || busy || !projectId} onClick={() => void onApply(true)}>
               Vérifier (dry-run)
             </Button>
             <Button
               variant="default"
               size="sm"
-              disabled={busy || !projectId || (appliedSignature !== null && appliedSignature === buildSelectedPatches().join("\n"))}
+              disabled={disabled || busy || !projectId || verifiedSignature === null || verifiedSignature !== buildSelectedPatches().join("\n")}
               onClick={() => void onApply(false)}
             >
               Appliquer sélection
@@ -158,7 +172,8 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
                         <div key={key} className="chat-studio-diff-hunk">
                           <label className="field-inline">
                             <Checkbox
-                              checked={checked}
+                              checked={checked && !appliedHunks.has(key)}
+                              disabled={disabled || busy || f.truncated || appliedHunks.has(key)}
                               onChange={(e) =>
                                 setSelection((prev) => ({
                                   ...prev,
@@ -166,7 +181,7 @@ export function ChatStudioDiffPanel({ diff, projectId, onApplied }: Props) {
                                 }))
                               }
                             />
-                            <span>Hunk #{idx + 1}</span>
+                            <span>Hunk #{idx + 1}{appliedHunks.has(key) ? " — déjà appliqué" : f.truncated ? " — tronqué, lecture seule" : ""}</span>
                           </label>
                           <pre className="chat-studio-diff-pre">{h}</pre>
                         </div>

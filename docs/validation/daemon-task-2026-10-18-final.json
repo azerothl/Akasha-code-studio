@@ -1,0 +1,194 @@
+{
+  "at": "2026-10-18T10:03:19.219Z",
+  "daemonUrl": "http://127.0.0.1:3891",
+  "projectId": "9224a360-8491-4555-88a2-fcbe5bc6dd55",
+  "taskId": "78e6a50e-7661-4ac1-917d-71a844220eb1",
+  "status": "completed",
+  "progress": [
+    {
+      "message": "Le fichier `RECIPE_OK.md`",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la rac",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RE",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECI",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`)",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne `",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne `recipe",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne `recipe-ok",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne `recipe-ok`.",
+      "progress_pct": 50,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne `recipe-ok`.",
+      "progress_pct": 100,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet (`workspace:/RECIPE_OK.md`) et contient exactement la ligne `recipe-ok`.",
+      "progress_pct": 100,
+      "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+    },
+    {
+      "message": "No response from the model. Check Ollama or your LLM provider.",
+      "progress_pct": 100,
+      "task_id": "34d148fa-ad94-4a50-ad44-4a3ac7ae6c25"
+    }
+  ],
+  "diffStatus": 200,
+  "diff": {
+    "captured_at": "2026-10-18T10:02:20.828068600+00:00",
+    "files": [
+      {
+        "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
+        "path": "RECIPE_OK.md",
+        "status": "added",
+        "truncated": false
+      }
+    ],
+    "task_id": "78e6a50e-7661-4ac1-917d-71a844220eb1"
+  },
+  "verifiedFile": {
+    "path": "RECIPE_OK.md",
+    "content": "recipe-ok"
+  },
+  "cleanedProjects": [
+    "9224a360-8491-4555-88a2-fcbe5bc6dd55"
+  ]
+}

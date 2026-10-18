@@ -1,5 +1,6 @@
 import type * as api from "./api";
 import { Button } from "./components/ui/button";
+import { AsyncState } from "./asyncState";
 
 // Helper to check if project is StudioProjectMeta
 function isMeta(project: api.StudioProject | api.StudioProjectMeta): project is api.StudioProjectMeta {
@@ -7,6 +8,12 @@ function isMeta(project: api.StudioProject | api.StudioProjectMeta): project is 
 }
 
 type Props = {
+  loading?: boolean;
+  onCreateProject?: () => void;
+  onLoadProject?: () => void;
+  codeRagError?: string | null;
+  codeRagBusy?: boolean;
+  onReindex?: () => void;
   project: api.StudioProject | api.StudioProjectMeta | null;
   codeRagStatus?: api.CodeRagStatus;
   activeTask?: { taskId: string; startedAt: number } | null;
@@ -66,6 +73,7 @@ function timeSinceInMinutes(time: string): string {
 }
 
 export function ProjectDashboard({
+  loading, onCreateProject, onLoadProject, codeRagError, codeRagBusy, onReindex,
   project,
   codeRagStatus,
   activeTask,
@@ -78,16 +86,13 @@ export function ProjectDashboard({
   onOpenBranches,
   onOpenPreview,
 }: Props) {
+  if (loading) return <AsyncState kind="loading" title="Chargement des projets…" />;
   if (!project) {
     return (
       <div className="project-dashboard project-dashboard--empty">
-        <div className="dashboard-empty-state">
-          <div className="dashboard-empty-icon">📁</div>
-          <h3>Aucun projet chargé</h3>
-          <p className="hint">
-            Créez un nouveau projet ou chargez un projet existant depuis le menu « Projet » en haut à gauche.
-          </p>
-        </div>
+        <AsyncState kind="empty" title="Aucun projet chargé" description="Créez un projet ou reprenez un projet existant pour commencer."
+          action={onCreateProject ? { label: "Créer un projet", onClick: onCreateProject } : undefined}
+          secondaryAction={onLoadProject ? { label: "Charger un projet", onClick: onLoadProject } : undefined} />
       </div>
     );
   }
@@ -170,7 +175,7 @@ export function ProjectDashboard({
             <h3>Index Code</h3>
           </div>
           <div className="dashboard-card-body">
-            <p className="hint">{ragStatus}</p>
+            {codeRagBusy ? <AsyncState kind="loading" title="Actualisation de l’index…" /> : codeRagError ? <AsyncState kind="error" title="Index indisponible" detail={codeRagError} action={onReindex ? { label: "Réessayer l’indexation", onClick: onReindex } : undefined} /> : codeRagStatus?.status === "absent" || codeRagStatus?.status === "stale" ? <AsyncState kind={codeRagStatus.status === "absent" ? "empty" : "partial"} title={codeRagStatus.status === "absent" ? "Aucun index de code" : "Index à actualiser"} description="L’index aide l’agent à retrouver les fichiers pertinents." action={onReindex ? { label: "Indexer le projet", onClick: onReindex } : undefined} /> : <p className="hint">{ragStatus}</p>}
             {codeRagStatus?.status === "ready" && codeRagStatus.built_at && (
               <p className="hint dashboard-hint-secondary">Mis à jour {timeSinceInMinutes(codeRagStatus.built_at)}</p>
             )}

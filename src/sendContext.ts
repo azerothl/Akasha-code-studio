@@ -7,7 +7,13 @@ export type FileRefStatus = {
 };
 
 export function redactSecrets(text: string): string {
-  return text.replace(SECRET, "$1[masqué]");
+  return text
+    .replace(/(authorization\s*[:=]\s*)[^\r\n,;]+/gi, "$1[masqué]")
+    .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [masqué]")
+    .replace(/((?:api[_-]?key|secret|token|password)\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi, "$1[masqué]")
+    .replace(SECRET, "$1[masqué]")
+    .replace(/\b(?:sk-[a-zA-Z0-9_-]{8,}|gh[pousr]_[a-zA-Z0-9_]{8,}|hf_[a-zA-Z0-9]{8,})\b/g, "[masqué]")
+    .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[masqué]@");
 }
 
 export function parseAtFileRefs(message: string): string[] {

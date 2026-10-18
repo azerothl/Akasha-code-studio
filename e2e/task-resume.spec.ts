@@ -6,6 +6,8 @@ const runTaskId = "10000000-0000-4000-8000-000000000099";
 let taskGetCount = 0;
 
 async function mockStudioBase(page: Page) {
+  await page.route("**/api/**", route => route.fulfill({ status: 404, json: { error: "unconfigured_fixture" } }));
+  await page.route("**/api/trust-access", route => route.fulfill({ json: { channel_permissions_mode: "ask_me" } }));
   await page.route("**/api/studio/projects", async (route) => {
     if (route.request().method() === "GET") {
       await route.fulfill({
@@ -139,18 +141,9 @@ test.beforeEach(async ({ page }) => {
   taskGetCount = 0;
   await mockStudioBase(page);
 
-  await page.route(`**/api/tasks/${runTaskId}*`, async (route) => {
+  await page.route(url => url.pathname === `/api/tasks/${runTaskId}`, async (route) => {
     if (route.request().method() !== "GET") {
       await route.continue();
-      return;
-    }
-    const url = route.request().url();
-    if (url.includes("/studio-diff")) {
-      await route.fulfill({
-        status: 404,
-        contentType: "application/json",
-        body: JSON.stringify({ error: "no_snapshot", task_id: runTaskId }),
-      });
       return;
     }
     taskGetCount += 1;
@@ -172,16 +165,22 @@ test.beforeEach(async ({ page }) => {
 
 test("reload resumes polling until task completes", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
   await page.locator(".chat-form textarea").fill("resume e2e");
   await page.getByRole("button", { name: "Envoyer" }).click();
-  await expect(page.getByText(/Requête acceptée|Tâche en cours|en cours/i).first()).toBeVisible({ timeout: 8000 });
+  const activity = page.locator(".chat-activity-area");
+  await expect(activity.getByRole("heading", { name: /^En cours/ })).toBeVisible({ timeout: 8000 });
+  const activeTaskKey = `akasha-code-studio-task-v1:${demoId}`;
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) || "null")?.taskId, activeTaskKey)).toBe(runTaskId);
+  const requestsBeforeReload = taskGetCount;
   await page.reload();
-  await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
-  await expect(page.getByText(/reprise après rechargement|Mock — en cours|terminé/i).first()).toBeVisible({
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  await expect(activity.getByText(/reprise après rechargement|Mock — en cours|terminé/i).first()).toBeVisible({
     timeout: 12_000,
   });
   await expect(page.locator(".bubble.assistant").getByText(/terminé|Mock/i).first()).toBeVisible({
     timeout: 20_000,
   });
+  expect(taskGetCount).toBeGreaterThan(requestsBeforeReload);
+  expect(await page.evaluate(key => localStorage.getItem(key), activeTaskKey)).toBeNull();
 });

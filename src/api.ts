@@ -608,19 +608,24 @@ export async function runBuild(
   projectId: string,
   argv: string[],
   timeoutSec?: number,
-): Promise<{ exit_code: number | null; stdout?: string; stderr?: string; error?: string }> {
+): Promise<{ exit_code: number | null; stdout?: string; stderr?: string; error?: string; execution_mode?: string }> {
   const r = await fetch(api(`/api/studio/projects/${projectId}/build`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ argv, timeout_sec: timeoutSec ?? 600 }),
   });
-  if (!r.ok) throw new Error(`runBuild ${r.status}`);
-  return r.json() as Promise<{
+  const text = await r.text();
+  let payload: Record<string, unknown>;
+  try { payload = JSON.parse(text); } catch { throw new Error(`Build HTTP ${r.status}: ${text}`); }
+  // A failed command returns HTTP 500 with valid exit/output data. Keep that evidence.
+  if (!r.ok && !("exit_code" in payload)) throw new Error(`Build HTTP ${r.status}: ${text}`);
+  return payload as {
     exit_code: number | null;
     stdout?: string;
     stderr?: string;
     error?: string;
-  }>;
+    execution_mode?: string;
+  };
 }
 
 export async function listEvolutions(projectId: string): Promise<Evolution[]> {
@@ -817,6 +822,7 @@ export type TaskStatusResponse = {
   last_turn_tokens_in?: number;
   last_turn_tokens_out?: number;
   last_turn_cost_usd?: number;
+  last_turn_model_used?: string | null;
   /** Dernière progression utile pour failed/cancelled (API daemon, rétrocompatible). */
   failure_detail?: string | null;
   /** Revue critères post-tâche (optionnel, tâche terminée avec points manuels signalés). */
@@ -1292,7 +1298,7 @@ export type DaemonStatus = {
 /** Lightweight daemon health probe for header badge. */
 export async function fetchDaemonStatus(): Promise<DaemonStatus> {
   try {
-    const r = await fetch(api("/api/status"));
+    const r = await fetch(api("/api/status"), { signal: AbortSignal.timeout(5000) });
     if (!r.ok) return { ok: false, label: "Hors ligne", detail: `HTTP ${r.status}` };
     const text = (await r.text()).trim();
     if (!text) return { ok: true, label: "En ligne" };

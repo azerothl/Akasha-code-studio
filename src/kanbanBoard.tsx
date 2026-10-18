@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
+import { AsyncState } from "./asyncState";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Textarea } from "./components/ui/textarea";
@@ -564,7 +565,7 @@ export function KanbanBoard({
   }
 
   if (!projectId) {
-    return <div className="muted">Sélectionnez un projet pour afficher le Kanban.</div>;
+    return <AsyncState kind="empty" title="Choisissez un projet" description="Créez ou chargez un projet depuis le menu Projet pour organiser ses tâches." />;
   }
 
   return (
@@ -594,8 +595,9 @@ export function KanbanBoard({
       </div>
       {playAllStatus ? <div className="muted">{playAllStatus}</div> : null}
 
-      {loading && <div className="muted">Chargement tickets…</div>}
-      {error && <div className="error">{error}</div>}
+      {loading && tickets.length === 0 ? <AsyncState kind="loading" title="Chargement des tickets…" /> : null}
+      {error ? <AsyncState kind="error" title="Tickets indisponibles" detail={error} action={{ label: "Réessayer", onClick: () => void load(), disabled: loading }} /> : null}
+      {!loading && !error && tickets.length === 0 ? <AsyncState kind="empty" title="Aucun ticket dans ce projet" description="Ajoutez une première tâche avec son résultat attendu." action={{ label: "Créer le premier ticket", onClick: () => setShowCreateModal(true) }} /> : null}
 
       <div className="kanban-columns-grid">
         {COLUMNS.map((col) => (

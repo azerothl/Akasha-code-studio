@@ -1,60 +1,39 @@
+import type { CenterTab } from "./studioNavigation";
+import { formatTaskStatusFr, looksLikeStructuredRefusal, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
+import { useStudioProjects } from "./hooks/useStudioProjects";
+import { AsyncState } from "./asyncState";
+import { useStudioGit } from "./hooks/useStudioGit";
+import { useStudioPreview } from "./hooks/useStudioPreview";
+import { useStudioEditor } from "./hooks/useStudioEditor";
+import { useStudioTasks } from "./hooks/useStudioTasks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
-import { loadChatMessages, saveChatMessages, type ChatMessage } from "./chatStorage";
-import { clearActiveTask, loadActiveTask, saveActiveTask } from "./taskStorage";
-import { clearLastProjectId, getLastProjectId, setLastProjectId } from "./lastProjectStorage";
-import {
-  STACK_PRESET_CUSTOM,
-  STACK_PRESET_NONE,
-  type StackAddonCategoryId,
-  composeStackString,
-  emptyStackAddons,
-} from "./stackConfig";
+import { type ChatMessage } from "./chatStorage";
+import { saveActiveTask } from "./taskStorage";
+
+import { STACK_PRESET_CUSTOM, STACK_PRESET_NONE, type StackAddonCategoryId, composeStackString, emptyStackAddons } from "./stackConfig";
 import { AgentCapabilitiesTable } from "./agentCapabilities";
 import { CodeEditor } from "./codeEditor";
 import { DevServerLogView } from "./devServerLogView";
-import { inferActionRisk, riskLabel, type ActionRiskLevel } from "./inferActionRisk";
+import { riskLabel } from "./inferActionRisk";
 import { MarkdownBlock } from "./markdownBlock";
 import { CODE_MODE_OPTIONS, loadPersistedCodeMode, persistCodeMode } from "./studioConstants";
 import type { StudioCodeMode } from "./api";
-import {
-  buildDesignPolicyHint,
-  DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN,
-  DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN,
-  designTokensToCss,
-  designTokensToJson,
-  normalizeDesignDoc,
-  parseDesignDoc,
-} from "./designDoc";
+import { buildDesignPolicyHint, DESIGN_DOC_AGENT_STRUCTURE_SPEC_EN, DESIGN_DOC_AGENT_STUDIO_HINT_COMPACT_EN, designTokensToCss, designTokensToJson, normalizeDesignDoc, parseDesignDoc } from "./designDoc";
 import { DesignVisualBoard } from "./designVisualBoard";
 import { EditorFileTree } from "./editorFileTree";
-import {
-  TaskDetailEventsGrouped,
-  TaskDetailProgressView,
-  TaskDetailWorkflowView,
-  mergeProgressWithEventProgress,
-} from "./taskDetailUi";
+import { TaskDetailEventsGrouped, TaskDetailProgressView, TaskDetailWorkflowView, mergeProgressWithEventProgress } from "./taskDetailUi";
 import type { DeliveryStepId } from "./deliveryCycle";
 import { DeliveryCycle } from "./deliveryCyclePanel";
-import {
-  bufferDirty,
-  closeBuffer,
-  filterPaths,
-  markBufferSaved,
-  searchTextFiles,
-  touchBufferText,
-  upsertBuffer,
-  type EditorBuffer,
-  type SearchHit,
-} from "./editorSession";
+import { bufferDirty, filterPaths } from "./editorSession";
 import { ForkTreePanel } from "./forkTreePanel";
-import { summarizeSendContext } from "./sendContext";
+import { redactSecrets, summarizeSendContext } from "./sendContext";
 import { SendContextSummaryPanel } from "./sendContextSummary";
 import { SwarmIsolationPanel } from "./swarmIsolationPanel";
 import { TaskReviewPanel } from "./taskReview";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
-import { NotificationCenter } from "./components/NotificationCenter";
+import { WorkspaceHeader, WorkspaceTools, MobileWorkspaceNav, ChatWelcome } from "./workspaceChrome";
 import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
 import { InfoTip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
@@ -67,7 +46,7 @@ import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
 import { Checkbox } from "./components/ui/checkbox";
 import { Button } from "./components/ui/button";
-import { Bot, Columns2, PanelLeft, PanelRight, Route, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, ArrowUp, Route, ShieldCheck, Sparkles } from "lucide-react";
 
 const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   {
@@ -102,20 +81,6 @@ const AGENT_OPTIONS: { value: string; label: string; hint: string }[] = [
   },
 ];
 
-type CenterTab =
-  | "dashboard"
-  | "kanban"
-  | "editor"
-  | "preview"
-  | "plan"
-  | "design"
-  | "branches"
-  | "logs"
-  | "cockpit"
-  | "docs"
-  | "agents"
-  | "settings";
-
 export type { CenterTab };
 
 const CENTER_TAB_ITEMS: { id: CenterTab; label: string; testId?: string }[] = [
@@ -147,169 +112,11 @@ function loadPersistedCenterTab(): CenterTab {
   }
 }
 
-// Deprecated: Use StackWizard instead
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// Deprecated: StackFields and StackFieldsProps have been replaced by StackWizard component
-
-function formatTaskStatusFr(status: string): string {
-  const m: Record<string, string> = {
-    pending: "En attente",
-    queued: "En file",
-    running: "En cours (LLM / outils)",
-    completed: "Terminé",
-    failed: "Échec",
-    paused: "En pause",
-    cancelled: "Annulé",
-    waiting_user_input: "Attente de votre réponse",
-    interrupted: "Interrompu",
-  };
-  return m[status] ?? status;
-}
-
-/** Dernière ligne de progression trop générique pour la remplacer par un texte fixe (voir daemon `task_progress_is_chat_stub`). */
-function isStubProgressMessage(msg: string): boolean {
-  const t = msg.trim();
-  if (t.length === 0) return true;
-  const stubs = new Set([
-    "Terminé.",
-    "Done.",
-    "Échec.",
-    "Annulé.",
-    "Failed.",
-    "Cancelled.",
-    "Sous-tâches en cours.",
-  ]);
-  if (stubs.has(t)) return true;
-  if (t.startsWith("Task delegated to agent")) return true;
-  return false;
-}
-
-function looksLikeTimeoutMessage(msg: string): boolean {
-  const t = msg.toLowerCase();
-  return (
-    t.includes("timeout") ||
-    t.includes("timed out") ||
-    t.includes("délai") ||
-    t.includes("delai") ||
-    t.includes("deadline") ||
-    t.includes("etimedout") ||
-    t.includes("504") ||
-    t.includes("408")
-  );
-}
-
-function looksLikeStructuredRefusal(text: string): boolean {
-  const t = text.trim();
-  if (/^refus\b/i.test(t)) return true;
-  if (/^acceptation\b/i.test(t)) return false;
-  return (
-    t.includes("Refus :") ||
-    t.includes("Refus collectif") ||
-    t.includes("merci d'arrêter") ||
-    t.includes("merci d'arrêter cette action")
-  );
-}
-
-/** Texte affiché dans le chat à la fin du suivi de tâche (préfère la dernière progression substantive renvoyée par le daemon). */
-function chatMessageForTerminalTask(
-  status: string,
-  lastProgressMessage: string | undefined,
-  failureDetail?: string | null,
-): string {
-  const last = lastProgressMessage?.trim();
-  const detail = failureDetail?.trim();
-  if (status === "completed") {
-    if (last && !isStubProgressMessage(last)) {
-      return last;
-    }
-    return "La tâche est terminée. Les nouveaux fichiers apparaissent dans l’arborescence (rafraîchissement automatique).";
-  }
-  if (status === "failed") {
-    const body =
-      detail && (!last || isStubProgressMessage(last))
-        ? detail
-        : last && !isStubProgressMessage(last)
-          ? last
-          : detail || null;
-    if (body) {
-      const hint = looksLikeTimeoutMessage(body)
-        ? "\n\n(Souvent un timeout réseau ou LLM — vous pouvez renvoyer la même consigne pour relancer.)"
-        : "";
-      return body.length > 2800 ? `${body.slice(0, 2800)}…${hint}` : `${body}${hint}`;
-    }
-    return "Échec sans détail persisté. Vérifiez l’onglet « Logs serveur », le journal de build, ou renvoyez la consigne pour une nouvelle tentative.";
-  }
-  if (status === "cancelled") {
-    if (detail && (!last || isStubProgressMessage(last))) return detail;
-    if (last && !isStubProgressMessage(last)) return last;
-    return "La tâche a été annulée.";
-  }
-  if (status === "waiting_user_input") {
-    return "Le daemon attend une validation (approbation d’outil ou question utilisateur).";
-  }
-  return `État : ${formatTaskStatusFr(status)}`;
-}
-
-function isMarkdownPath(path: string | null): boolean {
-  if (!path) return false;
-  const p = path.toLowerCase();
-  return p.endsWith(".md") || p.endsWith(".markdown") || p.endsWith(".mdx");
-}
-
-function extractTicketDraftsFromPlan(planText: string): { title: string; description: string }[] {
-  const lines = planText.split(/\r?\n/);
-  const drafts: { title: string; description: string }[] = [];
-  let currentSection = "";
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (!line) continue;
-    if (line.startsWith("## ")) {
-      currentSection = line.replace(/^##\s+/, "").trim();
-      continue;
-    }
-    // Accept TODO markdown checklists and task bullets.
-    if (/^-\s+\[\s?\]\s+/.test(line) || /^-\s+/.test(line)) {
-      const title = line
-        .replace(/^-\s+\[\s?\]\s+/, "")
-        .replace(/^-+\s+/, "")
-        .trim();
-      if (!title || title.length < 3) continue;
-      drafts.push({
-        title: title.slice(0, 200),
-        description: currentSection ? `Source plan section: ${currentSection}` : "Imported from CODE_STUDIO_PLAN.md",
-      });
-    }
-  }
-  // de-duplicate by case-insensitive title
-  const seen = new Set<string>();
-  return drafts.filter((d) => {
-    const k = d.title.toLowerCase();
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-}
-
-function dedupeProgressForTrace(
-  progress: { progress_pct: number; message: string; task_id?: string | null }[],
-  taskId: string,
-): { progress_pct: number; message: string; task_id?: string | null }[] {
-  const deduped = new Map<string, { progress_pct: number; message: string; task_id?: string | null }>();
-  for (const p of progress) {
-    const raw = (p.message ?? "").trim();
-    if (!raw) continue;
-    // Streamed progress emits many near-identical updates for the same percentage.
-    // Keep only the latest message per (task_id, progress_pct).
-    const k = `${p.task_id ?? taskId}\0${p.progress_pct}`;
-    deduped.set(k, p);
-  }
-  return Array.from(deduped.values()).sort((a, b) => a.progress_pct - b.progress_pct);
-}
-
 export default function App() {
-  const [projects, setProjects] = useState<api.StudioProject[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [workspaceToolsOpen, setWorkspaceToolsOpen] = useState(false);
+  const [editorTreeOpen, setEditorTreeOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) return false;
     if (typeof localStorage !== "undefined") {
       try {
         const saved = localStorage.getItem("akasha-studio-sidebar-open");
@@ -321,6 +128,12 @@ export default function App() {
     return true;
   });
   const [activeGroup, setActiveGroup] = useState<string>(getDefaultGroup());
+  useEffect(() => {
+    const narrowWindow = window.matchMedia("(max-width: 900px)");
+    const onResize = () => { if (narrowWindow.matches) setSidebarOpen(false); else setEditorTreeOpen(true); };
+    narrowWindow.addEventListener("change", onResize);
+    return () => narrowWindow.removeEventListener("change", onResize);
+  }, []);
   const [newProjectName, setNewProjectName] = useState("Mon application");
   const [newProjectSummary, setNewProjectSummary] = useState("");
   const [newStackPresetId, setNewStackPresetId] = useState(STACK_PRESET_NONE);
@@ -330,19 +143,6 @@ export default function App() {
   const [stackPresetId, setStackPresetId] = useState(STACK_PRESET_NONE);
   const [stackCustomText, setStackCustomText] = useState("");
   const [stackAddons, setStackAddons] = useState(() => emptyStackAddons());
-  const [files, setFiles] = useState<string[]>([]);
-  const [filePath, setFilePath] = useState<string | null>(null);
-  const [editorText, setEditorText] = useState("");
-  /** Dernière version connue sur le daemon (après ouverture ou enregistrement réussi). */
-  const [savedEditorText, setSavedEditorText] = useState("");
-  /** Fichier ouvert en mode binaire (pas de champ `content` dans la réponse raw). */
-  const [editorBinary, setEditorBinary] = useState(false);
-  const [editorBuffers, setEditorBuffers] = useState<EditorBuffer[]>([]);
-  const [editorQuickQuery, setEditorQuickQuery] = useState("");
-  const [editorSearchQuery, setEditorSearchQuery] = useState("");
-  const [editorSearchHits, setEditorSearchHits] = useState<SearchHit[]>([]);
-  const [editorSearchBusy, setEditorSearchBusy] = useState(false);
-  const [editorDiagnostics, setEditorDiagnostics] = useState<{ line: number; message: string }[]>([]);
   const [includeFileRefs, setIncludeFileRefs] = useState(true);
   const [includeCriteriaOnSend, setIncludeCriteriaOnSend] = useState(true);
   const [includeDesignOnSend, setIncludeDesignOnSend] = useState(true);
@@ -353,30 +153,7 @@ export default function App() {
   const [worktrees, setWorktrees] = useState<api.StudioWorktreeRecord[]>([]);
   const [worktreeBusy, setWorktreeBusy] = useState(false);
   const [worktreeNotice, setWorktreeNotice] = useState<string | null>(null);
-  /** Aperçu HTML statique (blob) depuis un fichier ouvert. */
-  const [staticPreviewBlobUrl, setStaticPreviewBlobUrl] = useState<string | null>(null);
-  /** URL du serveur dev lancé par le daemon (`npm run dev`). */
-  const [devPreviewUrl, setDevPreviewUrl] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<CenterTab>(() => loadPersistedCenterTab());
-  const [previewBusy, setPreviewBusy] = useState(false);
-  const [previewLog, setPreviewLog] = useState("");
-  const [forceInstallBeforePreview, setForceInstallBeforePreview] = useState(false);
-  /** WebContainers-style strict sandbox: iframe without same-origin (static/HTML preview safer). */
-  const [strictWebSandbox, setStrictWebSandbox] = useState(false);
-  /** Libellé de la stack détectée par le daemon lors du dernier `preview/start` ou `preview/install`. */
-  const [previewProfile, setPreviewProfile] = useState<string | null>(null);
-  const [devServerLog, setDevServerLog] = useState("");
-  const [depsInstallBusy, setDepsInstallBusy] = useState(false);
-  const [gitHeadBranch, setGitHeadBranch] = useState<string | null>(null);
-  const [gitWorktreeClean, setGitWorktreeClean] = useState<boolean | null>(null);
-  const [gitWorktreeLines, setGitWorktreeLines] = useState<{ status: string; path: string }[]>([]);
-  const [gitBranches, setGitBranches] = useState<api.GitBranchEntry[]>([]);
-  const [gitBranchesLoading, setGitBranchesLoading] = useState(false);
-  const [gitCompareBase, setGitCompareBase] = useState("");
-  const [gitCompareTarget, setGitCompareTarget] = useState("");
-  const [gitCompareResult, setGitCompareResult] = useState<api.GitComparePayload | null>(null);
-  const [gitConflicts, setGitConflicts] = useState<string[]>([]);
-  const [gitMergeInProgress, setGitMergeInProgress] = useState(false);
+  const [centerTab, setCenterTabState] = useState<CenterTab>(() => loadPersistedCenterTab());
   /** Index code-RAG (recherche / contexte agent) pour le projet sélectionné. */
   const [codeRagStatus, setCodeRagStatus] = useState<api.CodeRagStatus | null>(null);
   const [codeRagStatusLoading, setCodeRagStatusLoading] = useState(false);
@@ -386,13 +163,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
-  const [buildCmd, setBuildCmd] = useState("npm run build");
-  const [buildLog, setBuildLog] = useState("");
-  const [evolutions, setEvolutions] = useState<api.Evolution[]>([]);
-  const [evoLabel, setEvoLabel] = useState("");
-  const [selectedEvoId, setSelectedEvoId] = useState<string | null>(null);
-  const [chat, setChat] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [chatSendBusy, setChatSendBusy] = useState(false);
+  const chatSendLock = useRef(false);
   const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
   const [chatIncognito, setChatIncognito] = useState(false);
   const [handoffModel, setHandoffModel] = useState("");
@@ -406,39 +179,16 @@ export default function App() {
   const [forkInitialInstruction, setForkInitialInstruction] = useState("");
   const [agent, setAgent] = useState<string>("studio_scaffold");
   const [activeTocSection, setActiveTocSection] = useState<string>("agents-overview");
-  const [taskTrace, setTaskTrace] = useState<{
-    id: string;
-    status: string;
-    line: string;
-    done: boolean;
-    /** Étiquettes courtes dérivées des progressions daemon. */
-    progressChips?: string[];
-  } | null>(null);
-  /** Réponse attendue par le daemon (`ask_user`, approbation, …) — alimenté par GET …/human-input. */
-  const [pendingHumanInput, setPendingHumanInput] = useState<{
-    taskId: string;
-    question: string;
-    context: string;
-    choices: string[] | null;
-  } | null>(null);
-  const [humanReplyDraft, setHumanReplyDraft] = useState("");
-  const [humanReplyBusy, setHumanReplyBusy] = useState(false);
-  /** Annule le polling en cours (nouveau message ou démontage du composant). */
-  const pollTaskAbortRef = useRef<AbortController | null>(null);
-  const editorDirtyRef = useRef(false);
-  const filePathRef = useRef<string | null>(null);
-  const editorBinaryRef = useRef(false);
-  const editorBuffersRef = useRef<EditorBuffer[]>([]);
   const selectedIdRef = useRef<string | null>(null);
 
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
   const [modalLoadOpen, setModalLoadOpen] = useState(false);
-  const [deleteProjectDialog, setDeleteProjectDialog] = useState<api.StudioProject | null>(null);
-  const [deletePrecheck, setDeletePrecheck] = useState<api.StudioDeletePrecheck | null>(null);
-  const [deletePrecheckLoading, setDeletePrecheckLoading] = useState(false);
-  const [deleteProjectBusy, setDeleteProjectBusy] = useState(false);
   /** Répartition centre / chat : équilibré, plein centre, plein chat. */
-  const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("balanced");
+  const [mainSplit, setMainSplit] = useState<"balanced" | "center" | "chat">("chat");
+  const setCenterTab = useCallback<React.Dispatch<React.SetStateAction<CenterTab>>>((tab) => {
+    setCenterTabState(tab);
+    setMainSplit(previous => previous === "chat" ? "balanced" : previous);
+  }, []);
   /** Menu header ouvert : null ou id section. */
   const [openHeaderMenu, setOpenHeaderMenu] = useState<null | "project" | "evolutions" | "ops" | "agent">(null);
   const [dashboardProjectSettingsOpen, setDashboardProjectSettingsOpen] = useState(false);
@@ -490,39 +240,174 @@ export default function App() {
   const [designDocSnapshot, setDesignDocSnapshot] = useState("");
   const [designDocLoading, setDesignDocLoading] = useState(false);
   const [autoApplyDesign, setAutoApplyDesign] = useState(true);
-  const [editorMarkdownPreview, setEditorMarkdownPreview] = useState(false);
   const [planMarkdownPreview, setPlanMarkdownPreview] = useState(false);
   const [designMarkdownPreview, setDesignMarkdownPreview] = useState(false);
-  const [pendingInbox, setPendingInbox] = useState<api.TaskHumanInputPayload[]>([]);
   const [showAgentMatrix, setShowAgentMatrix] = useState(false);
-  /** Refus structurés consécutifs pour la même demande utilisateur (évite boucles côté agent). */
-  const [humanRefusalStreak, setHumanRefusalStreak] = useState(0);
   const [daemonStatus, setDaemonStatus] = useState<api.DaemonStatus>({ ok: false, label: "Vérification…" });
+  const [daemonChecking, setDaemonChecking] = useState(true);
+  const [daemonRetry, setDaemonRetry] = useState(0);
   const [userGuideDoc, setUserGuideDoc] = useState("");
   const [userGuideLoading, setUserGuideLoading] = useState(false);
   const [userGuideError, setUserGuideError] = useState<string | null>(null);
 
-  useNotifyOnMessage(error, "error", "Code Studio");
   useNotifyOnMessage(taskDetailError, "error", "Détail tâche");
   useNotifyOnMessage(userGuideError, "error", "Documentation");
-  useNotifyOnMessage(codeRagStatusError, "error", "Index code");
-
-  const skipChatSaveOnce = useRef(false);
   const appliedCssVarsRef = useRef<Set<string>>(new Set());
-  const chatLogRef = useRef<HTMLDivElement | null>(null);
-  const chatPinnedByUserRef = useRef(false);
   /** Buffers live events received before the initial task-detail fetch completes. */
   const taskDetailLiveSnapshotRef = useRef<api.TaskEventEntry[] | null>(null);
-  /** Incremented each time openDeleteProjectDialog is called; guards against applying a stale
-   *  precheck result to the wrong project when the user quickly opens deletion for another project
-   *  before the first precheck request resolves. */
-  const deletePrecheckGenRef = useRef(0);
-  const [chatHasUnseen, setChatHasUnseen] = useState(false);
 
-  const selectedProject = useMemo(
-    () => projects.find((p) => p.id === selectedId) ?? null,
-    [projects, selectedId],
-  );
+
+  const syncCodeRagAfterFileChange = useCallback((projectId: string) => {
+    void api
+      .reindexCodeRag(projectId, false)
+      .then((s) => {
+        if (selectedIdRef.current !== projectId) return;
+        setCodeRagStatus(s);
+        setCodeRagStatusError(null);
+      })
+      .catch((e) => {
+        if (selectedIdRef.current === projectId) setCodeRagStatusError(String(e));
+      });
+  }, []);
+
+  const {
+    projectsLoading, projectsError,
+    selectedProject,
+    selectedId,
+    setProjects,
+    refreshProjects,
+    setSelectedId,
+    openDeleteProjectDialog,
+    projects,
+    deleteProjectDialog,
+    deleteProjectBusy,
+    setDeleteProjectDialog,
+    deletePrecheckLoading,
+    deletePrecheck,
+    onConfirmDeleteProject
+  } = useStudioProjects({ setError, setOpenHeaderMenu, setModalLoadOpen, setStatus });
+
+  const {
+    gitError,
+    gitHeadBranch,
+    gitWorktreeClean,
+    gitWorktreeLines,
+    setGitHeadBranch,
+    setGitWorktreeClean,
+    setGitWorktreeLines,
+    setEvolutions,
+    setGitCompareBase,
+    setGitCompareTarget,
+    setGitCompareResult,
+    refreshGitBranches,
+    refreshGitConflicts,
+    gitCompareBase,
+    gitCompareTarget,
+    evoLabel,
+    setSelectedEvoId,
+    setEvoLabel,
+    selectedEvoId,
+    activeBranch,
+    evolutions,
+    gitBranchesLoading,
+    gitBranches,
+    refreshEvolutions,
+    gitCompareResult,
+    gitMergeInProgress,
+    gitConflicts
+  } = useStudioGit({ selectedId, centerTab });
+
+  const {
+    setStaticPreviewBlobUrl,
+    buildCmd,
+    setBuildCmd,
+    onBuild,
+    buildLog,
+    buildState, buildError, previewError, previewAction,
+    previewProfile,
+    forceInstallBeforePreview,
+    setForceInstallBeforePreview,
+    strictWebSandbox,
+    setStrictWebSandbox,
+    depsInstallBusy,
+    onInstallDepsOnly,
+    previewBusy,
+    onPlayPreview,
+    devPreviewUrl,
+    onStopPreview,
+    previewUrl,
+    openPreviewInNewWindow,
+    previewLog,
+    staticPreviewBlobUrl,
+    devServerLog
+  } = useStudioPreview({ selectedId, setError, setCenterTab, setStatus, centerTab });
+
+  const {
+    filesLoading, filesError, loadFiles, editorLoading, editorError, searchSummary,
+    setFiles,
+    setEditorText,
+    setSavedEditorText,
+    filePath,
+    editorBinary,
+    editorDirty,
+    reloadOpenFileFromServer,
+    filePathRef,
+    editorDirtyRef,
+    editorBinaryRef,
+    editorQuickQuery,
+    setEditorQuickQuery,
+    files,
+    openFile,
+    onDeleteFile,
+    handleStudioRename,
+    editorBuffers,
+    activateBuffer,
+    closeEditorTab,
+    saveEditor,
+    setEditorMarkdownPreview,
+    editorMarkdownPreview,
+    editorText,
+    onEditorChange,
+    setEditorDiagnostics,
+    editorSearchQuery,
+    setEditorSearchQuery,
+    onSearchProject,
+    editorSearchBusy,
+    editorSearchHits,
+    editorDiagnostics,
+    confirmDiscardDrafts
+  } = useStudioEditor({ selectedId, setStaticPreviewBlobUrl, setError, syncCodeRagAfterFileChange, setStatus, centerTab });
+  useEffect(() => {
+    if (filePath && window.innerWidth <= 900) setEditorTreeOpen(false);
+  }, [filePath]);
+
+  const {
+    resumeTaskTracking,
+    lastObservedModel,
+    pollTaskAbortRef,
+    setPendingHumanInput,
+    setHumanReplyDraft,
+    setTaskTrace,
+    setChat,
+    pollTask,
+    taskTrace,
+    pendingHumanInput,
+    humanReplyDraft,
+    humanRefusalStreak,
+    setHumanRefusalStreak,
+    setHumanReplyBusy,
+    dashboardActiveTask,
+    pendingInbox,
+    humanInputRiskLevel,
+    humanReplyBusy,
+    chat,
+    chatHasUnseen,
+    chatLogRef,
+    chatPinnedByUserRef,
+    setChatHasUnseen,
+    lastAssistant
+  } = useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFiles, syncCodeRagAfterFileChange, filePathRef, editorDirtyRef, editorBinaryRef, setEditorText, setSavedEditorText, setStaticPreviewBlobUrl, setForkEvents });
+
   const parsedDesignDoc = useMemo(() => parseDesignDoc(designDocText), [designDocText]);
   const designHint = useMemo(() => buildDesignPolicyHint(parsedDesignDoc), [parsedDesignDoc]);
   const userGuideToc = useMemo(() => {
@@ -577,39 +462,6 @@ export default function App() {
     evolutionSummaryDraft,
     policyNotesDraft,
   ]);
-
-  const dashboardActiveTask = useMemo(() => {
-    if (!selectedId || !taskTrace || taskTrace.done) return null;
-    const stored = loadActiveTask(selectedId);
-    return {
-      taskId: taskTrace.id,
-      startedAt: stored?.startedAt ?? Date.now(),
-    };
-  }, [selectedId, taskTrace]);
-
-  const editorDirty = useMemo(
-    () => Boolean(filePath && !editorBinary && editorText !== savedEditorText),
-    [filePath, editorBinary, editorText, savedEditorText],
-  );
-
-  useEffect(() => {
-    editorDirtyRef.current = editorDirty;
-  }, [editorDirty]);
-  useEffect(() => {
-    filePathRef.current = filePath;
-  }, [filePath]);
-  useEffect(() => {
-    editorBinaryRef.current = editorBinary;
-  }, [editorBinary]);
-  useEffect(() => {
-    editorBuffersRef.current = editorBuffers;
-  }, [editorBuffers]);
-  useEffect(() => {
-    setEditorBuffers([]);
-    setEditorSearchHits([]);
-    setEditorQuickQuery("");
-    setEditorDiagnostics([]);
-  }, [selectedId]);
   useEffect(() => {
     let cancelled = false;
     void api.fetchChannelPermissionMode().then((mode) => {
@@ -619,9 +471,6 @@ export default function App() {
       cancelled = true;
     };
   }, [selectedId]);
-  useEffect(() => {
-    if (!isMarkdownPath(filePath)) setEditorMarkdownPreview(false);
-  }, [filePath]);
 
   useEffect(() => {
     if (centerTab !== "agents") return;
@@ -704,88 +553,11 @@ export default function App() {
     [newStackPresetId, newStackCustomText, newStackAddons],
   );
 
-  const refreshProjects = useCallback(async () => {
-    setError(null);
-    try {
-      const p = await api.listProjects();
-      setProjects(p);
-    } catch (e) {
-      setError(String(e));
-    }
-  }, []);
-
-  const clearSessionSnapsForProject = useCallback((id: string) => {
-    try {
-      sessionStorage.removeItem(`akasha-plan-snap-${id}`);
-      sessionStorage.removeItem(`akasha-design-snap-${id}`);
-    } catch {
-      /* private mode / quota */
-    }
-  }, []);
-
-  const openDeleteProjectDialog = useCallback((p: api.StudioProject) => {
-    setOpenHeaderMenu(null);
-    setModalLoadOpen(false);
-    setDeleteProjectDialog(p);
-    setDeletePrecheck(null);
-    setDeletePrecheckLoading(true);
-    const gen = ++deletePrecheckGenRef.current;
-    void api
-      .getDeletePrecheck(p.id)
-      .then((c) => {
-        if (deletePrecheckGenRef.current !== gen) return;
-        setDeletePrecheck(c);
-      })
-      .catch((e) => {
-        if (deletePrecheckGenRef.current !== gen) return;
-        setError(String(e));
-        setDeleteProjectDialog(null);
-      })
-      .finally(() => {
-        if (deletePrecheckGenRef.current !== gen) return;
-        setDeletePrecheckLoading(false);
-      });
-  }, []);
-
-  const onConfirmDeleteProject = useCallback(
-    async (force: boolean) => {
-      if (!deleteProjectDialog) return;
-      setError(null);
-      setDeleteProjectBusy(true);
-      const id = deleteProjectDialog.id;
-      try {
-        try {
-          await api.stopStudioPreview(id);
-        } catch {
-          /* déjà arrêté ou indisponible */
-        }
-        await api.deleteProject(id, force);
-        clearSessionSnapsForProject(id);
-        if (selectedId === id) {
-          setSelectedId(null);
-        }
-        setDeleteProjectDialog(null);
-        setDeletePrecheck(null);
-        await refreshProjects();
-        setStatus("Projet supprimé");
-      } catch (e) {
-        setError(String(e));
-      } finally {
-        setDeleteProjectBusy(false);
-      }
-    },
-    [deleteProjectDialog, selectedId, refreshProjects, clearSessionSnapsForProject],
-  );
-
-  useEffect(() => {
-    void refreshProjects();
-  }, [refreshProjects]);
-
   useEffect(() => {
     let cancelled = false;
     const refresh = async () => {
       const next = await api.fetchDaemonStatus();
-      if (!cancelled) setDaemonStatus(next);
+      if (!cancelled) { setDaemonStatus(next); setDaemonChecking(false); }
     };
     void refresh();
     const timer = window.setInterval(() => {
@@ -795,77 +567,7 @@ export default function App() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
-
-  useEffect(() => {
-    if (projects.length === 0) {
-      if (selectedId !== null) setSelectedId(null);
-      return;
-    }
-    if (selectedId && projects.some((p) => p.id === selectedId)) {
-      return;
-    }
-    const lastId = getLastProjectId();
-    const restoredId = lastId && projects.some((p) => p.id === lastId) ? lastId : projects[0]?.id ?? null;
-    setSelectedId(restoredId);
-    if (restoredId) setLastProjectId(restoredId);
-  }, [projects, selectedId]);
-
-  useEffect(() => {
-    if (!selectedId) {
-      // Only clear the stored ID once projects have actually been loaded; on the
-      // very first render projects is still [] and selectedId is null, so we must
-      // not wipe the last-project-id before the restore logic has had a chance to
-      // read it.
-      if (projects.length > 0) clearLastProjectId();
-      return;
-    }
-    setLastProjectId(selectedId);
-  }, [selectedId, projects.length]);
-
-  useEffect(() => {
-    if (!selectedId) {
-      setChat([]);
-      setAcceptanceCriteriaDraft("");
-      return;
-    }
-    skipChatSaveOnce.current = true;
-    setChat(loadChatMessages(selectedId));
-    setAcceptanceCriteriaDraft("");
-  }, [selectedId]);
-
-  useEffect(() => {
-    const el = chatLogRef.current;
-    if (!el) return;
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-      chatPinnedByUserRef.current = false;
-      setChatHasUnseen(false);
-    });
-  }, [selectedId]);
-
-  useEffect(() => {
-    const el = chatLogRef.current;
-    if (!el) return;
-    const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
-    if (nearBottom || !chatPinnedByUserRef.current) {
-      requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight;
-      });
-      setChatHasUnseen(false);
-      return;
-    }
-    setChatHasUnseen(true);
-  }, [chat, taskTrace?.line]);
-
-  useEffect(() => {
-    if (!selectedId) return;
-    if (skipChatSaveOnce.current) {
-      skipChatSaveOnce.current = false;
-      return;
-    }
-    saveChatMessages(selectedId, chat);
-  }, [selectedId, chat]);
+  }, [daemonRetry]);
 
   useEffect(() => {
     setRenameDraft(selectedProject?.name ?? "");
@@ -1043,19 +745,6 @@ export default function App() {
     }
   }, [selectedId]);
 
-  const syncCodeRagAfterFileChange = useCallback((projectId: string) => {
-    void api
-      .reindexCodeRag(projectId, false)
-      .then((s) => {
-        if (selectedIdRef.current !== projectId) return;
-        setCodeRagStatus(s);
-        setCodeRagStatusError(null);
-      })
-      .catch((e) => {
-        if (selectedIdRef.current === projectId) setCodeRagStatusError(String(e));
-      });
-  }, []);
-
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
@@ -1063,24 +752,6 @@ export default function App() {
   useEffect(() => {
     persistCodeMode(codeMode);
   }, [codeMode]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const tick = async () => {
-      try {
-        const p = await api.listPendingHumanInput();
-        if (!cancelled) setPendingInbox(p);
-      } catch {
-        if (!cancelled) setPendingInbox([]);
-      }
-    };
-    void tick();
-    const id = window.setInterval(() => void tick(), 12000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
 
   useEffect(() => {
     if (!selectedId || centerTab !== "plan") return;
@@ -1207,123 +878,12 @@ export default function App() {
     [newStackPresetId, newStackCustomText, newStackAddons],
   );
 
-  useEffect(() => {
-    if (!selectedId) {
-      setFiles([]);
-      setFilePath(null);
-      setEditorText("");
-      setSavedEditorText("");
-      setEditorBinary(false);
-      setStaticPreviewBlobUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
-      setDevPreviewUrl(null);
-      setEvolutions([]);
-      return;
-    }
-    // Reset Git state immediately so the Branches tab never shows stale data from the previous project
-    setGitBranches([]);
-    setGitCompareBase("");
-    setGitCompareTarget("");
-    setGitCompareResult(null);
-    setGitConflicts([]);
-    setGitMergeInProgress(false);
-    let cancelled = false;
-    setFilePath(null);
-    setEditorText("");
-    setSavedEditorText("");
-    setEditorBinary(false);
-    (async () => {
-      try {
-        const f = await api.listFiles(selectedId);
-        if (!cancelled) setFiles(f);
-        const evo = await api.listEvolutions(selectedId).catch(() => []);
-        if (!cancelled) setEvolutions(evo);
-      } catch (e) {
-        if (!cancelled) setError(String(e));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId]);
-
-  const refreshEvolutions = useCallback(async () => {
-    if (!selectedId) return;
-    try {
-      const evo = await api.listEvolutions(selectedId);
-      setEvolutions(evo);
-    } catch {
-      setEvolutions([]);
-    }
-  }, [selectedId]);
-
-  const refreshGitBranches = useCallback(async () => {
-    if (!selectedId) {
-      setGitBranches([]);
-      return;
-    }
-    setGitBranchesLoading(true);
-    try {
-      const payload = await api.listGitBranches(selectedId);
-      setGitBranches(payload.branches);
-      if (!gitCompareBase && payload.current_branch) {
-        setGitCompareBase(payload.current_branch);
-      }
-      if (!gitCompareTarget) {
-        const fallbackTarget = payload.branches.find((b) => !b.current)?.name ?? "";
-        if (fallbackTarget) setGitCompareTarget(fallbackTarget);
-      }
-    } catch {
-      setGitBranches([]);
-    } finally {
-      setGitBranchesLoading(false);
-    }
-  }, [selectedId, gitCompareBase, gitCompareTarget]);
-
-  const refreshGitConflicts = useCallback(async () => {
-    if (!selectedId) {
-      setGitConflicts([]);
-      setGitMergeInProgress(false);
-      return;
-    }
-    try {
-      const payload = await api.getGitConflicts(selectedId);
-      setGitConflicts(payload.conflict_files);
-      setGitMergeInProgress(payload.merge_in_progress);
-    } catch {
-      setGitConflicts([]);
-      setGitMergeInProgress(false);
-    }
-  }, [selectedId]);
-
-  const reloadOpenFileFromServer = useCallback(async () => {
-    if (!selectedId || !filePath || editorBinary) return;
-    try {
-      const raw = await api.readRawFile(selectedId, filePath);
-      const text = raw.content ?? "";
-      setEditorText(text);
-      setSavedEditorText(text);
-      const ext = filePath.toLowerCase();
-      if (ext.endsWith(".html") || ext.endsWith(".htm")) {
-        const blob = new Blob([text], { type: "text/html" });
-        setStaticPreviewBlobUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return URL.createObjectURL(blob);
-        });
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [selectedId, filePath, editorBinary]);
-
   const refreshFiles = useCallback(async () => {
     if (!selectedId) return;
     setError(null);
     try {
-      const f = await api.listFiles(selectedId);
-      setFiles(f);
+      const f = await loadFiles();
+      if (!f || selectedIdRef.current !== selectedId) return;
       let metaNote = "";
       try {
         const m = await api.getProjectMeta(selectedId);
@@ -1348,200 +908,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts, centerTab]);
-
-  const onPlayPreview = useCallback(async () => {
-    if (!selectedId) return;
-    setPreviewBusy(true);
-    setPreviewLog("");
-    setError(null);
-    try {
-      const r = await api.startStudioPreview(selectedId, { force_install: forceInstallBeforePreview });
-      setDevPreviewUrl(r.url);
-      setPreviewProfile(r.profile ?? null);
-      if (r.install) {
-        const { stdout, stderr } = r.install;
-        setPreviewLog([stdout, stderr].filter(Boolean).join("\n"));
-      } else {
-        setPreviewLog("");
-      }
-      setCenterTab("preview");
-      const profileSuffix = r.profile ? ` (${r.profile})` : "";
-      setStatus(`Prévisualisation${profileSuffix} : ${r.url}`);
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setPreviewBusy(false);
-    }
-  }, [selectedId, forceInstallBeforePreview]);
-
-  const onInstallDepsOnly = useCallback(async () => {
-    if (!selectedId) return;
-    setDepsInstallBusy(true);
-    setError(null);
-    setPreviewLog("");
-    try {
-      const r = await api.installStudioDeps(selectedId, { force: forceInstallBeforePreview });
-      setPreviewProfile(r.profile ?? null);
-      const profileSuffix = r.profile ? ` (${r.profile})` : "";
-      if (r.skipped) {
-        setPreviewLog(`Dépendances déjà présentes${profileSuffix} : ${r.reason ?? ""}`);
-        setStatus(`Dépendances déjà installées${profileSuffix}`);
-      } else if (r.install) {
-        const { stdout, stderr, exit_code, argv } = r.install;
-        const cmd = argv?.join(" ") ?? "";
-        setPreviewLog(
-          [
-            cmd ? `$ ${cmd}` : null,
-            `Code: ${exit_code}`,
-            stdout,
-            stderr,
-          ]
-            .filter(Boolean)
-            .join("\n\n"),
-        );
-        setStatus(
-          r.ok
-            ? `Installation terminée${profileSuffix}`
-            : `Installation a échoué${profileSuffix} — voir le journal ci-dessous`,
-        );
-      }
-      setCenterTab("preview");
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setDepsInstallBusy(false);
-    }
-  }, [selectedId, forceInstallBeforePreview]);
-
-  const onStopPreview = useCallback(async () => {
-    if (!selectedId) return;
-    setError(null);
-    try {
-      await api.stopStudioPreview(selectedId);
-      setDevPreviewUrl(null);
-      setDevServerLog("");
-      setStatus("Prévisualisation arrêtée");
-    } catch (e) {
-      setError(String(e));
-    }
-  }, [selectedId]);
-
-  const activateBuffer = useCallback((buffer: EditorBuffer) => {
-    setFilePath(buffer.path);
-    setEditorText(buffer.text);
-    setSavedEditorText(buffer.savedText);
-    setEditorBinary(buffer.binary);
-    setEditorDiagnostics([]);
-  }, []);
-
-  const openFile = useCallback(
-    async (path: string) => {
-      if (!selectedId || !path) return;
-      const existing = editorBuffersRef.current.find((buffer) => buffer.path === path);
-      if (existing) {
-        activateBuffer(existing);
-        return;
-      }
-      setError(null);
-      setFilePath(path);
-      try {
-        const raw = await api.readRawFile(selectedId, path);
-        const text = raw.content;
-        const isBinary = text === undefined && Boolean(raw.content_base64);
-        if (isBinary) {
-          const buffer: EditorBuffer = {
-            path,
-            text: "(binaire — enregistrement depuis l’éditeur non disponible)",
-            savedText: "",
-            binary: true,
-          };
-          setEditorBinary(true);
-          setEditorText(buffer.text);
-          setSavedEditorText("");
-          setEditorBuffers((prev) => upsertBuffer(prev, buffer));
-          setStaticPreviewBlobUrl((prev) => {
-            if (prev) URL.revokeObjectURL(prev);
-            return null;
-          });
-        } else {
-          const body = text ?? "";
-          const buffer: EditorBuffer = { path, text: body, savedText: body, binary: false };
-          setEditorBinary(false);
-          setEditorText(body);
-          setSavedEditorText(body);
-          setEditorBuffers((prev) => upsertBuffer(prev, buffer));
-          const ext = path.toLowerCase();
-          if (ext.endsWith(".html") || ext.endsWith(".htm")) {
-            const blob = new Blob([body], { type: "text/html" });
-            setStaticPreviewBlobUrl((prev) => {
-              if (prev) URL.revokeObjectURL(prev);
-              return URL.createObjectURL(blob);
-            });
-          } else {
-            setStaticPreviewBlobUrl(null);
-          }
-        }
-      } catch (e) {
-        setError(String(e));
-      }
-    },
-    [selectedId, activateBuffer],
-  );
-
-  const closeEditorTab = useCallback(
-    (path: string) => {
-      const buffer = editorBuffersRef.current.find((row) => row.path === path);
-      if (buffer && bufferDirty(buffer)) {
-        const ok = window.confirm(`Fermer « ${path} » et perdre les modifications non enregistrées ?`);
-        if (!ok) return;
-      }
-      const next = closeBuffer(editorBuffersRef.current, path);
-      setEditorBuffers(next);
-      if (filePathRef.current !== path) return;
-      const fallback = next[next.length - 1];
-      if (fallback) activateBuffer(fallback);
-      else {
-        setFilePath(null);
-        setEditorText("");
-        setSavedEditorText("");
-        setEditorBinary(false);
-      }
-    },
-    [activateBuffer],
-  );
-
-  const onEditorChange = useCallback((value: string) => {
-    setEditorText(value);
-    setEditorBuffers((prev) => touchBufferText(prev, filePathRef.current, value));
-  }, []);
-
-  const onSearchProject = useCallback(async () => {
-    if (!selectedId || !editorSearchQuery.trim()) {
-      setEditorSearchHits([]);
-      return;
-    }
-    setEditorSearchBusy(true);
-    try {
-      const candidates = files.filter((path) => !/\.(png|jpg|jpeg|gif|webp|ico|woff2?|pdf)$/i.test(path)).slice(0, 25);
-      const entries: { path: string; text: string }[] = [];
-      for (const buffer of editorBuffersRef.current) {
-        if (!buffer.binary) entries.push({ path: buffer.path, text: buffer.text });
-      }
-      for (const path of candidates) {
-        if (entries.some((entry) => entry.path === path)) continue;
-        try {
-          const raw = await api.readRawFile(selectedId, path);
-          if (typeof raw.content === "string") entries.push({ path, text: raw.content });
-        } catch {
-          /* fichier illisible */
-        }
-      }
-      setEditorSearchHits(searchTextFiles(entries, editorSearchQuery));
-    } finally {
-      setEditorSearchBusy(false);
-    }
-  }, [selectedId, editorSearchQuery, files]);
+  }, [selectedId, filePath, editorBinary, editorDirty, reloadOpenFileFromServer, refreshGitBranches, refreshGitConflicts, centerTab, loadFiles]);
 
   const refreshWorktrees = useCallback(async () => {
     if (!selectedId) {
@@ -1549,163 +916,18 @@ export default function App() {
       return;
     }
     try {
-      setWorktrees(await api.listStudioWorktrees(selectedId));
+      const rows = await api.listStudioWorktrees(selectedId);
+      if (selectedIdRef.current !== selectedId) return;
+      setWorktrees(rows);
       setWorktreeNotice(null);
     } catch (error) {
+      if (selectedIdRef.current !== selectedId) return;
       setWorktrees([]);
       setWorktreeNotice(String(error));
     }
   }, [selectedId]);
 
-  const confirmDiscardDrafts = useCallback(() => {
-    const dirty = editorBuffersRef.current.filter(bufferDirty);
-    if (dirty.length === 0) return true;
-    return window.confirm(
-      `Des brouillons non enregistrés (${dirty.map((row) => row.path).join(", ")}) seront perdus. Continuer ?`,
-    );
-  }, []);
-
-  const handleStudioRename = useCallback(
-    async (from: string, to: string) => {
-      if (!selectedId) return;
-      const opened = filePath;
-      if (
-        editorDirty &&
-        opened &&
-        (opened === from || opened.startsWith(`${from}/`))
-      ) {
-        if (
-          !window.confirm(
-            "Le fichier ouvert ou son dossier a des changements non enregistrés. Poursuivre le déplacement ou le renommage ?",
-          )
-        ) {
-          return;
-        }
-      }
-      setError(null);
-      try {
-        await api.renameStudioPath(selectedId, from, to);
-        let nextOpen = opened;
-        if (opened === from) nextOpen = to;
-        else if (opened?.startsWith(`${from}/`)) nextOpen = to + opened.slice(from.length);
-        if (nextOpen !== opened) setFilePath(nextOpen);
-        setEditorBuffers((prev) =>
-          prev.map((buffer) => {
-            if (buffer.path === from) return { ...buffer, path: to };
-            if (buffer.path.startsWith(`${from}/`)) {
-              return { ...buffer, path: to + buffer.path.slice(from.length) };
-            }
-            return buffer;
-          }),
-        );
-        const fl = await api.listFiles(selectedId);
-        setFiles(fl);
-        syncCodeRagAfterFileChange(selectedId);
-        if (nextOpen && fl.includes(nextOpen) && !editorBinary && !editorDirty) {
-          try {
-            const raw = await api.readRawFile(selectedId, nextOpen);
-            const text = raw.content ?? "";
-            setEditorText(text);
-            setSavedEditorText(text);
-            const ext = nextOpen.toLowerCase();
-            if (ext.endsWith(".html") || ext.endsWith(".htm")) {
-              const blob = new Blob([text], { type: "text/html" });
-              setStaticPreviewBlobUrl((prev) => {
-                if (prev) URL.revokeObjectURL(prev);
-                return URL.createObjectURL(blob);
-              });
-            }
-          } catch {
-            /* ignore */
-          }
-        }
-        setStatus(`Renommé ou déplacé : ${from} → ${to}`);
-      } catch (e) {
-        setError(String(e));
-      }
-    },
-    [selectedId, filePath, editorDirty, editorBinary, syncCodeRagAfterFileChange],
-  );
-
-  const onDeleteFile = useCallback(
-    async (path: string) => {
-      if (!selectedId) return;
-      if (
-        !window.confirm(
-          `Supprimer définitivement « ${path} » sur le disque du projet ? Cette action est irréversible.`,
-        )
-      ) {
-        return;
-      }
-      setError(null);
-      try {
-        await api.deleteRawFile(selectedId, path);
-        setEditorBuffers((prev) => closeBuffer(prev, path));
-        if (filePath === path) {
-          const next = closeBuffer(editorBuffersRef.current, path);
-          setEditorBuffers(next);
-          const fallback = next[next.length - 1];
-          if (fallback) {
-            setFilePath(fallback.path);
-            setEditorText(fallback.text);
-            setSavedEditorText(fallback.savedText);
-            setEditorBinary(fallback.binary);
-          } else {
-            setFilePath(null);
-            setEditorText("");
-            setSavedEditorText("");
-            setEditorBinary(false);
-          }
-          setStaticPreviewBlobUrl((prev) => {
-            if (prev) URL.revokeObjectURL(prev);
-            return null;
-          });
-        }
-        const fl = await api.listFiles(selectedId);
-        setFiles(fl);
-        syncCodeRagAfterFileChange(selectedId);
-        setStatus(`Fichier supprimé : ${path}`);
-      } catch (e) {
-        setError(String(e));
-      }
-    },
-    [selectedId, filePath, syncCodeRagAfterFileChange],
-  );
-
-  const saveEditor = useCallback(async () => {
-    if (!selectedId || !filePath || editorBinary || !editorDirty) return;
-    setError(null);
-    try {
-      await api.writeRawFile(selectedId, filePath, editorText);
-      setSavedEditorText(editorText);
-      setEditorBuffers((prev) => markBufferSaved(prev, filePath, editorText));
-      syncCodeRagAfterFileChange(selectedId);
-      const ext = filePath.toLowerCase();
-      if (ext.endsWith(".html") || ext.endsWith(".htm")) {
-        const blob = new Blob([editorText], { type: "text/html" });
-        setStaticPreviewBlobUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return URL.createObjectURL(blob);
-        });
-      }
-      setStatus(`Fichier enregistré : ${filePath}`);
-    } catch (e) {
-      setError(String(e));
-    }
-  }, [selectedId, filePath, editorBinary, editorDirty, editorText, syncCodeRagAfterFileChange]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "s" && e.key !== "S") return;
-      if (!(e.ctrlKey || e.metaKey)) return;
-      if (centerTab !== "editor") return;
-      if (!filePath || editorBinary || !editorDirty) return;
-      e.preventDefault();
-      void saveEditor();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [centerTab, filePath, editorBinary, editorDirty, saveEditor]);
+  useEffect(() => { setWorktrees([]); setWorktreeNotice(null); }, [selectedId]);
 
   useEffect(() => {
     if (!openHeaderMenu) return;
@@ -1715,22 +937,6 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [openHeaderMenu]);
-
-  useEffect(() => {
-    return () => {
-      if (staticPreviewBlobUrl) URL.revokeObjectURL(staticPreviewBlobUrl);
-    };
-  }, [staticPreviewBlobUrl]);
-
-  useEffect(() => {
-    const id = selectedId;
-    return () => {
-      if (id) {
-        void api.stopStudioPreview(id).catch(() => {});
-      }
-      setDevPreviewUrl(null);
-    };
-  }, [selectedId]);
 
   const onCreateProject = async () => {
     setError(null);
@@ -1934,31 +1140,6 @@ export default function App() {
     }
   };
 
-  const onBuild = async () => {
-    if (!selectedId) return;
-    const parts = buildCmd.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return;
-    setError(null);
-    setBuildLog("…");
-    setStatus("Build en cours…");
-    try {
-      const out = await api.runBuild(selectedId, parts, 300);
-      const text = [
-        out.error ? `Erreur: ${out.error}` : `Code de sortie: ${out.exit_code}`,
-        out.stdout ? `--- sortie standard ---\n${out.stdout}` : "",
-        out.stderr ? `--- erreurs ---\n${out.stderr}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-      setBuildLog(text);
-      setStatus("Build terminé");
-    } catch (e) {
-      setBuildLog(String(e));
-      setError(String(e));
-      setStatus("");
-    }
-  };
-
   const onCheckoutBranch = useCallback(async (branch: string) => {
     if (!selectedId) return;
     setError(null);
@@ -2030,239 +1211,10 @@ export default function App() {
     }
   };
 
-  const activeBranch = useMemo(() => {
-    if (!selectedEvoId) return null;
-    return evolutions.find((e) => e.id === selectedEvoId)?.branch ?? null;
-  }, [evolutions, selectedEvoId]);
-
-  const pollTask = useCallback(
-    async (taskId: string, signal: AbortSignal, studioProjectId: string | null) => {
-      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-      try {
-        while (!signal.aborted) {
-          const t = await api.getTask(taskId);
-          if (signal.aborted) return;
-
-          let hi: api.TaskHumanInputPayload | null = null;
-          try {
-            hi = await api.getTaskHumanInput(taskId);
-          } catch {
-            hi = null;
-          }
-          if (signal.aborted) return;
-          if (hi?.question) {
-            setPendingHumanInput({
-              taskId,
-              question: hi.question,
-              context: (hi.context ?? "").trim(),
-              choices: hi.choices?.length ? hi.choices : null,
-            });
-            setTaskTrace({
-              id: taskId,
-              status: t.status,
-              line: "L’agent attend votre réponse (champs ci-dessous).",
-              done: true,
-              progressChips: undefined,
-            });
-            return;
-          }
-
-          const traceProgress = dedupeProgressForTrace(t.progress ?? [], taskId);
-          const last = traceProgress.length ? traceProgress[traceProgress.length - 1] : undefined;
-          const lastMsg = last?.message?.trim() ?? "";
-          const fd = (t.failure_detail ?? "").trim();
-          const useFailureDetail =
-            (t.status === "failed" || t.status === "cancelled") &&
-            fd.length > 0 &&
-            (!lastMsg || isStubProgressMessage(lastMsg));
-          const line = useFailureDetail
-            ? `${last?.progress_pct ?? 100}% — ${fd.length > 900 ? `${fd.slice(0, 900)}…` : fd}`
-            : last
-              ? `${last.progress_pct}% — ${last.message}`
-              : formatTaskStatusFr(t.status);
-          const progressChips = traceProgress
-            .filter((p) => p.message && !isStubProgressMessage(p.message))
-            .slice(-12)
-            .map((p) => {
-              const msg = p.message.trim();
-              const short = msg.length > 96 ? `${msg.slice(0, 96)}…` : msg;
-              return `${p.progress_pct}% ${short}`;
-            });
-          setTaskTrace({
-            id: taskId,
-            status: t.status,
-            line,
-            done: api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status),
-            progressChips: progressChips.length ? progressChips : undefined,
-          });
-          if (api.isTaskTerminal(t.status) || api.isTaskNeedsUser(t.status)) {
-            if (studioProjectId && api.isTaskTerminal(t.status)) {
-              clearActiveTask(studioProjectId);
-            }
-            if (api.isTaskTerminal(t.status) && t.status === "completed" && selectedId) {
-              try {
-                const fl = await api.listFiles(selectedId);
-                setFiles(fl);
-                syncCodeRagAfterFileChange(selectedId);
-                const fp = filePathRef.current;
-                if (
-                  fp
-                  && fl.includes(fp)
-                  && !editorDirtyRef.current
-                  && !editorBinaryRef.current
-                ) {
-                  try {
-                    const raw = await api.readRawFile(selectedId, fp);
-                    const text = raw.content ?? "";
-                    setEditorText(text);
-                    setSavedEditorText(text);
-                    const ext = fp.toLowerCase();
-                    if (ext.endsWith(".html") || ext.endsWith(".htm")) {
-                      const blob = new Blob([text], { type: "text/html" });
-                      setStaticPreviewBlobUrl((prev) => {
-                        if (prev) URL.revokeObjectURL(prev);
-                        return URL.createObjectURL(blob);
-                      });
-                    }
-                  } catch {
-                    /* ignore */
-                  }
-                }
-              } catch {
-                /* ignore */
-              }
-            }
-            const summary = chatMessageForTerminalTask(t.status, last?.message, t.failure_detail);
-            setChat((c) => [
-              ...c,
-              {
-                role: "assistant",
-                text: summary,
-                task_id: taskId,
-                suggested_actions: t.suggested_actions,
-              },
-            ]);
-            void (async () => {
-              try {
-                const sd = await api.getTaskStudioDiff(taskId);
-                if (!sd?.files?.length) return;
-                setChat((c) => {
-                  const next = [...c];
-                  for (let i = next.length - 1; i >= 0; i--) {
-                    const row = next[i];
-                    if (row.role === "assistant" && row.task_id === taskId) {
-                      next[i] = { ...row, studio_diff: sd };
-                      break;
-                    }
-                  }
-                  return next;
-                });
-              } catch {
-                /* snapshot absent ou erreur réseau */
-              }
-            })();
-            return;
-          }
-          await sleep(1500);
-        }
-      } catch (e) {
-        if (signal.aborted) return;
-        setTaskTrace((prev) =>
-          prev ? { ...prev, line: `Erreur de suivi : ${e}`, done: true } : null,
-        );
-      }
-    },
-    [selectedId, syncCodeRagAfterFileChange],
-  );
-
-  /** Au chargement / changement de projet : reprendre le polling si une tâche non terminale était en cours. */
-  useEffect(() => {
-    if (!selectedId) return;
-    let cancelled = false;
-    const stored = loadActiveTask(selectedId);
-    if (!stored?.taskId) return;
-    void (async () => {
-      try {
-        const t = await api.getTask(stored.taskId);
-        if (cancelled) return;
-        if (api.isTaskTerminal(t.status)) {
-          clearActiveTask(selectedId);
-          return;
-        }
-        pollTaskAbortRef.current?.abort();
-        const ac = new AbortController();
-        pollTaskAbortRef.current = ac;
-        setTaskTrace({
-          id: stored.taskId,
-          status: t.status,
-          line: "Tâche en cours (reprise après rechargement)…",
-          done: false,
-        });
-        void pollTask(stored.taskId, ac.signal, selectedId);
-      } catch {
-        if (!cancelled) clearActiveTask(selectedId);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      pollTaskAbortRef.current?.abort();
-    };
-  }, [selectedId, pollTask]);
-
-  useEffect(
-    () => () => {
-      pollTaskAbortRef.current?.abort();
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!selectedId || centerTab !== "logs") return;
-    let cancelled = false;
-    const tick = async () => {
-      try {
-        const j = await api.getPreviewLogs(selectedId);
-        if (!cancelled) setDevServerLog(j.log ?? "");
-      } catch {
-        if (!cancelled) setDevServerLog("");
-      }
-      if (!cancelled) {
-        setTimeout(() => void tick(), 1500);
-      }
-    };
-    void tick();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId, centerTab]);
-
-  useEffect(() => {
-    if (!selectedId || centerTab !== "branches") return;
-    void refreshGitBranches();
-    void refreshGitConflicts();
-  }, [selectedId, centerTab, refreshGitBranches, refreshGitConflicts]);
-
   useEffect(() => {
     if (!selectedId || (centerTab !== "cockpit" && centerTab !== "branches")) return;
     void refreshWorktrees();
   }, [selectedId, centerTab, refreshWorktrees]);
-
-  useEffect(() => {
-    const taskId = taskTrace?.id;
-    if (!taskId) {
-      setForkEvents([]);
-      return;
-    }
-    let cancelled = false;
-    void api.getTaskEvents(taskId).then((events) => {
-      if (!cancelled) setForkEvents(events.filter((event) => event.event_type === "session_fork_created"));
-    }).catch(() => {
-      if (!cancelled) setForkEvents([]);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [taskTrace?.id]);
 
   useEffect(() => {
     if (centerTab !== "docs") {
@@ -2442,8 +1394,9 @@ Procédure:
 
   const onSendChat = async () => {
     const text = chatInput.trim();
-    if (!text || !selectedId) return;
-    setChatInput("");
+    if (!text || !selectedId || chatSendLock.current) return;
+    chatSendLock.current = true;
+    setChatSendBusy(true);
     setError(null);
     const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
     const queued =
@@ -2482,6 +1435,9 @@ Procédure:
         studio_ticket_enforcement_mode: ticketEnforcementModeDraft,
         incognito: chatIncognito || undefined,
       });
+      if (!queued) saveActiveTask(selectedId, task_id);
+      if (selectedIdRef.current !== selectedId) return;
+      setChatInput(current => current.trim() === text ? "" : current);
       if (queued && activeTask) {
         setChat((c) => [
           ...c,
@@ -2493,7 +1449,9 @@ Procédure:
         ]);
         return;
       }
-      setChat((c) => [...c, { role: "user", text, task_id }]);
+      setChat((c) => [...c, { role: "user", text, task_id, task_status: "queued",
+        acceptance_criteria: includeCriteriaOnSend ? redactSecrets(acceptanceCriteriaDraft) : undefined,
+        git_branch: activeBranch || gitHeadBranch || undefined }]);
       setPolicyHintOneShot("");
       const ac = new AbortController();
       pollTaskAbortRef.current = ac;
@@ -2504,10 +1462,12 @@ Procédure:
         done: false,
         progressChips: undefined,
       });
-      saveActiveTask(selectedId, task_id);
       void pollTask(task_id, ac.signal, selectedId);
     } catch (e) {
-      setError(String(e));
+      if (selectedIdRef.current === selectedId) setError(String(e));
+    } finally {
+      chatSendLock.current = false;
+      setChatSendBusy(false);
     }
   };
 
@@ -2657,22 +1617,6 @@ Procédure:
     }
     return opt.hint;
   }, [agent, composedStack]);
-
-  const humanInputRiskLevel = useMemo((): ActionRiskLevel | null => {
-    if (!pendingHumanInput) return null;
-    return inferActionRisk(`${pendingHumanInput.question}\n${pendingHumanInput.context}`);
-  }, [pendingHumanInput]);
-
-  useEffect(() => {
-    setHumanRefusalStreak(0);
-  }, [pendingHumanInput?.taskId]);
-
-  const previewUrl = devPreviewUrl ?? staticPreviewBlobUrl;
-
-  const openPreviewInNewWindow = useCallback(() => {
-    if (!previewUrl) return;
-    window.open(previewUrl, "_blank", "noopener,noreferrer");
-  }, [previewUrl]);
 
   const applyUiSuggestedAction = useCallback(
     (action: string | undefined) => {
@@ -2894,13 +1838,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     (mainSplit === "balanced" ? "balanced" : mainSplit === "center" ? "center-max" : "chat-max");
   const appClass = `app ${uiDensity === "compact" ? "app--density-compact" : ""} ${!sidebarOpen ? "app--sidebar-collapsed" : ""}`;
 
-  const lastAssistant = useMemo(() => {
-    for (let i = chat.length - 1; i >= 0; i -= 1) {
-      if (chat[i]?.role === "assistant") return chat[i];
-    }
-    return null;
-  }, [chat]);
-
   const designHasFixableDiagnostics = useMemo(
     () =>
       parsedDesignDoc.diagnostics.some((d) => d.severity === "error" || d.severity === "warning"),
@@ -2951,8 +1888,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
     setSidebarOpen(open);
   };
 
+  useEffect(() => {
+    if (modalCreateOpen || modalLoadOpen || deleteProjectDialog) setWorkspaceToolsOpen(false);
+  }, [modalCreateOpen, modalLoadOpen, deleteProjectDialog]);
+
   const handleSidebarTabSelect = (tab: CenterTab) => {
     setCenterTab(tab);
+    if (window.innerWidth <= 900) setSidebarOpen(false);
     if (mainSplit === "chat") {
       setMainSplit("balanced");
     }
@@ -2964,6 +1906,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
       setActiveGroup(next);
     }
   }, [centerTab, activeGroup]);
+
+  useEffect(() => { setWorkspaceToolsOpen(false); }, [centerTab]);
 
   // Get filtered tabs for the active group
   const visibleTabs = useMemo(
@@ -2983,11 +1927,15 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         onTabSelect={handleSidebarTabSelect}
         onGroupSelect={setActiveGroup}
         activeGroup={activeGroup}
+        chatActive={mainSplit === "chat"}
+        onChatSelect={() => { setMainSplit("chat"); if (window.innerWidth <= 900) setSidebarOpen(false); }}
       />
       <div className={appClass}>
-      <header className="app-header app-header--compact">
+      <WorkspaceHeader projectName={selectedProject?.name} branch={gitHeadBranch} online={daemonStatus.ok} connectionLabel={daemonChecking ? "connexion…" : daemonStatus.label}
+        split={mainSplit} onSplit={setMainSplit} onProject={() => setModalLoadOpen(true)} onTools={() => setWorkspaceToolsOpen(true)} />
+      <WorkspaceTools open={workspaceToolsOpen} onClose={() => setWorkspaceToolsOpen(false)}>
         <div className="app-header-row">
-          <h1>Code Studio</h1>
+
           {selectedProject ? (
             <div className="app-header-meta" aria-label="Projet et branches Git">
               <span className="app-header-project">
@@ -3171,7 +2119,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </div>
               {selectedProject ? (
                 <p className="hint sidebar-project-hint">
-                  Projet actif : nom, identifiant court et branches dans l’en-tête.
+                  Projet actif : {selectedProject.name}.
                 </p>
               ) : (
                 <p className="hint">Aucun projet chargé — utilisez les actions ci-dessus.</p>
@@ -3301,11 +2249,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <Button
                     variant="default"
                     className="w-full"
-                    disabled={!selectedId}
+                    disabled={!selectedId || buildState === "running"}
                     title="Lance la commande sur le serveur Akasha et affiche la sortie dans le journal de build (panneau droit)."
                     onClick={() => void onBuild()}
                   >
-                    Exécuter le build
+                    {buildState === "running" ? "Build en cours…" : "Exécuter le build"}
                   </Button>
                 </div>
                 {status ? <div className="banner banner-ok">{status}</div> : null}
@@ -3372,65 +2320,19 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
         </div>
 
-        <div className="app-header-nav-secondary">
-          <NotificationCenter />
-          <label className="field-inline header-agent-inline">
-            <span className="header-agent-label">Rôle agent</span>
-            <Select className="header-agent-select" value={agent} onChange={(e) => setAgent(e.target.value)}>
-              {AGENT_OPTIONS.map((o) => (
-                <option key={o.value || "auto"} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <span
-            className={`daemon-status-badge daemon-status-badge--${daemonStatus.ok ? "up" : "down"} header-daemon-status`}
-            title={daemonStatus.detail ?? "Statut du daemon Akasha"}
-            aria-label="Statut du daemon"
-          >
-            Daemon {daemonStatus.label}
-          </span>
-
-          <div className="split-toolbar split-toolbar-group" role="group" aria-label="Répartition éditeur et chat">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`split-toolbar-btn ${mainSplit === "center" ? "is-active" : ""}`}
-              aria-pressed={mainSplit === "center"}
-              aria-label="Plein éditeur"
-              title="Plein éditeur"
-              onClick={() => setMainSplit("center")}
-            >
-              <PanelLeft className="h-4 w-4" aria-hidden />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`split-toolbar-btn ${mainSplit === "balanced" ? "is-active" : ""}`}
-              aria-pressed={mainSplit === "balanced"}
-              aria-label="Vue 50/50"
-              title="Vue 50/50"
-              onClick={() => setMainSplit("balanced")}
-            >
-              <Columns2 className="h-4 w-4" aria-hidden />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`split-toolbar-btn ${mainSplit === "chat" ? "is-active" : ""}`}
-              aria-pressed={mainSplit === "chat"}
-              aria-label="Plein chat"
-              title="Plein chat"
-              onClick={() => setMainSplit("chat")}
-            >
-              <PanelRight className="h-4 w-4" aria-hidden />
-            </Button>
-          </div>
-        </div>
       </nav>
-      </header>
+      </WorkspaceTools>
 
+      <div className="app-feedback">
+        {daemonChecking ? <AsyncState kind="loading" title="Connexion au daemon…" /> : !daemonStatus.ok ? (
+          <AsyncState kind="offline" title="Daemon hors ligne" description="Les brouillons restent disponibles. Démarrez le daemon Akasha puis réessayez." detail={daemonStatus.detail}
+            action={{ label: "Reconnexion", onClick: () => { setDaemonChecking(true); setDaemonRetry(n => n + 1); void refreshProjects(); } }}
+            secondaryAction={{ label: "Ouvrir le cockpit", onClick: () => setCenterTab("cockpit") }} />
+        ) : null}
+        {projectsError && daemonStatus.ok ? <AsyncState kind="error" title="Projets indisponibles" detail={projectsError} action={{ label: "Réessayer", onClick: () => void refreshProjects(), disabled: projectsLoading }} /> : null}
+        {error ? <AsyncState kind="error" title="Envoi ou action interrompue" description="Vos saisies sont conservées." detail={error}
+          action={{ label: "Voir les logs", onClick: () => setCenterTab("logs") }} secondaryAction={{ label: "Fermer le message", onClick: () => setError(null) }} /> : null}
+      </div>
       <div className={appMainClass}>
       <div className="center">
         <div className="center-tabs" role="tablist" aria-label="Navigation principale Code Studio">
@@ -3458,7 +2360,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               taskFinished={Boolean(taskTrace?.done)}
               dirty={gitWorktreeClean === false}
               hasEvolution={Boolean(selectedEvoId)}
-              verifyRan={Boolean(buildLog.trim()) && buildLog !== "…"}
+              verifyRan={buildState === "success"}
               onStep={(_step: DeliveryStepId, target) => {
                 if (target === "chat") setMainSplit("chat");
                 if (target === "preview") setCenterTab("preview");
@@ -3467,6 +2369,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             />
             <ProjectDashboard
               project={dashboardProjectMeta}
+              loading={projectsLoading && !selectedId}
+              onCreateProject={() => setModalCreateOpen(true)}
+              onLoadProject={() => setModalLoadOpen(true)}
+              codeRagError={codeRagStatusError}
+              codeRagBusy={codeRagStatusLoading || codeRagReindexBusy}
+              onReindex={() => void onReindexCodeRag()}
               codeRagStatus={codeRagStatus ?? undefined}
               activeTask={dashboardActiveTask}
               lastSyncedAt={dashboardLastSyncAt}
@@ -3629,7 +2537,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : centerTab === "editor" ? (
           <div className="center-body editor-pane">
             <div className="editor-layout">
-              <div className="editor-file-pane">
+              <details className="editor-file-pane" open={editorTreeOpen} onToggle={event => setEditorTreeOpen(event.currentTarget.open)}>
+                <summary className="editor-tree-toggle">Fichiers du projet</summary>
                 <div className="editor-file-pane-header">
                   <input
                     className="editor-quick-open"
@@ -3674,6 +2583,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </p>
                 ) : (
                   <div className="file-list-scroll">
+                    <>
+                    {filesLoading ? <AsyncState kind="loading" title="Chargement des fichiers…" /> : filesError ? <AsyncState kind="error" title="Fichiers indisponibles" detail={filesError} action={{ label: "Réessayer", onClick: () => void loadFiles() }} /> : files.length === 0 ? <AsyncState kind="empty" title="Ce projet ne contient aucun fichier" description="Décrivez à l’agent ce que vous souhaitez créer." action={{ label: "Demander à l’agent", onClick: () => setMainSplit("chat") }} /> : null}
                     <EditorFileTree
                       files={files}
                       activePath={filePath}
@@ -3681,10 +2592,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       onDeleteFile={(p) => void onDeleteFile(p)}
                       onRenamePath={(from, to) => handleStudioRename(from, to)}
                     />
+                    </>
                   </div>
                 )}
-              </div>
+              </details>
               <div className="editor-editor-pane">
+                {editorLoading ? <AsyncState kind="loading" title="Ouverture du fichier…" /> : null}
+                {editorError ? <AsyncState kind="error" title="Fichier indisponible" detail={editorError} action={{ label: "Actualiser les fichiers", onClick: () => void loadFiles() }} /> : null}
                 <div className="editor-tabs" role="tablist" aria-label="Fichiers ouverts">
                   {editorBuffers.map((buffer) => (
                     <div key={buffer.path} className={`editor-tab ${buffer.path === filePath ? "is-active" : ""}`}>
@@ -3732,7 +2646,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </Button>
                   ) : null}
                 </div>
-                {editorMarkdownPreview && isMarkdownPath(filePath) ? (
+                {!filePath ? <AsyncState kind="empty" title="Aucun fichier ouvert" description="Choisissez un fichier dans l’arborescence ou utilisez l’ouverture rapide." /> : editorMarkdownPreview && isMarkdownPath(filePath) ? (
                   <div className="markdown-doc-preview">
                     <MarkdownBlock text={editorText} className="md-content" />
                   </div>
@@ -3752,6 +2666,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     }}
                   />
                 )}
+                <details className="editor-inspection">
+                <summary>Recherche et diagnostics{editorDiagnostics.length ? ` · ${editorDiagnostics.length}` : ""}</summary>
                 <div className="editor-search">
                   <input
                     className="editor-quick-open"
@@ -3767,6 +2683,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     {editorSearchBusy ? "Recherche…" : "Rechercher"}
                   </Button>
                 </div>
+                {editorSearchBusy ? <AsyncState kind="loading" title="Recherche dans le projet…" /> : searchSummary ? <AsyncState kind={searchSummary.skipped ? "partial" : "empty"} title={editorSearchHits.length ? editorSearchHits.length + " résultat(s) affiché(s)" : "Aucun résultat pour « " + searchSummary.query + " »"} description={searchSummary.scanned + " fichiers examinés. " + (searchSummary.skipped ? searchSummary.skipped + " fichier(s) illisible(s). " : "") + "Affichage limité à 40 résultats."} /> : null}
                 {editorSearchHits.length > 0 ? (
                   <ul className="editor-search-hits">
                     {editorSearchHits.map((hit) => (
@@ -3784,6 +2701,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     : "aucun marqueur Monaco. Aucun serveur de langage n’est configuré ; seuls les diagnostics syntaxiques intégrés sont disponibles."}
                   {" "}Les chemins restent contrôlés par le daemon. Les fichiers binaires ne sont pas éditables.
                 </p>
+                </details>
               </div>
             </div>
           </div>
@@ -3822,7 +2740,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               <Button
                 variant="secondary"
                 size="sm"
-                disabled={!selectedId || depsInstallBusy}
+                disabled={!selectedId || depsInstallBusy || previewBusy}
                 title="Exécute uniquement la commande d’installation détectée (npm install / uv sync / …) sans démarrer le serveur."
                 onClick={() => void onInstallDepsOnly()}
               >
@@ -3831,7 +2749,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               <Button
                 variant="default"
                 size="sm"
-                disabled={!selectedId || previewBusy}
+                disabled={!selectedId || previewBusy || depsInstallBusy}
                 title="Détecte la stack (Node, Python uv …), installe si nécessaire, puis lance le serveur de dev correspondant."
                 onClick={() => void onPlayPreview()}
               >
@@ -3856,6 +2774,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 Nouvelle fenêtre
               </Button>
             </div>
+            {previewBusy || depsInstallBusy ? <AsyncState kind="loading" title={depsInstallBusy ? "Installation des dépendances…" : "Démarrage de l’aperçu…"} description="Le daemon prépare le projet. Vous pouvez continuer à consulter vos fichiers." /> : previewError ? <AsyncState kind="error" title="L’aperçu n’est pas prêt" detail={previewError} action={{ label: "Réessayer", onClick: () => void (previewAction === "install" ? onInstallDepsOnly() : onPlayPreview()) }} secondaryAction={{ label: "Consulter les logs", onClick: () => setCenterTab("logs") }} /> : null}
+            <div className="preview-build-controls">
+              <label>Commande de vérification<Input aria-label="Commande de vérification" value={buildCmd} onChange={e => setBuildCmd(e.target.value)} /></label>
+              <Button disabled={!selectedId || buildState === "running"} onClick={() => void onBuild()}>{buildState === "running" ? "Build en cours…" : "Exécuter le build"}</Button>
+            </div>
+            {buildState !== "idle" ? <AsyncState kind={buildState === "running" ? "loading" : buildState} title={buildState === "running" ? "Vérification en cours…" : buildState === "error" ? "La vérification a échoué" : "Vérification terminée"} detail={buildError || buildLog} action={buildState === "error" ? { label: "Relancer le build", onClick: () => void onBuild() } : undefined} /> : null}
             {previewLog ? (
               <pre className="preview-install-log" title="Sortie installation / serveur de dev">
                 {previewLog}
@@ -3876,6 +2800,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               />
             ) : (
               <div className="preview-empty">
+                {!previewBusy && !depsInstallBusy && !previewError ? <AsyncState kind="empty" title="Aucun aperçu lancé" description="Lancez le serveur de développement ou ouvrez un fichier HTML dans l’éditeur." action={selectedId ? { label: "Lancer l’aperçu", onClick: () => void onPlayPreview() } : { label: "Choisir un projet", onClick: () => setModalLoadOpen(true) }} /> : null}
                 <p>
                   <strong>Serveur de dev</strong> : la stack est détectée automatiquement à partir des
                   manifestes du projet, puis installée et lancée. Cliquez sur « Lancer la prévisualisation ».
@@ -4164,7 +3089,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <h2>
                   Branches disponibles <InfoTip content="Liste locale avec état courant, avance/retard et dernier commit." />
                 </h2>
-                {gitBranchesLoading ? <p className="hint">Chargement des branches…</p> : null}
+                {gitBranchesLoading ? <AsyncState kind="loading" title="Chargement des branches…" /> : null}
+                {gitError ? <AsyncState kind="error" title="Données Git indisponibles" detail={gitError} action={{ label: "Actualiser Git", onClick: () => { void refreshGitBranches(); void refreshGitConflicts(); } }} /> : null}
                 <ul className="branches-list">
                   {gitBranches.map((b) => (
                     <li key={b.name}>
@@ -4602,12 +3528,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
       <div className="chat-column">
         <aside className="chat-panel">
-        {selectedId ? (
-          <div className="sandbox-reminder" role="status">
-            Sandbox disque : <code>{selectedId.slice(0, 8)}…</code> — les outils agent sont limités à ce dossier projet
-            (voir daemon / policy).
-          </div>
-        ) : null}
         {pendingInbox.length > 1 ? (
           <div className="pending-inbox-banner" role="status">
             {pendingInbox.length} tâche(s) en attente de réponse (file globale — ouvrez la bonne dans l’UI principale
@@ -4616,16 +3536,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         ) : null}
 
         <div className="chat-activity-area">
-          {taskTrace ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => void onOpenTaskDetailModal(taskTrace.id)}
-              title="Ouvrir la modale de détail de la tâche"
-            >
-              Tâche en cours
-            </Button>
-          ) : null}
+          {taskTrace ? <AsyncState kind={!taskTrace.done ? "loading" : taskTrace.status === "failed" || taskTrace.status === "interrupted" ? "error" : taskTrace.status === "completed" ? "success" : "partial"}
+            title={formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
+            action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
+            secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Reprendre la demande", onClick: () => {
+              const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
+              if (prompt) setChatInput(prompt.text);
+              document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus();
+            } } : undefined} /> : null}
           {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
             <div className="task-human-input">
               {humanInputRiskLevel ? (
@@ -4680,11 +3598,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           ) : null}
 
           <section className="chat-conversation-panel" aria-label="Conversation agent">
-            <div className="pane-title pane-title--compact">Conversation</div>
+            <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>
             <ForkTreePanel
               messages={chat}
               events={forkEvents}
-              activeTaskId={taskTrace?.id ?? null}
+              activeTaskId={taskTrace?.id ?? chat[chat.length - 1]?.task_id ?? null}
+              activeTaskStatus={taskTrace?.status}
               inspectedTaskId={inspectedForkTaskId}
               onInspect={setInspectedForkTaskId}
             />
@@ -4715,6 +3634,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 if (nearBottom) setChatHasUnseen(false);
               }}
             >
+              {chat.length === 0 ? <ChatWelcome hasProject={Boolean(selectedId)} onCreate={() => setModalCreateOpen(true)} onLoad={() => setModalLoadOpen(true)} onPrompt={text => { setChatInput(text); document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus(); }} /> : null}
               {chat.map((m, i) => (
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
@@ -4747,7 +3667,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <TaskReviewPanel
                         diff={m.studio_diff}
                         projectId={selectedId}
-                        gitBranch={gitHeadBranch}
+                        gitBranch={chat.find(message => message.role === "user" && message.task_id === m.task_id)?.git_branch ?? null}
+                        acceptanceCriteria={chat.find(message => message.role === "user" && message.task_id === m.task_id)?.acceptance_criteria}
                         buildLog={buildLog}
                         onApplied={() => void refreshFiles()}
                         onOpenEditor={(path) => {
@@ -4788,7 +3709,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </section>
         </div>
 
-        <div className="chat-panel-footer">
+        {selectedId ? <div className="chat-panel-footer">
           {selectedId ? (
             <SendContextSummaryPanel
               summary={summarizeSendContext({
@@ -4802,8 +3723,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 policyHint: policyHintOneShot,
                 agent,
                 codeMode,
-                modelLabel: handoffModel,
-                providerLabel: handoffProvider,
+                modelLabel: lastObservedModel,
+                providerLabel: "",
                 permissionMode,
                 ragStatus: codeRagStatus?.status ?? null,
                 ragError: codeRagStatusError,
@@ -4821,9 +3742,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="input-group input-group--textarea chat-form">
             <Textarea
               className="input-group-field input-group-field--textarea"
+              aria-label="Message à l’agent"
+              rows={3}
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Décrivez ce que l’agent doit créer ou modifier… (Entrée pour nouvelle ligne)"
+              placeholder={selectedId ? "Demandez une modification… @ pour citer un fichier" : "Ouvrez un projet pour commencer"}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
@@ -4832,12 +3755,31 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               }}
             />
             <div className="input-group-append">
-              <Button variant="default" disabled={!selectedId} onClick={() => void onSendChat()}>
-                Envoyer
+              <Button variant="default" className="composer-send" aria-label={chatSendBusy ? "Envoi en cours" : "Envoyer"} title="Envoyer (Ctrl + Entrée)" disabled={!selectedId || chatSendBusy || !chatInput.trim()} onClick={() => void onSendChat()}>
+                <ArrowUp size={19} aria-hidden="true" />
               </Button>
             </div>
           </div>
           <div className="chat-controls-row">
+            <label className="composer-agent"><span className="sr-only">Rôle agent</span><Bot size={15} aria-hidden="true" /><Select aria-label="Rôle agent" value={agent} onChange={event => setAgent(event.target.value)}>{AGENT_OPTIONS.map(option => <option key={option.value || "auto"} value={option.value}>{option.label}</option>)}</Select></label>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              onClick={() => setChatOptionsOpen((v) => !v)}
+              aria-expanded={chatOptionsOpen}
+              title="Afficher ou masquer les options avancées"
+            >
+              {chatOptionsOpen ? "Masquer options" : "Options"}
+            </Button>
+            <p className="kbd-hint">
+              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
+            </p>
+          </div>
+          {chatOptionsOpen ? (
+            <div className="chat-options-panel">
+              <p className="hint">Les outils de l’agent restent limités au dossier de ce projet. Consultez le contexte pour les permissions effectives.</p>
             <Button
               variant="ghost"
               size="sm"
@@ -4861,21 +3803,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             >
               Reprendre avec un autre modèle
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="chat-options-toggle"
-              onClick={() => setChatOptionsOpen((v) => !v)}
-              title="Afficher ou masquer les options avancées"
-            >
-              {chatOptionsOpen ? "Masquer options" : "Options"}
-            </Button>
-            <p className="kbd-hint">
-              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
-            </p>
-          </div>
-          {chatOptionsOpen ? (
-            <div className="chat-options-panel">
               <label className="field">
                 <span>Livraison message (tâche en cours)</span>
                 <div className="input-group field-input-group">
@@ -4959,10 +3886,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </details>
             </div>
           ) : null}
-        </div>
+        </div> : null}
       </aside>
       </div>
     </div>
+      <MobileWorkspaceNav active={mainSplit === "chat" ? "chat" : centerTab === "editor" || centerTab === "preview" ? centerTab : null} onSelect={view => { if (view === "chat") setMainSplit("chat"); else { setCenterTab(view); setMainSplit("center"); } }} />
 
       {taskDetailForId ? (
         <div
