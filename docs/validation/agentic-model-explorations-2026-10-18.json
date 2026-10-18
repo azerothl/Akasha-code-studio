@@ -1,0 +1,2583 @@
+[
+  {
+    "source_run": "studio-model-recipes-v8v0qacu",
+    "daemon_sha256": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": []
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-iq8nyltq",
+    "daemon_sha256": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 0,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 3,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nLe fichier `CODE_STUDIO_PLAN.md` ne peut pas être lu actuellement (erreur « file not found »). Cela signifie que le fichier n’existe pas à l’emplacement attendu ou qu’il a été supprimé. Pour respecter la demande, je dois créer le fichier `RECIPE_OK.md` à la racine du projet, mais je ne peux pas le faire tant que le fichier plan n’est pas disponible ou que le chemin n’est pas corrigé. En l’absence d’instructions pour rétablir ou recréer le fichier plan, je ne peux pas poursuivre la modification demandée.\n\nRésumé : Le fichier `RECIPE_OK.md` ne peut pas être ajouté pour le moment car le fichier `CODE_STUDIO_PLAN.md` est introuvable et ne peut être lu. Une fois le fichier plan disponible ou corrigé, je pourrai ajouter la ligne datée dans la section « Informations complémentaires ».",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "completed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 0,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 4,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 4,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 4,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": []
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 2,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nI'll continue with the task using the recorded results. Let's proceed with the necessary steps.\n\nFirst, let's check the current Git status to ensure we're on the correct branch and to see if there are any pending changes.\n\n```json\n{\n  \"schema_version\": 1,\n  \"tool\": \"git_status\",\n  \"arguments\": {\n    \"repo\": \"workspace:/\"\n  }\n}\n```",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": []
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nI'll continue with the task using the recorded results. Let's proceed with the necessary steps.\n\nFirst, let's check the status of the Git repository to see the current state of the files and branches.\n\n```json\n{\n  \"schema_version\": 1,\n  \"tool\": \"git_status\",\n  \"arguments\": {\n    \"repo\": \"workspace:/\"\n  }\n}\n```",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nI'll continue with the task using the recorded results. Here's what I'll do:\n\n1. **Check if the file was written successfully**: I'll verify if the file was written correctly by reading it back.\n2. **Perform any remaining checks**: If there are any other checks that need to be performed (like verifying the content, running tests, etc.), I'll do those as well.\n3. **Summarize the results**: Once all the necessary steps are completed, I'll provide a brief summary of what was done and the results.\n\nLet's start by checking if the file was written successfully. I'll read the file back to verify its content.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nI'll continue with the task using the recorded results. Let's proceed with the necessary steps.\n\nFirst, let's check the current status of the Git repository to see what changes have been made and what needs to be committed.\n\n```json\n{\n  \"schema_version\": 1,\n  \"tool\": \"git_status\",\n  \"arguments\": {\n    \"repo\": \"workspace:/\"\n  }\n}\n```",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-n4eh7qpo",
+    "daemon_sha256": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('RECIPE_OK.md', 'recipe-ok\\nThe file RECIPE_OK.md has been created at workspace:/RECIPE_OK.md with the exact content \"recipe-ok\" as requested. No further actions are needed.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok\nThe file RECIPE_OK.md has been created at workspace:/RECIPE_OK.md with the exact content \"recipe-ok\" as requested. No further actions are needed."
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('FIRST.md', 'content=alpha')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 104,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 198,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "content=alpha",
+          "SECOND.md": "content=beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('RECIPE_OK.md', 'recipe-ok\\n]')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok\n]"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "completed",
+        "error": "(3, [{'operation_id': 'fb813de6-fae8-46e6-b2a9-6e05ddb87cb4', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': 'fb813de6-fae8-46e6-b2a9-6e05ddb87cb4', 'output': '[write_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-n4eh7qpo\\\\lfm2-24b\\\\studio-projects\\\\64c0dbd7-f4c9-43cf-9c1a-70cdcc4b75e1\\\\SECOND.md] saved (disk).', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file'}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-18T17:58:48.793892400+00:00'}, {'operation_id': '3ffed6c5-9886-4501-9e36-2c65a8dc4c1d', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': '3ffed6c5-9886-4501-9e36-2c65a8dc4c1d', 'output': '[read_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-n4eh7qpo\\\\lfm2-24b\\\\studio-projects\\\\64c0dbd7-f4c9-43cf-9c1a-70cdcc4b75e1\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'read_file'}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-18T17:58:48.769798700+00:00'}, {'operation_id': 'fab30dac-7456-46a6-9ac0-f8edb7552b8b', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': 'fab30dac-7456-46a6-9ac0-f8edb7552b8b', 'output': '[write_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-n4eh7qpo\\\\lfm2-24b\\\\studio-projects\\\\64c0dbd7-f4c9-43cf-9c1a-70cdcc4b75e1\\\\FIRST.md] saved (disk).', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file'}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-18T17:58:48.744382600+00:00'}, {'operation_id': 'a76da1e5-9313-4ac4-93d8-45e688018da1', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': 'a76da1e5-9313-4ac4-93d8-45e688018da1', 'output': '[write_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-n4eh7qpo\\\\lfm2-24b\\\\studio-projects\\\\64c0dbd7-f4c9-43cf-9c1a-70cdcc4b75e1\\\\SECOND.md] saved (disk).', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file'}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-18T17:58:48.071853+00:00'}, {'operation_id': 'b1f57ff6-29b2-4720-bcb6-ffe11d1d58bc', 'result': {'error': None, 'exit_code': None, 'file_version': 'missing', 'operation_id': 'b1f57ff6-29b2-4720-bcb6-ffe11d1d58bc', 'output': '[read_file workspace] failed: read error for FIRST.md at C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-n4eh7qpo\\\\lfm2-24b\\\\studio-projects\\\\64c0dbd7-f4c9-43cf-9c1a-70cdcc4b75e1\\\\FIRST.md: read_file bytes C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-n4eh7qpo\\\\lfm2-24b\\\\studio-projects\\\\64c0dbd7-f4c9-43cf-9c1a-70cdcc4b75e1\\\\FIRST.md: Le fichier spécifié est introuvable. (os error 2)', 'result_unknown': False, 'schema_version': 1, 'success': False, 'tool': 'read_file'}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-18T17:58:48.041665600+00:00'}])",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 8,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 4,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('RECIPE_OK.md', 'recipe-ok\\nThe file RECIPE_OK.md has been created at workspace:/RECIPE_OK.md with the exact content \"recipe-ok\" as requested. No further actions are needed.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok\nThe file RECIPE_OK.md has been created at workspace:/RECIPE_OK.md with the exact content \"recipe-ok\" as requested. No further actions are needed."
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'Loop detected: same tool and arguments repeated. Stopping.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 19,
+          "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+          "result": "partial",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 3,
+          "termination_reason": "tool_loop",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": "--content # Beta\\n\\nThis is the second draft with revisions based on feedback.\\n\\n### Improvements\\n- Added step-by-step photos\\n- Clarified timing notes\\n- Updated ingredient quantities\n"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-0mf_78wu",
+    "daemon_sha256": "d41c6bcb38aedd1bc2ecdd75229d844ee6b7888b0ee92a10c21b807c04d2fc3a",
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('RECIPE_OK.md', '--content recipe-ok\\n')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "--content recipe-ok\n"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('FIRST.md', '')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "",
+          "SECOND.md": "The requested files FIRST.md and SECOND.md have been created with the exact content \"alpha\" and \"beta\" respectively, as specified. No further changes were made to the project or any other files."
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('SECOND.md', 'beta\\nTerminé. J\\'ai créé `FIRST.md` avec le contenu \"alpha\" et `SECOND.md` avec le contenu \"beta\".')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta\nTerminé. J'ai créé `FIRST.md` avec le contenu \"alpha\" et `SECOND.md` avec le contenu \"beta\"."
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'Loop detected: same tool and arguments repeated. Stopping.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+          "result": "partial",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 3,
+          "termination_reason": "tool_loop",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-doosw2i8",
+    "daemon_sha256": "63233ae5e7442c036755ac7fcf2a6d0914e8e58e0a1821dc5a9900ae372ed8c4",
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "'NoneType' object has no attribute 'replace'",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 0,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "'NoneType' object has no attribute 'replace'",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 0,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', \"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\")",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "provider_error",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', \"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\")",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "provider_error",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-5khott7v",
+    "daemon_sha256": "d8f24ce942d9fbf7a279f712f51b35f14a473646ca4377cbba90f3a1a796b62d",
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-7cmuyn18",
+    "daemon_sha256": "c3f100c6f5e9c1bfbae8b912cea85e41f3bdca2398f7727919f12b22c4f834d8",
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'No tool operation was executed for the explicit file request; model claims of file creation are not validated.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-zd05s2m_",
+    "daemon_sha256": "62731eafe0c34f6c9950be26f859c0c96c40617f24f323b2512cb8f09a0dce8e",
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'Loop detected: same tool and arguments repeated. Stopping.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 3,
+          "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_loop",
+          "verification": []
+        },
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'Loop detected: same tool and arguments repeated. Stopping.')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 2,
+          "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_loop",
+          "verification": []
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "'NoneType' object has no attribute 'replace'",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": null
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-i9ehaodr",
+    "daemon_sha256": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('RECIPE_OK.md', 'recipe-ok)]')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok)]"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-qe0gfddy",
+    "daemon_sha256": "da9e97b60a853d19c9a008304e2aab5dd4b549fde816cbd49397763c70b0cd9c",
+    "cases": [
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('RECIPE_OK.md', '--content recipe-ok\\n')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "--content recipe-ok\n"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "[{'operation_id': '1d44515a-e55c-4b01-9ad2-cd958eb2af14', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': '1d44515a-e55c-4b01-9ad2-cd958eb2af14', 'output': '[write_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-qe0gfddy\\\\lfm2-24b\\\\studio-projects\\\\9419df28-b332-4584-8f96-b7f660ba02ec\\\\SECOND.md] saved (disk).', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file'}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-18T18:19:27.698562600+00:00'}, {'operation_id': 'f3e5ec14-34bb-4d6c-b4ee-0b1bfc9b2d9f', 'result': {'error': None, 'error_code': 'file_not_found', 'exit_code': None, 'file_version': 'missing', 'operation_id': 'f3e5ec14-34bb-4d6c-b4ee-0b1bfc9b2d9f', 'output': '[read_file workspace] failed: read error for SECOND.md at C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-qe0gfddy\\\\lfm2-24b\\\\studio-projects\\\\9419df28-b332-4584-8f96-b7f660ba02ec\\\\SECOND.md: read_file bytes C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-qe0gfddy\\\\lfm2-24b\\\\studio-projects\\\\9419df28-b332-4584-8f96-b7f660ba02ec\\\\SECOND.md: Le fichier spécifié est introuvable. (os error 2)', 'result_unknown': False, 'retry_hint': 'The file does not exist. Repeating read_file with another window/full cannot create it. If the ORIGINAL user request asks you to create this file, use write_file with expected_version: missing and the requested content. Otherwise report that it is absent; do not create unrelated files.', 'schema_version': 1, 'success': False, 'tool': 'read_file'}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-18T18:19:27.671974300+00:00'}, {'operation_id': 'c5cba957-f751-4eb9-9983-06803815b79f', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': 'c5cba957-f751-4eb9-9983-06803815b79f', 'output': '[write_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-qe0gfddy\\\\lfm2-24b\\\\studio-projects\\\\9419df28-b332-4584-8f96-b7f660ba02ec\\\\FIRST.md] saved (disk).', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file'}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-18T18:19:27.642184600+00:00'}, {'operation_id': 'e1cea22e-f54f-4c78-bf35-bd87cb6c9fdb', 'result': {'error': None, 'error_code': 'file_not_found', 'exit_code': None, 'file_version': 'missing', 'operation_id': 'e1cea22e-f54f-4c78-bf35-bd87cb6c9fdb', 'output': '[read_file workspace] failed: read error for FIRST.md at C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-qe0gfddy\\\\lfm2-24b\\\\studio-projects\\\\9419df28-b332-4584-8f96-b7f660ba02ec\\\\FIRST.md: read_file bytes C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-model-recipes-qe0gfddy\\\\lfm2-24b\\\\studio-projects\\\\9419df28-b332-4584-8f96-b7f660ba02ec\\\\FIRST.md: Le fichier spécifié est introuvable. (os error 2)', 'result_unknown': False, 'retry_hint': 'The file does not exist. Repeating read_file with another window/full cannot create it. If the ORIGINAL user request asks you to create this file, use write_file with expected_version: missing and the requested content. Otherwise report that it is absent; do not create unrelated files.', 'schema_version': 1, 'success': False, 'tool': 'read_file'}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-18T18:19:27.604328200+00:00'}]",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 2,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-vc_9ve6r",
+    "daemon_sha256": "c341c8a7aa4d44a47f04b5fd83ad3371ea6f6711b5e2d69b8c0f93adfbd19472",
+    "cases": [
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('SECOND.md', None)",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": null
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "failed",
+        "error": "HTTP Error 404: Not Found",
+        "outcome": null
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-jc2m4d9o",
+    "daemon_sha256": "d0d378f28e4400baf559f72eaebbfa190b479478a9294991c7173cce6d4762ee",
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "failed",
+        "error": "('failed', 'The first operation failed because the tool call was not properly formatted as a Studio JSON envelope. I will correct this by providing a valid JSON structure for the `write_file` tool to create `FIRST.md` with the content \"alpha\".\\n\\n[write_file(workspace=\"/workspace:/FIRST.md\", content=\"alpha\", expected_version=\"missing\")]')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nThe first operation failed because the tool call was not properly formatted as a Studio JSON envelope. I will correct this by providing a valid JSON structure for the `write_file` tool to create `FIRST.md` with the content \"alpha\".\n\n[write_file(workspace=\"/workspace:/FIRST.md\", content=\"alpha\", expected_version=\"missing\")]",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-zfhazha3",
+    "daemon_sha256": "1318fb041cd2fa45bd4dd5644ea2d9fba18a62855332b6ead34a67e233daad20",
+    "cases": [
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "RECIPE_OK.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "RECIPE_OK.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "RECIPE_OK.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "RECIPE_OK.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "RECIPE_OK.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "RECIPE_OK.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "RECIPE_OK.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "RECIPE_OK.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "RECIPE_OK.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "RECIPE_OK.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "RECIPE_OK.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "RECIPE_OK.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "RECIPE_OK.md": "recipe-ok"
+        }
+      },
+      {
+        "model": "devstral:latest",
+        "provider": "openai",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "passed",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "alpha",
+          "SECOND.md": "beta"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "validation": "failed",
+        "status": "completed",
+        "error": "('FIRST.md', '{\\n\"content\": \"alpha\",\\n\"expected_version\": \"missing\"\\n}')",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND.md",
+              "status": "passed"
+            }
+          ]
+        },
+        "verified_files": {
+          "FIRST.md": "{\n\"content\": \"alpha\",\n\"expected_version\": \"missing\"\n}",
+          "SECOND.md": "{\n\"content\": \"beta\",\n\"expected_version\": \"missing\"\n}"
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "single-write",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "RECIPE_OK.md": null
+        }
+      },
+      {
+        "model": "lfm2:24b",
+        "provider": "ollama",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "validation": "failed",
+        "status": "running",
+        "error": "('running', None)",
+        "outcome": null,
+        "verified_files": {
+          "FIRST.md": null,
+          "SECOND.md": null
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,1112 @@
+{
+  "at": "2026-10-18T18:47:03.667Z",
+  "model": "deterministic protocol fixture (not an LLM evaluation)",
+  "status": "passed",
+  "cases": [
+    {
+      "name": "real project creation and clean initial Git",
+      "status": "passed",
+      "ms": 529,
+      "evidence": {
+        "id": "3ed3fed8-df14-448d-914b-de4e5411b879",
+        "head": "40c0cb67564a48cf587e80e3a3924673244df3d3"
+      }
+    },
+    {
+      "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+      "status": "passed",
+      "ms": 3071,
+      "evidence": {
+        "id": "ba9e5a81-b286-4e8e-a5fc-1ce388029635",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\n[Tentatives automatiques : secours: npm exec -- vite build (sans étape tsc du script build)]\nVite fallback passed, but the configured build still failed (TypeScript step not verified).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "verification_failed",
+          "verification": [
+            {
+              "detail": "Vérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\n[Tentatives automatiques : secours: npm exec -- vite build (sans étape tsc du script build)]\nVite fallback passed, but the configured build still failed (TypeScript step not verified).",
+              "kind": "project_build",
+              "status": "failed"
+            }
+          ]
+        },
+        "failure": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\n[Tentatives automatiques : secours: npm exec -- vite build (sans étape tsc du script build)]\nVite fallback passed, but the configured build still failed (TypeScript step not verified)."
+      }
+    },
+    {
+      "name": "empty model fails without inventing verification",
+      "status": "passed",
+      "ms": 558,
+      "evidence": {
+        "id": "5e13f434-f2ac-46ae-9bf3-2968935f9302",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": []
+        }
+      }
+    },
+    {
+      "name": "file creation prose without any effect cannot become a success",
+      "status": "passed",
+      "ms": 547,
+      "evidence": {
+        "id": "08b2766f-08ac-448a-abb8-39173cef19c0",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "detail": "NEVER-NO-EFFECT.md: requested file missing",
+              "kind": "requested_file",
+              "path": "NEVER-NO-EFFECT.md",
+              "status": "failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "native continuation ends in tool results without a new continue user turn",
+      "status": "passed",
+      "ms": 554,
+      "evidence": {
+        "id": "0a1d210f-56a0-4e95-afcd-6dd0cfcb2719"
+      }
+    },
+    {
+      "name": "premature final response resumes only the explicitly missing file",
+      "status": "passed",
+      "ms": 828,
+      "evidence": {
+        "id": "ff2f6540-eaa5-42bf-8ae6-8b78dffccc8f",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST-REQUIRED.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST-REQUIRED.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND-REQUIRED.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND-REQUIRED.md",
+              "status": "passed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "native reads continue after the default 500-line window",
+      "status": "passed",
+      "ms": 830,
+      "evidence": {
+        "id": "0d4944d3-5ab9-4835-ad0e-aaf00676e128",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "mechanical acceptance preserves each criterion result",
+      "status": "passed",
+      "ms": 294,
+      "evidence": {
+        "id": "a9a809fd-5916-48e7-a0a2-d8836c9ffffc",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nÉchec critères d'acceptation (vérification automatique) :\n[missing] Fichier attendu absent ou non fichier: `MUST_NOT_EXIST.txt`",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "verification_failed",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "criterion_kind": "file_exists",
+              "exit_code": null,
+              "id": "present",
+              "kind": "acceptance",
+              "status": "passed",
+              "text": "Plan exists"
+            },
+            {
+              "criterion_kind": "file_exists",
+              "exit_code": null,
+              "id": "missing",
+              "kind": "acceptance",
+              "status": "failed",
+              "text": "Missing fixture"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "provider failure keeps explicit structured failure",
+      "status": "passed",
+      "ms": 294,
+      "evidence": {
+        "id": "15ac7802-9408-4a12-b033-08d3d8e941c1",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "provider_error",
+          "verification": []
+        }
+      }
+    },
+    {
+      "name": "native Unicode write, partial failure and retained diff",
+      "status": "passed",
+      "ms": 560,
+      "evidence": {
+        "id": "eaa01563-5a7a-4ac2-be2d-5fbe57e2e929",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "partial",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 1,
+          "termination_reason": "model_empty",
+          "verification": []
+        },
+        "diff": {
+          "captured_at": "2026-10-18T18:47:12.020764500+00:00",
+          "files": [
+            {
+              "diff": "diff --git a/proof.md b/proof.md\n--- /dev/null\n+++ b/proof.md\n@@ -0,0 +1 @@\n+réel 🙂\n",
+              "path": "proof.md",
+              "status": "added",
+              "truncated": false
+            }
+          ],
+          "task_id": "eaa01563-5a7a-4ac2-be2d-5fbe57e2e929"
+        }
+      }
+    },
+    {
+      "name": "reviewer and planner refuse command effects",
+      "status": "passed",
+      "ms": 1549,
+      "evidence": "No marker written; persisted roles and spoof refusal confirmed"
+    },
+    {
+      "name": "planner writes only exact plan path",
+      "status": "passed",
+      "ms": 827,
+      "evidence": {
+        "id": "8325b679-f8ba-4690-9ab7-2e1664f11c6d",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": []
+        }
+      }
+    },
+    {
+      "name": "real user PTY input, cursor, resize, isolation and close",
+      "status": "passed",
+      "ms": 702,
+      "evidence": {
+        "sid": "e048c9e4-fbb2-46fa-a044-8c5850e4d2ca",
+        "outputBytes": 446
+      }
+    },
+    {
+      "name": "agent PTY remains task-owned and archives its transcript",
+      "status": "passed",
+      "ms": 1683,
+      "evidence": {
+        "id": "73acca56-472b-4cea-b42a-01af2535265d",
+        "transcript": {
+          "bytes": 470,
+          "created_at": "2026-10-18T18:47:17.036846500+00:00",
+          "details": {
+            "exit_code": null,
+            "program": "cmd",
+            "session_id": "eda11198-6ace-433e-ae12-d9ea457df0d3",
+            "truncated": false
+          },
+          "id": "a43847ee-5f88-4674-ac00-bad7b08a87e0",
+          "kind": "terminal_transcript",
+          "mime": "text/plain",
+          "task_id": "73acca56-472b-4cea-b42a-01af2535265d"
+        }
+      }
+    },
+    {
+      "name": "MCP real stdio pagination validation and task invocation",
+      "status": "passed",
+      "ms": 2253,
+      "evidence": {
+        "id": "fc7161c6-adee-4874-9468-975fd0022556",
+        "discovered": [
+          "echo",
+          "second"
+        ]
+      }
+    },
+    {
+      "name": "agent browser desktop mobile logs PNG and denied redirect",
+      "status": "passed",
+      "ms": 3324,
+      "evidence": {
+        "id": "a7c15ee9-80b9-4355-a453-781e42516509",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 8,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "artifacts": {
+          "artifacts": [
+            {
+              "bytes": 8669,
+              "created_at": "2026-10-18T18:47:20.953514500+00:00",
+              "details": {
+                "url": "http://127.0.0.1:54682/demo",
+                "viewport": {
+                  "height": 720,
+                  "width": 1280
+                }
+              },
+              "id": "a4507c20-26d4-438d-a8ba-7c83e6bf9540",
+              "kind": "browser_screenshot",
+              "mime": "image/png",
+              "task_id": "a7c15ee9-80b9-4355-a453-781e42516509"
+            },
+            {
+              "bytes": 7074,
+              "created_at": "2026-10-18T18:47:21.273467700+00:00",
+              "details": {
+                "url": "http://127.0.0.1:54682/demo",
+                "viewport": {
+                  "height": 844,
+                  "width": 390
+                }
+              },
+              "id": "8d6293e6-a3d0-4984-ad45-a659882c85c4",
+              "kind": "browser_screenshot",
+              "mime": "image/png",
+              "task_id": "a7c15ee9-80b9-4355-a453-781e42516509"
+            },
+            {
+              "bytes": 121,
+              "created_at": "2026-10-18T18:47:21.450578100+00:00",
+              "details": {
+                "entries": 1
+              },
+              "id": "8b22334e-a1da-4855-a362-ca59e0676324",
+              "kind": "browser_console",
+              "mime": "application/json",
+              "task_id": "a7c15ee9-80b9-4355-a453-781e42516509"
+            },
+            {
+              "bytes": 253,
+              "created_at": "2026-10-18T18:47:21.624502500+00:00",
+              "details": {
+                "entries": 2
+              },
+              "id": "14cc810b-9fcb-4820-814a-b8bb1b0cf71a",
+              "kind": "browser_network",
+              "mime": "application/json",
+              "task_id": "a7c15ee9-80b9-4355-a453-781e42516509"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TypeScript real server diagnostics definition references rename",
+      "status": "passed",
+      "ms": 2274,
+      "evidence": {
+        "definition": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "sample.ts",
+              "range": {
+                "end": {
+                  "character": 18,
+                  "line": 0
+                },
+                "start": {
+                  "character": 13,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "references": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "sample.ts",
+              "range": {
+                "end": {
+                  "character": 18,
+                  "line": 0
+                },
+                "start": {
+                  "character": 13,
+                  "line": 0
+                }
+              }
+            },
+            {
+              "path": "sample.ts",
+              "range": {
+                "end": {
+                  "character": 17,
+                  "line": 1
+                },
+                "start": {
+                  "character": 12,
+                  "line": 1
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "diagnostics": {
+          "diagnostics": [
+            {
+              "code": 2322,
+              "message": "Type 'string' is not assignable to type 'number'.",
+              "range": {
+                "end": {
+                  "character": 9,
+                  "line": 0
+                },
+                "start": {
+                  "character": 6,
+                  "line": 0
+                }
+              },
+              "severity": 1,
+              "source": "typescript"
+            }
+          ],
+          "status": "ready"
+        }
+      }
+    },
+    {
+      "name": "Python real server navigation and explicit diagnostics",
+      "status": "passed",
+      "ms": 1158,
+      "evidence": {
+        "definition": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "sample.py",
+              "range": {
+                "end": {
+                  "character": 5,
+                  "line": 0
+                },
+                "start": {
+                  "character": 0,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "diagnostics": {
+          "diagnostics": [
+            {
+              "code": "reportAssignmentType",
+              "codeDescription": {
+                "href": "https://github.com/microsoft/pyright/blob/main/docs/configuration.md#reportAssignmentType"
+              },
+              "message": "Type \"Literal['text']\" is not assignable to declared type \"int\"\n  \"Literal['text']\" is not assignable to \"int\"",
+              "range": {
+                "end": {
+                  "character": 19,
+                  "line": 0
+                },
+                "start": {
+                  "character": 13,
+                  "line": 0
+                }
+              },
+              "severity": 1,
+              "source": "Pyright"
+            }
+          ],
+          "status": "ready"
+        }
+      }
+    },
+    {
+      "name": "Rust real server definition with build scripts disabled",
+      "status": "passed",
+      "ms": 2700,
+      "evidence": {
+        "definition": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "lsp-sample.rs",
+              "range": {
+                "end": {
+                  "character": 12,
+                  "line": 0
+                },
+                "start": {
+                  "character": 7,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "buildScriptExecuted": false
+      }
+    },
+    {
+      "name": "nested rules defer the first mutation and skill activations are auditable",
+      "status": "passed",
+      "ms": 910,
+      "evidence": {
+        "id": "1604ba2e-1b99-4a08-ac63-d100c383f75e",
+        "context": {
+          "rules": [
+            {
+              "path": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\",
+              "sha256": "725ab9529e0d7ab157925b68f27fe89a0d9eae6254c0b8f01ce176fcafe2c61b"
+            },
+            {
+              "path": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879",
+              "sha256": "725ab9529e0d7ab157925b68f27fe89a0d9eae6254c0b8f01ce176fcafe2c61b"
+            },
+            {
+              "path": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\nested\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\nested",
+              "sha256": "e062a1fcbb3f620dcb9cc37b3159ba5b853e3506599e8dd765efba1a63a3e72f"
+            }
+          ],
+          "schema_version": 1,
+          "skills": [
+            {
+              "name": "studio-explore",
+              "resource": null,
+              "resource_sha256": null,
+              "sha256": "6ac7695e42844c4b9a9bf73b0c643542fed89bee0257ee947756daa0f777bb44",
+              "source_root": "spec\\skills\\studio-explore",
+              "version": "1.0.0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "rename loads destination rules when its directory contains spaces",
+      "status": "passed",
+      "ms": 575,
+      "evidence": {
+        "id": "1a4be934-4c8c-4584-92da-a2f1982d8eb8"
+      }
+    },
+    {
+      "name": "selected commit preserves unrelated staged paths and idempotency",
+      "status": "passed",
+      "ms": 4939,
+      "evidence": {
+        "id": "15861d58-02d5-464b-9271-e84dd96eeff1",
+        "head": "d8d1651002713e567091a174a7b584447782ea08",
+        "result": {
+          "operation_id": "4fb5792c-8e97-4ba0-9668-07929207fc17",
+          "result": {
+            "branch": "main",
+            "commit": "d8d1651002713e567091a174a7b584447782ea08",
+            "paths": [
+              "selected.txt"
+            ],
+            "published": false,
+            "schema_version": 1,
+            "state": "committed",
+            "success": true,
+            "warning": null
+          }
+        },
+        "cached": {
+          "cached": true,
+          "operation_id": "4fb5792c-8e97-4ba0-9668-07929207fc17",
+          "replayed": false,
+          "result": {
+            "branch": "main",
+            "commit": "d8d1651002713e567091a174a7b584447782ea08",
+            "paths": [
+              "selected.txt"
+            ],
+            "published": false,
+            "schema_version": 1,
+            "state": "committed",
+            "success": true,
+            "warning": null
+          }
+        }
+      }
+    },
+    {
+      "name": "task manifest loads skills and rules from its persisted Git worktree",
+      "status": "passed",
+      "ms": 872,
+      "evidence": {
+        "id": "d1acf20a-969e-4038-bd13-ab2ed5f882df",
+        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\d1acf20a-969e-4038-bd13-ab2ed5f882df\\d1acf20a",
+        "skills": [
+          "studio-review",
+          "morning-brief",
+          "studio-debug",
+          "studio-implement",
+          "studio-verify-ui",
+          "worktree-only",
+          "studio-deliver",
+          "read_file",
+          "studio-verify",
+          "studio-explore"
+        ]
+      }
+    },
+    {
+      "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+      "status": "passed",
+      "ms": 1367,
+      "evidence": {
+        "id": "1351bbba-0e14-40d7-a2e7-b79183069758",
+        "status": "completed",
+        "session": "validation-restart"
+      }
+    },
+    {
+      "name": "restart during tool-round human wait asks again before continuing",
+      "status": "passed",
+      "ms": 3479,
+      "evidence": {
+        "id": "7c97fff3-1e03-4e5e-8626-dbbc934aa839",
+        "round": 16
+      }
+    },
+    {
+      "name": "restart during ask_user preserves the consumed round and asks again",
+      "status": "passed",
+      "ms": 1398,
+      "evidence": {
+        "id": "c5119c88-f43c-48bc-ab48-61f05a552b08",
+        "round": 2
+      }
+    },
+    {
+      "name": "crash after an external effect blocks mutations until inspected",
+      "status": "passed",
+      "ms": 1705,
+      "evidence": {
+        "id": "a8b226f5-b6dd-4a65-ad84-2610df0bbf9f",
+        "operation": "a38059b0-bbe9-48cd-99ed-ac5d78bfc57f",
+        "status": "completed",
+        "ledger": {
+          "operations": [
+            {
+              "operation_id": "78e01290-aab0-4db3-8a02-9edca3126cf0",
+              "result": {
+                "error": null,
+                "exit_code": null,
+                "file_version": "ad06e72726f6d8ff00228160453949c1ceb89571c99332e4815f9edce2acad07",
+                "operation_id": "78e01290-aab0-4db3-8a02-9edca3126cf0",
+                "output": "[read_file <isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\effect.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nonce",
+                "result_unknown": false,
+                "schema_version": 1,
+                "success": true,
+                "tool": "read_file"
+              },
+              "state": "completed",
+              "tool": "read_file",
+              "updated_at": "2026-10-18T18:47:43.956455100+00:00"
+            },
+            {
+              "operation_id": "a38059b0-bbe9-48cd-99ed-ac5d78bfc57f",
+              "result": {
+                "automatic": false,
+                "decision": "applied",
+                "note": "Inspection réelle : effect.md contient exactement une ligne once ; aucun replay demandé.",
+                "operation_id": "a38059b0-bbe9-48cd-99ed-ac5d78bfc57f"
+              },
+              "state": "resolved_applied",
+              "tool": "run_command",
+              "updated_at": "2026-10-18T18:47:43.698526+00:00"
+            }
+          ],
+          "schema_version": 1,
+          "unknown_count": 0
+        }
+      }
+    },
+    {
+      "name": "crash after a recorded tool result does not repeat its effect",
+      "status": "passed",
+      "ms": 1530,
+      "evidence": {
+        "id": "48b5ad9a-1b87-454f-844e-259dfa1ee5f4",
+        "checkpoint": {
+          "agent": "studio_project_manager",
+          "max_tool_rounds": 16,
+          "phase": "completed",
+          "project_id": "3ed3fed8-df14-448d-914b-de4e5411b879",
+          "round": 1,
+          "schema_version": 1,
+          "session_id": "validation-recorded-effect",
+          "waiting": null,
+          "workspace": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879"
+        },
+        "operations": [
+          {
+            "operation_id": "c8cef649-759e-4ab6-806a-f897908eabce",
+            "result": {
+              "error": null,
+              "exit_code": null,
+              "file_version": "7c4ac4b7152edf9dfb70d2e2638cc04c12ac36322b9a6be13f2e9be1c6f2bef5",
+              "operation_id": "c8cef649-759e-4ab6-806a-f897908eabce",
+              "output": "[write_file <isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879\\recorded.md] saved (disk).",
+              "result_unknown": false,
+              "schema_version": 1,
+              "success": true,
+              "tool": "write_file"
+            },
+            "state": "completed",
+            "tool": "write_file",
+            "updated_at": "2026-10-18T18:47:44.624841100+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "name": "restart retains the full literal task beyond the truncated task title",
+      "status": "passed",
+      "ms": 1951,
+      "evidence": {
+        "id": "cb06e197-864a-4e4e-ad1e-1a078f0302ed",
+        "session": "validation-durable-file-goals",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "DURABLE-FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "DURABLE-FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "DURABLE-SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "DURABLE-SECOND.md",
+              "status": "passed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "REC-04 interrupted tool approval requires a fresh request",
+      "status": "passed",
+      "ms": 1669,
+      "evidence": {
+        "id": "bb62ffe2-c0c5-48aa-b9d0-feb2acaed25a",
+        "oldRequest": "a0b31e82-d8fe-4b83-9f06-02b401eccb4f",
+        "freshRequest": "ffd8bab5-0b80-42a5-8679-bdb33e271d9d"
+      }
+    },
+    {
+      "name": "REC-06 concurrent resume and cancel preserves cancellation",
+      "status": "passed",
+      "ms": 3942,
+      "evidence": {
+        "races": [
+          {
+            "id": "8fc3e92f-e66d-44ff-95f4-de16ba595eb1",
+            "resumeStatus": 500
+          },
+          {
+            "id": "563e074d-6531-4426-bc88-da01ded22618",
+            "resumeStatus": 500
+          },
+          {
+            "id": "ca02e4da-b678-4a06-b6d0-239bae22d5c4",
+            "resumeStatus": 500
+          },
+          {
+            "id": "ceeca068-a4e8-4c04-97a1-277ea65c10fe",
+            "resumeStatus": 400
+          },
+          {
+            "id": "e3453b07-5a1d-4e5e-8071-4971fa9b4bae",
+            "resumeStatus": 500
+          }
+        ]
+      }
+    },
+    {
+      "name": "REC-07 pause during long command refuses overlapping resume",
+      "status": "passed",
+      "ms": 6636,
+      "evidence": {
+        "id": "84588feb-4f90-4ab0-888d-9b1bed39e0ff",
+        "operations": [
+          {
+            "operation_id": "0fde3f9b-4710-4e7a-8c26-a8814248ecc2",
+            "result": {
+              "error": null,
+              "exit_code": 0,
+              "file_version": null,
+              "operation_id": "0fde3f9b-4710-4e7a-8c26-a8814248ecc2",
+              "output": "{\"exit_code\":0,\"output\":\"[run_command node cwd=C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-agentic-real-KCIqNC\\\\studio-projects\\\\3ed3fed8-df14-448d-914b-de4e5411b879] exit 0 stdout:  stderr: \"}",
+              "result_unknown": false,
+              "schema_version": 1,
+              "success": true,
+              "tool": "run_command"
+            },
+            "state": "completed",
+            "tool": "run_command",
+            "updated_at": "2026-10-18T18:47:59.664161500+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pause and cancel release human waits without reusing their channels",
+      "status": "passed",
+      "ms": 854,
+      "evidence": {
+        "id": "512c9a5f-ef50-4dca-bf21-3580f13dac7f",
+        "checkpoint": {
+          "agent": "studio_project_manager",
+          "max_tool_rounds": 16,
+          "phase": "paused",
+          "project_id": "3ed3fed8-df14-448d-914b-de4e5411b879",
+          "round": 1,
+          "schema_version": 1,
+          "session_id": "validation-pause-question",
+          "waiting": {
+            "choices": [
+              "Continuer",
+              "Arrêter"
+            ],
+            "question": "Valider le scénario de reprise ?",
+            "tool": "ask_user"
+          },
+          "workspace": "<isolated-data>\\studio-projects\\3ed3fed8-df14-448d-914b-de4e5411b879"
+        }
+      }
+    },
+    {
+      "name": "REC-08 resume uses the current revoked tool policy",
+      "status": "passed",
+      "ms": 1296,
+      "evidence": {
+        "id": "09a6ea81-b3d6-4e0c-9810-41ae07b19b5b",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nÉcriture refusée par la politique courante.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+      "status": "passed",
+      "evidence": {
+        "childId": "1cc9db37-4a23-4af3-b08b-1de5e73d0436",
+        "workspace": "<isolated-data>\\studio-worktrees\\cd6c39a2-e171-4fd9-b21f-a212c599bcd7\\1cc9db37",
+        "rootHead": "baa7af7dd22390565801dd50735f559cf285703d"
+      }
+    },
+    {
+      "name": "REC-09 interrupted delegation retains children and uncertain effect",
+      "status": "passed",
+      "ms": 3473,
+      "evidence": {
+        "parent": "cd6c39a2-e171-4fd9-b21f-a212c599bcd7",
+        "childId": "1cc9db37-4a23-4af3-b08b-1de5e73d0436",
+        "delegation": "891fe589-5888-4471-939f-9611377edd0e"
+      }
+    },
+    {
+      "name": "real UI desktop/mobile consumes daemon APIs",
+      "status": "passed",
+      "ms": 11188,
+      "evidence": {
+        "screenshots": [
+          "desktop.png",
+          "mobile.png"
+        ],
+        "pageErrors": []
+      }
+    },
+    {
+      "name": "explicit GitHub push draft PR and CI state through delivery API",
+      "status": "passed",
+      "ms": 15529,
+      "evidence": {
+        "id": "f59208d0-a5d9-4a6c-be83-dfa13dac6dc9",
+        "head": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+        "branch": "validation/studio-agentic-958d8ff1",
+        "created": {
+          "operation_id": "0d551268-c381-472b-84dc-7b3cb7162698",
+          "result": {
+            "branch": "validation/studio-agentic-958d8ff1",
+            "commit": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+            "error": null,
+            "expected_commit": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+            "pr": {
+              "draft": true,
+              "head": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+              "number": 41,
+              "url": "https://github.com/azerothl/Akasha-code-studio/pull/41"
+            },
+            "repository": "azerothl/Akasha-code-studio",
+            "result_unknown": false,
+            "schema_version": 1,
+            "state": "pr_created",
+            "success": true
+          }
+        },
+        "status": {
+          "checks_match_local_head": true,
+          "checks_state": "not_run",
+          "current_head_checks": "not_run",
+          "fetched_at": "2026-10-18T18:48:32.326442400+00:00",
+          "local_head": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+          "pr": {
+            "baseRefName": "main",
+            "headRefName": "validation/studio-agentic-958d8ff1",
+            "headRefOid": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+            "isDraft": true,
+            "mergeable": "MERGEABLE",
+            "number": 41,
+            "reviewDecision": "",
+            "state": "OPEN",
+            "statusCheckRollup": [],
+            "url": "https://github.com/azerothl/Akasha-code-studio/pull/41"
+          },
+          "repository": "azerothl/Akasha-code-studio",
+          "schema_version": 1,
+          "success": true
+        }
+      }
+    }
+  ],
+  "nativeRequests": 120,
+  "testPullRequest": {
+    "draft": true,
+    "head": "2ffaeae7e985217c573ab3f2d05b85cc8c16931f",
+    "number": 41,
+    "url": "https://github.com/azerothl/Akasha-code-studio/pull/41"
+  },
+  "publishedBranch": "validation/studio-agentic-958d8ff1",
+  "uiLsp": [
+    {
+      "url": "http://127.0.0.1:5189/api/studio/projects/3ed3fed8-df14-448d-914b-de4e5411b879/lsp/query",
+      "status": 200,
+      "body": {
+        "document_version": 1,
+        "file_version": "f234ee20ffd0fedd9d50bd1ea2fce4e0c7c471928a54addeabacdb21f79f698e",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "diagnostics": [
+            {
+              "code": 2322,
+              "message": "Type 'string' is not assignable to type 'number'.",
+              "range": {
+                "end": {
+                  "character": 9,
+                  "line": 0
+                },
+                "start": {
+                  "character": 6,
+                  "line": 0
+                }
+              },
+              "severity": 1,
+              "source": "typescript"
+            }
+          ],
+          "status": "ready"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server"
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5189/api/studio/projects/3ed3fed8-df14-448d-914b-de4e5411b879/lsp/query",
+      "status": 200,
+      "body": {
+        "document_version": 1,
+        "file_version": "f234ee20ffd0fedd9d50bd1ea2fce4e0c7c471928a54addeabacdb21f79f698e",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "artifact": null,
+          "expires_in_secs": 7200,
+          "files": [
+            {
+              "after": "const renamedInUi: number = \"text\";\n",
+              "before": "const bad: number = \"text\";\n",
+              "edit_count": 1,
+              "expected_version": "f234ee20ffd0fedd9d50bd1ea2fce4e0c7c471928a54addeabacdb21f79f698e",
+              "path": "sample.ts"
+            }
+          ],
+          "plan_id": "cf305368-3434-4591-b970-f1aebd570972",
+          "status": "planned"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server"
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5189/api/studio/projects/3ed3fed8-df14-448d-914b-de4e5411b879/lsp/rename/cf305368-3434-4591-b970-f1aebd570972/apply",
+      "status": 200,
+      "body": {
+        "files": [
+          "sample.ts"
+        ],
+        "plan_id": "cf305368-3434-4591-b970-f1aebd570972",
+        "schema_version": 1,
+        "status": "applied"
+      }
+    }
+  ],
+  "source_run": "studio-agentic-real-KCIqNC",
+  "daemon_sha256": "5efe8298bed2ef8e7315dbbac0c9756a8e2c91f07f453c098b5657c2166edf5c",
+  "test_pr_cleanup": {
+    "state": "CLOSED",
+    "merged": false,
+    "branch_deleted": true
+  },
+  "tests": {
+    "daemon_passed": 406,
+    "daemon_ignored": 1,
+    "llm_passed": 52,
+    "store_passed": 29,
+    "tools_passed": 28,
+    "frontend_unit_passed": 21,
+    "frontend_playwright_mocked_passed": 32,
+    "frontend_build": "passed",
+    "native_frontend_tsc": "passed"
+  },
+  "gpu": "not_run: no runner; explicit user waiver"
+}

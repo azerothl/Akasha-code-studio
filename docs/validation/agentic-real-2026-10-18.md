@@ -1,5 +1,7 @@
 # Validation agentique réelle — 18 octobre 2026
 
+> **Historique de la première campagne.** La [validation suivante de #158 et #179](agentic-recovery-models-2026-10-18.md) remplace les compteurs et les lacunes de reprise ci-dessous : REC-01 à REC-09 exécutées, 515 tests Rust, 21 unitaires UI, 32 Playwright et 38 parcours techniques réussis. Dernières recettes LLM : Qwen 6/6, Devstral 3/6, LFM2 1/6 ; #179 reste bloquant. Les anciens échecs sont conservés dans ce document.
+
 Validation Windows CPU des piles Akasha #162, #164, #166–#170 et Code Studio #31–#35. Les résultats ci-dessous concernent les scénarios exécutés ; ils ne constituent pas une certification de tous les outils ni de tous les modèles.
 
 ## Contrôles
