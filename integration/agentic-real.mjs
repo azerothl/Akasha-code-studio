@@ -185,6 +185,7 @@ await writeFile(
       "rust-analyzer",
     ],
     command_timeout_secs: 15,
+    mcp_max_calls_per_task: 1,
     browser_enabled: true,
     browser_allowed_domains: ["127.0.0.1"],
     browser_headless: true,
@@ -436,6 +437,45 @@ try {
     return { id, outcome: row.outcome };
   });
   await check(
+    "mechanical acceptance preserves each criterion result",
+    async () => {
+      const id = await task(
+        "criteria",
+        [{ text: "Contrôles demandés terminés." }],
+        "studio_scaffold",
+        {
+          studio_acceptance_criteria: {
+            criteria: [
+              {
+                id: "present",
+                text: "Plan exists",
+                kind: "file_exists",
+                path: "CODE_STUDIO_PLAN.md",
+              },
+              {
+                id: "missing",
+                text: "Missing fixture",
+                kind: "file_exists",
+                path: "MUST_NOT_EXIST.txt",
+              },
+            ],
+          },
+        },
+      );
+      const row = await finished(id);
+      assert.equal(row.status, "failed");
+      assert.equal(
+        row.outcome.verification.find((c) => c.id === "present").status,
+        "passed",
+      );
+      assert.equal(
+        row.outcome.verification.find((c) => c.id === "missing").status,
+        "failed",
+      );
+      return { id, outcome: row.outcome };
+    },
+  );
+  await check(
     "provider failure keeps explicit structured failure",
     async () => {
       const id = await task("provider-error", [{ error: 503 }]);
@@ -549,6 +589,21 @@ try {
       const path = `/api/studio/projects/${project.id}/terminal/sessions`;
       const created = await api(path, "POST", { cols: 80, rows: 24 });
       const sid = created.session_id;
+      const legacy = await api("/api/terminal/pty/sessions");
+      assert(!legacy.some((session) => session.session_id === sid));
+      await api(
+        `/api/terminal/pty/sessions/${sid}/output`,
+        "GET",
+        undefined,
+        404,
+      );
+      await api(
+        `/api/terminal/pty/sessions/${sid}/input`,
+        "POST",
+        { text: "MUST_BE_DENIED\r" },
+        404,
+      );
+      await api(`/api/terminal/pty/sessions/${sid}`, "DELETE", undefined, 404);
       await api(`${path}/${sid}/input`, "POST", { text: "echo PTY_REAL_OK\r" });
       let out;
       for (let i = 0; i < 40; i++) {
@@ -656,6 +711,7 @@ try {
         "",
       );
       const id = await task("mcp", [
+        tool("mcp_fixture_echo", { text: 42 }),
         tool("mcp_fixture_echo", { text: "MCP_REAL_OK" }),
         { text: "MCP terminé." },
       ]);
@@ -665,6 +721,40 @@ try {
         await readFile(join(data, "mcp-calls.txt"), "utf8"),
         /MCP_REAL_OK/,
       );
+      const policyPath = join(data, "tools_policy.yaml");
+      const originalPolicy = await readFile(policyPath, "utf8");
+      try {
+        await writeFile(
+          policyPath,
+          JSON.stringify({
+            ...JSON.parse(originalPolicy),
+            default_profile: "read-only",
+            tool_profiles: { "read-only": ["read_file"] },
+          }),
+        );
+        await api("/api/tools/reload", "POST", {});
+        const restricted = await api(
+          `/api/tools/effective?project_id=${project.id}`,
+        );
+        assert.equal(
+          restricted.tools.find((t) => t.name === "mcp_fixture_echo").allowed,
+          false,
+        );
+        const blocked = await task("mcp-profile", [
+          tool("mcp_fixture_echo", { text: "MUST_BE_DENIED" }),
+          { text: "Refus constaté." },
+        ]);
+        const blockedRow = await finished(blocked);
+        assert(blockedRow.outcome.failed_tool_calls > 0);
+        assert(
+          !(await readFile(join(data, "mcp-calls.txt"), "utf8")).includes(
+            "MUST_BE_DENIED",
+          ),
+        );
+      } finally {
+        await writeFile(policyPath, originalPolicy);
+        await api("/api/tools/reload", "POST", {});
+      }
       await api("/api/mcp/runtime/stdio/stop", "POST", {});
       const manifest = await api(
         `/api/tools/effective?project_id=${project.id}`,
@@ -688,6 +778,12 @@ try {
         tool("browser", { argv: ["console"] }),
         tool("browser", { argv: ["network"] }),
         tool("browser", { argv: ["navigate", fixture + "/redirect"] }),
+        tool("browser", { argv: ["navigate", fixture + "/demo"] }),
+        {
+          tool: "browser",
+          args: { argv: ["snapshot"] },
+          verify: (text) => assert(text.includes("Navigated")),
+        },
         { text: "Observation terminée." },
       ]);
       const row = await finished(id);
@@ -908,6 +1004,44 @@ try {
     },
   );
   await check(
+    "rename loads destination rules when its directory contains spaces",
+    async () => {
+      await mkdir(join(root, "spaced target"), { recursive: true });
+      await writeFile(
+        join(root, "spaced target/AGENTS.md"),
+        "SPACED_DESTINATION_RULE: inspect before moving into this directory.\n",
+      );
+      await writeFile(join(root, "to-move.md"), "move once\n");
+      const op = randomUUID();
+      const args = {
+        argv: ["workspace:/to-move.md", "workspace:/spaced", "target/moved.md"],
+      };
+      const id = await task("rename-rules", [
+        tool("rename_path", args, op),
+        {
+          tool: "rename_path",
+          args,
+          id: op,
+          verify: async (text) => {
+            assert(text.includes("SPACED_DESTINATION_RULE"));
+            assert.equal(
+              await readFile(join(root, "to-move.md"), "utf8"),
+              "move once\n",
+            );
+          },
+        },
+        { text: "Déplacement terminé." },
+      ]);
+      const row = await finished(id);
+      assert.equal(row.status, "completed", JSON.stringify(row));
+      assert.equal(
+        await readFile(join(root, "spaced target/moved.md"), "utf8"),
+        "move once\n",
+      );
+      return { id };
+    },
+  );
+  await check(
     "selected commit preserves unrelated staged paths and idempotency",
     async () => {
       const id = await task(
@@ -948,6 +1082,50 @@ try {
       const cached = await api(path, "POST", request);
       assert.equal(cached.cached, true);
       assert.equal(git(root, "rev-parse", "HEAD"), head);
+      await mkdir(join(root, "normalized"), { recursive: true });
+      await writeFile(join(root, "normalized/path.txt"), "normalized\n");
+      await writeFile(join(root, "IGNORED_VALIDATION.txt"), "ignored\n");
+      await writeFile(
+        join(root, ".git/info/exclude"),
+        "IGNORED_VALIDATION.txt\n",
+      );
+      const normalizedRequest = {
+        task_id: id,
+        operation_id: randomUUID(),
+        request: {
+          paths: ["normalized\\path.txt", "IGNORED_VALIDATION.txt"],
+          expected_versions: {
+            "normalized\\path.txt": createHash("sha256")
+              .update("normalized\n")
+              .digest("hex"),
+            "IGNORED_VALIDATION.txt": createHash("sha256")
+              .update("ignored\n")
+              .digest("hex"),
+          },
+          expected_head: head,
+          message: "must not omit ignored selection",
+        },
+      };
+      const ignored = await fetch(base + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(normalizedRequest),
+      });
+      assert.equal(ignored.status, 200);
+      assert.equal((await ignored.json()).result.success, false);
+      assert.equal(git(root, "rev-parse", "HEAD"), head);
+      normalizedRequest.operation_id = randomUUID();
+      normalizedRequest.request.paths = ["normalized\\path.txt"];
+      delete normalizedRequest.request.expected_versions[
+        "IGNORED_VALIDATION.txt"
+      ];
+      const normalized = await api(path, "POST", normalizedRequest);
+      assert.equal(normalized.result.success, true, JSON.stringify(normalized));
+      assert.equal(git(root, "show", "HEAD:normalized/path.txt"), "normalized");
+      assert.equal(
+        git(root, "diff", "--cached", "--name-only"),
+        "unrelated.txt",
+      );
       return { id, head, result, cached };
     },
   );
@@ -979,6 +1157,42 @@ try {
       const after = await api(`/api/tasks/${id}/recovery`);
       assert.equal(after.checkpoint.session_id, recovery.checkpoint.session_id);
       return { id, status: row.status, session: after.checkpoint.session_id };
+    },
+  );
+  await check(
+    "restart during tool-round human wait asks again before continuing",
+    async () => {
+      const sequence = [];
+      for (let i = 0; i < 16; i++) {
+        await writeFile(join(root, `round-${i}.txt`), String(i));
+        sequence.push(tool("read_file", { path: `workspace:/round-${i}.txt` }));
+      }
+      sequence.push({ text: "Reprise du budget validée." });
+      const id = await task("round-wait", sequence);
+      const pending = async () => {
+        for (let i = 0; i < 160; i++) {
+          const response = await fetch(`${base}/api/tasks/${id}/human-input`);
+          if (response.ok) return response.json();
+          await pause(100);
+        }
+        throw Error("Round-limit prompt missing");
+      };
+      await pending();
+      const before = await api(`/api/tasks/${id}/recovery`);
+      assert.equal(before.checkpoint.waiting.tool_round_limit, true);
+      daemon.kill();
+      await new Promise((resolve) => daemon.once("exit", resolve));
+      start();
+      await ready();
+      await api(`/api/tasks/${id}/resume`, "POST", {});
+      const again = await pending();
+      assert(again.choices.includes("Continuer (+10 tours)"));
+      await api(`/api/tasks/${id}/human-reply`, "POST", {
+        response: "Continuer (+10 tours)",
+      });
+      const row = await finished(id);
+      assert.equal(row.status, "completed", JSON.stringify(row));
+      return { id, round: before.checkpoint.round };
     },
   );
   await check(
@@ -1142,10 +1356,7 @@ try {
       }
     });
     await page.goto("http://127.0.0.1:5189");
-    await page
-      .getByText("Agentic validation", { exact: true })
-      .first()
-      .waitFor();
+    await page.getByRole("button", { name: "Choisir un projet" }).waitFor();
     await page.getByRole("button", { name: "Choisir un projet" }).click();
     await page.getByTestId(`studio-project-${project.id}`).click();
     await page

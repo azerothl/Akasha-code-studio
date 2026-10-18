@@ -9,7 +9,7 @@ Validation Windows CPU des piles Akasha #162, #164, #166–#170 et Code Studio #
 | Vitest interface, `npm run test` | 20 tests réussis |
 | TypeScript/Vite, `npm run build` | Réussi ; avertissement du bundle principal >500 Ko conservé |
 | Playwright, `npm run test:e2e` | 30 tests réussis, API simulées |
-| Rust daemon, profil `--no-default-features --features embedded --lib` | 391 réussis, 1 ancien test PTY ignoré ; PTY couvert par les parcours réels ci-dessous |
+| Rust daemon, profil `--no-default-features --features embedded --lib` | 394 réussis, 1 ancien test PTY ignoré ; PTY couvert par les parcours réels ci-dessous |
 | Bibliothèques Rust `akasha-llm`, `akasha-store`, `akasha-tools` | Respectivement 44, 29 et 28 tests réussis |
 | Création de projet via daemon réel | Réussie ; fichiers initiaux et Git propre vérifiés |
 
@@ -17,11 +17,11 @@ Le profil Rust sans aucune feature conserve son erreur préexistante sur `embedd
 
 ## Recettes avec un vrai modèle Ollama
 
-La recette `npm run test:daemon:task` passe avec **qwen2.5-coder:14b** : une seule écriture, `RECIPE_OK.md` exactement égal à `recipe-ok`, diff vérifié par le test, statut `completed`, terminaison `success`. Le build n'est pas applicable au projet texte (`not_run`) et `acceptance_verified=false` reste honnête : c'est le test externe qui contrôle le contenu.
+La recette `npm run test:daemon:task` passe avec **Devstral via l'API compatible OpenAI d'Ollama** sur le binaire corrigé après revue : une seule écriture, contenu `recipe-ok` exact et diff vérifiés, statut `completed`, terminaison `success`. Le build du projet texte est `not_run` et `acceptance_verified=false` : le test externe contrôle le contenu, pas le modèle.
 
-La même recette avec **lfm2:24b**, modèle configuré chez l'utilisateur, reste en échec `tool_loop` après l'écriture correcte. Ce défaut était déjà observé dans l'audit ; le nouveau contrat le rend explicitement `partial`, au lieu d'un faux succès. Le suivi [Akasha #179](https://github.com/azerothl/Akasha/issues/179) reste ouvert. **La compatibilité de ce modèle n'est pas validée et n'est pas assimilée aux contrôles réussis.** La configuration utilisateur n'a pas été changée.
+**Qwen2.5-coder:14b via le transport texte Ollama a réussi une première exécution puis bouclé lors d'une répétition. LFM2:24b reste également en échec `tool_loop`. Ces transports/modèles ne sont pas considérés fiables sur cette recette.** Les fichiers et diffs sont conservés comme résultats partiels, sans faux succès. [Akasha #179](https://github.com/azerothl/Akasha/issues/179) reste ouvert. La configuration utilisateur n'a pas été changée.
 
-Les deux essais utilisent un daemon et des données isolés, fallback désactivé, température 0.1, max_tokens 1024, num_ctx 32768. Le nouveau suivi après outil corrige la répétition observée avec Qwen ; il ne suffit pas pour LFM2. Les résultats expurgés sont dans [le rapport modèles](agentic-model-recipes-2026-10-18.json).
+Données et daemon isolés, fallback désactivé, température 0.1, num_ctx 32768 pour le transport Ollama, max_tokens 1024 pour les essais texte et 4096 pour l'essai compatible OpenAI. Les succès **et** échecs sont dans [le rapport modèles](agentic-model-recipes-2026-10-18.json). Un succès isolé n'est pas une mesure de fiabilité ni une validation universelle du modèle.
 
 ## Parcours réels reproductibles
 
@@ -36,13 +36,15 @@ Les deux essais utilisent un daemon et des données isolés, fallback désactiv�
 | Planner/reviewer | Commandes refusées, rôle persisté, usurpation du rôle par query refusée ; planner limité au plan exact |
 | Terminal utilisateur | Saisie, curseur, redimensionnement, fermeture, refus entre projets |
 | Terminal agent | Propriété par tâche, refus de saisie utilisateur, transcription attachée |
-| MCP stdio | Vrai processus JSON-RPC, découverte paginée, schéma invalide refusé avant invocation, révocation à l'arrêt |
+| Critères mécaniques | Un fichier présent reste `passed` quand un autre critère échoue |
+| MCP stdio | Vrai processus JSON-RPC, découverte paginée, schéma invalide refusé sans consommer le budget, profil explicite refusé, révocation à l'arrêt |
 | Navigateur | Captures bureau/mobile, console, réseau, redirection interdite refusée |
 | TypeScript | Vrai serveur, diagnostics, définition, références, aperçu et application du renommage |
 | Python | Vrai serveur, définition et diagnostic |
 | Rust | Vrai rust-analyzer, définition ; marqueur `build.rs` non exécuté |
 | Règles et skill | AGENTS racine/sous-dossier, mutation différée puis rejouée explicitement, activation `studio-explore` tracée |
-| Commit sélectionné | Préserve un fichier sans rapport déjà indexé ; nouvelle demande avec même identifiant rend le résultat en cache |
+| Commit sélectionné | Préserve l’index sans rapport, refus d’une sélection ignorée sans modifier HEAD, chemin avec antislash normalisé, retry idempotent |
+| Reprise du plafond de tours | Arrêt pendant la question, nouvelle question après reprise, continuation seulement après nouvelle réponse |
 | REC-01 | Arrêt réel avant modèle, tâche interrompue, reprise explicite avec même session |
 | REC-02 | Crash après effet avant résultat : état inconnu, mutations bloquées, inspection puis décision explicite, aucun effet doublé |
 | REC-03 | Crash après écriture enregistrée, avant modèle suivant : fichier préservé et une seule écriture dans le journal |
@@ -92,6 +94,12 @@ Les rapports compacts joints à ce document et les captures sont issus des exéc
 
 ## Preuves archivées
 
-- [Rapport des 20 parcours et de la publication](agentic-real-2026-10-18.json).
+- [Rapport des 23 parcours et de la publication](agentic-real-2026-10-18.json).
 - [Recettes des deux modèles](agentic-model-recipes-2026-10-18.json).
 - [Bureau](agentic-real-2026-10-18/desktop.png), [mobile](agentic-real-2026-10-18/mobile.png), [éditeur LSP](agentic-real-2026-10-18/editor-lsp.png), [preuves de tâche](agentic-real-2026-10-18/task-evidence.png).
+
+## Retours des revues automatiques
+
+Les retours publiés sur les sept PR daemon ont été examinés, corrigés ou motivés dans leurs fils. Corrections principales : isolation des PTY par gestionnaire ; profil MCP strict ; activation des skills après approbation ; règles/skills du worktree de la tâche ; appels JSON et legacy mixtes après filtrage du raisonnement ; reprise en file sans résultat périmé ; garde d’activité retenue par l’agrégateur ; timeout structuré ; synchronisation LSP négociée, erreurs applicatives sans tuer le serveur, diagnostics en attente dans le contrat normal et préparation du renommage HTTP verrouillée ; récupération navigateur après erreur ; présence des fichiers sélectionnés dans l’index temporaire.
+
+Les profils explicites restent stricts pour Kanban : ajouter les noms des outils de tickets au profil nécessaire, sans exemption implicite. Les nouveaux scénarios restent dans le script reproductible ; les garanties non testées par arrêt réel de #158 restent ouvertes.

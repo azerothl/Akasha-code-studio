@@ -1,29 +1,34 @@
 {
-  "at": "2026-10-18T16:39:16.684Z",
+  "at": "2026-10-18T16:54:07.038Z",
   "status": "passed",
   "model": "deterministic protocol fixture (not an LLM evaluation)",
-  "source_run": "studio-agentic-real-qM0Dsv",
-  "native_requests": 50,
+  "source_run": "studio-agentic-real-pVZTCh",
+  "native_requests": 74,
   "cases": [
     {
       "name": "real project creation and clean initial Git",
       "status": "passed",
-      "duration_ms": 399
+      "duration_ms": 413
     },
     {
       "name": "TypeScript build failure stays failed when Vite fallback succeeds",
       "status": "passed",
-      "duration_ms": 2988
+      "duration_ms": 2829
     },
     {
       "name": "empty model fails without inventing verification",
       "status": "passed",
-      "duration_ms": 280
+      "duration_ms": 277
+    },
+    {
+      "name": "mechanical acceptance preserves each criterion result",
+      "status": "passed",
+      "duration_ms": 279
     },
     {
       "name": "provider failure keeps explicit structured failure",
       "status": "passed",
-      "duration_ms": 281
+      "duration_ms": 279
     },
     {
       "name": "native Unicode write, partial failure and retained diff",
@@ -33,77 +38,87 @@
     {
       "name": "reviewer and planner refuse command effects",
       "status": "passed",
-      "duration_ms": 1771
+      "duration_ms": 1466
     },
     {
       "name": "planner writes only exact plan path",
       "status": "passed",
-      "duration_ms": 555
+      "duration_ms": 554
     },
     {
       "name": "real user PTY input, cursor, resize, isolation and close",
       "status": "passed",
-      "duration_ms": 553
+      "duration_ms": 496
     },
     {
       "name": "agent PTY remains task-owned and archives its transcript",
       "status": "passed",
-      "duration_ms": 1363
+      "duration_ms": 1360
     },
     {
       "name": "MCP real stdio pagination validation and task invocation",
       "status": "passed",
-      "duration_ms": 662
+      "duration_ms": 1287
     },
     {
       "name": "agent browser desktop mobile logs PNG and denied redirect",
       "status": "passed",
-      "duration_ms": 1616
+      "duration_ms": 1923
     },
     {
       "name": "TypeScript real server diagnostics definition references rename",
       "status": "passed",
-      "duration_ms": 1325
+      "duration_ms": 1232
     },
     {
       "name": "Python real server navigation and explicit diagnostics",
       "status": "passed",
-      "duration_ms": 857
+      "duration_ms": 817
     },
     {
       "name": "Rust real server definition with build scripts disabled",
       "status": "passed",
-      "duration_ms": 1123
+      "duration_ms": 1111
     },
     {
       "name": "nested rules defer the first mutation and skill activations are auditable",
       "status": "passed",
-      "duration_ms": 611
+      "duration_ms": 891
+    },
+    {
+      "name": "rename loads destination rules when its directory contains spaces",
+      "status": "passed",
+      "duration_ms": 565
     },
     {
       "name": "selected commit preserves unrelated staged paths and idempotency",
       "status": "passed",
-      "duration_ms": 1412
+      "duration_ms": 3368
     },
     {
       "name": "daemon restart interrupts and explicitly resumes same checkpoint",
       "status": "passed",
-      "duration_ms": 1068
+      "duration_ms": 1356
+    },
+    {
+      "name": "restart during tool-round human wait asks again before continuing",
+      "status": "passed",
+      "duration_ms": 3690
     },
     {
       "name": "crash after an external effect blocks mutations until inspected",
       "status": "passed",
-      "duration_ms": 1545
+      "duration_ms": 1551
     },
     {
       "name": "crash after a recorded tool result does not repeat its effect",
       "status": "passed",
-      "duration_ms": 1196
+      "duration_ms": 1094
     },
     {
       "name": "real UI desktop/mobile consumes daemon APIs",
       "status": "passed",
-      "duration_ms": 7113
+      "duration_ms": 7323
     }
   ],
   "publication": {
@@ -114,7 +129,7 @@
     "source_run": "studio-agentic-real-t11bYw"
   },
   "cpu_tests": {
-    "daemon_passed": 391,
+    "daemon_passed": 394,
     "daemon_ignored": 1,
     "llm_passed": 44,
     "store_passed": 29,
@@ -143,5 +158,13 @@
       ]
     },
     "failure": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\nVite fallback passed, but the configured build still failed (TypeScript step not verified)."
-  }
+  },
+  "review_regressions": [
+    "separate Studio PTY manager and legacy-route rejection",
+    "MCP explicit profile and validation-before-budget",
+    "per-criterion acceptance truth",
+    "spaced rename destination instructions",
+    "normalized selected Git paths and ignored-file rejection",
+    "round-cap human wait survives restart"
+  ]
 }
