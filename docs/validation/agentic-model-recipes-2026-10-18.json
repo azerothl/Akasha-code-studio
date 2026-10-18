@@ -35,8 +35,11 @@
       ],
       "task_id": "8e35c7c1-2692-4299-ba9d-fe29a52698d4"
     },
-    "rawContent": null,
-    "source_run": "studio-real-model-mm_zx3km"
+    "source_run": "studio-real-model-mm_zx3km",
+    "verifiedFile": {
+      "path": "RECIPE_OK.md",
+      "content": "recipe-ok"
+    }
   },
   {
     "at": "2026-10-18T16:36:26.436Z",
@@ -57,7 +60,7 @@
     "failureDetail": "Loop detected: same tool and arguments repeated. Stopping.",
     "diffStatus": 200,
     "diff": "{\"captured_at\":\"2026-10-18T16:36:06.261907800+00:00\",\"files\":[{\"diff\":\"diff --git a/RECIPE_OK.md b/RECIPE_OK.md\\n--- /dev/null\\n+++ b/RECIPE_OK.md\\n@@ -0,0 +1 @@\\n+recipe-ok\\n\",\"path\":\"RECIPE_OK.md\",\"status\":\"added\",\"truncated\":false}],\"task_id\":\"3c59d800-3a16-42bf-9b87-07edcf7f0a60\"}",
-    "rawContent": null,
-    "source_run": "studio-real-model-r7a_jd4j"
+    "source_run": "studio-real-model-r7a_jd4j",
+    "verifiedFile": null
   }
 ]
