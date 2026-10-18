@@ -15,9 +15,23 @@ La base inclut les PR fusionnées [Code Studio #23](https://github.com/azerothl/
 | [#22](https://github.com/azerothl/Akasha-code-studio/issues/22) | Hooks de domaines projets, éditeur, Git, aperçu/build et suivi des tâches. Types de navigation et modèles purs séparés. Annulation, identification des requêtes et synchronisation des brouillons préservées ; voir [frontières UI](UI_BOUNDARIES.md). |
 | [#25](https://github.com/azerothl/Akasha-code-studio/issues/25) | Composant commun pour attente, vide, partiel, hors ligne, erreur et succès ; actions de reprise, détails repliables, annonces accessibles et brouillon de chat conservé après échec. |
 
-## Vérifications
+## Validation finale après simplification UI
 
-Les résultats ci-dessous correspondent au commit `785a4e7`, avant la simplification visuelle demandée ensuite. Cette simplification est décrite dans [DESIGN.md](../DESIGN.md) : compilation et revue visuelle effectuées, sélecteurs existants adaptés, suites de tests non réexécutées.
+Passage du 18 octobre 2026 sous Windows, sur l’interface simplifiée de [DESIGN.md](../DESIGN.md) :
+
+- `npm run test:unit` : **20/20**.
+- `npm run test:e2e` : **29/29**, Chromium et API simulée. Deux tests supplémentaires couvrent le focus et la fermeture du panneau Outils ainsi que le parcours mobile discussion → fichier → aperçu → discussion avec conservation du brouillon.
+- `npm run build` : **réussi**, TypeScript/Vite ; avertissement de bundle principal d’environ 704 ko minifié.
+- `npm run test:daemon` : **1/1 réel**, création et initialisation Git du projet ; le test de tâche agent reste opt-in.
+- `npm run test:daemon:task` : **1/1 réel**, environ 59 secondes avec Ollama `qwen3.5:9b`, même binaire daemon identifié ci-dessous. Le [rapport final](validation/daemon-task-2026-10-18-final.json) confirme le contenu exact de `RECIPE_OK.md`, le diff HTTP 200 et le nettoyage du projet `9224a360-8491-4555-88a2-fcbe5bc6dd55`. Le dossier des projets était vide après nettoyage et le daemon de recette a été arrêté.
+
+La tâche finale `78e6a50e-7661-4ac1-917d-71a844220eb1` est déclarée `completed` par le daemon. Sa dernière progression indique toutefois une absence de réponse du modèle après les opérations d’écriture. Les assertions fichier/diff/nettoyage passent ; ce message est conservé dans le rapport et ne permet pas d’affirmer que toute l’orchestration daemon est sans avertissement.
+
+Les assertions qui dépendaient de l’ancien bandeau sandbox ont été remplacées par la sélection visible du projet. Le test de restauration place le projet mémorisé en deuxième position de la liste. Le test de reprise cible la progression visible de la conversation et vérifie l’identifiant de tâche persistant, la reprise des requêtes après rechargement puis le nettoyage à la fin. Son mock de statut ne répond qu’à l’URL exacte de la tâche.
+
+## Validation initiale du backlog
+
+Les résultats et captures ci-dessous correspondent au commit `785a4e7`, avant la simplification visuelle. Les résultats de l’interface simplifiée figurent dans la section précédente.
 
 Exécutions du 18 octobre 2026 sous Windows :
 

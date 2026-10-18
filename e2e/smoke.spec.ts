@@ -2,6 +2,49 @@ import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
+test("project tools stay disclosed on demand and restore keyboard focus", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  const trigger = page.getByRole("button", { name: "Outils du projet", exact: true });
+  const tools = page.getByRole("dialog", { name: "Outils du projet", exact: true });
+  await expect(tools).not.toBeVisible();
+  await expect(page.getByTestId("studio-code-rag-badge")).not.toBeVisible();
+  await trigger.click();
+  await expect(tools).toBeVisible();
+  await expect(page.getByTestId("studio-code-rag-badge")).toBeVisible();
+  // Tab stays in the dialog; programmatic focus on background content is blocked.
+  await tools.getByRole("button", { name: "Fermer les outils" }).focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await trigger.focus();
+  expect(await tools.evaluate(element => element.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(tools).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+});
+
+test("mobile navigation preserves the draft and gives the editor room", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  const navigation = page.getByRole("navigation", { name: "Navigation mobile" });
+  const draft = page.getByRole("textbox", { name: "Message à l’agent" });
+  await draft.fill("Conserver mon brouillon pendant la revue");
+  await navigation.getByRole("button", { name: "Fichiers", exact: true }).click();
+  await page.getByRole("button", { name: "index.html", exact: true }).click();
+  await expect(page.locator(".editor-file-pane")).not.toHaveAttribute("open", "");
+  await expect(page.locator(".editor-open-path")).toContainText("index.html");
+  const editor = await page.locator(".editor-editor-pane").boundingBox();
+  expect(editor && editor.height > 844 / 2).toBe(true);
+  await navigation.getByRole("button", { name: "Aperçu", exact: true }).click();
+  await expect(page.locator('iframe[title="Aperçu"]').contentFrame().getByRole("heading", { name: "Studio" })).toBeVisible();
+  await navigation.getByRole("button", { name: "Discussion", exact: true }).click();
+  await expect(draft).toHaveValue("Conserver mon brouillon pendant la revue");
+  const bounds = await navigation.boundingBox();
+  expect(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 844).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test("worker integration requires a terminal worker and an explicit review", async ({ page }) => {
   const record = { root_task_id: "root", project_id: demoId, project_root: "/fixture", base_branch: "main", base_sha: "a".repeat(40), worktree_path: "/fixture/worker" };
   await page.route(`**/api/studio/projects/${demoId}/worktrees`, route => route.fulfill({ json: { worktrees: [
@@ -938,11 +981,16 @@ test("shows operator cockpit in dedicated section and endpoint blocks", async ({
 });
 
 test("restores last selected project from localStorage", async ({ page }) => {
+  // Remembered project is deliberately not the first fallback in the list.
+  await page.route("**/api/studio/projects", route => route.fulfill({ json: { projects: [
+    { id: "another-project", name: "Autre projet", path: "/tmp/other" },
+    { id: demoId, name: "Démo E2E", path: `/tmp/studio/${demoId}` },
+  ] } }));
   await page.addInitScript((id) => {
     localStorage.setItem("akasha-code-studio:last-project-id", id as string);
   }, demoId);
   await page.goto("/");
-  await expect(page.locator(".sandbox-reminder")).toContainText(demoId.slice(0, 8));
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
 });
 
 test("fork dialog sends fork_from_task_id and fork_after_message_index", async ({ page }) => {
