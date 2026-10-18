@@ -1135,6 +1135,7 @@ export function subscribeTaskEventsLive(
 
 /** Question en attente (`ask_user`, approbation d’outil, etc.) — 404 si aucune. */
 export type TaskHumanInputPayload = {
+  request_id?: string | null;
   task_id: string;
   question: string;
   context: string;
@@ -1156,14 +1157,17 @@ export async function listPendingHumanInput(): Promise<TaskHumanInputPayload[]> 
   return j.pending ?? [];
 }
 
-export async function postTaskHumanReply(taskId: string, response: string): Promise<void> {
+export class HumanReplyConflictError extends Error {}
+
+export async function postTaskHumanReply(taskId: string, response: string, requestId?: string | null): Promise<void> {
   const r = await fetch(api(`/api/tasks/${taskId}/human-reply`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ response }),
+    body: JSON.stringify({ response, request_id: requestId }),
   });
   if (!r.ok) {
     const t = await r.text();
+    if (r.status === 409) throw new HumanReplyConflictError("La demande d’approbation a changé. Relisez la demande actuelle avant de répondre.");
     throw new Error(`postTaskHumanReply ${r.status}: ${t}`);
   }
 }

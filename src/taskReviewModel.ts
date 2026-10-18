@@ -35,7 +35,7 @@ export function classifyReviewChecks(input: {
   for (const check of outcome?.verification ?? []) {
     if (!check || typeof check.kind !== "string" || typeof check.status !== "string") continue;
     checks.push({
-      label: check.kind === "project_build" ? "Build post-tâche" : check.kind === "acceptance" ? "Critère d’acceptation" : "Commande de la tâche",
+      label: check.kind === "project_build" ? "Build post-tâche" : check.kind === "acceptance" ? "Critère d’acceptation" : check.kind === "requested_file" ? "Fichier demandé" : "Commande de la tâche",
       state: check.status === "passed" ? "executed" : check.status === "failed" ? "failed" : check.status === "manual" ? "manual" : "not_run",
       detail: redactReviewDetail([check.id, check.text, check.tool, check.detail, typeof check.exit_code === "number" ? `Code de sortie : ${check.exit_code}` : ""].filter(Boolean).join(" · ") || "Résultat structuré du daemon"),
     });

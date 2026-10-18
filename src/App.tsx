@@ -1587,7 +1587,7 @@ Procédure:
     setHumanReplyBusy(true);
     setError(null);
     try {
-      await api.postTaskHumanReply(pendingHumanInput.taskId, text);
+      await api.postTaskHumanReply(pendingHumanInput.taskId, text, pendingHumanInput.requestId);
       const tid = pendingHumanInput.taskId;
       setPendingHumanInput(null);
       setHumanReplyDraft("");
@@ -1601,6 +1601,11 @@ Procédure:
       });
       void pollTask(tid, ac.signal, selectedId);
     } catch (e) {
+      if (e instanceof api.HumanReplyConflictError) {
+        const fresh = await api.getTaskHumanInput(pendingHumanInput.taskId).catch(() => null);
+        setPendingHumanInput(fresh ? { taskId: pendingHumanInput.taskId, requestId: fresh.request_id, question: fresh.question, context: fresh.context, choices: fresh.choices } : null);
+        setHumanReplyDraft("");
+      }
       setError(String(e));
     } finally {
       setHumanReplyBusy(false);

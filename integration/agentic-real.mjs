@@ -11,6 +11,7 @@ import {
   readFile,
   symlink,
   unlink,
+  rename,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, delimiter } from "node:path";
@@ -74,7 +75,7 @@ const server = createServer(async (req, res) => {
     : { text: "Validation terminée." };
   try {
     if (typeof next.args === "function") next.args = next.args(text);
-    if (next.verify) await next.verify(text);
+    if (next.verify) await next.verify(text, body);
   } catch (error) {
     report.fixtureError = String(error);
     res.writeHead(500);
@@ -322,6 +323,30 @@ async function finished(id) {
   }
   throw Error("Task timeout " + JSON.stringify(row));
 }
+async function waitUntil(fn, label, timeout = 20000) {
+  const until = Date.now() + timeout;
+  while (Date.now() < until) {
+    const result = await fn();
+    if (result) return result;
+    await pause(75);
+  }
+  throw Error(`Timeout: ${label}`);
+}
+async function restart() {
+  daemon.kill();
+  await new Promise((resolve) => daemon.once("exit", resolve));
+  start();
+  await ready();
+}
+async function checkpointed(id) {
+  return waitUntil(async () => {
+    const value = await api(`/api/tasks/${id}/recovery`);
+    return value.checkpoint && value;
+  }, "checkpoint " + id);
+}
+async function inactive(id) {
+  return waitUntil(async () => !(await api(`/api/tasks/${id}/recovery`)).execution_active, "inactive " + id);
+}
 const tool = (name, args, id) => ({ tool: name, args, id });
 const fileArgs = (path, content) => ({
   path: "workspace:/" + path,
@@ -435,6 +460,50 @@ try {
     assert.equal(row.outcome?.termination_reason, "model_empty");
     assert.equal(row.outcome.acceptance_verified, false);
     return { id, outcome: row.outcome };
+  });
+  await check("file creation prose without any effect cannot become a success", async () => {
+    const id=await task("no-effect-claim",Array.from({length:4},()=>({text:"Le fichier demandé a été créé."})),"studio_scaffold",{message:"Crée uniquement NEVER-NO-EFFECT.md avec la ligne proof. CASE:no-effect-claim"});
+    const row=await finished(id);
+    assert.equal(row.status,"failed");
+    assert.equal(row.outcome.termination_reason,"tool_error");
+    assert.equal(row.outcome.successful_tool_calls,0);
+    assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
+    return {id,outcome:row.outcome};
+  });
+  await check("native continuation ends in tool results without a new continue user turn", async () => {
+    const id=await task("native-turns",[
+      tool("write_file",fileArgs("native-turns.md","turns\n")),
+      {...tool("read_file",{path:"workspace:/native-turns.md"}),verify:(_text,body)=>{
+        assert.equal(body.messages.at(-1).role,"tool");
+        assert.equal(body.messages.filter(m=>m.role==="user").length,1);
+        assert.equal(body.messages.at(-2).tool_calls[0].id,body.messages.at(-1).tool_call_id);
+      }},
+      {text:"Fichier écrit et relu.",verify:(_text,body)=>{
+        assert.equal(body.messages.at(-1).role,"tool");
+        assert.equal(body.messages.filter(m=>m.role==="user").length,1);
+        assert.equal(body.messages.filter(m=>m.role==="tool").length,2);
+      }},
+    ]);
+    assert.equal((await finished(id)).status,"completed");
+    return {id};
+  });
+  await check("premature final response resumes only the explicitly missing file", async () => {
+    const id=await task("missing-deliverable",[
+      tool("write_file",fileArgs("FIRST-REQUIRED.md","one\n")),
+      {text:"Tout est terminé."},
+      {...tool("write_file",fileArgs("SECOND-REQUIRED.md","two\n")),verify:(_text,body)=>{
+        assert.equal(body.messages.at(-1).role,"user");
+        assert(body.messages.at(-1).content.includes("[Pending physical deliverables]"));
+        assert(body.messages.at(-1).content.includes("SECOND-REQUIRED.md"));
+      }},
+      {text:"Les deux fichiers demandés sont présents."},
+    ],"studio_scaffold",{message:"Crée FIRST-REQUIRED.md. Ensuite crée SECOND-REQUIRED.md. CASE:missing-deliverable"});
+    const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));
+    assert.equal(await readFile(join(root,"FIRST-REQUIRED.md"),"utf8"),"one\n");
+    assert.equal(await readFile(join(root,"SECOND-REQUIRED.md"),"utf8"),"two\n");
+    assert.equal(row.outcome.verification.filter(c=>c.kind==="requested_file"&&c.status==="passed").length,2);
+    assert.equal(row.outcome.acceptance_verified,false,"Presence is not full content/acceptance validation");
+    return {id,outcome:row.outcome};
   });
   await check(
     "native reads continue after the default 500-line window",
@@ -970,7 +1039,8 @@ try {
       const path = `/api/studio/projects/${project.id}/lsp`;
       let definition;
       let lastError;
-      for (let i = 0; i < 12; i++) {
+      const definitionDeadline=Date.now()+45000;
+      while(Date.now()<definitionDeadline) {
         try {
           const value = await api(path + "/query", "POST", {
             action: "definition",
@@ -1501,6 +1571,192 @@ try {
       };
     },
   );
+  await check("restart retains the full literal task beyond the truncated task title", async () => {
+    const id=await task("durable-file-goals",[
+      tool("write_file",fileArgs("DURABLE-FIRST.md","first\n")),
+      {text:"Réponse en attente.",delay:30000},
+    ],"studio_scaffold",{message:"Crée DURABLE-FIRST.md. Ensuite crée DURABLE-SECOND.md. CASE:durable-file-goals"});
+    const before=await waitUntil(async()=>{const r=await api(`/api/tasks/${id}/recovery`);return r.checkpoint?.round>=1&&r;},"recorded first file");
+    await restart();
+    scripts.set("durable-file-goals",[
+      {text:"Tout est terminé."},
+      {...tool("write_file",fileArgs("DURABLE-SECOND.md","second\n")),verify:(_text,body)=>{
+        assert(body.messages.at(-1).content.includes("[Pending physical deliverables]"));
+        assert(body.messages.at(-1).content.includes("DURABLE-SECOND.md"));
+      }},
+      {text:"Les deux fichiers sont présents après reprise."},
+    ]);
+    await api(`/api/tasks/${id}/resume`,"POST",{});
+    const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));
+    assert.equal(await readFile(join(root,"DURABLE-FIRST.md"),"utf8"),"first\n");
+    assert.equal(await readFile(join(root,"DURABLE-SECOND.md"),"utf8"),"second\n");
+    const after=await api(`/api/tasks/${id}/recovery`);
+    assert.equal(after.checkpoint.session_id,before.checkpoint.session_id);
+    assert.equal(after.ledger.operations.filter(o=>o.tool==="write_file").length,2);
+    return {id,session:after.checkpoint.session_id,outcome:row.outcome};
+  });
+  await check("REC-04 interrupted tool approval requires a fresh request", async () => {
+    const policy = (await api("/api/tools/policy")).policy;
+    try {
+      await api("/api/tools/policy", "POST", {policy: {...policy, require_approval: ["write_file"]}});
+      await api("/api/permissions/mode", "POST", {mode: "ask_me"});
+      const key = "approval-crash";
+      const operation = () => tool("write_file", fileArgs("approval-once.md", "fresh approval\n"));
+      const id = await task(key, [operation(), {text: "Écriture approuvée."}]);
+      const pending = () => waitUntil(async () => {
+        const response = await fetch(`${base}/api/tasks/${id}/human-input`);
+        return response.ok && response.json();
+      }, "approval question");
+      await pending();
+      const before = await api(`/api/tasks/${id}/recovery`);
+      assert.equal(before.checkpoint.waiting.tool, "write_file");
+      const oldQueue = (await api("/api/permissions/queue")).items.find(q => q.task_id === id && q.status === "pending");
+      assert(oldQueue);
+      await restart();
+      assert.equal((await fetch(`${base}/api/tasks/${id}/human-reply`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({response:"Approuver"})})).status, 404);
+      scripts.set(key, [operation(), {text: "Écriture approuvée après reprise."}]);
+      await api(`/api/tasks/${id}/resume`, "POST", {});
+      await pending();
+      const queue = (await api("/api/permissions/queue")).items;
+      const fresh = queue.find(q => q.task_id === id && q.id !== oldQueue.id && q.status === "pending");
+      assert(fresh);
+      const stale = await fetch(`${base}/api/permissions/queue/${oldQueue.id}/approve`, {method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+      assert.equal(stale.status, 409, "Historical approval must not unblock the new question");
+      assert.equal(await readFile(join(root,"approval-once.md"),"utf8").catch(()=>null),null);
+      await api(`/api/permissions/queue/${fresh.id}/approve`, "POST", {});
+      assert.equal((await finished(id)).status,"completed");
+      assert.equal(await readFile(join(root,"approval-once.md"),"utf8"),"fresh approval\n");
+      return {id, oldRequest:oldQueue.id, freshRequest:fresh.id};
+    } finally {
+      await api("/api/tools/policy", "POST", {policy});
+      await api("/api/permissions/mode", "POST", {mode:"allow_all"});
+    }
+  });
+  await check("REC-06 concurrent resume and cancel preserves cancellation", async () => {
+    const ids=[];
+    for(let i=0;i<5;i++) {
+      const key=`cancel-resume-${i}`;
+      const id=await task(key,[{text:"attente",delay:30000}]);
+      await checkpointed(id);
+      await restart();
+      scripts.set(key,[{...tool("write_file",fileArgs(`NEVER-CANCEL-${i}.md`,"bad")),delay:1200}]);
+      const responses=await Promise.all([
+        fetch(`${base}/api/tasks/${id}/resume`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),
+        fetch(`${base}/api/tasks/${id}/cancel`,{method:"POST"}),
+      ]);
+      assert.equal(responses[1].status,200);
+      await inactive(id);
+      assert.equal((await api(`/api/tasks/${id}`)).status,"cancelled");
+      assert.equal(await readFile(join(root,`NEVER-CANCEL-${i}.md`),"utf8").catch(()=>null),null);
+      assert.notEqual((await fetch(`${base}/api/tasks/${id}/resume`,{method:"POST"})).status,200);
+      ids.push({id,resumeStatus:responses[0].status});
+    }
+    return {races:ids};
+  });
+  await check("REC-07 pause during long command refuses overlapping resume", async () => {
+    const id=await task("pause-command",[
+      tool("run_command",{program:"node",args:["-e","require('fs').appendFileSync('pause-command.md','once\\n');setTimeout(()=>process.exit(0),6000)"]}),
+      {text:"Fin après la commande."},
+    ]);
+    await waitUntil(async()=>await readFile(join(root,"pause-command.md"),"utf8").catch(()=>null),"long command started");
+    await api(`/api/tasks/${id}/pause`,"POST",{});
+    assert.equal((await api(`/api/tasks/${id}/recovery`)).execution_active,true);
+    const refused=await fetch(`${base}/api/tasks/${id}/resume`,{method:"POST"});
+    assert.equal(refused.status,500);
+    assert.match(await refused.text(),/active|stopping/);
+    await inactive(id);
+    assert.equal((await api(`/api/tasks/${id}`)).status,"paused");
+    await api(`/api/tasks/${id}/resume`,"POST",{});
+    assert.equal((await finished(id)).status,"completed");
+    assert.equal(await readFile(join(root,"pause-command.md"),"utf8"),"once\n");
+    const after=await api(`/api/tasks/${id}/recovery`);
+    assert.equal(after.ledger.operations.filter(o=>o.tool==="run_command").length,1);
+    return {id,operations:after.ledger.operations};
+  });
+  await check("pause and cancel release human waits without reusing their channels", async () => {
+    const question={question:"Valider le scénario de reprise ?",choices:["Continuer","Arrêter"]};
+    const id=await task("pause-question",[{text:`TOOL: ask_user\n${JSON.stringify(question)}`},{text:"Fin"}]);
+    const pending=()=>waitUntil(async()=>{const r=await fetch(`${base}/api/tasks/${id}/human-input`);return r.ok&&r.json();},"human wait");
+    await pending();
+    await api(`/api/tasks/${id}/pause`,"POST",{});
+    await inactive(id);
+    assert.equal((await api(`/api/tasks/${id}`)).status,"paused");
+    const checkpoint=await api(`/api/tasks/${id}/recovery`);
+    assert.equal(checkpoint.checkpoint.waiting.tool,"ask_user");
+    assert.equal((await fetch(`${base}/api/tasks/${id}/human-input`)).status,404);
+    scripts.set("pause-question",[{text:`TOOL: ask_user\n${JSON.stringify(question)}`},{text:"Nouvelle réponse reçue."}]);
+    await api(`/api/tasks/${id}/resume`,"POST",{});
+    await pending();
+    await api(`/api/tasks/${id}/cancel`,"POST",{});
+    await inactive(id);
+    assert.equal((await api(`/api/tasks/${id}`)).status,"cancelled");
+    assert.equal((await fetch(`${base}/api/tasks/${id}/human-reply`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({response:"Continuer"})})).status,404);
+    return {id,checkpoint:checkpoint.checkpoint};
+  });
+  await check("REC-08 resume uses the current revoked tool policy", async () => {
+    const policy=(await api("/api/tools/policy")).policy;
+    const id=await task("policy-resume",[{text:"attente",delay:30000}]);
+    await checkpointed(id);
+    await restart();
+    try {
+      await api("/api/tools/policy","POST",{policy:{...policy,allowed_write_paths:[]}});
+      scripts.set("policy-resume",[tool("write_file",fileArgs("NEVER-POLICY.md","bad")),{text:"Écriture refusée par la politique courante."}]);
+      await api(`/api/tasks/${id}/resume`,"POST",{});
+      const row=await finished(id);
+      assert.equal(await readFile(join(root,"NEVER-POLICY.md"),"utf8").catch(()=>null),null);
+      assert(row.outcome.failed_tool_calls>=1,JSON.stringify(row));
+      assert.notEqual(row.outcome.result,"succeeded");
+      return {id,outcome:row.outcome};
+    } finally {await api("/api/tools/policy","POST",{policy});}
+  });
+  await check("REC-09 interrupted delegation retains children and uncertain effect", async () => {
+    daemonEnv.AKASHA_STUDIO_WORKTREE_ENABLED="1";
+    await restart();
+    let moved;
+    try {
+      scripts.set("recovery-child",[{text:"Enfant en attente",delay:30000}]);
+      const parent=await task("recovery-parent",[{text:"TOOL: delegate_to_agent studio_fullstack CASE:recovery-child Attend la validation."},{text:"parent fini"}],"studio_scaffold",{studio_delegate_single_level:false});
+      const child=await waitUntil(async()=>{
+        const recovery=await api(`/api/tasks/${parent}/recovery`);
+        return recovery.children.find(c=>c.agent==="studio_fullstack");
+      },"persisted delegated child");
+      const childId=child.task_id;
+      const childBefore=await checkpointed(childId);
+      assert(childBefore.checkpoint.workspace.includes("studio-worktrees"),JSON.stringify(childBefore));
+      await restart();
+      const recovery=await api(`/api/tasks/${parent}/recovery`);
+      assert(recovery.children.some(c=>c.task_id===childId && c.status==="interrupted"));
+      const delegation=recovery.ledger.operations.find(o=>o.tool==="delegate_to_agent" && o.state==="started");
+      assert(delegation,JSON.stringify(recovery));
+      await api(`/api/tasks/${parent}/recovery/operations/${delegation.operation_id}/resolve`,"POST",{decision:"applied",note:"Enfant persistant inspecté ; reprendre cet enfant sans créer une nouvelle délégation."});
+      scripts.set("recovery-parent",[{text:"Délégation existante inspectée."}]);
+      await api(`/api/tasks/${parent}/resume`,"POST",{});
+      assert.equal((await finished(parent)).status,"completed");
+      assert.equal((await api(`/api/tasks/${parent}/recovery`)).children.length,1);
+      // REC-05: move the actual child worktree after the physical restart.
+      const workspace=childBefore.checkpoint.workspace;
+      moved={from:workspace,to:workspace+"-moved"};
+      await rename(moved.from,moved.to);
+      const rootHead=git(root,"rev-parse","HEAD");
+      const refused=await fetch(`${base}/api/tasks/${childId}/resume`,{method:"POST"});
+      assert.equal(refused.status,500);
+      assert.match(await refused.text(),/worktree|workspace|missing|unavailable|cannot find/i);
+      assert.equal((await api(`/api/tasks/${childId}`)).status,"interrupted");
+      assert.equal(git(root,"rev-parse","HEAD"),rootHead);
+      await rename(moved.to,moved.from);moved=null;
+      scripts.set("recovery-child",[{text:"Enfant repris dans son worktree restauré."}]);
+      await api(`/api/tasks/${childId}/resume`,"POST",{});
+      assert.equal((await finished(childId)).status,"completed");
+      const childAfter=await api(`/api/tasks/${childId}/recovery`);
+      assert.equal(childAfter.checkpoint.session_id,childBefore.checkpoint.session_id);
+      report.cases.push({name:"REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",status:"passed",evidence:{childId,workspace,rootHead}});
+      return {parent,childId,delegation:delegation.operation_id};
+    } finally {
+      if(moved)await rename(moved.to,moved.from);
+      delete daemonEnv.AKASHA_STUDIO_WORKTREE_ENABLED;
+      await restart();
+    }
+  });
   // Real browser -> Vite proxy -> daemon. No page.route() or API mocking.
   await check("real UI desktop/mobile consumes daemon APIs", async () => {
     ui = spawn(

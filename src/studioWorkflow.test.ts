@@ -124,6 +124,11 @@ describe("fork tree", () => {
 });
 
 describe("task review checks", () => {
+  it("labels physical file presence without presenting it as a command or content validation", () => {
+    const rows=classifyReviewChecks({progress:[],missingManual:[],buildLog:"",outcome:{schema_version:1,termination_reason:"success",result:"succeeded",acceptance_verified:false,verification:[{kind:"requested_file",status:"passed",detail:"sample.md: present; content not certified"}]}});
+    expect(rows[0].label).toBe("Fichier demandé");
+    expect(rows[0].detail).toContain("content not certified");
+  });
   it("does not treat a proposed command as execution evidence or a nonzero exit as success", () => {
     expect(classifyReviewChecks({ progress: ["À faire : npm run test"], missingManual: [], buildLog: "" })[0].state).toBe("not_run");
     expect(classifyReviewChecks({ progress: [], missingManual: [], buildLog: "Code de sortie: 17" })[0].state).toBe("failed");
