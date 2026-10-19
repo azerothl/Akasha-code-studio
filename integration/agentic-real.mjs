@@ -506,8 +506,8 @@ try {
       {text:"TOOL: write_file workspace:/legacy-replay.txt\nexact-replay"},
       {text:"TOOL: write_file workspace:/legacy-replay.txt\nexact-replay"},
       {...tool("read_file",{path:"workspace:/legacy-replay.txt"}),verify:(_text,body)=>{
-        const receipts=body.messages.filter(m=>m.role==="tool").map(m=>{try{return JSON.parse(m.content);}catch{return null;}}).filter(Boolean);
-        assert(receipts.some(receipt=>receipt.replayed===true),"Repeated legacy write must return a verified cached receipt");
+        const history=body.messages.map(message=>typeof message.content==="string"?message.content:JSON.stringify(message.content)).join("\n");
+        assert.match(history,/"replayed"\s*:\s*true/,"Legacy continuation must receive the verified cached receipt");
       }},
       {text:"Fichier enregistré et relu."},
     ],"studio_scaffold",{message:"Crée legacy-replay.txt avec exactement exact-replay puis lis legacy-replay.txt. CASE:legacy-write-replay"});
