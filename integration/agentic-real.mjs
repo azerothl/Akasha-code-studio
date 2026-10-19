@@ -81,7 +81,8 @@ const server = createServer(async (req, res) => {
     if (typeof next.args === "function") next.args = next.args(text);
     if (next.verify) await next.verify(text, body);
   } catch (error) {
-    report.fixtureError = String(error);
+    report.fixtureError ??= String(error);
+    (report.fixtureErrors ??= []).push(String(error));
     res.writeHead(500);
     res.end("Protocol fixture assertion failed");
     return;
