@@ -2,7 +2,7 @@
 
 ## Périmètre et décision
 
-**Contrôles locaux et campagnes réelles réussis ; CI CPU finale en attente de runner.** Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub. Ce rapport remplace le [constat de blocage précédent](agentic-ci-integration-2026-10-19.md) pour la version finale ; ses échecs restent conservés.
+**Contrôles locaux et campagnes réelles réussis ; CI CPU finale bloquée côté GitHub, sans résultats exploitables.** Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub. Ce rapport remplace le [constat de blocage précédent](agentic-ci-integration-2026-10-19.md) pour la version finale ; ses échecs restent conservés.
 
 ## Corrections
 
@@ -31,7 +31,7 @@ Source du daemon testé : [65d3cc2](https://github.com/azerothl/Akasha/commit/65
 
 La source finale inclut la correction du graphe natif différé et l’isolation des enveloppes `TOOL_JSON` avant les transformations de texte libre. Le point d’entrée Studio et les fonctions JSON directes préservent aussi les balises littérales. Les six nouveaux tests Rust passent ; le 50e parcours réel vérifie le contenu exact et l’absence d’opération injectée. Le premier essai avait encore supprimé les balises `<think>` au point d’entrée Studio : cet échec reste archivé dans l’historique et a été corrigé avant la campagne finale.
 
-[CI CPU de la source finale](https://github.com/azerothl/Akasha/actions/runs/39278448450) : en attente de runner (workspace, daemon/CLI, llama.cpp Linux et UI). Le raccordement d’ascendance de #167, sans modification de son arbre de fichiers, est aussi validé par sa [CI dédiée](https://github.com/azerothl/Akasha/actions/runs/39271373767). Les tests natifs 57 Vitest et 1 Chromium ont été relancés sur la source finale ; le contrôle TypeScript et le build du panneau portent sur les mêmes sources UI.
+[CI CPU de la source finale](https://github.com/azerothl/Akasha/actions/runs/39278448450) : en attente de résultats (workspace, daemon/CLI, llama.cpp Linux et UI). Le raccordement d’ascendance de #167, sans modification de son arbre de fichiers, est aussi validé par sa [CI dédiée](https://github.com/azerothl/Akasha/actions/runs/39271373767). Les tests natifs 57 Vitest et 1 Chromium ont été relancés sur la source finale ; le contrôle TypeScript et le build du panneau portent sur les mêmes sources UI.
 
 Le groupement natif GitHub #226 a été dissous pour revenir aux PR dépendantes classiques et conserver l’historique de merges validé. Les piles natives demandent un historique linéaire et une procédure de fusion spécifique ([documentation GitHub](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests)). Après dissociation et relance, GitHub calcule à nouveau la fusion et crée la CI du dernier SHA. Aucun test ni workflow n’a été assoupli.
 
@@ -61,3 +61,9 @@ Les trois modèles doivent être installés dans Ollama. Le runner utilise une c
 Le job CUDA n’est pas exécuté faute de runner, conformément à l’exception expressément autorisée ; les modèles locaux via Ollama sur RTX 4080 SUPER ne certifient pas le backend embarqué CUDA. Le binaire Tauri n’a pas été compilé ; son contrôle TypeScript est distinct de la CI et de l’interface web.
 
 La tranche livrée correspond à Akasha #151–#160 et #179, et Code Studio #27–#30. **#143** garde ses besoins d’évaluation transversale, mémoire/fallback/tâches planifiées et baselines/seuils. **#145** garde son audit complet des frontières et mutations de worktrees. Aucun adaptateur Akasha OS n’est livré ici.
+
+## État final de l’intégration
+
+Akasha #162, #164 et #166 ont été fusionnées après leurs contrôles et avant les remarques de revue tardives, corrigées cumulativement dans #170. Les **neuf PR restantes et les quinze tickets restent ouverts**. Aucune clôture ni fusion supplémentaire sans CI finale réussie et vérification des arbres intégrés.
+
+GitHub affiche le workflow final `Queued`, les deux jobs backend `in_progress` sans aucune étape et le job UI en attente. Les demandes d’annulation et d’annulation forcée ont été acceptées ; la relance est refusée avec `This workflow is already running`. Aucun nouveau passage n’a donc été démarré et aucune réussite Linux n’est revendiquée. La reprise consiste à obtenir une CI complète réussie sur le même SHA, puis à poursuivre Akasha #167 → #168 → #169 → #170, ensuite Code Studio #31 → #32 → #33 → #34 → #35 ; les arbres de main devront correspondre aux sources validées avant les clôtures.

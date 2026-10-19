@@ -1621,8 +1621,8 @@
         "conclusion": "",
         "databaseId": 118148323186,
         "name": "test",
-        "startedAt": "2026-10-19T15:30:00Z",
-        "status": "queued",
+        "startedAt": "2026-10-19T15:30:02Z",
+        "status": "in_progress",
         "steps": [],
         "url": "https://github.com/azerothl/Akasha/actions/runs/39278448450/job/118148323186"
       },
@@ -1631,15 +1631,34 @@
         "conclusion": "",
         "databaseId": 118148323467,
         "name": "embedded-llama-cpp-linux",
-        "startedAt": "2026-10-19T15:30:00Z",
-        "status": "queued",
+        "startedAt": "2026-10-19T15:30:01Z",
+        "status": "in_progress",
         "steps": [],
         "url": "https://github.com/azerothl/Akasha/actions/runs/39278448450/job/118148323467"
+      },
+      {
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "databaseId": 118151403286,
+        "name": "ui-e2e",
+        "startedAt": "2026-10-19T15:39:30Z",
+        "status": "queued",
+        "steps": [],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39278448450/job/118151403286"
       }
     ],
     "status": "queued",
     "url": "https://github.com/azerothl/Akasha/actions/runs/39278448450"
   },
   "ui_source_commit": "14540b3",
-  "rust_test_features": "--no-default-features --features embedded; tools with web,container"
+  "rust_test_features": "--no-default-features --features embedded; tools with web,container",
+  "ci_observation": {
+    "at": "2026-10-19T15:50:20.987177+00:00",
+    "status": "blocked externally: workflow queued, assigned jobs in_progress with empty steps, UI job queued",
+    "cancel_requested": true,
+    "force_cancel_requested": true,
+    "rerun_started": false,
+    "rerun_error": "This workflow is already running",
+    "merge_gate": "not satisfied; nine remaining PRs and all fifteen issues stay open"
+  }
 }
