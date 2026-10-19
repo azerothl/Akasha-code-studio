@@ -6,6 +6,7 @@
 import { createServer } from "node:http";
 import {
   mkdtemp,
+  copyFile,
   mkdir,
   writeFile,
   readFile,
@@ -14,16 +15,18 @@ import {
   rename,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve, delimiter } from "node:path";
+import { join, resolve, delimiter, basename } from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { randomUUID, createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 
 const repo = resolve(process.env.AKASHA_REPO_DIR ?? "../Akasha");
-const bin = process.env.CODE_STUDIO_DAEMON_BIN;
-assert(bin, "Set CODE_STUDIO_DAEMON_BIN to the built daemon executable");
+const sourceBin = process.env.CODE_STUDIO_DAEMON_BIN;
+assert(sourceBin, "Set CODE_STUDIO_DAEMON_BIN to the built daemon executable");
 const data = await mkdtemp(join(tmpdir(), "studio-agentic-real-"));
+const bin = join(data, basename(sourceBin));
+await copyFile(sourceBin, bin);
 const report = {
   at: new Date().toISOString(),
   data,
@@ -626,7 +629,7 @@ try {
     ],"studio_scaffold",{message:"Crée native-function.txt avec exactement exact-é. Puis lis native-function.txt. CASE:native-functions"});
     const row=await finished(id);assert.equal(row.status,"completed");assert.equal(row.outcome.successful_tool_calls,2);
     assert.equal(await readFile(join(root,"native-function.txt"),"utf8"),"exact-é");
-    const invalid=await task("native-unknown",[{...tool("write_file",fileArgs("unknown-native.txt","wrong")),nativeName:"not_advertised"}],"studio_scaffold",{message:"Crée unknown-native.txt. CASE:native-unknown"});
+    const invalid=await task("native-unknown",Array.from({length:4},()=>({...tool("write_file",fileArgs("unknown-native.txt","wrong")),nativeName:"not_advertised"})),"studio_scaffold",{message:"Crée unknown-native.txt. CASE:native-unknown"});
     const rejected=await finished(invalid);assert.equal(rejected.status,"failed");assert.equal(rejected.outcome.termination_reason,"provider_error");
     assert.equal(rejected.outcome.successful_tool_calls,0);assert.equal(await readFile(join(root,"unknown-native.txt"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome,rejected:rejected.outcome};
@@ -776,7 +779,7 @@ try {
   await check(
     "provider failure keeps explicit structured failure",
     async () => {
-      const id = await task("provider-error", [{ error: 503 }]);
+      const id = await task("provider-error", Array.from({length:4},()=>({ error: 503 })));
       const row = await finished(id);
       assert.equal(row.status, "failed");
       assert.equal(row.outcome.termination_reason, "provider_error");

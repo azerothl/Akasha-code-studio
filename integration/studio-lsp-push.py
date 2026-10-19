@@ -4,8 +4,9 @@ from pathlib import Path
 root=Path(tempfile.mkdtemp(prefix="studio-lsp-push-"));bindir=root/"bin";bindir.mkdir()
 binary=Path(os.environ["CODE_STUDIO_DAEMON_BIN"]).resolve()
 fixture=root/"server.mjs"
-fixture.write_text(r'''let buffer=Buffer.alloc(0);const send=x=>{let body=Buffer.from(JSON.stringify(x));process.stdout.write(`Content-Length: ${body.length}\r\n\r\n`);process.stdout.write(body);};
-process.stdin.on("data",chunk=>{buffer=Buffer.concat([buffer,chunk]);while(true){const i=buffer.indexOf("\r\n\r\n");if(i<0)return;const n=Number(/Content-Length: (\d+)/i.exec(buffer.subarray(0,i).toString())[1]);if(buffer.length<i+4+n)return;const m=JSON.parse(buffer.subarray(i+4,i+4+n));buffer=buffer.subarray(i+4+n);if(m.method==="initialize")send({jsonrpc:"2.0",id:m.id,result:{capabilities:{textDocumentSync:1}}});if(m.method==="textDocument/didOpen"){const d=m.params.textDocument;const diag=(message,version)=>send({jsonrpc:"2.0",method:"textDocument/publishDiagnostics",params:{uri:d.uri,...(version===undefined?{}:{version}),diagnostics:[{range:{start:{line:0,character:0},end:{line:0,character:1}},message,code:String(process.pid)}]}});diag("WRONG-VERSION",99);setTimeout(()=>diag(d.text),40);setTimeout(()=>diag("LATE-OLD-"+d.text),500);}if(m.method==="textDocument/didChange")send({jsonrpc:"2.0",method:"textDocument/publishDiagnostics",params:{uri:m.params.textDocument.uri,diagnostics:[{message:"STALE-DIDCHANGE"}]}});}});
+fixture.write_text(r'''import {appendFileSync} from 'node:fs';
+let buffer=Buffer.alloc(0);const send=x=>{let body=Buffer.from(JSON.stringify(x));process.stdout.write(`Content-Length: ${body.length}\r\n\r\n`);process.stdout.write(body);};
+process.stdin.on("data",chunk=>{buffer=Buffer.concat([buffer,chunk]);while(true){const i=buffer.indexOf("\r\n\r\n");if(i<0)return;const n=Number(/Content-Length: (\d+)/i.exec(buffer.subarray(0,i).toString())[1]);if(buffer.length<i+4+n)return;const m=JSON.parse(buffer.subarray(i+4,i+4+n));buffer=buffer.subarray(i+4+n);if(m.method==="initialize")send({jsonrpc:"2.0",id:m.id,result:{capabilities:{textDocumentSync:1}}});if(m.method==="textDocument/didOpen"){const d=m.params.textDocument;appendFileSync(process.env.STUDIO_LSP_AUDIT,JSON.stringify({pid:String(process.pid),uri:d.uri,text:d.text})+"\n");const diag=(message,version)=>send({jsonrpc:"2.0",method:"textDocument/publishDiagnostics",params:{uri:d.uri,...(version===undefined?{}:{version}),diagnostics:[{range:{start:{line:0,character:0},end:{line:0,character:1}},message,code:String(process.pid)}]}});diag("WRONG-VERSION",99);setTimeout(()=>diag(d.text),40);setTimeout(()=>diag("LATE-OLD-"+d.text),500);}if(m.method==="textDocument/didChange")send({jsonrpc:"2.0",method:"textDocument/publishDiagnostics",params:{uri:m.params.textDocument.uri,diagnostics:[{message:"STALE-DIDCHANGE"}]}});}});
 ''',encoding="utf8")
 node=shutil.which("node");assert node
 launcher=bindir/("typescript-language-server.cmd" if os.name=="nt" else "typescript-language-server")
@@ -20,7 +21,7 @@ def api(path,body=None,method=None):
 report={"daemon_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"cases":[],"model":"none: adversarial LSP protocol process"}
 project=None
 with open(root/"daemon.log","w",encoding="utf8") as log:
- process=subprocess.Popen([str(binary)],cwd=Path(os.environ.get("AKASHA_REPO_DIR","../Akasha")).resolve(),env=dict(os.environ,AKASHA_DATA_DIR=str(root),AKASHA_PORT=str(port),PATH=str(bindir)+os.pathsep+os.environ["PATH"]),stdout=log,stderr=log,creationflags=0x08000000 if os.name=="nt" else 0)
+ process=subprocess.Popen([str(binary)],cwd=Path(os.environ.get("AKASHA_REPO_DIR","../Akasha")).resolve(),env=dict(os.environ,AKASHA_DATA_DIR=str(root),AKASHA_PORT=str(port),STUDIO_LSP_AUDIT=str(root/"opens.jsonl"),PATH=str(bindir)+os.pathsep+os.environ["PATH"]),stdout=log,stderr=log,creationflags=0x08000000 if os.name=="nt" else 0)
  try:
   for _ in range(90):
    try:api("/api/status");break
@@ -32,16 +33,22 @@ with open(root/"daemon.log","w",encoding="utf8") as log:
   assert first["result"]["status"]=="ready",first
   assert first["result"]["diagnostics"][0]["message"]=="old",first
   assert not first["session_restarted_for_freshness"],first
+  (workspace/"other.ts").write_text("disk",encoding="utf8")
+  other=api(endpoint+"/query",{"action":"diagnostics","path":"other.ts","text":"unsaved-other"})
+  assert other["result"]["status"]=="ready",other
   time.sleep(.6) # Let the previous process enqueue its delayed stale notification.
   second=api(endpoint+"/query",{"action":"diagnostics","path":"sample.ts","text":"new"})
   assert second["result"]["status"]=="ready",second
   assert second["result"]["diagnostics"][0]["message"]=="new",second
   assert second["session_restarted_for_freshness"],second
   assert first["result"]["diagnostics"][0]["code"]!=second["result"]["diagnostics"][0]["code"]
+  opened=[json.loads(line) for line in (root/"opens.jsonl").read_text(encoding="utf8").splitlines()]
+  fresh_pid=second["result"]["diagnostics"][0]["code"]
+  assert any(item["pid"]==fresh_pid and item["uri"].endswith("/other.ts") and item["text"]=="unsaved-other" for item in opened),opened
   third=api(endpoint+"/query",{"action":"diagnostics","path":"sample.ts","text":"new"})
   assert not third["session_restarted_for_freshness"],third
   assert third["result"]["diagnostics"]==second["result"]["diagnostics"],third
-  report.update(status="passed",cases=[{"name":"initial versionless push and rejection of wrong version","result":first},{"name":"changed buffer uses isolated process, excludes old delayed diagnostics","result":second},{"name":"unchanged buffer reuses process","result":third}])
+  report.update(status="passed",cases=[{"name":"initial versionless push and rejection of wrong version","result":first},{"name":"changed buffer uses isolated process, excludes old delayed diagnostics","result":second},{"name":"unchanged buffer reuses process","result":third},{"name":"unsaved sibling buffer reopened in fresh process","result":{"pid":fresh_pid,"unsaved_text":"unsaved-other"}}])
  finally:
   if project:
    try:api(f"/api/studio/projects/{project}/lsp/sessions",method="DELETE")
