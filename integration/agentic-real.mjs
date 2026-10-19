@@ -223,6 +223,7 @@ await writeFile(hostileGlobalGitConfig,'[user]\n  name = Studio validation\n  em
 const daemonEnv = {
   ...process.env,
   GIT_CONFIG_GLOBAL: hostileGlobalGitConfig,
+  GIT_SSH_COMMAND: "studio-unapproved-ssh-route",
   AKASHA_DATA_DIR: data,
   AKASHA_PORT: String(port),
   OPENAI_API_KEY: "fixture-not-secret",
@@ -2306,6 +2307,7 @@ try {
           );
           git(publishRoot, "fetch", "--depth=1", "origin", "main");
           git(publishRoot, "checkout", "-B", branch, "FETCH_HEAD");
+          git(publishRoot,"remote","set-url","origin","git@github.com:azerothl/Akasha-code-studio.git");
           git(publishRoot, "config", "user.name", "Studio validation");
           git(
             publishRoot,
