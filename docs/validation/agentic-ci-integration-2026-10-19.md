@@ -20,7 +20,7 @@ Suite du [rapport de reprise et des modèles](agentic-recovery-models-2026-10-19
 
 Code daemon : [2eb0c9d](https://github.com/azerothl/Akasha/commit/2eb0c9df73eed95616f8ab6d32beaf8c57f0eb90). SHA-256 du binaire commun aux 48 parcours et 18 recettes : `3592dacea6a593b58ca4a5eeac8f1af91447202fe710576719453911da675b38`.
 
-La [CI CPU du commit](https://github.com/azerothl/Akasha/actions/runs/39245399976) comprend les tests du workspace, les recettes cookbook, les smoke daemon/CLI, les parcours UI et la compilation llama.cpp Linux. Son état vivant doit être vert avant fusion. Le job GPU sans runner n'est pas exécuté, conformément à l'exception autorisée. La recette locale utilise Ollama sur une **RTX 4080 SUPER, 16 376 MiB**, pilote 610.88 ; elle ne remplace pas une validation du backend embarqué CUDA.
+La [CI CPU du commit](https://github.com/azerothl/Akasha/actions/runs/39245399976) comprend les tests du workspace, les recettes cookbook, les smoke daemon/CLI, les parcours UI et la compilation llama.cpp Linux. **Les trois jobs CPU sont terminés avec succès** : test (workspace, cookbook, daemon/CLI), embedded-llama-cpp-linux et ui-e2e. Les revues automatiques sont terminées ; le commentaire LSP sur les diagnostics sans version reste ouvert. Cette CI verte ne lève pas le blocage fonctionnel #179. Le job GPU sans runner n'est pas exécuté, conformément à l'exception autorisée. La recette locale utilise Ollama sur une **RTX 4080 SUPER, 16 376 MiB**, pilote 610.88 ; elle ne remplace pas une validation du backend embarqué CUDA.
 
 ## Corrections de revue
 
