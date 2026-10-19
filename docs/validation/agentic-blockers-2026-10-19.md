@@ -1,69 +1,130 @@
-# Corrections #179 / #159 et validation de la pile — 19 octobre 2026
+# Corrections #179 / #159 et validation finale — 19-20 octobre 2026
 
-## Périmètre et décision
+## Décision et provenance
 
-**Contrôles locaux et campagnes réelles réussis ; CI CPU finale bloquée côté GitHub, sans résultats exploitables.** Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub. Ce rapport remplace le [constat de blocage précédent](agentic-ci-integration-2026-10-19.md) pour la version finale ; ses échecs restent conservés.
+**Tests locaux, campagnes réelles et CI CPU réussis.** Les PR et tickets GitHub portent l’état vivant de fusion et de clôture. La fusion doit conserver l’ordre des dépendances ; les arbres intégrés doivent correspondre aux sources validées avant les clôtures.
 
-## Corrections
+Source finale daemon : [2eada3a](https://github.com/azerothl/Akasha/commit/2eada3ae28ad49d9ece053b552cf40e6913c2c84). Les mises à jour de main [#225](https://github.com/azerothl/Akasha/pull/225) et [#233](https://github.com/azerothl/Akasha/pull/233) sont intégrées, avec leurs changements Deep Research et UI. Toutes les campagnes ont été relancées après cette intégration. Le même binaire est utilisé dans les quatre campagnes, SHA-256 : `0e7b718c619160a016120ff0cd8f3ff44ca924d054aa657326517e3dd785b930`.
 
-- **#179** : les fonctions natives conservent la description des préconditions de création ; `expected_version` est explicite dans le transport LiquidAI. Un lot rejeté indique les opérations restées sans effet dans leur ordre et demande de repartir de la première opération non exécutée. Les résumés sont bornés et ne recopient pas les gros contenus dans chaque résultat. Les contenus et versions ne sont jamais corrigés silencieusement par l’exécuteur.
-- **#159** : après modification d’un buffer, un serveur ne proposant que des diagnostics push est redémarré avant `didOpen`. Cette nouvelle session constitue la barrière de fraîcheur quand `publishDiagnostics` omet sa version. Les buffers frères non enregistrés sont rouverts ; les requêtes inchangées réutilisent le processus. Les diagnostics pull gardent leur synchronisation par requête. Un mauvais numéro de version reste refusé. Le coût est une nouvelle indexation pour les buffers push modifiés. Les plans de renommage sont limités sur leur JSON sérialisé, avec le même plafond de 8 MiB à l’écriture et à la lecture ; le plafond d’aperçu agent reste 48 KiB.
-- **#158** : la résolution d’un effet inconnu et le contrôle du statut arrêté partagent la même écriture SQLite. Une reprise concurrente qui a mis la tâche en file empêche cette résolution. L’overlay de reprise n’est plus répété après le premier tour repris.
-- **#160 / revue** : les métadonnées Git appartiennent au projet précis, ou au worktree enregistré et validé de ce projet. Refus des redirections par gitfile/commondir, des symlinks de chemins de contrôle et de répertoires d’objets, et des alternates externes. Les chemins Git et la destination réseau sont épinglés dans les processus et dans l’identité d’approbation. Le verrou `config.lock` est détenu de la validation à la fin de la commande ; un autre écrivain Git ne peut pas modifier sa configuration dans cet intervalle. Le verrou coordonne les écrivains Git ; la sandbox OS contre les mutations arbitraires de processus externes reste hors périmètre. Un verrou existant est refusé et n’est jamais supprimé automatiquement.
-- **Dernières revues Git et historique** : les versions opaques de livraison lient aussi le caractère exécutable Unix ; elles sont contrôlées avant et après staging. Le parcours des métadonnées contrôle les répertoires d’objets et les chemins mutables sans parcourir chaque objet loose. Une fonction JSON précédée de raisonnement apparaît une seule fois dans l’historique natif, sans copie dans le texte assistant. Les tests Linux de chmod et de refus de shard symlinké restent en attente de CI.
-- **Arguments natifs / revue tardive** : les champs JSON restent des données avant les normalisations de prose, de raisonnement et d’en-têtes `TOOL:`. Aucune commande n’est extraite d’un contenu de fichier. Les blocs de raisonnement extérieurs restent expurgés. Le cas réel valide une seule écriture et aucun fichier injecté.
-- **CI affichée** : `STALE`, un résultat manquant et un état inconnu ne valent pas réussite, même mélangés avec `SKIPPED`/`NEUTRAL`. Priorité : échec, attente, inconnu, neutre/ignoré, réussite.
+[CI CPU finale](https://github.com/azerothl/Akasha/actions/runs/39342590108) : workspace, daemon/CLI, cookbook, llama.cpp Linux et UI réussis. Les contrôles Unix de permissions exécutables et de répertoires Git redirigés sont inclus dans les tests Linux.
 
-## Contrôles
+## Corrections validées
+
+- **Confinement des commandes Windows** : comparaison exacte du nom ou du chemin autorisé après normalisation `.exe` ; `evilnode.exe` ne correspond plus à `node`. Régressions allow/deny et exécution hostile sur daemon réel couvertes.
+
+- **Formats Git** : les dépôts non standards, dont SHA-256, restent non pris en charge par la livraison Studio et reçoivent un refus explicite de format. Un vrai dépôt initialisé en SHA-256 vérifie ce diagnostic.
+
+- **Index Git et branches numériques** : le calcul SHA-256 de l’index utilise un flux sans la limite des fichiers sélectionnés. Le statut de PR cherche explicitement la branche source via l’API, y compris pour les noms numériques. Tests unitaires et recette GitHub réelle couverts.
+
+- **Configuration GitHub CLI** : chaque commande de livraison reçoit une configuration `gh` vide et isolée. Les identifiants sont importés séparément en mémoire ; la route `http_unix_socket` héritée ne peut pas détourner les appels. La publication réelle utilise volontairement cette configuration hostile.
+
+- **PR existantes** : titre, description et statut brouillon doivent correspondre à la demande approuvée ; toute divergence produit un échec explicite sans modifier la PR. Régression unitaire et publication GitHub réelle couvertes.
+
+- **Identité Git actualisée** : chaque commande de livraison relit les deux champs globaux inertes user.name/user.email ; une configuration faite après le premier appel est prise en compte sans redémarrer le daemon. Test sur un fichier global temporaire vide puis configuré et modifié, sans changer les réglages utilisateur.
+
+- **Objets ressemblant à des chemins** : « Add dist/ to .gitignore » lie la preuve à .gitignore ; modifier seulement dist/ ne suffit pas. Les listes de dossiers sans extension héritent du type demandé, y compris lorsqu’un déterminant est répété ; une liste partielle échoue.
+
+- **Annulation Deep Research héritée** : la fin du travail revérifie le drapeau d’annulation avant de publier un succès. Un test déterministe couvre l’annulation acceptée entre deux scrutations, sans inférence. Cela ne certifie pas la qualité factuelle des rapports de recherche.
+
+- **Fichiers et dossiers explicites** : les déterminants file/fichier/folder/directory/dossier/répertoire désignent une cible, y compris sans extension et en majuscules. Le type final demandé est vérifié : un fichier ne satisfait pas une demande de dossier, et inversement. Les variantes sans effet et une création réelle de dossier sont couvertes.
+
+- **Cibles de renommage** : « rename … as … » et « move … into … » sont reconnues. Un verbe rename/move sans cible résolue reste une demande de mutation et provoque un refus explicite, au lieu de désactiver le contrôle. Les variantes sans effet et les cibles incomplètes sont couvertes.
+
+- **Listes de fichiers** : les chemins coordonnés par virgule, « and » ou « et » héritent du verbe de mutation ; écrire seulement a.txt pour « Create a.txt and b.txt » ne suffit plus. Une recette partielle échoue et la recette complète réussit.
+
+- **Fonctions JSON dans le texte** : les enveloppes directes, enveloppées et les lots sont validés contre les noms annoncés pour ce tour, avant tout effet. Les appels de lecture légitimes et leur historique restent pris en charge. Le transport texte TOOL/TOOL_JSON vérifie aussi le catalogue effectif du tour avant tout effet. Les outils de workflow annoncés pour les tours ordinaires restent disponibles par texte, sans élargir les tours limités aux fichiers littéraux.
+
+- **Catalogue natif OpenAI, OpenRouter, Azure et Ollama** : chaque fonction, y compris `studio_call`, doit figurer dans le catalogue transmis au modèle. Ollama conserve son enveloppe, avec validation explicite du nom de l’outil interne contre le catalogue du tour. Les lots invalides sont rejetés avant effet ; tests SSE, réponses complètes et parcours hostile sur daemon réel couverts.
+
+- **Demandes avec objet avant le chemin** : « Add logging to config.txt » et « Update dependencies in Cargo.toml », « Replace foo with bar in config.toml » et « Change the port in config.toml » lient maintenant la vérification au fichier cible. Le parseur reste borné à la phrase et ignore les exemples entre guillemets. Les tests unitaires et deux variantes sur daemon réel refusent une simple affirmation sans modification.
+
+- **Preuves par chemin** : seuls les reçus du registre autoritaire attestent les effets. Ils mesurent les versions avant/après sous le verrou de travail, avec les chemins demandés et leur état final. Les écritures identiques, dans un autre fichier et les changements annulés ne satisfont pas la demande. Les renommages conservent le contenu source, vérifié à nouveau à la conclusion ; une réécriture ou recréation ultérieure avec un contenu différent invalide la preuve. Les preuves survivent aux checkpoints ; une nouvelle cible humaine réinitialise la portée et exclut les anciens reçus par une borne monotone du registre. Les réponses de tools ne peuvent pas fabriquer cette preuve. Limites de capture : 32 chemins, 4096 entrées et 64 MiB ; les symlinks exigent une inspection explicite. Il ne s’agit pas d’une preuve universelle de conformité sémantique de tout code généré.
+
+- **Annulation des arbres** : chaque membre est basculé par transition conditionnelle, y compris les tâches en pause, interrompues ou attendant une réponse. Le nettoyage retire uniquement les questions des identifiants effectivement annulés dont le statut reste annulé ; les autres attentes sont préservées. Test unitaire de l’arbre et recette réelle d’annulation pendant ask_user couverts.
+
+- **Entrées humaines** : chaque question et attente au plafond de tours reçoit un identifiant neuf. Une réponse ancienne ou sans identifiant ne peut pas satisfaire la question suivante. Le parcours réel vérifie les deux refus 409 puis la bonne reprise avec la réponse courante. Les clients Studio, natif, TUI et Telegram transmettent cet identifiant.
+
+- **Effets différés du PTY** : les reçus autoritaires conservent l’état avant start/write par session. Une lecture ou fermeture ultérieure constate le changement à partir de cet état, même si la commande a exécuté après le retour de write. L’état survit aux checkpoints et le rejeu des reçus suit leur ordre monotone. Le parcours réel utilise une écriture Node retardée, avant la lecture, puis vérifie la réussite et les octets.
+
+- **Terminal** : le code de sortie naturel est capturé avant fermeture puis transmis à l’archive ; une sortie réelle de code 7 reste 7 dans les métadonnées. Un processus interrompu n’est pas présenté comme une fin normale.
+
+- **Modifications sans effet** : le garde existant du moteur couvre les demandes explicites de modification en français et en anglais. Un parcours réel exige un outil puis simule une affirmation seule de modification d’un fichier existant : la tâche doit échouer sans effet. Le rejet des seules commandes non natives a été retiré : il bloquait les appels texte valides de Qwen. Cette campagne en échec reste dans l’historique.
+
+- **#179** : préconditions de création et `expected_version` conservés dans les fonctions natives ; validation des lots avant effets ; opérations différées rejouées dans l’ordre. Les lectures FIRST précèdent les écritures SECOND, les contenus exacts sont conservés et aucune réussite n’est forcée.
+
+- **Fichiers temporaires** : une suppression, un renommage ou un déplacement demandé ne déclenche plus de recréation par le contrôle complémentaire de présence finale. Deux parcours réels vérifient création/lecture/suppression et création/renommage ; les critères explicites restent contrôlés.
+
+- **Arguments natifs** : les enveloppes JSON sont isolées avant les transformations du texte libre. Les marqueurs `TOOL:` et `<think>` dans un argument restent des données. Trois transports sont vérifiés : appel natif, fonction JSON et fonction JSON précédée de raisonnement. Une seule invocation apparaît dans l’historique, sans copie dans le texte assistant.
+
+- **#159** : une nouvelle session push-only après changement du buffer fournit la barrière de fraîcheur des diagnostics sans version. Les buffers frères non enregistrés sont rouverts, les buffers inchangés réutilisent le serveur, et les versions explicitement incorrectes sont refusées. Coût : réindexation sur changement push-only. Les plans de renommage sérialisés sont limités à 8 MiB, comme leur lecture ; aperçu agent limité à 48 KiB.
+
+- **Réponses humaines Telegram** : attente conservée pendant le POST, rafraîchissement de la demande après refus et absence de rejeu automatique ; une nouvelle attente concurrente n’est pas écrasée. Deux tests locaux couvrent ces états, sans appel Telegram réel.
+
+- **#158** : résolution d’un effet inconnu et contrôle du statut arrêté dans la même écriture SQLite ; refus si une reprise concurrente a remis la tâche en file. L’overlay de reprise n’est pas répété après le premier tour.
+
+- **Livraison Git** : métadonnées liées au projet ou worktree enregistré ; destination et chemins Git épinglés ; verrou de configuration détenu de l’inspection à la fin de la commande. Les versions opaques lient contenu et caractère exécutable Unix. Contrôle des chemins mutables et répertoires d’objets, sans parcourir chaque objet loose ; symlinks de contrôle et alternates externes refusés. Les symlinks sélectionnés sont refusés.
+
+- **CI et UI** : états inconnus/STALE non assimilés à une réussite ; refs transmises par les panneaux différés et graphe initialisé après disponibilité de la ref.
+
+## Résultats
 
 | Contrôle | Résultat |
+
 | --- | --- |
-| Rust ciblé daemon / LLM / store / tools | **449 / 66 / 29 / 34**, soit **578 réussis**, 1 ancien PTY ignoré |
-| Code Studio Vitest / Playwright | **21 / 32 réussis**, API simulées dans les 32 parcours |
-| Daemon réel, SQLite, Git/GitHub, PTY, MCP, Chromium, LSP | **50/50**, dont REC-01 à REC-09 |
-| Processus LSP push sans version et notifications tardives | **4/4** ; buffer frère non enregistré conservé |
-| Vrais modèles, sans fallback | **18/18** : Devstral, LFM2, Qwen, six recettes chacun |
-| LFM2 supplémentaire, sans fallback | **12/12**, six écritures simples et six séquences à trois opérations |
-| Builds daemon / Code Studio | Réussis ; avertissement de taille du bundle non bloquant |
-| Interface native | **57 Vitest + 1 Chromium ciblé**, TypeScript et build e2e réussis ; binaire Tauri non compilé |
 
-Source du daemon testé : [65d3cc2](https://github.com/azerothl/Akasha/commit/65d3cc2859636530e71f370c1710e429357d9e70). Les quatre campagnes finales utilisent le même exécutable SHA-256 : `98d1d431d62d9cb733f364751951702b6e34d578c7237ce6462229a397fc5f66`.
+| Rust daemon / LLM / store / tools | **507 / 69 / 29 / 35**, soit **640 réussis**, 1 ancien PTY ignoré et couvert par les parcours réels |
 
-La source finale inclut la correction du graphe natif différé et l’isolation des enveloppes `TOOL_JSON` avant les transformations de texte libre. Le point d’entrée Studio et les fonctions JSON directes préservent aussi les balises littérales. Les six nouveaux tests Rust passent ; le 50e parcours réel vérifie le contenu exact et l’absence d’opération injectée. Le premier essai avait encore supprimé les balises `<think>` au point d’entrée Studio : cet échec reste archivé dans l’historique et a été corrigé avant la campagne finale.
+| Code Studio | **21 Vitest, 32 Playwright réussis** ; build réussi |
 
-[CI CPU de la source finale](https://github.com/azerothl/Akasha/actions/runs/39278448450) : en attente de résultats (workspace, daemon/CLI, llama.cpp Linux et UI). Le raccordement d’ascendance de #167, sans modification de son arbre de fichiers, est aussi validé par sa [CI dédiée](https://github.com/azerothl/Akasha/actions/runs/39271373767). Les tests natifs 57 Vitest et 1 Chromium ont été relancés sur la source finale ; le contrôle TypeScript et le build du panneau portent sur les mêmes sources UI.
+| Interface native | **59 Vitest, 1 Chromium ciblé réussis** ; TypeScript/build réussis |
 
-Le groupement natif GitHub #226 a été dissous pour revenir aux PR dépendantes classiques et conserver l’historique de merges validé. Les piles natives demandent un historique linéaire et une procédure de fusion spécifique ([documentation GitHub](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests)). Après dissociation et relance, GitHub calcule à nouveau la fusion et crée la CI du dernier SHA. Aucun test ni workflow n’a été assoupli.
+| Daemon réel, SQLite, Git/GitHub, PTY, MCP, navigateur, LSP | **59/59**, REC-01 à REC-09 inclus |
 
-[Preuve du correctif natif du graphe](agentic-native-panel-2026-10-19.json).
+| Diagnostics LSP push sans version et notifications tardives | **4/4**, buffer frère conservé |
 
-Preuves : [50 parcours techniques](agentic-blockers-technical-2026-10-19.json), [18 recettes modèles](agentic-blockers-models-2026-10-19.json), [12 recettes LFM2 supplémentaires](agentic-blockers-lfm-stress-2026-10-19.json), [4 cas LSP](agentic-blockers-lsp-2026-10-19.json). [Historique des passages de ce traitement](agentic-blockers-development-2026-10-19.json). Captures : [desktop](agentic-blockers-2026-10-19/desktop.png), [mobile](agentic-blockers-2026-10-19/mobile.png), [éditeur LSP](agentic-blockers-2026-10-19/editor-lsp.png), [preuves de tâche](agentic-blockers-2026-10-19/task-evidence.png). Les recettes techniques emploient une fixture de protocole déterministe, distincte des vrais modèles. Les tests UI Playwright simulent les API ; les captures desktop/mobile et les parcours d’éditeur utilisent aussi un daemon réel.
+| Vrais modèles, sans fallback | **18/18**, Devstral 6/6, LFM2 6/6, Qwen 6/6 |
+
+| LFM2 supplémentaire | **12/12**, six écritures simples et six séquences multi-outils |
+
+| CI CPU de la source finale | **Réussie** |
+
+Les tests UI natifs ont été rejoués sur `f923cf3` (arbre UI identique au backend final) et les 21/32 tests Code Studio sur `f3ccf67` (seule la recette d’intégration a changé ensuite).
+
+Les parcours techniques utilisent une fixture déterministe du protocole modèle, distincte des vraies recettes LLM. Les tests de refus couvrent les fonctions natives, les enveloppes JSON dans le texte et les appels TOOL/TOOL_JSON ; les lots sont refusés avant tout effet si un outil est hors catalogue. Les contrôles de rôle et de politique restent actifs dans le moteur. Les 32 Playwright Code Studio simulent les API ; les parcours techniques et captures utilisent un daemon réel. Le test Chromium natif retarde le chunk du graphe et simule ses données IPC, avec les vrais composants React/relation-graph.
+
+Preuves : [techniques](agentic-blockers-technical-2026-10-19.json), [modèles](agentic-blockers-models-2026-10-19.json), [LFM2 supplémentaire](agentic-blockers-lfm-stress-2026-10-19.json), [LSP](agentic-blockers-lsp-2026-10-19.json), [graphe natif](agentic-native-panel-2026-10-19.json). [Historique des essais et échecs corrigés](agentic-blockers-development-2026-10-19.json). Captures : [desktop](agentic-blockers-2026-10-19/desktop.png), [mobile](agentic-blockers-2026-10-19/mobile.png), [LSP](agentic-blockers-2026-10-19/editor-lsp.png), [preuves](agentic-blockers-2026-10-19/task-evidence.png).
+
+La PR de recette [#88](https://github.com/azerothl/Akasha-code-studio/pull/88) est fermée sans fusion et sa branche supprimée. Les publications de recette antérieures #53 à #76 et #78 à #87 sont aussi fermées sans fusion.
 
 ## Reproduction
 
-Depuis Code Studio, avec le daemon construit et les dépendances décrites dans les scripts :
+Dans Code Studio, avec les modèles Ollama installés, Python/PyYAML et les serveurs LSP des scripts :
 
 ```powershell
-$env:CODE_STUDIO_DAEMON_BIN = '<chemin du daemon construit>'
+
+$env:CODE_STUDIO_DAEMON_BIN = '<daemon construit depuis la source finale>'
+
 python integration/studio-lsp-push.py
+
 $env:CODE_STUDIO_TEST_PUBLISH = '1'
+
 node integration/agentic-real.mjs
-python integration/real-model-recipes.py --models devstral:latest lfm2:24b qwen2.5-coder:14b --repeat 3 --openai-context 32768 --require-file-catalogue
-python integration/real-model-recipes.py --models lfm2:24b --repeat 6 --require-file-catalogue
+
+python integration/real-model-recipes.py --models qwen2.5-coder:14b devstral:latest lfm2:24b --repeat 3 --openai-context 32768 --require-file-catalogue --preload-models
+
+python integration/real-model-recipes.py --models lfm2:24b --repeat 6 --require-file-catalogue --preload-models
+
 ```
 
-L’option de publication crée une PR temporaire en brouillon : elle doit être fermée sans fusion et sa branche supprimée après contrôle. La PR finale de recette [#61](https://github.com/azerothl/Akasha-code-studio/pull/61), comme les PR de recette #53 à #60, a été fermée sans fusion et sa branche supprimée.
+Une campagne précédente sur le binaire remplacé a enregistré un timeout Qwen après 90 secondes, puis a été arrêtée avant la campagne finale seule sur le binaire corrigé ; cet échec est conservé dans l’historique. La campagne finale précharge chaque modèle avec `--preload-models` via la requête Ollama vide documentée, puis vérifie sa résidence et son contexte. La durée de chargement est consignée séparément dans `readiness` ; les délais des tâches restent de 90 secondes, avec une échéance totale de 180 secondes. Elle ne certifie pas un chargement à froid dans le délai de tâche. [Documentation Ollama](https://github.com/ollama/ollama/blob/main/docs/api.md?plain=1).
 
-Les trois modèles doivent être installés dans Ollama. Le runner utilise une configuration temporaire isolée, sans fournisseur de secours, sans modifier les réglages de l’utilisateur. Chaque campagne copie son exécutable. Température 0.1, max_tokens 4096, contexte 32768, budget 12 tours ; adaptation LiquidAI native pour LFM2. Les écritures, fichiers exacts, diff exact, absence d’écritures réussies répétées et lecture de FIRST.md après sa création et avant SECOND.md sont vérifiés. Les alias Devstral temporaires sont supprimés en fin de campagne.
+Température 0.1, max_tokens 4096, contexte 32768, budget 12 tours ; adaptation LiquidAI pour LFM2. Configurations temporaires isolées et exécutables copiés ; aucun fallback ni changement des réglages utilisateur. Les contenus, fichiers, diffs, écritures uniques et ordre lecture FIRST avant écriture SECOND sont contrôlés. Fermer toute PR de recette sans fusion et supprimer sa branche après validation.
 
-## Limites et suivi
+## Historique CI et limites
 
-Le job CUDA n’est pas exécuté faute de runner, conformément à l’exception expressément autorisée ; les modèles locaux via Ollama sur RTX 4080 SUPER ne certifient pas le backend embarqué CUDA. Le binaire Tauri n’a pas été compilé ; son contrôle TypeScript est distinct de la CI et de l’interface web.
+Les anciennes lectures d’attente étaient incomplètes : la lecture rafraîchie a confirmé les succès backend et Playwright, avec un statut UI annulé après demande d’arrêt. Le job UI a été relancé, puis la nouvelle intégration de main a obtenu sa propre CI complète. L’[instantané précédent](https://github.com/azerothl/Akasha-code-studio/blob/82ad6c1b3cf9cb3c0dbc03e34615d09db6f29d38/docs/validation/agentic-blockers-2026-10-19.md) conserve ce contexte sans certifier la source finale.
 
-La tranche livrée correspond à Akasha #151–#160 et #179, et Code Studio #27–#30. **#143** garde ses besoins d’évaluation transversale, mémoire/fallback/tâches planifiées et baselines/seuils. **#145** garde son audit complet des frontières et mutations de worktrees. Aucun adaptateur Akasha OS n’est livré ici.
+CUDA embarqué non exécuté faute de runner, conformément à l’accord utilisateur. Les recettes Ollama sur RTX 4080 SUPER ne certifient pas ce backend CUDA. Binaire Tauri non compilé. Les verrous Git coordonnent les écrivains Git et ne constituent pas une sandbox OS contre les mutations arbitraires de processus externes.
 
-## État final de l’intégration
+Ordre : Akasha #162 → #164 → #166 → #167 → #168 → #169 → #170, puis Code Studio #31 → #32 → #33 → #34 → #35. Périmètre validé : Akasha #151–#160 et #179 ; Code Studio #27–#30. Akasha **#143** (évaluations transversales) et **#145** (audit complet worktrees/sandbox) restent ouverts ; **#232** suit un défaut Deep Research hérité de main #225, hors de cette livraison ; **#235** suit la validation des citations du retry Deep Research, héritée inchangée de main #233 et non validée ici ; aucun adaptateur Akasha OS livré ici.
 
-Akasha #162, #164 et #166 ont été fusionnées après leurs contrôles et avant les remarques de revue tardives, corrigées cumulativement dans #170. Les **neuf PR restantes et les quinze tickets restent ouverts**. Aucune clôture ni fusion supplémentaire sans CI finale réussie et vérification des arbres intégrés.
-
-GitHub affiche le workflow final `Queued`, les deux jobs backend `in_progress` sans aucune étape et le job UI en attente. Les demandes d’annulation et d’annulation forcée ont été acceptées ; la relance est refusée avec `This workflow is already running`. Aucun nouveau passage n’a donc été démarré et aucune réussite Linux n’est revendiquée. La reprise consiste à obtenir une CI complète réussie sur le même SHA, puis à poursuivre Akasha #167 → #168 → #169 → #170, ensuite Code Studio #31 → #32 → #33 → #34 → #35 ; les arbres de main devront correspondre aux sources validées avant les clôtures.
