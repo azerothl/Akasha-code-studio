@@ -1,0 +1,1880 @@
+[
+  {
+    "source_run": "studio-agentic-real-M7ouS2",
+    "daemon_sha256": "78d7689d90016a37427359a354fee1a4fea0370966ff1a765541f86781269d87",
+    "status": "passed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-vQZrHc",
+    "daemon_sha256": "4a9fc70da6abd297730db4065658047051ec5d599a8cccd3667b12b8a6647643",
+    "status": "failed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "failed",
+        "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'tool_error'\n- 'provider_error'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:630:90\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:277:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:612:3"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-h7kW71",
+    "daemon_sha256": "4a9fc70da6abd297730db4065658047051ec5d599a8cccd3667b12b8a6647643",
+    "status": "passed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-yut3667o",
+    "daemon_sha256": "a82b48ceff3762e84e2f639e8172ae69121e0469c632de07cc8f4788c05819a2",
+    "status": null,
+    "cases": [
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-nRLEZL",
+    "daemon_sha256": "655aef49986ef73f065c571b2291dca60c7f80af9566de15e8316d712ed33052",
+    "status": "failed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "Git metadata cannot redirect delivery to another Studio project",
+        "status": "failed",
+        "error": "AssertionError [ERR_ASSERTION]: {\"operation_id\":\"c1152d94-4a62-473a-a6e9-bf420d9eef48\",\"result\":{\"error\":\"Git common metadata belongs to another project\",\"result_unknown\":false,\"schema_version\":1,\"success\":false}}\n\n200 !== 409\n\n    at refuse (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:2188:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:2192:10\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:280:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:2179:3"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-BFoONf",
+    "daemon_sha256": "655aef49986ef73f065c571b2291dca60c7f80af9566de15e8316d712ed33052",
+    "status": "passed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "Git metadata cannot redirect delivery to another Studio project",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-q80ce75d",
+    "daemon_sha256": "655aef49986ef73f065c571b2291dca60c7f80af9566de15e8316d712ed33052",
+    "status": null,
+    "cases": [
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-fnQNo1",
+    "daemon_sha256": "32d47e424f9a59b4509caf5d228e5223f233d8a431228a027e1e16733596e1ed",
+    "status": "passed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "Git metadata cannot redirect delivery to another Studio project",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-f4fs3qs0",
+    "daemon_sha256": "32d47e424f9a59b4509caf5d228e5223f233d8a431228a027e1e16733596e1ed",
+    "status": null,
+    "cases": [
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-9Fa76y",
+    "daemon_sha256": "6951d9aacff51ca5bcd62a7cba5d55f98b8c439d8e6373be5562c8e5d079e2d5",
+    "status": "passed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "Git metadata cannot redirect delivery to another Studio project",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-q7do2b43",
+    "daemon_sha256": "6951d9aacff51ca5bcd62a7cba5d55f98b8c439d8e6373be5562c8e5d079e2d5",
+    "status": null,
+    "cases": [
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-294glcey",
+    "daemon_sha256": "6951d9aacff51ca5bcd62a7cba5d55f98b8c439d8e6373be5562c8e5d079e2d5",
+    "status": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 4,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 4,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 5,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 5,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 6,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 6,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  }
+]

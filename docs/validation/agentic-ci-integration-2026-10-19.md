@@ -1,3 +1,5 @@
+> Suite et corrections : [validation des blocages #179 / #159](agentic-blockers-2026-10-19.md). Le constat ci-dessous décrit un binaire antérieur ; ses échecs restent historiques.
+
 # Validation avant intégration — 19 octobre 2026
 
 Suite du [rapport de reprise et des modèles](agentic-recovery-models-2026-10-19.md), après traitement des commentaires de revue et deux régressions Windows observées pendant la recette. Les états de fusion et de clôture sont consultables dans les PR et tickets liés au [backlog](../AGENTIC_BACKLOG.md).

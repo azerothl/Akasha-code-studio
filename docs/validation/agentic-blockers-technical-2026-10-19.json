@@ -1,0 +1,1856 @@
+{
+  "at": "2026-10-19T13:34:18.049Z",
+  "model": "deterministic protocol fixture (not an LLM evaluation)",
+  "status": "passed",
+  "cases": [
+    {
+      "name": "real project creation and clean initial Git",
+      "status": "passed",
+      "ms": 429,
+      "evidence": {
+        "id": "6b398313-0195-46f4-825b-a7c1088391ce",
+        "head": "a06937b958491420a81c936342b26783c470e8c0"
+      }
+    },
+    {
+      "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+      "status": "passed",
+      "ms": 3810,
+      "evidence": {
+        "id": "2407acab-097b-4614-b95a-737992bd6232",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\n[Tentatives automatiques : secours: npm exec -- vite build (sans étape tsc du script build)]\nVite fallback passed, but the configured build still failed (TypeScript step not verified).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "verification_failed",
+          "verification": [
+            {
+              "detail": "Vérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\n[Tentatives automatiques : secours: npm exec -- vite build (sans étape tsc du script build)]\nVite fallback passed, but the configured build still failed (TypeScript step not verified).",
+              "kind": "project_build",
+              "status": "failed"
+            }
+          ]
+        },
+        "failure": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nVérification post-tâche échouée (code de sortie 2).\n--- stdout ---\n\n> build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'.\r\n\n--- stderr ---\n(vide — avec npm run build, les erreurs TypeScript sont souvent sur stdout ci-dessus.)\n\n[Tentatives automatiques : secours: npm exec -- vite build (sans étape tsc du script build)]\nVite fallback passed, but the configured build still failed (TypeScript step not verified)."
+      }
+    },
+    {
+      "name": "empty model fails without inventing verification",
+      "status": "passed",
+      "ms": 295,
+      "evidence": {
+        "id": "398036fa-303c-4c86-b910-4b76faae1385",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": []
+        }
+      }
+    },
+    {
+      "name": "file creation prose without any effect cannot become a success",
+      "status": "passed",
+      "ms": 2406,
+      "evidence": {
+        "id": "72484f43-c38a-4e95-be33-6de37901eacf",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No tool operation was executed for the explicit file request; model claims of file creation are not validated.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "detail": "NEVER-NO-EFFECT.md: requested file missing",
+              "kind": "requested_file",
+              "path": "NEVER-NO-EFFECT.md",
+              "status": "failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+      "status": "passed",
+      "ms": 2666,
+      "evidence": {
+        "id": "f4e4c214-86d3-44c2-9dec-a7c08f414db3",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "requested literal content verified",
+              "kind": "requested_file",
+              "path": "literal-case.txt",
+              "status": "passed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+      "status": "passed",
+      "ms": 7137,
+      "evidence": {
+        "id": "ca25d6bc-c8ca-4e3d-9bdd-00b5de68f23d",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "attempt": 1,
+              "detail": "Empty response before any tool effect; a real operation is still required. A second empty generation remains model_empty.",
+              "kind": "empty_generation_retry",
+              "status": "retried"
+            },
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "requested literal content verified",
+              "kind": "requested_file",
+              "path": "empty-retry.txt",
+              "status": "passed"
+            }
+          ]
+        },
+        "persistent_empty": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": [
+            {
+              "attempt": 1,
+              "detail": "Empty response before any tool effect; a real operation is still required. A second empty generation remains model_empty.",
+              "kind": "empty_generation_retry",
+              "status": "retried"
+            },
+            {
+              "detail": "empty-exhausted.txt: requested file missing",
+              "kind": "requested_file",
+              "path": "empty-exhausted.txt",
+              "status": "failed"
+            }
+          ]
+        },
+        "durable_retry": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "model_empty",
+          "verification": [
+            {
+              "attempt": 1,
+              "detail": "Empty response before any tool effect; a real operation is still required. A second empty generation remains model_empty.",
+              "kind": "empty_generation_retry",
+              "status": "retried"
+            },
+            {
+              "detail": "empty-durable.txt: requested file missing",
+              "kind": "requested_file",
+              "path": "empty-durable.txt",
+              "status": "failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+      "status": "passed",
+      "ms": 4024,
+      "evidence": {
+        "id": "95d857ff-5193-4444-bcbe-343357edad4f",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 8,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 3,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "requested literal content verified",
+              "kind": "requested_file",
+              "path": "batch-first.txt",
+              "status": "passed"
+            },
+            {
+              "detail": "requested literal content verified",
+              "kind": "requested_file",
+              "path": "batch-second.txt",
+              "status": "passed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "direct file context retains repository rules and project constraints without maintenance examples",
+      "status": "passed",
+      "ms": 2211,
+      "evidence": {
+        "id": "cb252ad3-b464-4825-b428-5137db4806f1"
+      }
+    },
+    {
+      "name": "native continuation ends in tool results without a new continue user turn",
+      "status": "passed",
+      "ms": 557,
+      "evidence": {
+        "id": "31bd3d89-42e7-4f24-b688-84a19301f247"
+      }
+    },
+    {
+      "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+      "status": "passed",
+      "ms": 3244,
+      "evidence": {
+        "id": "305fbf3e-f6e7-425f-8d6e-1a2f06031322",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "requested literal content verified",
+              "kind": "requested_file",
+              "path": "native-function.txt",
+              "status": "passed"
+            }
+          ]
+        },
+        "rejected": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué (dernier : openai: api error: unsupported native function; nothing executed).).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "provider_error",
+          "verification": [
+            {
+              "detail": "unknown-native.txt: requested file missing",
+              "kind": "requested_file",
+              "path": "unknown-native.txt",
+              "status": "failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+      "status": "passed",
+      "ms": 1644,
+      "evidence": {
+        "variants": [
+          {
+            "name": "studio_call",
+            "id": "75cbffb3-8a44-4df7-bc57-0eabd59fe76c",
+            "operations": [
+              {
+                "operation_id": "b3da9013-33af-4d6d-8eb8-537796712c8d",
+                "result": {
+                  "error": null,
+                  "exit_code": null,
+                  "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+                  "operation_id": "b3da9013-33af-4d6d-8eb8-537796712c8d",
+                  "output": "[write_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\json-first-studio_call.md] saved (disk).",
+                  "result_unknown": false,
+                  "schema_version": 1,
+                  "success": true,
+                  "tool": "write_file",
+                  "truncated": false
+                },
+                "state": "completed",
+                "tool": "write_file",
+                "updated_at": "2026-10-19T13:34:46.425443200+00:00"
+              },
+              {
+                "operation_id": "fa78cf7a-1070-4dfa-ad8f-b282f65592ea",
+                "result": {
+                  "error": null,
+                  "exit_code": null,
+                  "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+                  "operation_id": "fa78cf7a-1070-4dfa-ad8f-b282f65592ea",
+                  "output": "[read_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\json-first-studio_call.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+                  "result_unknown": false,
+                  "schema_version": 1,
+                  "success": true,
+                  "tool": "read_file",
+                  "truncated": false
+                },
+                "state": "completed",
+                "tool": "read_file",
+                "updated_at": "2026-10-19T13:34:46.512286600+00:00"
+              },
+              {
+                "operation_id": "31b03760-f1d4-499a-9a67-435360bf01c5",
+                "result": {
+                  "error": null,
+                  "exit_code": null,
+                  "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
+                  "operation_id": "31b03760-f1d4-499a-9a67-435360bf01c5",
+                  "output": "[write_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\json-second-studio_call.md] saved (disk).",
+                  "result_unknown": false,
+                  "schema_version": 1,
+                  "success": true,
+                  "tool": "write_file",
+                  "truncated": false
+                },
+                "state": "completed",
+                "tool": "write_file",
+                "updated_at": "2026-10-19T13:34:46.618497200+00:00"
+              }
+            ]
+          },
+          {
+            "name": "read_file",
+            "id": "7fac1a48-ee49-447b-b93e-8496f935bd95",
+            "operations": [
+              {
+                "operation_id": "72d47674-c2de-44cf-adc9-15c38407fa56",
+                "result": {
+                  "error": null,
+                  "exit_code": null,
+                  "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+                  "operation_id": "72d47674-c2de-44cf-adc9-15c38407fa56",
+                  "output": "[write_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\json-first-read_file.md] saved (disk).",
+                  "result_unknown": false,
+                  "schema_version": 1,
+                  "success": true,
+                  "tool": "write_file",
+                  "truncated": false
+                },
+                "state": "completed",
+                "tool": "write_file",
+                "updated_at": "2026-10-19T13:34:47.278470600+00:00"
+              },
+              {
+                "operation_id": "9264b81f-b1bb-40dd-aaaa-faad037d5f04",
+                "result": {
+                  "error": null,
+                  "exit_code": null,
+                  "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+                  "operation_id": "9264b81f-b1bb-40dd-aaaa-faad037d5f04",
+                  "output": "[read_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\json-first-read_file.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+                  "result_unknown": false,
+                  "schema_version": 1,
+                  "success": true,
+                  "tool": "read_file",
+                  "truncated": false
+                },
+                "state": "completed",
+                "tool": "read_file",
+                "updated_at": "2026-10-19T13:34:47.419630700+00:00"
+              },
+              {
+                "operation_id": "54803faf-2713-4fd2-b73c-0e63ba936c82",
+                "result": {
+                  "error": null,
+                  "exit_code": null,
+                  "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
+                  "operation_id": "54803faf-2713-4fd2-b73c-0e63ba936c82",
+                  "output": "[write_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\json-second-read_file.md] saved (disk).",
+                  "result_unknown": false,
+                  "schema_version": 1,
+                  "success": true,
+                  "tool": "write_file",
+                  "truncated": false
+                },
+                "state": "completed",
+                "tool": "write_file",
+                "updated_at": "2026-10-19T13:34:47.547229200+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "malformed JSON function arguments never execute or become a success",
+      "status": "passed",
+      "ms": 550,
+      "evidence": {
+        "id": "489c5045-f2ad-4a31-b36f-044c5eb3354e",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nTerminé.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "premature final response resumes only the explicitly missing file",
+      "status": "passed",
+      "ms": 2684,
+      "evidence": {
+        "id": "621b318e-9fca-454d-88e1-b43cca06177a",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "FIRST-REQUIRED.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "FIRST-REQUIRED.md",
+              "status": "passed"
+            },
+            {
+              "detail": "SECOND-REQUIRED.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "SECOND-REQUIRED.md",
+              "status": "passed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "native reads continue after the default 500-line window",
+      "status": "passed",
+      "ms": 840,
+      "evidence": {
+        "id": "43e8f05e-bb57-438f-ba78-88fa70ecef13",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 5,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "mechanical acceptance preserves each criterion result",
+      "status": "passed",
+      "ms": 556,
+      "evidence": {
+        "id": "5f9580f0-f383-4e1c-bc0c-b54e213ae1c2",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Échec vérification automatique (build/check) — la tâche est marquée en échec.\nÉchec critères d'acceptation (vérification automatique) :\n[missing] Fichier attendu absent ou non fichier: `MUST_NOT_EXIST.txt`",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "verification_failed",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "criterion_kind": "file_exists",
+              "exit_code": null,
+              "id": "present",
+              "kind": "acceptance",
+              "status": "passed",
+              "text": "Plan exists"
+            },
+            {
+              "criterion_kind": "file_exists",
+              "exit_code": null,
+              "id": "missing",
+              "kind": "acceptance",
+              "status": "failed",
+              "text": "Missing fixture"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "provider failure keeps explicit structured failure",
+      "status": "passed",
+      "ms": 284,
+      "evidence": {
+        "id": "50a33c20-b2da-49db-b16f-aa1eedbadcfd",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué (dernier : openai: api error: 503 Service Unavailable fixture provider error).).",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "provider_error",
+          "verification": []
+        }
+      }
+    },
+    {
+      "name": "native Unicode write, partial failure and retained diff",
+      "status": "passed",
+      "ms": 633,
+      "evidence": {
+        "id": "cd8ccc4a-c257-45e2-bcf4-d7e8db2e9645",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": "No response from the model. Check Ollama or your LLM provider.",
+          "result": "partial",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 1,
+          "termination_reason": "model_empty",
+          "verification": []
+        },
+        "diff": {
+          "captured_at": "2026-10-19T13:34:52.871572900+00:00",
+          "files": [
+            {
+              "diff": "diff --git a/proof.md b/proof.md\n--- /dev/null\n+++ b/proof.md\n@@ -0,0 +1 @@\n+réel 🙂\n",
+              "path": "proof.md",
+              "status": "added",
+              "truncated": false
+            }
+          ],
+          "task_id": "cd8ccc4a-c257-45e2-bcf4-d7e8db2e9645"
+        }
+      }
+    },
+    {
+      "name": "reviewer and planner refuse command effects",
+      "status": "passed",
+      "ms": 1499,
+      "evidence": "No marker written; persisted roles and spoof refusal confirmed"
+    },
+    {
+      "name": "planner writes only exact plan path",
+      "status": "passed",
+      "ms": 806,
+      "evidence": {
+        "id": "5edb8f02-8872-4815-a56b-a0ae3125d2c1",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": []
+        }
+      }
+    },
+    {
+      "name": "real user PTY input, cursor, resize, isolation and close",
+      "status": "passed",
+      "ms": 2611,
+      "evidence": {
+        "sid": "3bdf6152-6a79-4fed-881b-6a8870eb548d",
+        "outputBytes": 446
+      }
+    },
+    {
+      "name": "agent PTY remains task-owned and archives its transcript",
+      "status": "passed",
+      "ms": 3487,
+      "evidence": {
+        "id": "3ff26e89-2759-4ada-833e-71ebf829e149",
+        "transcript": {
+          "bytes": 486,
+          "created_at": "2026-10-19T13:35:01.373162500+00:00",
+          "details": {
+            "exit_code": null,
+            "program": "cmd.exe",
+            "session_id": "69070a7e-5e4b-4d73-aa3e-3780d6175404",
+            "truncated": false
+          },
+          "id": "18ed837e-bde8-4f54-88fb-fc706dc77911",
+          "kind": "terminal_transcript",
+          "mime": "text/plain",
+          "task_id": "3ff26e89-2759-4ada-833e-71ebf829e149"
+        }
+      }
+    },
+    {
+      "name": "MCP real stdio pagination validation and task invocation",
+      "status": "passed",
+      "ms": 2155,
+      "evidence": {
+        "id": "e7c5ae19-6100-4afc-bb5c-432803c531f4",
+        "discovered": [
+          "echo",
+          "second"
+        ]
+      }
+    },
+    {
+      "name": "agent browser desktop mobile logs PNG and denied redirect",
+      "status": "passed",
+      "ms": 2691,
+      "evidence": {
+        "id": "5adcd528-2e04-4498-9fd4-89f5725319c7",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 8,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "artifacts": {
+          "artifacts": [
+            {
+              "bytes": 8669,
+              "created_at": "2026-10-19T13:35:05.311258300+00:00",
+              "details": {
+                "url": "http://127.0.0.1:57926/demo",
+                "viewport": {
+                  "height": 720,
+                  "width": 1280
+                }
+              },
+              "id": "6d6ad1df-53ac-40e8-8c68-2539cd75affd",
+              "kind": "browser_screenshot",
+              "mime": "image/png",
+              "task_id": "5adcd528-2e04-4498-9fd4-89f5725319c7"
+            },
+            {
+              "bytes": 7074,
+              "created_at": "2026-10-19T13:35:05.577917500+00:00",
+              "details": {
+                "url": "http://127.0.0.1:57926/demo",
+                "viewport": {
+                  "height": 844,
+                  "width": 390
+                }
+              },
+              "id": "001272d8-3e4a-492a-904e-a7f47bbf6cf4",
+              "kind": "browser_screenshot",
+              "mime": "image/png",
+              "task_id": "5adcd528-2e04-4498-9fd4-89f5725319c7"
+            },
+            {
+              "bytes": 121,
+              "created_at": "2026-10-19T13:35:05.704844200+00:00",
+              "details": {
+                "entries": 1
+              },
+              "id": "90b18de6-13ae-47bb-a17f-694b7405e738",
+              "kind": "browser_console",
+              "mime": "application/json",
+              "task_id": "5adcd528-2e04-4498-9fd4-89f5725319c7"
+            },
+            {
+              "bytes": 253,
+              "created_at": "2026-10-19T13:35:05.828814900+00:00",
+              "details": {
+                "entries": 2
+              },
+              "id": "77a12500-e15d-47c7-994c-62260c3c5fce",
+              "kind": "browser_network",
+              "mime": "application/json",
+              "task_id": "5adcd528-2e04-4498-9fd4-89f5725319c7"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TypeScript real server diagnostics definition references rename",
+      "status": "passed",
+      "ms": 1558,
+      "evidence": {
+        "definition": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "sample.ts",
+              "range": {
+                "end": {
+                  "character": 18,
+                  "line": 0
+                },
+                "start": {
+                  "character": 13,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "references": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "sample.ts",
+              "range": {
+                "end": {
+                  "character": 18,
+                  "line": 0
+                },
+                "start": {
+                  "character": 13,
+                  "line": 0
+                }
+              }
+            },
+            {
+              "path": "sample.ts",
+              "range": {
+                "end": {
+                  "character": 17,
+                  "line": 1
+                },
+                "start": {
+                  "character": 12,
+                  "line": 1
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "diagnostics": {
+          "diagnostics": [
+            {
+              "code": 2322,
+              "message": "Type 'string' is not assignable to type 'number'.",
+              "range": {
+                "end": {
+                  "character": 9,
+                  "line": 0
+                },
+                "start": {
+                  "character": 6,
+                  "line": 0
+                }
+              },
+              "severity": 1,
+              "source": "typescript"
+            }
+          ],
+          "status": "ready"
+        }
+      }
+    },
+    {
+      "name": "Python real server navigation and explicit diagnostics",
+      "status": "passed",
+      "ms": 1208,
+      "evidence": {
+        "definition": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "sample.py",
+              "range": {
+                "end": {
+                  "character": 5,
+                  "line": 0
+                },
+                "start": {
+                  "character": 0,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "diagnostics": {
+          "diagnostics": [
+            {
+              "code": "reportAssignmentType",
+              "codeDescription": {
+                "href": "https://github.com/microsoft/pyright/blob/main/docs/configuration.md#reportAssignmentType"
+              },
+              "message": "Type \"Literal['text']\" is not assignable to declared type \"int\"\n  \"Literal['text']\" is not assignable to \"int\"",
+              "range": {
+                "end": {
+                  "character": 19,
+                  "line": 0
+                },
+                "start": {
+                  "character": 13,
+                  "line": 0
+                }
+              },
+              "severity": 1,
+              "source": "Pyright"
+            }
+          ],
+          "status": "ready"
+        }
+      }
+    },
+    {
+      "name": "Rust real server definition with build scripts disabled",
+      "status": "passed",
+      "ms": 1979,
+      "evidence": {
+        "definition": {
+          "excluded_outside_workspace": 0,
+          "locations": [
+            {
+              "path": "lsp-sample.rs",
+              "range": {
+                "end": {
+                  "character": 12,
+                  "line": 0
+                },
+                "start": {
+                  "character": 7,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "buildScriptExecuted": false
+      }
+    },
+    {
+      "name": "recursive search rules are active before the next mutation and skills are auditable",
+      "status": "passed",
+      "ms": 910,
+      "evidence": {
+        "id": "8e433d66-feee-4713-a34d-f12f36210d1a",
+        "context": {
+          "rules": [
+            {
+              "path": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\",
+              "sha256": "725ab9529e0d7ab157925b68f27fe89a0d9eae6254c0b8f01ce176fcafe2c61b"
+            },
+            {
+              "path": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce",
+              "sha256": "725ab9529e0d7ab157925b68f27fe89a0d9eae6254c0b8f01ce176fcafe2c61b"
+            },
+            {
+              "path": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\nested\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\nested",
+              "sha256": "e062a1fcbb3f620dcb9cc37b3159ba5b853e3506599e8dd765efba1a63a3e72f"
+            }
+          ],
+          "schema_version": 1,
+          "skills": [
+            {
+              "name": "studio-explore",
+              "resource": null,
+              "resource_sha256": null,
+              "sha256": "6ac7695e42844c4b9a9bf73b0c643542fed89bee0257ee947756daa0f777bb44",
+              "source_root": "spec\\skills\\studio-explore",
+              "version": "1.0.0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "fresh nested rules defer mutations until the model has read them",
+      "status": "passed",
+      "ms": 554,
+      "evidence": {
+        "id": "ba26a79f-a3fb-48c0-92a7-8b3c14af8db3"
+      }
+    },
+    {
+      "name": "rename loads destination rules when its directory contains spaces",
+      "status": "passed",
+      "ms": 562,
+      "evidence": {
+        "id": "b3d682e4-40f5-4c76-9c3c-d88c9ef5fb80"
+      }
+    },
+    {
+      "name": "selected commit preserves unrelated staged paths and idempotency",
+      "status": "passed",
+      "ms": 11729,
+      "evidence": {
+        "id": "39648f76-e7a7-48e1-aa7a-765fcbad6026",
+        "head": "a021700cf4947459e0de23226d7af9896d4458b9",
+        "result": {
+          "operation_id": "214dd2d0-d114-439d-80c7-7dfed1f148aa",
+          "result": {
+            "branch": "main",
+            "commit": "a021700cf4947459e0de23226d7af9896d4458b9",
+            "paths": [
+              "selected.txt"
+            ],
+            "published": false,
+            "schema_version": 1,
+            "state": "committed",
+            "success": true,
+            "warning": null
+          }
+        },
+        "cached": {
+          "cached": true,
+          "operation_id": "214dd2d0-d114-439d-80c7-7dfed1f148aa",
+          "replayed": false,
+          "result": {
+            "branch": "main",
+            "commit": "a021700cf4947459e0de23226d7af9896d4458b9",
+            "paths": [
+              "selected.txt"
+            ],
+            "published": false,
+            "schema_version": 1,
+            "state": "committed",
+            "success": true,
+            "warning": null
+          }
+        },
+        "agentId": "c1e704a6-f4f4-45f8-adc2-6c39a947c962",
+        "agentHead": "07ed471860b18d6de0280e73f5905e4f23a37814",
+        "approvedAgentOutcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "task manifest loads skills and rules from its persisted Git worktree",
+      "status": "passed",
+      "ms": 872,
+      "evidence": {
+        "id": "b944db69-ff3a-442d-8a49-79d46bb4b30c",
+        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\b944db69-ff3a-442d-8a49-79d46bb4b30c\\b944db69",
+        "skills": [
+          "studio-debug",
+          "studio-explore",
+          "studio-implement",
+          "studio-verify-ui",
+          "morning-brief",
+          "studio-deliver",
+          "studio-verify",
+          "read_file",
+          "studio-review",
+          "worktree-only"
+        ]
+      }
+    },
+    {
+      "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+      "status": "passed",
+      "ms": 1085,
+      "evidence": {
+        "id": "31394f3b-f672-4853-a986-4c4af622ca4a",
+        "status": "completed",
+        "session": "validation-restart"
+      }
+    },
+    {
+      "name": "restart during tool-round human wait asks again before continuing",
+      "status": "passed",
+      "ms": 3039,
+      "evidence": {
+        "id": "6c4aeb0f-fc3c-4f47-990a-d7ac914bd52e",
+        "round": 16
+      }
+    },
+    {
+      "name": "restart during ask_user preserves the consumed round and asks again",
+      "status": "passed",
+      "ms": 1532,
+      "evidence": {
+        "id": "c9da9472-5afb-4b54-977d-67e161b870c9",
+        "round": 2
+      }
+    },
+    {
+      "name": "crash after an external effect blocks mutations until inspected",
+      "status": "passed",
+      "ms": 1726,
+      "evidence": {
+        "id": "5545e63b-4ed9-45c1-8717-c69e3756ce9c",
+        "operation": "5d08a097-dd0b-4825-9b5e-3e4dacdd9235",
+        "status": "completed",
+        "ledger": {
+          "operations": [
+            {
+              "operation_id": "0097894c-1054-405a-94e7-9df2fd76424c",
+              "result": {
+                "error": null,
+                "exit_code": null,
+                "file_version": "ad06e72726f6d8ff00228160453949c1ceb89571c99332e4815f9edce2acad07",
+                "operation_id": "0097894c-1054-405a-94e7-9df2fd76424c",
+                "output": "[read_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\effect.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nonce",
+                "result_unknown": false,
+                "schema_version": 1,
+                "success": true,
+                "tool": "read_file",
+                "truncated": false
+              },
+              "state": "completed",
+              "tool": "read_file",
+              "updated_at": "2026-10-19T13:35:33.074701600+00:00"
+            },
+            {
+              "operation_id": "5d08a097-dd0b-4825-9b5e-3e4dacdd9235",
+              "result": {
+                "automatic": false,
+                "decision": "applied",
+                "note": "Inspection réelle : effect.md contient exactement une ligne once ; aucun replay demandé.",
+                "operation_id": "5d08a097-dd0b-4825-9b5e-3e4dacdd9235"
+              },
+              "state": "resolved_applied",
+              "tool": "run_command",
+              "updated_at": "2026-10-19T13:35:32.796911800+00:00"
+            }
+          ],
+          "schema_version": 1,
+          "unknown_count": 0
+        }
+      }
+    },
+    {
+      "name": "crash after a recorded tool result does not repeat its effect",
+      "status": "passed",
+      "ms": 1211,
+      "evidence": {
+        "id": "4f26ddc1-a7d0-4057-ad03-770699e02cd5",
+        "checkpoint": {
+          "agent": "studio_project_manager",
+          "max_tool_rounds": 16,
+          "phase": "before_model",
+          "project_id": "6b398313-0195-46f4-825b-a7c1088391ce",
+          "round": 1,
+          "schema_version": 1,
+          "session_id": "validation-recorded-effect",
+          "waiting": null,
+          "workspace": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce"
+        },
+        "operations": [
+          {
+            "operation_id": "4a07af47-0f3b-4703-aa64-b1e67c3f1d46",
+            "result": {
+              "error": null,
+              "exit_code": null,
+              "file_version": "7c4ac4b7152edf9dfb70d2e2638cc04c12ac36322b9a6be13f2e9be1c6f2bef5",
+              "operation_id": "4a07af47-0f3b-4703-aa64-b1e67c3f1d46",
+              "output": "[write_file <isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce\\recorded.md] saved (disk).",
+              "result_unknown": false,
+              "schema_version": 1,
+              "success": true,
+              "tool": "write_file",
+              "truncated": false
+            },
+            "state": "completed",
+            "tool": "write_file",
+            "updated_at": "2026-10-19T13:35:33.663168700+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "name": "restart retains the full literal task beyond the truncated task title",
+      "status": "passed",
+      "ms": 2049,
+      "evidence": {
+        "id": "96be5f97-109b-4cd7-bf0f-c7becca4bbc7",
+        "session": "validation-durable-file-goals",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 2,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            },
+            {
+              "detail": "DURABLE-FIRST.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "DURABLE-FIRST.md",
+              "status": "passed"
+            },
+            {
+              "detail": "DURABLE-SECOND.md: regular file present; content not certified",
+              "kind": "requested_file",
+              "path": "DURABLE-SECOND.md",
+              "status": "passed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "REC-04 interrupted tool approval requires a fresh request",
+      "status": "passed",
+      "ms": 1471,
+      "evidence": {
+        "id": "0be4cff9-1e10-4abf-a3d6-4da5f2c8706b",
+        "oldRequest": "4bf17baf-724f-4e05-9669-2f9b76946c78",
+        "freshRequest": "3d51230e-aba6-4005-973f-187c9b163351"
+      }
+    },
+    {
+      "name": "REC-06 concurrent resume and cancel preserves cancellation",
+      "status": "passed",
+      "ms": 3887,
+      "evidence": {
+        "races": [
+          {
+            "id": "a2b4e5b0-3b77-4cec-bdf3-cedabc786d3d",
+            "resumeStatus": 500
+          },
+          {
+            "id": "7d6958bc-12dc-48b4-a6f5-f78d2e053666",
+            "resumeStatus": 500
+          },
+          {
+            "id": "0d5b8cfd-0204-41f1-be47-6cd25ba8cce7",
+            "resumeStatus": 400
+          },
+          {
+            "id": "b0492c99-6816-473a-a243-5d15b69778d2",
+            "resumeStatus": 500
+          },
+          {
+            "id": "d8e75c39-b336-4650-8b78-e3643aad8754",
+            "resumeStatus": 500
+          }
+        ]
+      }
+    },
+    {
+      "name": "REC-07 pause during long command refuses overlapping resume",
+      "status": "passed",
+      "ms": 6687,
+      "evidence": {
+        "id": "ace6464c-fda4-475b-98bc-8d0dc4a0f113",
+        "operations": [
+          {
+            "operation_id": "0ee346f0-18bb-482e-a5dd-43a26f61cbff",
+            "result": {
+              "error": null,
+              "exit_code": 0,
+              "file_version": null,
+              "operation_id": "0ee346f0-18bb-482e-a5dd-43a26f61cbff",
+              "output": "[run_command node cwd=<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce] exit 0 stdout:  stderr: ",
+              "result_unknown": false,
+              "schema_version": 1,
+              "success": true,
+              "tool": "run_command",
+              "truncated": false
+            },
+            "state": "completed",
+            "tool": "run_command",
+            "updated_at": "2026-10-19T13:35:48.334432500+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pause and cancel release human waits without reusing their channels",
+      "status": "passed",
+      "ms": 894,
+      "evidence": {
+        "id": "75b082df-2410-4ba6-9120-9fd6c18799d4",
+        "checkpoint": {
+          "agent": "studio_project_manager",
+          "max_tool_rounds": 16,
+          "phase": "paused",
+          "project_id": "6b398313-0195-46f4-825b-a7c1088391ce",
+          "round": 1,
+          "schema_version": 1,
+          "session_id": "validation-pause-question",
+          "waiting": {
+            "choices": [
+              "Continuer",
+              "Arrêter"
+            ],
+            "question": "Valider le scénario de reprise ?",
+            "tool": "ask_user"
+          },
+          "workspace": "<isolated-data>\\studio-projects\\6b398313-0195-46f4-825b-a7c1088391ce"
+        }
+      }
+    },
+    {
+      "name": "REC-08 resume uses the current revoked tool policy",
+      "status": "passed",
+      "ms": 1286,
+      "evidence": {
+        "id": "707cef9d-0339-4ce8-a30f-81f8359a37ea",
+        "outcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 1,
+          "reason": "No tool operation succeeded; the requested effects are not validated.\nÉcriture refusée par la politique courante.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "tool_error",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+      "status": "passed",
+      "evidence": {
+        "childId": "5dab0e51-d35c-4865-ad53-87bb3241d846",
+        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\45db5ae6-b228-4fef-a4fa-518b25516198\\5dab0e51",
+        "rootHead": "07ed471860b18d6de0280e73f5905e4f23a37814"
+      }
+    },
+    {
+      "name": "REC-09 interrupted delegation retains children and uncertain effect",
+      "status": "passed",
+      "ms": 2993,
+      "evidence": {
+        "parent": "45db5ae6-b228-4fef-a4fa-518b25516198",
+        "childId": "5dab0e51-d35c-4865-ad53-87bb3241d846",
+        "delegation": "7c079a6b-35b9-40d2-8ef9-c50502f57f4e"
+      }
+    },
+    {
+      "name": "real UI desktop/mobile consumes daemon APIs",
+      "status": "passed",
+      "ms": 10089,
+      "evidence": {
+        "screenshots": [
+          "desktop.png",
+          "mobile.png"
+        ],
+        "pageErrors": []
+      }
+    },
+    {
+      "name": "delivery reads reject foreign and opaque browser origins",
+      "status": "passed",
+      "ms": 26,
+      "evidence": {
+        "denied": 20
+      }
+    },
+    {
+      "name": "delivery refuses repository configured process helpers before GitHub access",
+      "status": "passed",
+      "ms": 310,
+      "evidence": {
+        "refused": true,
+        "configurations": 3
+      }
+    },
+    {
+      "name": "Git metadata cannot redirect delivery to another Studio project",
+      "status": "passed",
+      "ms": 1427,
+      "evidence": {
+        "refused": 2,
+        "victim_head_unchanged": true,
+        "own_head_unchanged": true
+      }
+    },
+    {
+      "name": "explicit GitHub push draft PR and CI state through delivery API",
+      "status": "passed",
+      "ms": 19333,
+      "evidence": {
+        "id": "854e37bd-1d7b-4b21-854a-262d00f58eec",
+        "head": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+        "branch": "validation/studio-agentic-90c9d73f",
+        "created": {
+          "operation_id": "06d260eb-de92-42cc-b159-e22869d5e39a",
+          "result": {
+            "branch": "validation/studio-agentic-90c9d73f",
+            "commit": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+            "error": null,
+            "expected_commit": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+            "pr": {
+              "draft": true,
+              "head": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+              "number": 59,
+              "url": "https://github.com/azerothl/Akasha-code-studio/pull/59"
+            },
+            "repository": "azerothl/Akasha-code-studio",
+            "result_unknown": false,
+            "schema_version": 1,
+            "state": "pr_created",
+            "success": true
+          }
+        },
+        "status": {
+          "checks_match_local_head": true,
+          "checks_state": "not_run",
+          "current_head_checks": "not_run",
+          "fetched_at": "2026-10-19T13:36:25.040672+00:00",
+          "local_head": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+          "pr": {
+            "baseRefName": "main",
+            "headRefName": "validation/studio-agentic-90c9d73f",
+            "headRefOid": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+            "isDraft": true,
+            "mergeable": "MERGEABLE",
+            "number": 59,
+            "reviewDecision": "",
+            "state": "OPEN",
+            "statusCheckRollup": [],
+            "url": "https://github.com/azerothl/Akasha-code-studio/pull/59"
+          },
+          "repository": "azerothl/Akasha-code-studio",
+          "schema_version": 1,
+          "success": true
+        }
+      }
+    }
+  ],
+  "nativeRequests": 152,
+  "testPullRequest": {
+    "draft": true,
+    "head": "b6503694ebe6b891fa261b66ade02f86ab6e46b3",
+    "number": 59,
+    "url": "https://github.com/azerothl/Akasha-code-studio/pull/59"
+  },
+  "publishedBranch": "validation/studio-agentic-90c9d73f",
+  "uiLsp": [
+    {
+      "url": "http://127.0.0.1:61678/api/studio/projects/6b398313-0195-46f4-825b-a7c1088391ce/lsp/query",
+      "status": 200,
+      "body": {
+        "document_version": 1,
+        "file_version": "f234ee20ffd0fedd9d50bd1ea2fce4e0c7c471928a54addeabacdb21f79f698e",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "diagnostics": [
+            {
+              "code": 2322,
+              "message": "Type 'string' is not assignable to type 'number'.",
+              "range": {
+                "end": {
+                  "character": 9,
+                  "line": 0
+                },
+                "start": {
+                  "character": 6,
+                  "line": 0
+                }
+              },
+              "severity": 1,
+              "source": "typescript"
+            }
+          ],
+          "status": "ready"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server",
+        "session_restarted_for_freshness": false
+      }
+    },
+    {
+      "url": "http://127.0.0.1:61678/api/studio/projects/6b398313-0195-46f4-825b-a7c1088391ce/lsp/query",
+      "status": 200,
+      "body": {
+        "document_version": 1,
+        "file_version": "f234ee20ffd0fedd9d50bd1ea2fce4e0c7c471928a54addeabacdb21f79f698e",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "artifact": null,
+          "expires_in_secs": 7200,
+          "files": [
+            {
+              "after": "const renamedInUi: number = \"text\";\n",
+              "before": "const bad: number = \"text\";\n",
+              "edit_count": 1,
+              "expected_version": "f234ee20ffd0fedd9d50bd1ea2fce4e0c7c471928a54addeabacdb21f79f698e",
+              "path": "sample.ts"
+            }
+          ],
+          "plan_id": "82cbed03-2218-4737-b321-0f8407fe3852",
+          "status": "planned"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server",
+        "session_restarted_for_freshness": false
+      }
+    },
+    {
+      "url": "http://127.0.0.1:61678/api/studio/projects/6b398313-0195-46f4-825b-a7c1088391ce/lsp/rename/82cbed03-2218-4737-b321-0f8407fe3852/apply",
+      "status": 200,
+      "body": {
+        "files": [
+          "sample.ts"
+        ],
+        "plan_id": "82cbed03-2218-4737-b321-0f8407fe3852",
+        "schema_version": 1,
+        "status": "applied"
+      }
+    }
+  ],
+  "daemon_sha256": "1e8d3dbcb7842f1dbc3c552d80c2bf455925b2cf38c9353423833f55c6eb3287",
+  "source_run": "studio-agentic-real-zoMKtQ",
+  "code_commit": "6feefe5016297b7678e49c13148d4e057cce9429",
+  "code_tree": "6dea030294be771b7591de23aa6831c7a0dddc08",
+  "test_pr_cleanup": {
+    "state": "CLOSED",
+    "merged": false,
+    "branch_deleted": true
+  },
+  "tests": {
+    "daemon": 443,
+    "daemon_ignored": 1,
+    "llm": 66,
+    "store": 29,
+    "tools": 34,
+    "ui_unit": 21,
+    "ui_playwright_mocked": 32,
+    "native_tsc": "passed"
+  },
+  "gpu": "not executed: no runner; user waiver",
+  "ui_source_commit": "ad277adda6bc059a6442c6d5b7a227d97905832e",
+  "ui_runtime_tree": "e5847b398b364845072ddf202bddf57e9098b08f",
+  "recipe_sha256": {
+    "integration/agentic-real.mjs": "67e269cf99f1b67824caa79ae9f26dbc2b0a0bf6482686f3f00312d96075a976",
+    "integration/real-model-recipes.py": "8d3f14d3a2b778bb278083d2d24db4a1e013dea12216396581f1a3abe4713a59",
+    "integration/studio-lsp-push.py": "b134997868f78847defb53f8a9aea826fa5bbf1dfff4847737a31a185194af1d"
+  },
+  "ci": {
+    "conclusion": "success",
+    "headSha": "6feefe5016297b7678e49c13148d4e057cce9429",
+    "jobs": [
+      {
+        "completedAt": "2026-10-19T13:42:44Z",
+        "conclusion": "success",
+        "databaseId": 118089115734,
+        "name": "test",
+        "startedAt": "2026-10-19T13:33:57Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-19T13:34:00Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-19T13:33:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:34:04Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-19T13:34:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:35:46Z",
+            "conclusion": "success",
+            "name": "Free disk space",
+            "number": 3,
+            "startedAt": "2026-10-19T13:34:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:35:56Z",
+            "conclusion": "success",
+            "name": "Install Rust",
+            "number": 4,
+            "startedAt": "2026-10-19T13:35:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:35:58Z",
+            "conclusion": "success",
+            "name": "Install system dependencies",
+            "number": 5,
+            "startedAt": "2026-10-19T13:35:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:36:31Z",
+            "conclusion": "success",
+            "name": "Cache cargo",
+            "number": 6,
+            "startedAt": "2026-10-19T13:35:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:40:28Z",
+            "conclusion": "success",
+            "name": "Cargo test (workspace)",
+            "number": 7,
+            "startedAt": "2026-10-19T13:36:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:40:29Z",
+            "conclusion": "success",
+            "name": "Validate cookbook recipes",
+            "number": 8,
+            "startedAt": "2026-10-19T13:40:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:42:40Z",
+            "conclusion": "success",
+            "name": "E2E tests (daemon + CLI binaries)",
+            "number": 9,
+            "startedAt": "2026-10-19T13:40:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:42:42Z",
+            "conclusion": "success",
+            "name": "Post Cache cargo",
+            "number": 17,
+            "startedAt": "2026-10-19T13:42:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:42:42Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 18,
+            "startedAt": "2026-10-19T13:42:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:42:42Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 19,
+            "startedAt": "2026-10-19T13:42:42Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39261235822/job/118089115734"
+      },
+      {
+        "completedAt": "2026-10-19T13:39:08Z",
+        "conclusion": "success",
+        "databaseId": 118089116013,
+        "name": "embedded-llama-cpp-linux",
+        "startedAt": "2026-10-19T13:33:57Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-19T13:33:59Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-19T13:33:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:34:01Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-19T13:33:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:34:11Z",
+            "conclusion": "success",
+            "name": "Install Rust",
+            "number": 3,
+            "startedAt": "2026-10-19T13:34:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:34:20Z",
+            "conclusion": "success",
+            "name": "Install build deps (llama.cpp)",
+            "number": 4,
+            "startedAt": "2026-10-19T13:34:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:38:59Z",
+            "conclusion": "success",
+            "name": "Build embedded-llm with llama-cpp",
+            "number": 5,
+            "startedAt": "2026-10-19T13:34:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:39:06Z",
+            "conclusion": "success",
+            "name": "Unit tests (no GGUF e2e)",
+            "number": 6,
+            "startedAt": "2026-10-19T13:38:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:39:06Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 12,
+            "startedAt": "2026-10-19T13:39:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:39:06Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-10-19T13:39:06Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39261235822/job/118089116013"
+      },
+      {
+        "completedAt": "2026-10-19T13:49:55Z",
+        "conclusion": "success",
+        "databaseId": 118093430371,
+        "name": "ui-e2e",
+        "startedAt": "2026-10-19T13:42:46Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-19T13:42:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-19T13:42:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:42:51Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-19T13:42:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:44:40Z",
+            "conclusion": "success",
+            "name": "Free disk space",
+            "number": 3,
+            "startedAt": "2026-10-19T13:42:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:44:49Z",
+            "conclusion": "success",
+            "name": "Install Rust",
+            "number": 4,
+            "startedAt": "2026-10-19T13:44:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:44:52Z",
+            "conclusion": "success",
+            "name": "Install system dependencies",
+            "number": 5,
+            "startedAt": "2026-10-19T13:44:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:45:04Z",
+            "conclusion": "success",
+            "name": "Cache cargo",
+            "number": 6,
+            "startedAt": "2026-10-19T13:44:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:48:41Z",
+            "conclusion": "success",
+            "name": "Build daemon for Playwright",
+            "number": 7,
+            "startedAt": "2026-10-19T13:45:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:48:43Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 8,
+            "startedAt": "2026-10-19T13:48:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:49:04Z",
+            "conclusion": "success",
+            "name": "Install UI deps and Playwright browser",
+            "number": 9,
+            "startedAt": "2026-10-19T13:48:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:49:51Z",
+            "conclusion": "success",
+            "name": "Playwright E2E (build --mode e2e + tests)",
+            "number": 10,
+            "startedAt": "2026-10-19T13:49:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:49:52Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 18,
+            "startedAt": "2026-10-19T13:49:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:49:54Z",
+            "conclusion": "success",
+            "name": "Post Cache cargo",
+            "number": 19,
+            "startedAt": "2026-10-19T13:49:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:49:54Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 20,
+            "startedAt": "2026-10-19T13:49:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T13:49:54Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-10-19T13:49:54Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39261235822/job/118093430371"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/azerothl/Akasha/actions/runs/39261235822"
+  }
+}

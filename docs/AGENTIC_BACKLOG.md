@@ -34,7 +34,7 @@ Un ticket ouvert ou une correction locale ne signifie pas livraison validée. Le
 
 ## Implémentations et suivi
 
-Les 12 PR constituent deux piles à intégrer dans l'ordre ci-dessous. La [validation finale après revue](validation/agentic-ci-integration-2026-10-19.md) couvre REC-01 à REC-09, 48 parcours techniques réussis ; la campagne complète sur le code actuel reste à 17/18 recettes fonctionnelles pour #179. **Les PR restent ouvertes et les tickets ne sont pas clôturés.** Les échecs intermédiaires sont archivés. Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub ; #143 et #145 conservent leur périmètre distinct. Les correctifs communs de revue sont portés par Akasha #170 et les recettes par Code Studio #35.
+Les 12 PR constituent deux piles à intégrer dans l’ordre ci-dessous. La [validation des blocages et corrections de revue](validation/agentic-blockers-2026-10-19.md) couvre REC-01 à REC-09, 49 parcours techniques, quatre scénarios LSP et 30/30 recettes modèles sur le même binaire. Les échecs antérieurs restent archivés. Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub ; #143 et #145 conservent leur périmètre distinct. Les correctifs communs de revue sont portés par Akasha #170 et les recettes par Code Studio #35.
 
 | Priorité | Ticket | PR d’implémentation |
 | --- | --- | --- |
