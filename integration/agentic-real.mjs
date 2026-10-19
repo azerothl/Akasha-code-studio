@@ -2130,7 +2130,10 @@ try {
     await inactive(id);
     assert.equal((await api(`/api/tasks/${id}`)).status,"cancelled");
     assert.equal((await fetch(`${base}/api/tasks/${id}/human-reply`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({response:"Continuer"})})).status,404);
-    return {id,checkpoint:checkpoint.checkpoint};
+    const tree=await task("tree-wait",[{text:`TOOL: ask_user\n${JSON.stringify(question)}`},{text:"Never resumed."}]);
+    await waitUntil(async()=>{const r=await fetch(`${base}/api/tasks/${tree}/human-input`);return r.ok;},"tree human wait");
+    const cancelled=await api(`/api/tasks/${tree}/cancel-tree`,"POST",{});assert(cancelled.cancelled_ids.includes(tree));await inactive(tree);assert.equal((await api(`/api/tasks/${tree}`)).status,"cancelled");assert.equal((await fetch(`${base}/api/tasks/${tree}/human-input`)).status,404);
+    return {id,checkpoint:checkpoint.checkpoint,tree,cancelled};
   });
   await check("REC-08 resume uses the current revoked tool policy", async () => {
     const policy=(await api("/api/tools/policy")).policy;
