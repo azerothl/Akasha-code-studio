@@ -224,6 +224,9 @@ const daemonEnv = {
   ...process.env,
   GIT_CONFIG_GLOBAL: hostileGlobalGitConfig,
   GIT_SSH_COMMAND: "studio-unapproved-ssh-route",
+  GIT_SSL_NO_VERIFY: "true",
+  GIT_SSL_CAINFO: join(data,"unapproved-ca.pem"),
+  HTTPS_PROXY: "http://127.0.0.1:9",
   AKASHA_DATA_DIR: data,
   AKASHA_PORT: String(port),
   OPENAI_API_KEY: "fixture-not-secret",
@@ -1948,6 +1951,36 @@ try {
       ids.push({id,resumeStatus:responses[0].status});
     }
     return {races:ids};
+  });
+  await check("operator delivery and resume cannot strand a queued task",async()=>{
+    const attempts=[];
+    for (let iteration=0;iteration<3;iteration++) {
+      const key=`operator-resume-${iteration}`;
+      const id=await task(key,[{text:"Attente avant reprise.",delay:30000}]);
+      await checkpointed(id);await restart();
+      assert.equal((await api(`/api/tasks/${id}`)).status,"interrupted");
+      scripts.set(key,[{text:"Reprise exécutée après arbitrage de livraison."}]);
+      const name=`operator-resume-${iteration}.txt`,content=`operator ${iteration}\n`;
+      await writeFile(join(root,name),content);
+      const request={task_id:id,operation_id:randomUUID(),request:{paths:[name],expected_versions:{[name]:createHash("sha256").update(content).digest("hex")},expected_head:git(root,"rev-parse","HEAD"),message:"test: serialize operator delivery and resume"}};
+      const resume=()=>fetch(`${base}/api/tasks/${id}/resume`,{method:"POST"});
+      const commit=()=>fetch(`${base}/api/studio/projects/${project.id}/delivery/commit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(request)});
+      const [first,second]=await Promise.all((iteration%2?[commit,resume]:[resume,commit]).map(action=>action()));
+      const resumed=iteration%2?second:first,delivered=iteration%2?first:second;
+      const resumeBody=await resumed.text(),deliveryBody=await delivered.text();
+      assert([200,500].includes(resumed.status),resumeBody);
+      assert([200,409].includes(delivered.status),deliveryBody);
+      assert(resumed.status===200 || delivered.status===200,{resumeBody,deliveryBody});
+      if (delivered.status===200) assert.equal(JSON.parse(deliveryBody).result.success,true,deliveryBody);
+      if (resumed.status!==200) {
+        assert.match(resumeBody,/active|stopping/);
+        assert.equal((await api(`/api/tasks/${id}`)).status,"interrupted");
+        await api(`/api/tasks/${id}/resume`,"POST",{});
+      }
+      const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));await inactive(id);
+      attempts.push({id,resume_status:resumed.status,delivery_status:delivered.status,final_status:row.status});
+    }
+    return {attempts,no_stranded_queue:true};
   });
   await check("REC-07 pause during long command refuses overlapping resume", async () => {
     const id=await task("pause-command",[
