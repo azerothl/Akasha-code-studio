@@ -1,23 +1,23 @@
 {
-  "at": "2026-10-19T10:12:57.511Z",
+  "at": "2026-10-19T11:33:56.216Z",
   "model": "deterministic protocol fixture (not an LLM evaluation)",
   "status": "passed",
   "cases": [
     {
       "name": "real project creation and clean initial Git",
       "status": "passed",
-      "ms": 402,
+      "ms": 456,
       "evidence": {
-        "id": "ae699180-99c6-41ad-8901-ff1bd541a3a9",
-        "head": "70436961b22ce54d2d1756d190cea6ed76f3247a"
+        "id": "53245d64-ae3b-40cb-a025-c05ec630f961",
+        "head": "4576a0d84c4b922a671f82ecd191c0055c261f99"
       }
     },
     {
       "name": "TypeScript build failure stays failed when Vite fallback succeeds",
       "status": "passed",
-      "ms": 2765,
+      "ms": 2742,
       "evidence": {
-        "id": "31a5f2b3-0468-4e22-8af8-915ae442eb42",
+        "id": "0c1e44b5-8419-4bd9-853a-9ce8a0628e5e",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -41,9 +41,9 @@
     {
       "name": "empty model fails without inventing verification",
       "status": "passed",
-      "ms": 277,
+      "ms": 281,
       "evidence": {
-        "id": "1d5b28d0-fba5-4790-8af6-e6a57aa25679",
+        "id": "9e20fc44-b6a8-40f5-adc7-50bd49dea644",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -60,9 +60,9 @@
     {
       "name": "file creation prose without any effect cannot become a success",
       "status": "passed",
-      "ms": 812,
+      "ms": 1882,
       "evidence": {
-        "id": "ce5c1f4a-2f55-4118-99be-4fa0f26b2c5b",
+        "id": "962376fd-bcd5-46af-91a2-5bcaae767d7f",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -86,9 +86,9 @@
     {
       "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
       "status": "passed",
-      "ms": 546,
+      "ms": 1885,
       "evidence": {
-        "id": "3a74ec44-e37c-46a8-ab04-a9bc1b4163f6",
+        "id": "a525b188-3a3d-4c9e-847c-51f71dfb5ea6",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 1,
@@ -117,9 +117,9 @@
     {
       "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
       "status": "passed",
-      "ms": 2655,
+      "ms": 5998,
       "evidence": {
-        "id": "2289388f-9bf8-4bf3-8eb9-73fc5e4e53fa",
+        "id": "50d45204-a4c4-443f-9cfc-4ba3315b6f67",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -202,12 +202,12 @@
     {
       "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
       "status": "passed",
-      "ms": 831,
+      "ms": 3759,
       "evidence": {
-        "id": "7a180717-e9f0-49c4-9452-2e94a4ae7d69",
+        "id": "f5886828-f6f5-4e02-aa59-85ffb075c44c",
         "outcome": {
           "acceptance_verified": false,
-          "failed_tool_calls": 3,
+          "failed_tool_calls": 8,
           "reason": null,
           "result": "succeeded",
           "schema_version": 1,
@@ -239,25 +239,25 @@
     {
       "name": "direct file context retains repository rules and project constraints without maintenance examples",
       "status": "passed",
-      "ms": 1927,
+      "ms": 2015,
       "evidence": {
-        "id": "f9b4b007-6089-4492-9eab-c49c3fab204d"
+        "id": "0d33be72-d88e-40a4-ac2a-97f34902f651"
       }
     },
     {
       "name": "native continuation ends in tool results without a new continue user turn",
       "status": "passed",
-      "ms": 546,
+      "ms": 560,
       "evidence": {
-        "id": "e1079dde-d7c4-4aad-a546-e326c39bae67"
+        "id": "12fec98e-f71a-4681-8c18-995cced064a5"
       }
     },
     {
       "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
       "status": "passed",
-      "ms": 1102,
+      "ms": 2963,
       "evidence": {
-        "id": "137e5b09-39c9-401a-a92b-beceec27de90",
+        "id": "38446e3e-33e1-45fe-b71c-6de85630b743",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -304,21 +304,21 @@
     {
       "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
       "status": "passed",
-      "ms": 1646,
+      "ms": 1398,
       "evidence": {
         "variants": [
           {
             "name": "studio_call",
-            "id": "9221a5ac-2071-4d06-8458-05612fd63ef9",
+            "id": "d6cfafdd-31c5-40a2-8f87-0c0f44a98d42",
             "operations": [
               {
-                "operation_id": "73861025-b9f8-4a15-bae3-486803ee6aba",
+                "operation_id": "e3bad65a-77af-4c58-8c1d-1a94e0b10dbf",
                 "result": {
                   "error": null,
                   "exit_code": null,
                   "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-                  "operation_id": "73861025-b9f8-4a15-bae3-486803ee6aba",
-                  "output": "[write_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\json-first-studio_call.md] saved (disk).",
+                  "operation_id": "e3bad65a-77af-4c58-8c1d-1a94e0b10dbf",
+                  "output": "[write_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\json-first-studio_call.md] saved (disk).",
                   "result_unknown": false,
                   "schema_version": 1,
                   "success": true,
@@ -327,16 +327,16 @@
                 },
                 "state": "completed",
                 "tool": "write_file",
-                "updated_at": "2026-10-19T10:13:10.554515700+00:00"
+                "updated_at": "2026-10-19T11:34:19.624599100+00:00"
               },
               {
-                "operation_id": "cbe20986-8543-41e5-bb20-817bae28e592",
+                "operation_id": "3d10b149-3fb8-45a0-9a61-e37dfe25f162",
                 "result": {
                   "error": null,
                   "exit_code": null,
                   "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-                  "operation_id": "cbe20986-8543-41e5-bb20-817bae28e592",
-                  "output": "[read_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\json-first-studio_call.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+                  "operation_id": "3d10b149-3fb8-45a0-9a61-e37dfe25f162",
+                  "output": "[read_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\json-first-studio_call.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
                   "result_unknown": false,
                   "schema_version": 1,
                   "success": true,
@@ -345,16 +345,16 @@
                 },
                 "state": "completed",
                 "tool": "read_file",
-                "updated_at": "2026-10-19T10:13:10.661488400+00:00"
+                "updated_at": "2026-10-19T11:34:19.716853+00:00"
               },
               {
-                "operation_id": "f7d165df-a93b-4f5d-8f5f-f3f2ef53d1cd",
+                "operation_id": "7cabed25-1a51-4512-b37a-9f49d8367686",
                 "result": {
                   "error": null,
                   "exit_code": null,
                   "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-                  "operation_id": "f7d165df-a93b-4f5d-8f5f-f3f2ef53d1cd",
-                  "output": "[write_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\json-second-studio_call.md] saved (disk).",
+                  "operation_id": "7cabed25-1a51-4512-b37a-9f49d8367686",
+                  "output": "[write_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\json-second-studio_call.md] saved (disk).",
                   "result_unknown": false,
                   "schema_version": 1,
                   "success": true,
@@ -363,22 +363,22 @@
                 },
                 "state": "completed",
                 "tool": "write_file",
-                "updated_at": "2026-10-19T10:13:10.745925100+00:00"
+                "updated_at": "2026-10-19T11:34:19.821768700+00:00"
               }
             ]
           },
           {
             "name": "read_file",
-            "id": "31c4a894-7e63-4ac5-b2b3-17ef0191c17f",
+            "id": "6ee80118-50ea-4740-8842-a85cbd1c14e0",
             "operations": [
               {
-                "operation_id": "5bf7ba77-aea2-417a-a0b2-0bdfebef3489",
+                "operation_id": "841f1a1b-9f6c-4f2c-878f-082a35e240b5",
                 "result": {
                   "error": null,
                   "exit_code": null,
                   "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-                  "operation_id": "5bf7ba77-aea2-417a-a0b2-0bdfebef3489",
-                  "output": "[write_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\json-first-read_file.md] saved (disk).",
+                  "operation_id": "841f1a1b-9f6c-4f2c-878f-082a35e240b5",
+                  "output": "[write_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\json-first-read_file.md] saved (disk).",
                   "result_unknown": false,
                   "schema_version": 1,
                   "success": true,
@@ -387,16 +387,16 @@
                 },
                 "state": "completed",
                 "tool": "write_file",
-                "updated_at": "2026-10-19T10:13:11.429615400+00:00"
+                "updated_at": "2026-10-19T11:34:20.249748100+00:00"
               },
               {
-                "operation_id": "5fa7563c-d80b-4e1c-aa8d-a443fb32cc1a",
+                "operation_id": "3fbc49fe-3bd1-471b-b86f-a5a63a088122",
                 "result": {
                   "error": null,
                   "exit_code": null,
                   "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-                  "operation_id": "5fa7563c-d80b-4e1c-aa8d-a443fb32cc1a",
-                  "output": "[read_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\json-first-read_file.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+                  "operation_id": "3fbc49fe-3bd1-471b-b86f-a5a63a088122",
+                  "output": "[read_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\json-first-read_file.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
                   "result_unknown": false,
                   "schema_version": 1,
                   "success": true,
@@ -405,16 +405,16 @@
                 },
                 "state": "completed",
                 "tool": "read_file",
-                "updated_at": "2026-10-19T10:13:11.519077400+00:00"
+                "updated_at": "2026-10-19T11:34:20.347100600+00:00"
               },
               {
-                "operation_id": "b7f6eb02-59f5-4478-a440-8d1e912b529d",
+                "operation_id": "b2342b0a-18b3-4f9c-8df6-6baed0073e5a",
                 "result": {
                   "error": null,
                   "exit_code": null,
                   "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-                  "operation_id": "b7f6eb02-59f5-4478-a440-8d1e912b529d",
-                  "output": "[write_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\json-second-read_file.md] saved (disk).",
+                  "operation_id": "b2342b0a-18b3-4f9c-8df6-6baed0073e5a",
+                  "output": "[write_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\json-second-read_file.md] saved (disk).",
                   "result_unknown": false,
                   "schema_version": 1,
                   "success": true,
@@ -423,7 +423,7 @@
                 },
                 "state": "completed",
                 "tool": "write_file",
-                "updated_at": "2026-10-19T10:13:11.667518400+00:00"
+                "updated_at": "2026-10-19T11:34:20.445302+00:00"
               }
             ]
           }
@@ -433,9 +433,9 @@
     {
       "name": "malformed JSON function arguments never execute or become a success",
       "status": "passed",
-      "ms": 569,
+      "ms": 554,
       "evidence": {
-        "id": "5b2adee0-1c9b-4ef6-a468-35d0ad8759e7",
+        "id": "2cb2821b-6669-4c40-bd43-3564f19cbccd",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 1,
@@ -458,9 +458,9 @@
     {
       "name": "premature final response resumes only the explicitly missing file",
       "status": "passed",
-      "ms": 1077,
+      "ms": 2414,
       "evidence": {
-        "id": "11fd533d-3ed8-4cfa-8c8b-07c23cebdd1d",
+        "id": "7b993641-d5e0-4be9-9268-56776e227e3f",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -495,9 +495,9 @@
     {
       "name": "native reads continue after the default 500-line window",
       "status": "passed",
-      "ms": 807,
+      "ms": 817,
       "evidence": {
-        "id": "bdd1353c-e74e-4bff-9cf7-bdc4f56516fc",
+        "id": "2f6543de-7509-4f23-be20-341d8fbb838c",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -520,9 +520,9 @@
     {
       "name": "mechanical acceptance preserves each criterion result",
       "status": "passed",
-      "ms": 551,
+      "ms": 282,
       "evidence": {
-        "id": "62dc2756-7be7-4e5c-9cb6-30db66114ba4",
+        "id": "c0e923d1-0499-41d3-bc41-03c106aa61f4",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -561,9 +561,9 @@
     {
       "name": "provider failure keeps explicit structured failure",
       "status": "passed",
-      "ms": 286,
+      "ms": 278,
       "evidence": {
-        "id": "6495f779-0511-4dfe-ad59-efd8868f6fee",
+        "id": "a6c7d9c2-141b-423f-9339-a19de01b8021",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -580,9 +580,9 @@
     {
       "name": "native Unicode write, partial failure and retained diff",
       "status": "passed",
-      "ms": 555,
+      "ms": 553,
       "evidence": {
-        "id": "f15372e4-840d-4fda-90ad-d0bc93d907fa",
+        "id": "93c9a67e-2310-46f2-9a6c-9515c295599d",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 0,
@@ -595,7 +595,7 @@
           "verification": []
         },
         "diff": {
-          "captured_at": "2026-10-19T10:13:15.304773700+00:00",
+          "captured_at": "2026-10-19T11:34:25.177406500+00:00",
           "files": [
             {
               "diff": "diff --git a/proof.md b/proof.md\n--- /dev/null\n+++ b/proof.md\n@@ -0,0 +1 @@\n+réel 🙂\n",
@@ -604,22 +604,22 @@
               "truncated": false
             }
           ],
-          "task_id": "f15372e4-840d-4fda-90ad-d0bc93d907fa"
+          "task_id": "93c9a67e-2310-46f2-9a6c-9515c295599d"
         }
       }
     },
     {
       "name": "reviewer and planner refuse command effects",
       "status": "passed",
-      "ms": 1206,
+      "ms": 1214,
       "evidence": "No marker written; persisted roles and spoof refusal confirmed"
     },
     {
       "name": "planner writes only exact plan path",
       "status": "passed",
-      "ms": 558,
+      "ms": 541,
       "evidence": {
-        "id": "2c455fd5-8f07-4092-b860-09b7c317bac9",
+        "id": "04154897-172d-4ed9-9b35-22af5f5cbdc7",
         "status": "completed",
         "outcome": {
           "acceptance_verified": false,
@@ -637,40 +637,40 @@
     {
       "name": "real user PTY input, cursor, resize, isolation and close",
       "status": "passed",
-      "ms": 2522,
+      "ms": 2539,
       "evidence": {
-        "sid": "575ac444-8fe0-47a9-b134-e517d3404eab",
+        "sid": "7ec253c6-2664-46ad-87e6-ca94eb4402c0",
         "outputBytes": 446
       }
     },
     {
       "name": "agent PTY remains task-owned and archives its transcript",
       "status": "passed",
-      "ms": 3244,
+      "ms": 3224,
       "evidence": {
-        "id": "9d6ca5e4-beac-4ff7-95cd-cfb1125bb155",
+        "id": "1ec33f15-68a9-4e3b-8177-5cfd950d654d",
         "transcript": {
           "bytes": 486,
-          "created_at": "2026-10-19T10:13:23.138775+00:00",
+          "created_at": "2026-10-19T11:34:33.062982900+00:00",
           "details": {
             "exit_code": null,
             "program": "cmd.exe",
-            "session_id": "abc976d3-2bf6-44cf-9008-007bc075f4f0",
+            "session_id": "d08b6b71-b0fa-4ba6-9dcd-7440d7606b92",
             "truncated": false
           },
-          "id": "200189b9-937a-41b1-bbda-77a31dd7d253",
+          "id": "a36666ac-6e6a-4db1-8f43-6519578bb72d",
           "kind": "terminal_transcript",
           "mime": "text/plain",
-          "task_id": "9d6ca5e4-beac-4ff7-95cd-cfb1125bb155"
+          "task_id": "1ec33f15-68a9-4e3b-8177-5cfd950d654d"
         }
       }
     },
     {
       "name": "MCP real stdio pagination validation and task invocation",
       "status": "passed",
-      "ms": 1572,
+      "ms": 1588,
       "evidence": {
-        "id": "baace1eb-14e3-47b1-a83a-c619215b5914",
+        "id": "b26f5d06-69ce-4c0c-a6eb-db75bc4ec514",
         "discovered": [
           "echo",
           "second"
@@ -680,9 +680,9 @@
     {
       "name": "agent browser desktop mobile logs PNG and denied redirect",
       "status": "passed",
-      "ms": 1886,
+      "ms": 2141,
       "evidence": {
-        "id": "0f9a8f29-675b-471e-9b00-845faa317abd",
+        "id": "ec3a0cfa-7a2c-4eb0-8739-9c48833ce22c",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 1,
@@ -704,55 +704,55 @@
           "artifacts": [
             {
               "bytes": 8669,
-              "created_at": "2026-10-19T10:13:25.710672200+00:00",
+              "created_at": "2026-10-19T11:34:35.749399900+00:00",
               "details": {
-                "url": "http://127.0.0.1:63261/demo",
+                "url": "http://127.0.0.1:52611/demo",
                 "viewport": {
                   "height": 720,
                   "width": 1280
                 }
               },
-              "id": "ecdaabbd-4b58-4018-a464-22fbc8032ef3",
+              "id": "cfddef36-68f4-4292-9c00-453c75057cc1",
               "kind": "browser_screenshot",
               "mime": "image/png",
-              "task_id": "0f9a8f29-675b-471e-9b00-845faa317abd"
+              "task_id": "ec3a0cfa-7a2c-4eb0-8739-9c48833ce22c"
             },
             {
               "bytes": 7074,
-              "created_at": "2026-10-19T10:13:25.927331900+00:00",
+              "created_at": "2026-10-19T11:34:36.000808800+00:00",
               "details": {
-                "url": "http://127.0.0.1:63261/demo",
+                "url": "http://127.0.0.1:52611/demo",
                 "viewport": {
                   "height": 844,
                   "width": 390
                 }
               },
-              "id": "44a0f042-bbf2-49ce-b26f-d11347e51857",
+              "id": "fbdd66d3-cdc9-4b72-a094-e88a89cf6999",
               "kind": "browser_screenshot",
               "mime": "image/png",
-              "task_id": "0f9a8f29-675b-471e-9b00-845faa317abd"
+              "task_id": "ec3a0cfa-7a2c-4eb0-8739-9c48833ce22c"
             },
             {
               "bytes": 121,
-              "created_at": "2026-10-19T10:13:26.049849800+00:00",
+              "created_at": "2026-10-19T11:34:36.107624700+00:00",
               "details": {
                 "entries": 1
               },
-              "id": "99eb7b77-c8e7-4d2a-b131-b814181833d3",
+              "id": "96c0d493-c53e-412c-ae85-f76e87a7f0c1",
               "kind": "browser_console",
               "mime": "application/json",
-              "task_id": "0f9a8f29-675b-471e-9b00-845faa317abd"
+              "task_id": "ec3a0cfa-7a2c-4eb0-8739-9c48833ce22c"
             },
             {
               "bytes": 253,
-              "created_at": "2026-10-19T10:13:26.155587900+00:00",
+              "created_at": "2026-10-19T11:34:36.223010300+00:00",
               "details": {
                 "entries": 2
               },
-              "id": "2dd14d6b-abba-4c0a-bcc7-5167c6119b83",
+              "id": "21e71f64-0ee2-45c4-8103-ca89744e9c63",
               "kind": "browser_network",
               "mime": "application/json",
-              "task_id": "0f9a8f29-675b-471e-9b00-845faa317abd"
+              "task_id": "ec3a0cfa-7a2c-4eb0-8739-9c48833ce22c"
             }
           ]
         }
@@ -761,7 +761,7 @@
     {
       "name": "TypeScript real server diagnostics definition references rename",
       "status": "passed",
-      "ms": 1286,
+      "ms": 1512,
       "evidence": {
         "definition": {
           "excluded_outside_workspace": 0,
@@ -840,7 +840,7 @@
     {
       "name": "Python real server navigation and explicit diagnostics",
       "status": "passed",
-      "ms": 834,
+      "ms": 964,
       "evidence": {
         "definition": {
           "excluded_outside_workspace": 0,
@@ -890,7 +890,7 @@
     {
       "name": "Rust real server definition with build scripts disabled",
       "status": "passed",
-      "ms": 1120,
+      "ms": 2012,
       "evidence": {
         "definition": {
           "excluded_outside_workspace": 0,
@@ -917,24 +917,24 @@
     {
       "name": "recursive search rules are active before the next mutation and skills are auditable",
       "status": "passed",
-      "ms": 605,
+      "ms": 887,
       "evidence": {
-        "id": "2311ce34-0434-4f76-bd47-46d453bb51c5",
+        "id": "b20f82c1-6cbe-40df-b6e4-b48cdf0a79bf",
         "context": {
           "rules": [
             {
-              "path": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\AGENTS.md",
-              "scope": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\",
+              "path": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\",
               "sha256": "725ab9529e0d7ab157925b68f27fe89a0d9eae6254c0b8f01ce176fcafe2c61b"
             },
             {
-              "path": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\AGENTS.md",
-              "scope": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9",
+              "path": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961",
               "sha256": "725ab9529e0d7ab157925b68f27fe89a0d9eae6254c0b8f01ce176fcafe2c61b"
             },
             {
-              "path": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\nested\\AGENTS.md",
-              "scope": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\nested",
+              "path": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\nested\\AGENTS.md",
+              "scope": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\nested",
               "sha256": "e062a1fcbb3f620dcb9cc37b3159ba5b853e3506599e8dd765efba1a63a3e72f"
             }
           ],
@@ -955,31 +955,31 @@
     {
       "name": "fresh nested rules defer mutations until the model has read them",
       "status": "passed",
-      "ms": 542,
+      "ms": 551,
       "evidence": {
-        "id": "7743b853-1e5e-4f2b-a01e-29dbe687407c"
+        "id": "6073564f-e0ca-4b1a-9138-0074cd044d8d"
       }
     },
     {
       "name": "rename loads destination rules when its directory contains spaces",
       "status": "passed",
-      "ms": 562,
+      "ms": 560,
       "evidence": {
-        "id": "47c2eb1a-23b2-41e8-baa3-b846e3225333"
+        "id": "2a6213c7-2f5b-4554-8831-c07fa76a1451"
       }
     },
     {
       "name": "selected commit preserves unrelated staged paths and idempotency",
       "status": "passed",
-      "ms": 5555,
+      "ms": 9054,
       "evidence": {
-        "id": "37b4568c-0c83-428c-a0d9-de2d3699a181",
-        "head": "39aad9043e84016ad0c5cfbbac6fbad2ad78cb29",
+        "id": "495285ed-56d5-4f34-96cb-eab0896f3667",
+        "head": "885132bd4d6da89a277b0d440dafb5873338298a",
         "result": {
-          "operation_id": "791caf65-b6c5-44d0-ae3a-a073fb5270a4",
+          "operation_id": "3c6cedbb-9929-4d24-9956-91219097baa3",
           "result": {
             "branch": "main",
-            "commit": "39aad9043e84016ad0c5cfbbac6fbad2ad78cb29",
+            "commit": "885132bd4d6da89a277b0d440dafb5873338298a",
             "paths": [
               "selected.txt"
             ],
@@ -992,11 +992,11 @@
         },
         "cached": {
           "cached": true,
-          "operation_id": "791caf65-b6c5-44d0-ae3a-a073fb5270a4",
+          "operation_id": "3c6cedbb-9929-4d24-9956-91219097baa3",
           "replayed": false,
           "result": {
             "branch": "main",
-            "commit": "39aad9043e84016ad0c5cfbbac6fbad2ad78cb29",
+            "commit": "885132bd4d6da89a277b0d440dafb5873338298a",
             "paths": [
               "selected.txt"
             ],
@@ -1006,36 +1006,55 @@
             "success": true,
             "warning": null
           }
+        },
+        "agentId": "aada8dc2-bcc1-46a0-a294-1f79ed3a4cc0",
+        "agentHead": "75d29ceb3236a754a627d5d6800798fafbf7020e",
+        "approvedAgentOutcome": {
+          "acceptance_verified": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
         }
       }
     },
     {
       "name": "task manifest loads skills and rules from its persisted Git worktree",
       "status": "passed",
-      "ms": 526,
+      "ms": 565,
       "evidence": {
-        "id": "c4311311-f3c6-40d3-8f2d-11f48e83332f",
-        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\c4311311-f3c6-40d3-8f2d-11f48e83332f\\c4311311",
+        "id": "1765f62b-82e8-436d-903c-cdce0c567399",
+        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\1765f62b-82e8-436d-903c-cdce0c567399\\1765f62b",
         "skills": [
+          "worktree-only",
+          "studio-explore",
+          "studio-review",
           "morning-brief",
           "studio-debug",
-          "studio-verify-ui",
-          "studio-deliver",
-          "studio-implement",
           "read_file",
-          "studio-explore",
-          "studio-verify",
-          "studio-review",
-          "worktree-only"
+          "studio-deliver",
+          "studio-verify-ui",
+          "studio-implement",
+          "studio-verify"
         ]
       }
     },
     {
       "name": "daemon restart interrupts and explicitly resumes same checkpoint",
       "status": "passed",
-      "ms": 1082,
+      "ms": 1067,
       "evidence": {
-        "id": "8876ba30-3c97-40f8-8dfe-ebdc61b5470d",
+        "id": "4be6c50d-1acd-4260-b476-2acdd05cd139",
         "status": "completed",
         "session": "validation-restart"
       }
@@ -1043,39 +1062,39 @@
     {
       "name": "restart during tool-round human wait asks again before continuing",
       "status": "passed",
-      "ms": 2700,
+      "ms": 2841,
       "evidence": {
-        "id": "d6b07a1b-f142-4be5-a0df-e7a39610f686",
+        "id": "c5b07c13-3a4a-4429-bad3-be1dd8669f8c",
         "round": 16
       }
     },
     {
       "name": "restart during ask_user preserves the consumed round and asks again",
       "status": "passed",
-      "ms": 1389,
+      "ms": 1285,
       "evidence": {
-        "id": "bf2f4036-e732-4686-bfe1-b8dd0b4c9cf8",
+        "id": "f9395969-dd2c-4cf3-82a6-c74df3cd87a8",
         "round": 2
       }
     },
     {
       "name": "crash after an external effect blocks mutations until inspected",
       "status": "passed",
-      "ms": 1538,
+      "ms": 1563,
       "evidence": {
-        "id": "5af0f9a4-1bd6-422d-801e-a7c5a032dfb0",
-        "operation": "4ba9d47f-4ee0-457a-a66f-b2da61032e20",
+        "id": "ed4f3b50-310a-444f-b96f-b2b36b8c6dbd",
+        "operation": "9a1c9857-dc71-4faa-9e3e-a668ce37466d",
         "status": "completed",
         "ledger": {
           "operations": [
             {
-              "operation_id": "1504e9a1-9354-46a1-a15e-f9824b728100",
+              "operation_id": "3294b34b-5a36-4c3f-a50c-d24eae37c069",
               "result": {
                 "error": null,
                 "exit_code": null,
                 "file_version": "ad06e72726f6d8ff00228160453949c1ceb89571c99332e4815f9edce2acad07",
-                "operation_id": "1504e9a1-9354-46a1-a15e-f9824b728100",
-                "output": "[read_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\effect.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nonce",
+                "operation_id": "3294b34b-5a36-4c3f-a50c-d24eae37c069",
+                "output": "[read_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\effect.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nonce",
                 "result_unknown": false,
                 "schema_version": 1,
                 "success": true,
@@ -1084,19 +1103,19 @@
               },
               "state": "completed",
               "tool": "read_file",
-              "updated_at": "2026-10-19T10:13:44.237421200+00:00"
+              "updated_at": "2026-10-19T11:34:59.502958500+00:00"
             },
             {
-              "operation_id": "4ba9d47f-4ee0-457a-a66f-b2da61032e20",
+              "operation_id": "9a1c9857-dc71-4faa-9e3e-a668ce37466d",
               "result": {
                 "automatic": false,
                 "decision": "applied",
                 "note": "Inspection réelle : effect.md contient exactement une ligne once ; aucun replay demandé.",
-                "operation_id": "4ba9d47f-4ee0-457a-a66f-b2da61032e20"
+                "operation_id": "9a1c9857-dc71-4faa-9e3e-a668ce37466d"
               },
               "state": "resolved_applied",
               "tool": "run_command",
-              "updated_at": "2026-10-19T10:13:44.007704400+00:00"
+              "updated_at": "2026-10-19T11:34:59.256771800+00:00"
             }
           ],
           "schema_version": 1,
@@ -1107,29 +1126,29 @@
     {
       "name": "crash after a recorded tool result does not repeat its effect",
       "status": "passed",
-      "ms": 1174,
+      "ms": 1180,
       "evidence": {
-        "id": "e16d2462-b47d-4b2d-8cc7-39021ad9cd2c",
+        "id": "5a50b273-10fc-4c62-b089-5a1502edf032",
         "checkpoint": {
           "agent": "studio_project_manager",
           "max_tool_rounds": 16,
           "phase": "completed",
-          "project_id": "ae699180-99c6-41ad-8901-ff1bd541a3a9",
+          "project_id": "53245d64-ae3b-40cb-a025-c05ec630f961",
           "round": 1,
           "schema_version": 1,
           "session_id": "validation-recorded-effect",
           "waiting": null,
-          "workspace": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9"
+          "workspace": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961"
         },
         "operations": [
           {
-            "operation_id": "08d6e77c-3e78-4e09-86bd-7741c8084b52",
+            "operation_id": "ba4ebb39-52b5-4356-8ed5-c6ca0023201c",
             "result": {
               "error": null,
               "exit_code": null,
               "file_version": "7c4ac4b7152edf9dfb70d2e2638cc04c12ac36322b9a6be13f2e9be1c6f2bef5",
-              "operation_id": "08d6e77c-3e78-4e09-86bd-7741c8084b52",
-              "output": "[write_file <isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9\\recorded.md] saved (disk).",
+              "operation_id": "ba4ebb39-52b5-4356-8ed5-c6ca0023201c",
+              "output": "[write_file <isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961\\recorded.md] saved (disk).",
               "result_unknown": false,
               "schema_version": 1,
               "success": true,
@@ -1138,7 +1157,7 @@
             },
             "state": "completed",
             "tool": "write_file",
-            "updated_at": "2026-10-19T10:13:44.817751400+00:00"
+            "updated_at": "2026-10-19T11:35:00.117981900+00:00"
           }
         ]
       }
@@ -1146,9 +1165,9 @@
     {
       "name": "restart retains the full literal task beyond the truncated task title",
       "status": "passed",
-      "ms": 1934,
+      "ms": 1938,
       "evidence": {
-        "id": "8a279d2a-31f0-4b40-94ce-8d256026c027",
+        "id": "600e7c90-9846-4bfd-b37c-63f23d39c661",
         "session": "validation-durable-file-goals",
         "outcome": {
           "acceptance_verified": false,
@@ -1184,37 +1203,37 @@
     {
       "name": "REC-04 interrupted tool approval requires a fresh request",
       "status": "passed",
-      "ms": 1328,
+      "ms": 1379,
       "evidence": {
-        "id": "0d4acf3f-3e9b-4c3d-a34b-e817f6ea59b9",
-        "oldRequest": "146753a3-d1f9-4d8c-90a7-b87fd0c1e0dd",
-        "freshRequest": "ee56bca7-9e80-459a-b2b1-51c85659b357"
+        "id": "b5e2ddde-dd2a-4c70-8562-b90d3708b3b9",
+        "oldRequest": "0d2c30e2-7ebe-48d2-bc6b-3a3ec8c97678",
+        "freshRequest": "d0d04a0b-463e-41da-bbdf-c3121e560c76"
       }
     },
     {
       "name": "REC-06 concurrent resume and cancel preserves cancellation",
       "status": "passed",
-      "ms": 3890,
+      "ms": 3977,
       "evidence": {
         "races": [
           {
-            "id": "1c8bceaf-a725-491d-81b1-94be00b07d65",
+            "id": "fd4b9a72-ea3a-424e-a6ce-988617d52c96",
             "resumeStatus": 500
           },
           {
-            "id": "cbf4ad7e-16f0-4047-8594-e76beab96340",
+            "id": "71f10107-8744-4673-b56f-6fdd179ff0aa",
             "resumeStatus": 500
           },
           {
-            "id": "69189476-343b-4186-8a3f-b03ee052c783",
-            "resumeStatus": 400
-          },
-          {
-            "id": "da5768f0-704f-4cbe-972a-be7f0b74462e",
+            "id": "66a68f11-0cd2-402a-9d9e-1c4ac53e7c09",
             "resumeStatus": 500
           },
           {
-            "id": "11d5eff8-7e8f-4daf-b444-916e6857965b",
+            "id": "a395fdf1-78b1-4893-88be-6e65ce2e78ac",
+            "resumeStatus": 500
+          },
+          {
+            "id": "b3875d68-ccb6-43b4-b0e5-489f84ab7bdf",
             "resumeStatus": 500
           }
         ]
@@ -1223,18 +1242,18 @@
     {
       "name": "REC-07 pause during long command refuses overlapping resume",
       "status": "passed",
-      "ms": 6639,
+      "ms": 6663,
       "evidence": {
-        "id": "d9a45a28-0687-48a2-bacf-42001258de09",
+        "id": "cf221205-4d84-478b-8ecb-2cfec09df0bd",
         "operations": [
           {
-            "operation_id": "f96869a7-a150-4f7e-9e5a-edf7455706a5",
+            "operation_id": "e3d6c197-d4e9-4adf-9b77-ae29fd944786",
             "result": {
               "error": null,
               "exit_code": 0,
               "file_version": null,
-              "operation_id": "f96869a7-a150-4f7e-9e5a-edf7455706a5",
-              "output": "[run_command node cwd=<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9] exit 0 stdout:  stderr: ",
+              "operation_id": "e3d6c197-d4e9-4adf-9b77-ae29fd944786",
+              "output": "[run_command node cwd=<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961] exit 0 stdout:  stderr: ",
               "result_unknown": false,
               "schema_version": 1,
               "success": true,
@@ -1243,7 +1262,7 @@
             },
             "state": "completed",
             "tool": "run_command",
-            "updated_at": "2026-10-19T10:13:59.188194400+00:00"
+            "updated_at": "2026-10-19T11:35:14.612862600+00:00"
           }
         ]
       }
@@ -1251,14 +1270,14 @@
     {
       "name": "pause and cancel release human waits without reusing their channels",
       "status": "passed",
-      "ms": 745,
+      "ms": 667,
       "evidence": {
-        "id": "1f4d097a-56a0-49ea-9e0b-c1a72fe9fa2f",
+        "id": "a02db5bd-1e96-4f11-abb1-57869d2b8618",
         "checkpoint": {
           "agent": "studio_project_manager",
           "max_tool_rounds": 16,
           "phase": "paused",
-          "project_id": "ae699180-99c6-41ad-8901-ff1bd541a3a9",
+          "project_id": "53245d64-ae3b-40cb-a025-c05ec630f961",
           "round": 1,
           "schema_version": 1,
           "session_id": "validation-pause-question",
@@ -1270,16 +1289,16 @@
             "question": "Valider le scénario de reprise ?",
             "tool": "ask_user"
           },
-          "workspace": "<isolated-data>\\studio-projects\\ae699180-99c6-41ad-8901-ff1bd541a3a9"
+          "workspace": "<isolated-data>\\studio-projects\\53245d64-ae3b-40cb-a025-c05ec630f961"
         }
       }
     },
     {
       "name": "REC-08 resume uses the current revoked tool policy",
       "status": "passed",
-      "ms": 1343,
+      "ms": 1291,
       "evidence": {
-        "id": "8cd9e469-8ba0-49b2-ad77-3feabbd8e7b3",
+        "id": "fb857b4a-f30f-4a1a-8ea5-e719fc4dd5ff",
         "outcome": {
           "acceptance_verified": false,
           "failed_tool_calls": 1,
@@ -1303,25 +1322,25 @@
       "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
       "status": "passed",
       "evidence": {
-        "childId": "8f9dc493-9df1-4d1e-8cf9-6bf5a5a39b19",
-        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\ee42804d-d954-43c2-bd08-bad6f8cff2ae\\8f9dc493",
-        "rootHead": "02ebd8ab7abfa04bf5f3ec67bef952fc5f205afc"
+        "childId": "d11a956f-131a-4cf5-bd7c-a39f620fa1ae",
+        "workspace": "\\\\?\\<isolated-data>\\studio-worktrees\\824aea25-2ffb-4d2d-8f1e-407d1d821c85\\d11a956f",
+        "rootHead": "75d29ceb3236a754a627d5d6800798fafbf7020e"
       }
     },
     {
       "name": "REC-09 interrupted delegation retains children and uncertain effect",
       "status": "passed",
-      "ms": 3217,
+      "ms": 3189,
       "evidence": {
-        "parent": "ee42804d-d954-43c2-bd08-bad6f8cff2ae",
-        "childId": "8f9dc493-9df1-4d1e-8cf9-6bf5a5a39b19",
-        "delegation": "c7d567ca-0f00-4801-b47f-fad6d95d7137"
+        "parent": "824aea25-2ffb-4d2d-8f1e-407d1d821c85",
+        "childId": "d11a956f-131a-4cf5-bd7c-a39f620fa1ae",
+        "delegation": "e71c9a34-0133-492e-b469-adbcac1e6480"
       }
     },
     {
       "name": "real UI desktop/mobile consumes daemon APIs",
       "status": "passed",
-      "ms": 7479,
+      "ms": 7235,
       "evidence": {
         "screenshots": [
           "desktop.png",
@@ -1333,39 +1352,40 @@
     {
       "name": "delivery reads reject foreign and opaque browser origins",
       "status": "passed",
-      "ms": 6,
+      "ms": 20,
       "evidence": {
-        "denied": 6
+        "denied": 20
       }
     },
     {
       "name": "delivery refuses repository configured process helpers before GitHub access",
       "status": "passed",
-      "ms": 51,
+      "ms": 147,
       "evidence": {
-        "refused": true
+        "refused": true,
+        "configurations": 3
       }
     },
     {
       "name": "explicit GitHub push draft PR and CI state through delivery API",
       "status": "passed",
-      "ms": 13802,
+      "ms": 14637,
       "evidence": {
-        "id": "1e709544-bdd1-4617-9d31-8667ba45982a",
-        "head": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
-        "branch": "validation/studio-agentic-e678081b",
+        "id": "4bd35c06-deac-4b69-92ea-119193c4557b",
+        "head": "89482c8b61e86486728ad21b964972f6ceafcd31",
+        "branch": "validation/studio-agentic-008aa3ce",
         "created": {
-          "operation_id": "1c5626f0-6268-409d-bb3f-22763bd2494f",
+          "operation_id": "87c7ddaf-c036-4942-8d10-7da049013095",
           "result": {
-            "branch": "validation/studio-agentic-e678081b",
-            "commit": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
+            "branch": "validation/studio-agentic-008aa3ce",
+            "commit": "89482c8b61e86486728ad21b964972f6ceafcd31",
             "error": null,
-            "expected_commit": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
+            "expected_commit": "89482c8b61e86486728ad21b964972f6ceafcd31",
             "pr": {
               "draft": true,
-              "head": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
-              "number": 49,
-              "url": "https://github.com/azerothl/Akasha-code-studio/pull/49"
+              "head": "89482c8b61e86486728ad21b964972f6ceafcd31",
+              "number": 52,
+              "url": "https://github.com/azerothl/Akasha-code-studio/pull/52"
             },
             "repository": "azerothl/Akasha-code-studio",
             "result_unknown": false,
@@ -1378,19 +1398,19 @@
           "checks_match_local_head": true,
           "checks_state": "not_run",
           "current_head_checks": "not_run",
-          "fetched_at": "2026-10-19T10:14:26.176568+00:00",
-          "local_head": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
+          "fetched_at": "2026-10-19T11:35:42.145877400+00:00",
+          "local_head": "89482c8b61e86486728ad21b964972f6ceafcd31",
           "pr": {
             "baseRefName": "main",
-            "headRefName": "validation/studio-agentic-e678081b",
-            "headRefOid": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
+            "headRefName": "validation/studio-agentic-008aa3ce",
+            "headRefOid": "89482c8b61e86486728ad21b964972f6ceafcd31",
             "isDraft": true,
             "mergeable": "MERGEABLE",
-            "number": 49,
+            "number": 52,
             "reviewDecision": "",
             "state": "OPEN",
             "statusCheckRollup": [],
-            "url": "https://github.com/azerothl/Akasha-code-studio/pull/49"
+            "url": "https://github.com/azerothl/Akasha-code-studio/pull/52"
           },
           "repository": "azerothl/Akasha-code-studio",
           "schema_version": 1,
@@ -1399,17 +1419,17 @@
       }
     }
   ],
-  "nativeRequests": 157,
+  "nativeRequests": 159,
   "testPullRequest": {
     "draft": true,
-    "head": "90434c017cf0107ec0182eb1c8e3b121c4fe019b",
-    "number": 49,
-    "url": "https://github.com/azerothl/Akasha-code-studio/pull/49"
+    "head": "89482c8b61e86486728ad21b964972f6ceafcd31",
+    "number": 52,
+    "url": "https://github.com/azerothl/Akasha-code-studio/pull/52"
   },
-  "publishedBranch": "validation/studio-agentic-e678081b",
+  "publishedBranch": "validation/studio-agentic-008aa3ce",
   "uiLsp": [
     {
-      "url": "http://127.0.0.1:62379/api/studio/projects/ae699180-99c6-41ad-8901-ff1bd541a3a9/lsp/query",
+      "url": "http://127.0.0.1:50773/api/studio/projects/53245d64-ae3b-40cb-a025-c05ec630f961/lsp/query",
       "status": 200,
       "body": {
         "document_version": 1,
@@ -1442,7 +1462,7 @@
       }
     },
     {
-      "url": "http://127.0.0.1:62379/api/studio/projects/ae699180-99c6-41ad-8901-ff1bd541a3a9/lsp/query",
+      "url": "http://127.0.0.1:50773/api/studio/projects/53245d64-ae3b-40cb-a025-c05ec630f961/lsp/query",
       "status": 200,
       "body": {
         "document_version": 1,
@@ -1461,7 +1481,7 @@
               "path": "sample.ts"
             }
           ],
-          "plan_id": "9343370e-83ee-475f-8024-5afb378a2f92",
+          "plan_id": "fc26130a-479c-4eaa-80ed-6c4bf87925f2",
           "status": "planned"
         },
         "schema_version": 1,
@@ -1469,28 +1489,28 @@
       }
     },
     {
-      "url": "http://127.0.0.1:62379/api/studio/projects/ae699180-99c6-41ad-8901-ff1bd541a3a9/lsp/rename/9343370e-83ee-475f-8024-5afb378a2f92/apply",
+      "url": "http://127.0.0.1:50773/api/studio/projects/53245d64-ae3b-40cb-a025-c05ec630f961/lsp/rename/fc26130a-479c-4eaa-80ed-6c4bf87925f2/apply",
       "status": 200,
       "body": {
         "files": [
           "sample.ts"
         ],
-        "plan_id": "9343370e-83ee-475f-8024-5afb378a2f92",
+        "plan_id": "fc26130a-479c-4eaa-80ed-6c4bf87925f2",
         "schema_version": 1,
         "status": "applied"
       }
     }
   ],
-  "source_run": "studio-agentic-real-vnI1Qh",
-  "daemon_sha256": "8bbd9836f54d3d396ca828327eb2325e2025f75c8b65afbc99f248bee3b30e1b",
-  "code_commit": "aa075a9c39fe6c13ce7ae879f22efad3a923f571",
+  "daemon_sha256": "3592dacea6a593b58ca4a5eeac8f1af91447202fe710576719453911da675b38",
+  "source_run": "studio-agentic-real-VCwxli",
+  "code_commit": "2eb0c9df73eed95616f8ab6d32beaf8c57f0eb90",
   "test_pr_cleanup": {
     "state": "CLOSED",
     "merged": false,
     "branch_deleted": true
   },
   "tests": {
-    "daemon": 425,
+    "daemon": 432,
     "daemon_ignored": 1,
     "llm": 65,
     "store": 29,

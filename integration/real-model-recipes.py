@@ -86,7 +86,15 @@ for model in args.models:
                         task_id=api('/api/message',{'session_id':f'real-recipe-{project}','studio_project_id':project,'studio_assigned_agent':'studio_scaffold','studio_delegate_single_level':True,'message':message})['task_id']
                         case.update(project=project,task_id=task_id)
                         until=time.monotonic()+180
+                        catalogues={}
+                        def collect_catalogues():
+                            # task_events is a bounded rolling journal. Capture before
+                            # streamed token events evict the early catalogue evidence.
+                            with sqlite3.connect(data/'akasha.db') as database:
+                                for row in database.execute("SELECT payload_json FROM task_events WHERE task_id=? AND event_type='studio_native_tool_catalog' ORDER BY seq",(task_id,)):
+                                    if row[0]:catalogues[row[0]]=json.loads(row[0])
                         while True:
+                            collect_catalogues()
                             task=api('/api/tasks/'+task_id)
                             if task['status'] in ['completed','failed','cancelled','paused','interrupted','waiting_user_input']:break
                             try:
@@ -102,7 +110,8 @@ for model in args.models:
                             saved=database.execute('SELECT body FROM studio_checkpoints WHERE task=?',(task_id,)).fetchone()
                             if saved:
                                 case['model_turns']=[m for m in json.loads(saved[0]).get('conversation',[]) if m['role'] in ['assistant','tool']]
-                            case['native_tool_catalogues']=[json.loads(row[0]) for row in database.execute("SELECT payload_json FROM task_events WHERE task_id=? AND event_type='studio_native_tool_catalog' ORDER BY seq",(task_id,)) if row[0]]
+                        collect_catalogues()
+                        case['native_tool_catalogues']=list(catalogues.values())
                         ledger=api(f'/api/tasks/{task_id}/recovery')['ledger']['operations']
                         case['operations']=ledger
                         case['diff']=api(f'/api/tasks/{task_id}/studio-diff')

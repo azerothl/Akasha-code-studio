@@ -788,5 +788,898 @@
         "validation": "passed"
       }
     ]
+  },
+  {
+    "source_run": "studio-agentic-real-ZfcqF4",
+    "daemon_sha256": "08f1069c2d214f0b4d206106699803c120deddcc041e52d21f3e3044cf4a7832",
+    "status": "passed",
+    "fixture_error": null,
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-pxq5fvme",
+    "daemon_sha256": "08f1069c2d214f0b4d206106699803c120deddcc041e52d21f3e3044cf4a7832",
+    "status": null,
+    "fixture_error": null,
+    "cases": [
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-3GNZJA",
+    "daemon_sha256": "738b8f224edbace97612a35642074cedf386ffbc55d942ede153fefc8b1b34b4",
+    "status": "passed",
+    "fixture_error": null,
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "explicit GitHub push draft PR and CI state through delivery API",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-r54yubn_",
+    "daemon_sha256": "738b8f224edbace97612a35642074cedf386ffbc55d942ede153fefc8b1b34b4",
+    "status": null,
+    "fixture_error": null,
+    "cases": [
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "devstral:latest",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "running",
+        "validation": "failed",
+        "error": "('running', None)"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "qwen2.5-coder:14b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-qk9fwlbz",
+    "daemon_sha256": "af5d8055bc8075a0bf6ce446f91fc98bb2ac1f9d3b63b0a06150965299630e6c",
+    "status": null,
+    "fixture_error": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "running",
+        "validation": "failed",
+        "error": "('running', None)"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 4,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 4,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 5,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 5,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 6,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 6,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-model-recipes-1q3pgckn",
+    "daemon_sha256": "354d7ac0773198a318045f7a2d163dbd9356db8129c1439bd363a668b2505e7f",
+    "status": null,
+    "fixture_error": null,
+    "cases": [
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 1,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 2,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 3,
+        "status": "completed",
+        "validation": "failed",
+        "error": "[{'operation_id': 'cf3d33fe-70dd-4f4a-a9b2-c9d491f0d461', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': 'cf3d33fe-70dd-4f4a-a9b2-c9d491f0d461', 'output': '[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\2d68143f-ac9b-422d-8f0d-25d888bbd3ff\\\\FIRST.md] wrote 5 bytes', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file', 'truncated': False}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-19T11:19:56.109267900+00:00'}, {'operation_id': 'a3c03339-71a2-453d-adf1-c677d4c38adc', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': 'a3c03339-71a2-453d-adf1-c677d4c38adc', 'output': '[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\2d68143f-ac9b-422d-8f0d-25d888bbd3ff\\\\SECOND.md] wrote 4 bytes', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file', 'truncated': False}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-19T11:19:56.134074200+00:00'}, {'operation_id': '0d9815ad-54aa-4c8a-9521-8179946a826a', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': '0d9815ad-54aa-4c8a-9521-8179946a826a', 'output': '[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\2d68143f-ac9b-422d-8f0d-25d888bbd3ff\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'read_file', 'truncated': False}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-19T11:19:59.341936200+00:00'}, {'operation_id': 'dd3f198a-b19b-48ce-9ca5-1beb5c41ff34', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': 'dd3f198a-b19b-48ce-9ca5-1beb5c41ff34', 'output': '[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\2d68143f-ac9b-422d-8f0d-25d888bbd3ff\\\\SECOND.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nbeta', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'read_file', 'truncated': False}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-19T11:19:59.360018800+00:00'}]"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 4,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 4,
+        "status": "completed",
+        "validation": "failed",
+        "error": "[{'operation_id': '65306d13-56f9-40dd-bf4b-62e400441a5e', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': '65306d13-56f9-40dd-bf4b-62e400441a5e', 'output': '[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a4785c62-697d-4045-9d06-9b61c74cdc70\\\\FIRST.md] wrote 5 bytes', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file', 'truncated': False}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-19T11:20:10.040543+00:00'}, {'operation_id': '40d9b3a8-3fc4-4f69-b9a1-9cf6713c0a7b', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': '40d9b3a8-3fc4-4f69-b9a1-9cf6713c0a7b', 'output': '[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a4785c62-697d-4045-9d06-9b61c74cdc70\\\\SECOND.md] wrote 4 bytes', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'write_file', 'truncated': False}, 'state': 'completed', 'tool': 'write_file', 'updated_at': '2026-10-19T11:20:10.059970+00:00'}, {'operation_id': 'a40bf5dc-9620-4bc8-a6e8-d647bdb6a5f3', 'result': {'error': None, 'exit_code': None, 'file_version': '8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8', 'operation_id': 'a40bf5dc-9620-4bc8-a6e8-d647bdb6a5f3', 'output': '[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a4785c62-697d-4045-9d06-9b61c74cdc70\\\\FIRST.md] full file (1 lines, 5 bytes):\\nalpha', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'read_file', 'truncated': False}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-19T11:20:12.232774700+00:00'}, {'operation_id': '28588571-da10-41f3-947e-95a5c3ef60fe', 'result': {'error': None, 'exit_code': None, 'file_version': 'f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753', 'operation_id': '28588571-da10-41f3-947e-95a5c3ef60fe', 'output': '[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a4785c62-697d-4045-9d06-9b61c74cdc70\\\\SECOND.md] full file (1 lines, 4 bytes):\\nbeta', 'result_unknown': False, 'schema_version': 1, 'success': True, 'tool': 'read_file', 'truncated': False}, 'state': 'completed', 'tool': 'read_file', 'updated_at': '2026-10-19T11:20:12.252484700+00:00'}]"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 5,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 5,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "single-write",
+        "iteration": 6,
+        "status": "completed",
+        "validation": "passed"
+      },
+      {
+        "model": "lfm2:24b",
+        "recipe": "multi-tool",
+        "iteration": 6,
+        "status": "completed",
+        "validation": "passed"
+      }
+    ]
+  },
+  {
+    "source_run": "studio-agentic-real-wsobDm",
+    "daemon_sha256": "3592dacea6a593b58ca4a5eeac8f1af91447202fe710576719453911da675b38",
+    "status": "failed",
+    "fixture_error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n6 !== 3\n",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "failed",
+        "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:547:12\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:277:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:516:3"
+      }
+    ]
   }
 ]

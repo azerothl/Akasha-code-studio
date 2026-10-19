@@ -2,7 +2,7 @@
   "models": [
     {
       "model": "devstral:latest",
-      "actual_model": "studio-validation-3b3544481924",
+      "actual_model": "studio-validation-8e794b2133e4",
       "provider": "openai",
       "temperature": 0.1,
       "max_tokens": 4096,
@@ -37,8 +37,8 @@
       "provider": "openai",
       "recipe": "single-write",
       "iteration": 1,
-      "project": "4f432195-15f8-4495-9cab-9fca9e3ba1d5",
-      "task_id": "107f7dfa-d5b4-4ff5-aeec-6e019a3ea2a1",
+      "project": "b5b33527-0a78-4fb1-a966-f6450ff39674",
+      "task_id": "7f367639-2423-4f5e-9cbd-672f91a5e5bd",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -63,9 +63,9 @@
           }
         ]
       },
-      "model_used": "studio-validation-3b3544481924",
+      "model_used": "studio-validation-8e794b2133e4",
       "failure": null,
-      "reply": "Le fichier `RECIPE_OK.md` a été créé avec succès à la racine du projet, contenant uniquement la ligne `recipe-ok`.",
+      "reply": "Le fichier RECIPE_OK.md a été créé avec succès à la racine du projet, contenant exactement la ligne \"recipe-ok\".",
       "model_turns": [
         {
           "role": "assistant",
@@ -83,19 +83,30 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"e69fc264-1850-415b-963a-b6b1317f8380\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\4f432195-15f8-4495-9cab-9fca9e3ba1d5\\\\RECIPE_OK.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"b498c9b6-b6bb-46c5-8030-260bb939a797\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\b5b33527-0a78-4fb1-a966-f6450ff39674\\\\RECIPE_OK.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
           "tool_call_id": "call_studio_1_0"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
         }
       ],
       "operations": [
         {
-          "operation_id": "e69fc264-1850-415b-963a-b6b1317f8380",
+          "operation_id": "b498c9b6-b6bb-46c5-8030-260bb939a797",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "e69fc264-1850-415b-963a-b6b1317f8380",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\4f432195-15f8-4495-9cab-9fca9e3ba1d5\\RECIPE_OK.md] saved (disk).",
+            "operation_id": "b498c9b6-b6bb-46c5-8030-260bb939a797",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\b5b33527-0a78-4fb1-a966-f6450ff39674\\RECIPE_OK.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -104,11 +115,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:15:11.467141100+00:00"
+          "updated_at": "2026-10-19T11:36:15.369309600+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:14:47.993028100+00:00",
+        "captured_at": "2026-10-19T11:35:54.234159200+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -117,7 +128,7 @@
             "truncated": false
           }
         ],
-        "task_id": "107f7dfa-d5b4-4ff5-aeec-6e019a3ea2a1"
+        "task_id": "7f367639-2423-4f5e-9cbd-672f91a5e5bd"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
@@ -129,8 +140,8 @@
       "provider": "openai",
       "recipe": "multi-tool",
       "iteration": 1,
-      "project": "c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b",
-      "task_id": "88fa0c1d-6383-4eb2-9799-c05e50c2a6ab",
+      "project": "542236ee-349f-41f2-9cce-b2a4d220b853",
+      "task_id": "798995a5-31c9-47d8-860d-412149b03975",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -161,9 +172,9 @@
           }
         ]
       },
-      "model_used": "studio-validation-3b3544481924",
+      "model_used": "studio-validation-8e794b2133e4",
       "failure": null,
-      "reply": "J'ai créé et vérifié les fichiers demandés :\n\n1. `FIRST.md` contient \"alpha\"\n2. `SECOND.md` contient \"beta\"\n\nLa tâche est terminée.",
+      "reply": "Les fichiers FIRST.md et SECOND.md ont été créés avec respectivement \"alpha\" et \"beta\" comme contenu. Le contenu de FIRST.md a été vérifié et correspond bien à la demande. La tâche est terminée.",
       "model_turns": [
         {
           "role": "assistant",
@@ -181,7 +192,7 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"cdac6993-7451-4b10-895b-f67f223c8eb2\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b\\\\FIRST.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"3ea4f315-be27-4d1b-9b01-c27939ecae04\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\542236ee-349f-41f2-9cce-b2a4d220b853\\\\FIRST.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_1_0"
         },
         {
@@ -200,7 +211,7 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"46667a4b-e745-46a3-bfd2-a83216e0ead7\",\"output\":\"[read_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"4ab5a605-48c6-42fe-971d-66ab8483c08b\",\"output\":\"[read_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\542236ee-349f-41f2-9cce-b2a4d220b853\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_2_0"
         },
         {
@@ -219,19 +230,20 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"1e732b50-9b6b-45e3-88c6-b3854222153b\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b\\\\SECOND.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"c9b2fc87-9f55-4d89-a549-d1bcb537e19a\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\542236ee-349f-41f2-9cce-b2a4d220b853\\\\SECOND.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_3_0"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "1e732b50-9b6b-45e3-88c6-b3854222153b",
+          "operation_id": "c9b2fc87-9f55-4d89-a549-d1bcb537e19a",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "1e732b50-9b6b-45e3-88c6-b3854222153b",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b\\SECOND.md] saved (disk).",
+            "operation_id": "c9b2fc87-9f55-4d89-a549-d1bcb537e19a",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\542236ee-349f-41f2-9cce-b2a4d220b853\\SECOND.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -240,16 +252,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:15:34.114951+00:00"
+          "updated_at": "2026-10-19T11:36:37.946495200+00:00"
         },
         {
-          "operation_id": "46667a4b-e745-46a3-bfd2-a83216e0ead7",
+          "operation_id": "4ab5a605-48c6-42fe-971d-66ab8483c08b",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "46667a4b-e745-46a3-bfd2-a83216e0ead7",
-            "output": "[read_file <isolated-data>\\devstral-latest\\studio-projects\\c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+            "operation_id": "4ab5a605-48c6-42fe-971d-66ab8483c08b",
+            "output": "[read_file <isolated-data>\\devstral-latest\\studio-projects\\542236ee-349f-41f2-9cce-b2a4d220b853\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -258,16 +270,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:15:29.691385400+00:00"
+          "updated_at": "2026-10-19T11:36:32.727158+00:00"
         },
         {
-          "operation_id": "cdac6993-7451-4b10-895b-f67f223c8eb2",
+          "operation_id": "3ea4f315-be27-4d1b-9b01-c27939ecae04",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "cdac6993-7451-4b10-895b-f67f223c8eb2",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\c6c44448-5ca6-47c6-8bdd-1ba75ac31d3b\\FIRST.md] saved (disk).",
+            "operation_id": "3ea4f315-be27-4d1b-9b01-c27939ecae04",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\542236ee-349f-41f2-9cce-b2a4d220b853\\FIRST.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -276,11 +288,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:15:25.237355600+00:00"
+          "updated_at": "2026-10-19T11:36:27.966462700+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:15:17.364380600+00:00",
+        "captured_at": "2026-10-19T11:36:21.616780800+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -295,22 +307,22 @@
             "truncated": false
           }
         ],
-        "task_id": "88fa0c1d-6383-4eb2-9799-c05e50c2a6ab"
+        "task_id": "798995a5-31c9-47d8-860d-412149b03975"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "devstral:latest",
       "provider": "openai",
       "recipe": "single-write",
       "iteration": 2,
-      "project": "5911cd4d-c1b6-4e19-ad80-df5af9df9cb2",
-      "task_id": "b98271cb-e190-4e0c-bfa3-5f5c17433bf0",
+      "project": "9fff5118-625a-4366-876b-4b3762c812d4",
+      "task_id": "50cc75c8-246c-427a-a13a-2e0864e93e8c",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -335,9 +347,9 @@
           }
         ]
       },
-      "model_used": "studio-validation-3b3544481924",
+      "model_used": "studio-validation-8e794b2133e4",
       "failure": null,
-      "reply": "Le fichier RECIPE_OK.md a été créé à la racine du projet avec le contenu exact \"recipe-ok\". La tâche est terminée.",
+      "reply": "Le fichier RECIPE_OK.md a été créé avec succès à la racine du projet, contenant uniquement la ligne \"recipe-ok\". La tâche est terminée.",
       "model_turns": [
         {
           "role": "assistant",
@@ -355,19 +367,20 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"189a122c-c81c-44e2-bb5d-4d9578c9dfe5\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\5911cd4d-c1b6-4e19-ad80-df5af9df9cb2\\\\RECIPE_OK.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"a4a9960d-16a8-4f65-abe9-171715220414\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\9fff5118-625a-4366-876b-4b3762c812d4\\\\RECIPE_OK.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
           "tool_call_id": "call_studio_1_0"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "189a122c-c81c-44e2-bb5d-4d9578c9dfe5",
+          "operation_id": "a4a9960d-16a8-4f65-abe9-171715220414",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "189a122c-c81c-44e2-bb5d-4d9578c9dfe5",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\5911cd4d-c1b6-4e19-ad80-df5af9df9cb2\\RECIPE_OK.md] saved (disk).",
+            "operation_id": "a4a9960d-16a8-4f65-abe9-171715220414",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\9fff5118-625a-4366-876b-4b3762c812d4\\RECIPE_OK.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -376,11 +389,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:15:48.364114200+00:00"
+          "updated_at": "2026-10-19T11:36:52.521819300+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:15:40.753856100+00:00",
+        "captured_at": "2026-10-19T11:36:45.984712900+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -389,20 +402,21 @@
             "truncated": false
           }
         ],
-        "task_id": "b98271cb-e190-4e0c-bfa3-5f5c17433bf0"
+        "task_id": "50cc75c8-246c-427a-a13a-2e0864e93e8c"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
       },
-      "validation": "passed"
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "devstral:latest",
       "provider": "openai",
       "recipe": "multi-tool",
       "iteration": 2,
-      "project": "05be7ce6-85d5-4749-87ba-c6c05debe6e7",
-      "task_id": "cdfadad3-b619-489a-83b0-7a3f5ea2f6ac",
+      "project": "e1049944-f6c4-4d70-8084-456991ec2147",
+      "task_id": "6ef2cc40-3fb4-4c37-8c01-edf6756847ab",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -433,9 +447,9 @@
           }
         ]
       },
-      "model_used": "studio-validation-3b3544481924",
+      "model_used": "studio-validation-8e794b2133e4",
       "failure": null,
-      "reply": "Les fichiers FIRST.md et SECOND.md ont été créés avec respectivement \"alpha\" et \"beta\" comme contenu. La vérification de FIRST.md a confirmé son contenu. La tâche est terminée.",
+      "reply": "Les fichiers FIRST.md et SECOND.md ont été créés avec les contenus demandés. La tâche est terminée.",
       "model_turns": [
         {
           "role": "assistant",
@@ -453,7 +467,7 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"b388ea96-6ee0-4b50-8594-3ecd319c8f12\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\05be7ce6-85d5-4749-87ba-c6c05debe6e7\\\\FIRST.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"4dc35258-0253-464d-9e80-c74d06457f97\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\e1049944-f6c4-4d70-8084-456991ec2147\\\\FIRST.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_1_0"
         },
         {
@@ -472,7 +486,7 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"a6ef3db0-2e6b-403d-9a67-9528aa293f3b\",\"output\":\"[read_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\05be7ce6-85d5-4749-87ba-c6c05debe6e7\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"82a7ea7a-a5a9-4330-9cfb-b40da8898951\",\"output\":\"[read_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\e1049944-f6c4-4d70-8084-456991ec2147\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_2_0"
         },
         {
@@ -491,19 +505,30 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"8d340890-a66f-4708-af72-b20456e6ff95\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\05be7ce6-85d5-4749-87ba-c6c05debe6e7\\\\SECOND.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"7205656d-f8c7-4f32-a24a-e73981158138\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\e1049944-f6c4-4d70-8084-456991ec2147\\\\SECOND.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_3_0"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
         }
       ],
       "operations": [
         {
-          "operation_id": "8d340890-a66f-4708-af72-b20456e6ff95",
+          "operation_id": "7205656d-f8c7-4f32-a24a-e73981158138",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "8d340890-a66f-4708-af72-b20456e6ff95",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\05be7ce6-85d5-4749-87ba-c6c05debe6e7\\SECOND.md] saved (disk).",
+            "operation_id": "7205656d-f8c7-4f32-a24a-e73981158138",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\e1049944-f6c4-4d70-8084-456991ec2147\\SECOND.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -512,16 +537,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:16:09.887116+00:00"
+          "updated_at": "2026-10-19T11:37:14.976393500+00:00"
         },
         {
-          "operation_id": "a6ef3db0-2e6b-403d-9a67-9528aa293f3b",
+          "operation_id": "82a7ea7a-a5a9-4330-9cfb-b40da8898951",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "a6ef3db0-2e6b-403d-9a67-9528aa293f3b",
-            "output": "[read_file <isolated-data>\\devstral-latest\\studio-projects\\05be7ce6-85d5-4749-87ba-c6c05debe6e7\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+            "operation_id": "82a7ea7a-a5a9-4330-9cfb-b40da8898951",
+            "output": "[read_file <isolated-data>\\devstral-latest\\studio-projects\\e1049944-f6c4-4d70-8084-456991ec2147\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -530,16 +555,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:16:05.473294100+00:00"
+          "updated_at": "2026-10-19T11:37:09.911758200+00:00"
         },
         {
-          "operation_id": "b388ea96-6ee0-4b50-8594-3ecd319c8f12",
+          "operation_id": "4dc35258-0253-464d-9e80-c74d06457f97",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "b388ea96-6ee0-4b50-8594-3ecd319c8f12",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\05be7ce6-85d5-4749-87ba-c6c05debe6e7\\FIRST.md] saved (disk).",
+            "operation_id": "4dc35258-0253-464d-9e80-c74d06457f97",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\e1049944-f6c4-4d70-8084-456991ec2147\\FIRST.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -548,11 +573,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:16:01.411176500+00:00"
+          "updated_at": "2026-10-19T11:37:05.382798400+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:15:54.221041600+00:00",
+        "captured_at": "2026-10-19T11:36:59.337226+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -567,22 +592,21 @@
             "truncated": false
           }
         ],
-        "task_id": "cdfadad3-b619-489a-83b0-7a3f5ea2f6ac"
+        "task_id": "6ef2cc40-3fb4-4c37-8c01-edf6756847ab"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "passed"
     },
     {
       "model": "devstral:latest",
       "provider": "openai",
       "recipe": "single-write",
       "iteration": 3,
-      "project": "5bebdb94-c236-4e25-b5f6-217fc9149f85",
-      "task_id": "8c9a833e-6db7-4350-ab94-57b2aa629a57",
+      "project": "ffd9c343-4075-4de3-84f9-9acb5cff8b99",
+      "task_id": "971e3dda-8dac-486f-b870-ceb859bc6c3a",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -607,9 +631,9 @@
           }
         ]
       },
-      "model_used": "studio-validation-3b3544481924",
+      "model_used": "studio-validation-8e794b2133e4",
       "failure": null,
-      "reply": "Le fichier RECIPE_OK.md a été créé avec succès à la racine du projet, contenant uniquement la ligne \"recipe-ok\".",
+      "reply": "Le fichier RECIPE_OK.md a été créé avec succès à la racine du projet, contenant uniquement la ligne \"recipe-ok\". La tâche est terminée.",
       "model_turns": [
         {
           "role": "assistant",
@@ -627,19 +651,20 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"65808a4b-85f3-4e34-9754-f84fa6ac6575\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\5bebdb94-c236-4e25-b5f6-217fc9149f85\\\\RECIPE_OK.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"96afc9da-376a-4b09-ab6f-3f0effc8097b\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\ffd9c343-4075-4de3-84f9-9acb5cff8b99\\\\RECIPE_OK.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
           "tool_call_id": "call_studio_1_0"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "65808a4b-85f3-4e34-9754-f84fa6ac6575",
+          "operation_id": "96afc9da-376a-4b09-ab6f-3f0effc8097b",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "65808a4b-85f3-4e34-9754-f84fa6ac6575",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\5bebdb94-c236-4e25-b5f6-217fc9149f85\\RECIPE_OK.md] saved (disk).",
+            "operation_id": "96afc9da-376a-4b09-ab6f-3f0effc8097b",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\ffd9c343-4075-4de3-84f9-9acb5cff8b99\\RECIPE_OK.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -648,11 +673,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:16:23.960190700+00:00"
+          "updated_at": "2026-10-19T11:37:26.513492100+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:16:16.170308600+00:00",
+        "captured_at": "2026-10-19T11:37:20.050988800+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -661,20 +686,21 @@
             "truncated": false
           }
         ],
-        "task_id": "8c9a833e-6db7-4350-ab94-57b2aa629a57"
+        "task_id": "971e3dda-8dac-486f-b870-ceb859bc6c3a"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
       },
-      "validation": "passed"
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "devstral:latest",
       "provider": "openai",
       "recipe": "multi-tool",
       "iteration": 3,
-      "project": "183b6ac8-ea6d-4fc1-b539-87a742efff3c",
-      "task_id": "bd21666b-e609-44c8-9052-2ba61a28c41c",
+      "project": "9454b430-771d-488a-a118-4e1158edc52a",
+      "task_id": "acf4a264-03ed-4acd-9056-3251b14f2aa9",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -705,9 +731,9 @@
           }
         ]
       },
-      "model_used": "studio-validation-3b3544481924",
+      "model_used": "studio-validation-8e794b2133e4",
       "failure": null,
-      "reply": "Les fichiers FIRST.md et SECOND.md ont été créés avec respectivement \"alpha\" et \"beta\" comme contenu. La vérification de FIRST.md a confirmé son contenu. La tâche est terminée.",
+      "reply": "Les fichiers FIRST.md et SECOND.md ont été créés avec respectivement \"alpha\" et \"beta\" comme contenu. Le contenu de FIRST.md a été vérifié et correspond bien à ce qui était attendu. La tâche est terminée.",
       "model_turns": [
         {
           "role": "assistant",
@@ -725,7 +751,7 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"3183d09b-4c4a-4fae-a5dc-d927c6e07a3b\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\183b6ac8-ea6d-4fc1-b539-87a742efff3c\\\\FIRST.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"bb21c831-64c5-4896-991a-86cd757bf931\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\9454b430-771d-488a-a118-4e1158edc52a\\\\FIRST.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_1_0"
         },
         {
@@ -744,7 +770,7 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"3d77aa09-521b-4cb7-8613-d22822915cb5\",\"output\":\"[read_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\183b6ac8-ea6d-4fc1-b539-87a742efff3c\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"19450a5c-c440-4ac7-aeac-5206fc966d0f\",\"output\":\"[read_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\9454b430-771d-488a-a118-4e1158edc52a\\\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_2_0"
         },
         {
@@ -763,19 +789,20 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"bd52384b-f963-4e59-bf61-b6f293e4989c\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\183b6ac8-ea6d-4fc1-b539-87a742efff3c\\\\SECOND.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"7d8d3285-61f1-4638-9528-0410d7607e3c\",\"output\":\"[write_file <isolated-data>\\\\devstral-latest\\\\studio-projects\\\\9454b430-771d-488a-a118-4e1158edc52a\\\\SECOND.md] saved (disk).\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_3_0"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "bd52384b-f963-4e59-bf61-b6f293e4989c",
+          "operation_id": "7d8d3285-61f1-4638-9528-0410d7607e3c",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "bd52384b-f963-4e59-bf61-b6f293e4989c",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\183b6ac8-ea6d-4fc1-b539-87a742efff3c\\SECOND.md] saved (disk).",
+            "operation_id": "7d8d3285-61f1-4638-9528-0410d7607e3c",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\9454b430-771d-488a-a118-4e1158edc52a\\SECOND.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -784,16 +811,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:16:44.845333700+00:00"
+          "updated_at": "2026-10-19T11:37:49.381367+00:00"
         },
         {
-          "operation_id": "3d77aa09-521b-4cb7-8613-d22822915cb5",
+          "operation_id": "19450a5c-c440-4ac7-aeac-5206fc966d0f",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "3d77aa09-521b-4cb7-8613-d22822915cb5",
-            "output": "[read_file <isolated-data>\\devstral-latest\\studio-projects\\183b6ac8-ea6d-4fc1-b539-87a742efff3c\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+            "operation_id": "19450a5c-c440-4ac7-aeac-5206fc966d0f",
+            "output": "[read_file <isolated-data>\\devstral-latest\\studio-projects\\9454b430-771d-488a-a118-4e1158edc52a\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -802,16 +829,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:16:40.424836400+00:00"
+          "updated_at": "2026-10-19T11:37:44.278102500+00:00"
         },
         {
-          "operation_id": "3183d09b-4c4a-4fae-a5dc-d927c6e07a3b",
+          "operation_id": "bb21c831-64c5-4896-991a-86cd757bf931",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "3183d09b-4c4a-4fae-a5dc-d927c6e07a3b",
-            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\183b6ac8-ea6d-4fc1-b539-87a742efff3c\\FIRST.md] saved (disk).",
+            "operation_id": "bb21c831-64c5-4896-991a-86cd757bf931",
+            "output": "[write_file <isolated-data>\\devstral-latest\\studio-projects\\9454b430-771d-488a-a118-4e1158edc52a\\FIRST.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -820,11 +847,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:16:36.375957+00:00"
+          "updated_at": "2026-10-19T11:37:39.587710600+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:16:29.187839100+00:00",
+        "captured_at": "2026-10-19T11:37:33.018636800+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -839,22 +866,22 @@
             "truncated": false
           }
         ],
-        "task_id": "bd21666b-e609-44c8-9052-2ba61a28c41c"
+        "task_id": "acf4a264-03ed-4acd-9056-3251b14f2aa9"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "lfm2:24b",
       "provider": "ollama",
       "recipe": "single-write",
       "iteration": 1,
-      "project": "4cac260b-c034-4cd7-a077-c3623f2fed63",
-      "task_id": "f44c75a6-2f51-4d8a-9a6a-573ab1b8edc3",
+      "project": "c793dfa9-9a9b-4218-b1ed-e2ccb09367f3",
+      "task_id": "ba719297-d4f1-410b-874b-6542509fd3d9",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -881,7 +908,7 @@
       },
       "model_used": "lfm2:24b",
       "failure": null,
-      "reply": "Le fichier RECIPE_OK.md a bien été créé avec le contenu demandé. La tâche est terminée.",
+      "reply": "Le fichier RECIPE_OK.md a bien été créé à la racine du projet avec le contenu exact demandé. La tâche est maintenant terminée.\n\nFin de l'opération.",
       "model_turns": [
         {
           "role": "assistant",
@@ -899,19 +926,39 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"96099eb7-d06a-4206-a97a-6d576ad8691e\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\4cac260b-c034-4cd7-a077-c3623f2fed63\\\\RECIPE_OK.md] wrote 9 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"7e9746e6-ae97-4c37-9da7-d5c1200b277d\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\c793dfa9-9a9b-4218-b1ed-e2ccb09367f3\\\\RECIPE_OK.md] wrote 9 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
           "tool_call_id": "call_studio_1_0"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
         }
       ],
       "operations": [
         {
-          "operation_id": "96099eb7-d06a-4206-a97a-6d576ad8691e",
+          "operation_id": "7e9746e6-ae97-4c37-9da7-d5c1200b277d",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "96099eb7-d06a-4206-a97a-6d576ad8691e",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\4cac260b-c034-4cd7-a077-c3623f2fed63\\RECIPE_OK.md] wrote 9 bytes",
+            "operation_id": "7e9746e6-ae97-4c37-9da7-d5c1200b277d",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\c793dfa9-9a9b-4218-b1ed-e2ccb09367f3\\RECIPE_OK.md] wrote 9 bytes",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -920,11 +967,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:05.817597400+00:00"
+          "updated_at": "2026-10-19T11:38:13.637608300+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:16:52.273377600+00:00",
+        "captured_at": "2026-10-19T11:37:59.236468300+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -933,7 +980,7 @@
             "truncated": false
           }
         ],
-        "task_id": "f44c75a6-2f51-4d8a-9a6a-573ab1b8edc3"
+        "task_id": "ba719297-d4f1-410b-874b-6542509fd3d9"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
@@ -945,318 +992,8 @@
       "provider": "ollama",
       "recipe": "multi-tool",
       "iteration": 1,
-      "project": "b3f8a30b-4500-460c-aa37-e8cdf59ae0ff",
-      "task_id": "db52e276-3caa-48a6-8877-d34b372678f6",
-      "status": "completed",
-      "outcome": {
-        "acceptance_verified": false,
-        "failed_tool_calls": 2,
-        "reason": null,
-        "result": "succeeded",
-        "schema_version": 1,
-        "status": "completed",
-        "successful_tool_calls": 3,
-        "termination_reason": "success",
-        "verification": [
-          {
-            "exit_code": null,
-            "kind": "project_build",
-            "status": "not_run"
-          },
-          {
-            "detail": "requested literal content verified",
-            "kind": "requested_file",
-            "path": "FIRST.md",
-            "status": "passed"
-          },
-          {
-            "detail": "requested literal content verified",
-            "kind": "requested_file",
-            "path": "SECOND.md",
-            "status": "passed"
-          }
-        ]
-      },
-      "model_used": "lfm2:24b",
-      "failure": null,
-      "reply": "Les trois fichiers ont été créés avec les contenus demandés :\n\n- FIRST.md contient \"alpha\" (vérifié par read_file).\n- SECOND.md contient \"beta\".\n\nLa tâche est maintenant terminée.\n\nFIN DE LA TASK",
-      "model_turns": [
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
-            {
-              "function": {
-                "arguments": "{\"arguments\":{\"content\":\"# Alpha\\n\\nThis is the first file in the project, following the initial design scaffold.\",\"expected_version\":\"missing\",\"workspace\":\"/FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
-                "name": "studio_call"
-              },
-              "id": "call_studio_1_0",
-              "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"invalid file arguments: unknown field `workspace`, expected one of `path`, `content`, `expected_version`, `start_line`, `end_line`, `full`, `offset_line`, `limit_lines`. Use only the declared argument names; workspace paths belong in path.\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_1_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
-            {
-              "function": {
-                "arguments": "{\"arguments\":{\"content\":\"# Alpha\\n\\nThis is the first file in the project, following the initial design scaffold.\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
-                "name": "studio_call"
-              },
-              "id": "call_studio_2_0",
-              "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"No file written: the proposed content differs from the user's explicit literal. Request the tool again with these exact bytes; do not change case or add a template.\",\"error_code\":\"explicit_content_mismatch\",\"expected_literal\":\"alpha\",\"path\":\"FIRST.md\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_2_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
-            {
-              "function": {
-                "arguments": "{\"arguments\":{\"content\":\"alpha\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
-                "name": "studio_call"
-              },
-              "id": "call_studio_3_0",
-              "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"e5cde20e-6df5-45f8-a870-62561095ccc9\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\b3f8a30b-4500-460c-aa37-e8cdf59ae0ff\\\\FIRST.md] wrote 5 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_3_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
-            {
-              "function": {
-                "arguments": "{\"arguments\":{\"limit_lines\":5,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
-                "name": "studio_call"
-              },
-              "id": "call_studio_4_0",
-              "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"6122c7b1-2412-43d2-b621-0e6d6faa5718\",\"output\":\"[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\b3f8a30b-4500-460c-aa37-e8cdf59ae0ff\\\\FIRST.md] requested lines 1..5; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_4_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
-            {
-              "function": {
-                "arguments": "{\"arguments\":{\"content\":\"beta\",\"expected_version\":\"missing\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
-                "name": "studio_call"
-              },
-              "id": "call_studio_5_0",
-              "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"7843cf82-ef71-4d4f-a672-4daf9e0b0015\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\b3f8a30b-4500-460c-aa37-e8cdf59ae0ff\\\\SECOND.md] wrote 4 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_5_0"
-        }
-      ],
-      "operations": [
-        {
-          "operation_id": "7843cf82-ef71-4d4f-a672-4daf9e0b0015",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "7843cf82-ef71-4d4f-a672-4daf9e0b0015",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\b3f8a30b-4500-460c-aa37-e8cdf59ae0ff\\SECOND.md] wrote 4 bytes",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "write_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:13.590212100+00:00"
-        },
-        {
-          "operation_id": "6122c7b1-2412-43d2-b621-0e6d6faa5718",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "6122c7b1-2412-43d2-b621-0e6d6faa5718",
-            "output": "[read_file <isolated-data>\\lfm2-24b\\studio-projects\\b3f8a30b-4500-460c-aa37-e8cdf59ae0ff\\FIRST.md] requested lines 1..5; returned lines 1..1 (file has 1 lines):\nalpha",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "read_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "read_file",
-          "updated_at": "2026-10-19T10:17:13.233339300+00:00"
-        },
-        {
-          "operation_id": "e5cde20e-6df5-45f8-a870-62561095ccc9",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "e5cde20e-6df5-45f8-a870-62561095ccc9",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\b3f8a30b-4500-460c-aa37-e8cdf59ae0ff\\FIRST.md] wrote 5 bytes",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "write_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:11.343028500+00:00"
-        }
-      ],
-      "diff": {
-        "captured_at": "2026-10-19T10:17:08.454228+00:00",
-        "files": [
-          {
-            "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
-            "path": "FIRST.md",
-            "status": "added",
-            "truncated": false
-          },
-          {
-            "diff": "diff --git a/SECOND.md b/SECOND.md\n--- /dev/null\n+++ b/SECOND.md\n@@ -0,0 +1 @@\n+beta\n\\ No newline at end of file\n",
-            "path": "SECOND.md",
-            "status": "added",
-            "truncated": false
-          }
-        ],
-        "task_id": "db52e276-3caa-48a6-8877-d34b372678f6"
-      },
-      "verified_files": {
-        "FIRST.md": "alpha",
-        "SECOND.md": "beta"
-      },
-      "validation": "passed",
-      "read_before_second_write_verified": true
-    },
-    {
-      "model": "lfm2:24b",
-      "provider": "ollama",
-      "recipe": "single-write",
-      "iteration": 2,
-      "project": "e150d84a-a231-4fd2-9fc4-503f3a2e00fb",
-      "task_id": "1a687be4-7da1-4204-b9c0-637819ec6e27",
-      "status": "completed",
-      "outcome": {
-        "acceptance_verified": false,
-        "failed_tool_calls": 0,
-        "reason": null,
-        "result": "succeeded",
-        "schema_version": 1,
-        "status": "completed",
-        "successful_tool_calls": 1,
-        "termination_reason": "success",
-        "verification": [
-          {
-            "exit_code": null,
-            "kind": "project_build",
-            "status": "not_run"
-          },
-          {
-            "detail": "requested literal content verified",
-            "kind": "requested_file",
-            "path": "RECIPE_OK.md",
-            "status": "passed"
-          }
-        ]
-      },
-      "model_used": "lfm2:24b",
-      "failure": null,
-      "reply": "Le fichier RECIPE_OK.md a bien été créé à la racine du projet avec le contenu exact demandé. La tâche est maintenant terminée.\n\nTask is completed.",
-      "model_turns": [
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
-            {
-              "function": {
-                "arguments": "{\"arguments\":{\"content\":\"recipe-ok\",\"expected_version\":\"missing\",\"path\":\"RECIPE_OK.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
-                "name": "studio_call"
-              },
-              "id": "call_studio_1_0",
-              "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"aad6cf7d-7889-4d38-8ccd-ed55dee30102\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\e150d84a-a231-4fd2-9fc4-503f3a2e00fb\\\\RECIPE_OK.md] wrote 9 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
-          "tool_call_id": "call_studio_1_0"
-        }
-      ],
-      "operations": [
-        {
-          "operation_id": "aad6cf7d-7889-4d38-8ccd-ed55dee30102",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "aad6cf7d-7889-4d38-8ccd-ed55dee30102",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\e150d84a-a231-4fd2-9fc4-503f3a2e00fb\\RECIPE_OK.md] wrote 9 bytes",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "write_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:16.803173500+00:00"
-        }
-      ],
-      "diff": {
-        "captured_at": "2026-10-19T10:17:14.665712600+00:00",
-        "files": [
-          {
-            "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
-            "path": "RECIPE_OK.md",
-            "status": "added",
-            "truncated": false
-          }
-        ],
-        "task_id": "1a687be4-7da1-4204-b9c0-637819ec6e27"
-      },
-      "verified_files": {
-        "RECIPE_OK.md": "recipe-ok"
-      },
-      "validation": "passed"
-    },
-    {
-      "model": "lfm2:24b",
-      "provider": "ollama",
-      "recipe": "multi-tool",
-      "iteration": 2,
-      "project": "5db48cae-6192-4403-bdf2-a6954bc55db2",
-      "task_id": "7288617f-acc2-4746-b175-fbb8833dc503",
+      "project": "ddbf5fc0-41e2-4308-ae49-71c47c994e0d",
+      "task_id": "0af2ac5b-ddee-40fc-b353-594d2e97e172",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -1289,7 +1026,7 @@
       },
       "model_used": "lfm2:24b",
       "failure": null,
-      "reply": "Les trois fichiers ont été créés et lus avec succès :\n- FIRST.md contient bien \"alpha\".\n- SECOND.md contient bien \"beta\".\n\nLa tâche est maintenant terminée.\n\nFinal answer: Les fichiers FIRST.md et SECOND.md ont été créés avec le contenu demandé et vérifiés avec succès.",
+      "reply": "Les trois opérations demandées ont été réalisées avec succès :\n\n1. Création de **FIRST.md** avec le contenu `alpha` (version alpha).\n2. Lecture de **FIRST.md** confirmant son contenu `alpha`.\n3. Création de **SECOND.md** avec le contenu `beta` (version beta).\n\nAucune modification ultérieure n'a été effectuée, conformément à votre instruction. \n\nFin de la tâche.",
       "model_turns": [
         {
           "role": "assistant",
@@ -1297,7 +1034,7 @@
           "tool_calls": [
             {
               "function": {
-                "arguments": "{\"arguments\":{\"content\":\"# Alpha\\n\\nCeci est le premier fichier créé selon la demande.\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "arguments": "{\"arguments\":{\"content\":\"alpha\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
                 "name": "studio_call"
               },
               "id": "call_studio_1_0",
@@ -1305,7 +1042,7 @@
             },
             {
               "function": {
-                "arguments": "{\"arguments\":{\"full\":true,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
                 "name": "studio_call"
               },
               "id": "call_studio_1_1",
@@ -1313,7 +1050,7 @@
             },
             {
               "function": {
-                "arguments": "{\"arguments\":{\"content\":\"# Beta\\n\\nCeci est le second fichier créé selon la demande.\",\"expected_version\":\"missing\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
                 "name": "studio_call"
               },
               "id": "call_studio_1_2",
@@ -1323,17 +1060,17 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"No file written: the proposed content differs from the user's explicit literal. Request the tool again with these exact bytes; do not change case or add a template.\",\"error_code\":\"explicit_content_mismatch\",\"expected_literal\":\"alpha\",\"path\":\"FIRST.md\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_1_0"
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_1_1"
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"No file written: the proposed content differs from the user's explicit literal. Request the tool again with these exact bytes; do not change case or add a template.\",\"error_code\":\"explicit_content_mismatch\",\"expected_literal\":\"beta\",\"path\":\"SECOND.md\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_1_2"
         },
         {
@@ -1368,29 +1105,58 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"8ae4b0df-d2f4-471d-89e1-f38eff255ee3\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\5db48cae-6192-4403-bdf2-a6954bc55db2\\\\FIRST.md] wrote 5 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"79b9934d-9f21-466a-a0c1-42e54e7a4c6e\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\ddbf5fc0-41e2-4308-ae49-71c47c994e0d\\\\FIRST.md] wrote 5 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_2_0"
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"e6b32c9c-7c23-4c3c-8a8d-8d355b8812ee\",\"output\":\"[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\5db48cae-6192-4403-bdf2-a6954bc55db2\\\\FIRST.md] full file (1 lines, 5 bytes):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"5748dde9-23d1-4a1f-9155-496c560e7917\",\"output\":\"[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\ddbf5fc0-41e2-4308-ae49-71c47c994e0d\\\\FIRST.md] full file (1 lines, 5 bytes):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_2_1"
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"a1cec8af-af2a-4cdb-ac18-e0e4b2113bd7\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\5db48cae-6192-4403-bdf2-a6954bc55db2\\\\SECOND.md] wrote 4 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"8f989e34-3525-4c5e-97b6-09539a79de36\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\ddbf5fc0-41e2-4308-ae49-71c47c994e0d\\\\SECOND.md] wrote 4 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_2_2"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
         }
       ],
       "operations": [
         {
-          "operation_id": "a1cec8af-af2a-4cdb-ac18-e0e4b2113bd7",
+          "operation_id": "8f989e34-3525-4c5e-97b6-09539a79de36",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "a1cec8af-af2a-4cdb-ac18-e0e4b2113bd7",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\5db48cae-6192-4403-bdf2-a6954bc55db2\\SECOND.md] wrote 4 bytes",
+            "operation_id": "8f989e34-3525-4c5e-97b6-09539a79de36",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\ddbf5fc0-41e2-4308-ae49-71c47c994e0d\\SECOND.md] wrote 4 bytes",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1399,16 +1165,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:22.364024400+00:00"
+          "updated_at": "2026-10-19T11:38:20.635309800+00:00"
         },
         {
-          "operation_id": "e6b32c9c-7c23-4c3c-8a8d-8d355b8812ee",
+          "operation_id": "5748dde9-23d1-4a1f-9155-496c560e7917",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "e6b32c9c-7c23-4c3c-8a8d-8d355b8812ee",
-            "output": "[read_file <isolated-data>\\lfm2-24b\\studio-projects\\5db48cae-6192-4403-bdf2-a6954bc55db2\\FIRST.md] full file (1 lines, 5 bytes):\nalpha",
+            "operation_id": "5748dde9-23d1-4a1f-9155-496c560e7917",
+            "output": "[read_file <isolated-data>\\lfm2-24b\\studio-projects\\ddbf5fc0-41e2-4308-ae49-71c47c994e0d\\FIRST.md] full file (1 lines, 5 bytes):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1417,16 +1183,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:17:22.344676800+00:00"
+          "updated_at": "2026-10-19T11:38:20.615298500+00:00"
         },
         {
-          "operation_id": "8ae4b0df-d2f4-471d-89e1-f38eff255ee3",
+          "operation_id": "79b9934d-9f21-466a-a0c1-42e54e7a4c6e",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "8ae4b0df-d2f4-471d-89e1-f38eff255ee3",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\5db48cae-6192-4403-bdf2-a6954bc55db2\\FIRST.md] wrote 5 bytes",
+            "operation_id": "79b9934d-9f21-466a-a0c1-42e54e7a4c6e",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\ddbf5fc0-41e2-4308-ae49-71c47c994e0d\\FIRST.md] wrote 5 bytes",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1435,11 +1201,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:22.324453+00:00"
+          "updated_at": "2026-10-19T11:38:20.595563+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:17:19.388628100+00:00",
+        "captured_at": "2026-10-19T11:38:16.986686700+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -1454,22 +1220,21 @@
             "truncated": false
           }
         ],
-        "task_id": "7288617f-acc2-4746-b175-fbb8833dc503"
+        "task_id": "0af2ac5b-ddee-40fc-b353-594d2e97e172"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "passed"
     },
     {
       "model": "lfm2:24b",
       "provider": "ollama",
       "recipe": "single-write",
-      "iteration": 3,
-      "project": "fd58584e-1f2c-4a49-b31b-95d988d4c628",
-      "task_id": "e03050b4-53a1-4f6a-bd1d-b980b5e6743a",
+      "iteration": 2,
+      "project": "2670f7c9-4b8a-4aaa-b38d-3684e6b1c941",
+      "task_id": "78349f8f-db2a-466f-87dc-49c5fa4b9279",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -1496,7 +1261,7 @@
       },
       "model_used": "lfm2:24b",
       "failure": null,
-      "reply": "Le fichier RECIPE_OK.md a bien été créé à la racine du projet avec le contenu exact demandé. La tâche est maintenant terminée.",
+      "reply": "Le fichier RECIPE_OK.md a bien été créé avec le contenu demandé. La tâche est terminée.\n\n```\nrecipe-ok\n```",
       "model_turns": [
         {
           "role": "assistant",
@@ -1514,19 +1279,39 @@
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"555d1d87-c66d-4815-8fbb-3b4317f2dd9d\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\fd58584e-1f2c-4a49-b31b-95d988d4c628\\\\RECIPE_OK.md] wrote 9 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"d55aa7f4-445e-4031-b81f-de32a8c47eac\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\2670f7c9-4b8a-4aaa-b38d-3684e6b1c941\\\\RECIPE_OK.md] wrote 9 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
           "tool_call_id": "call_studio_1_0"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
         }
       ],
       "operations": [
         {
-          "operation_id": "555d1d87-c66d-4815-8fbb-3b4317f2dd9d",
+          "operation_id": "d55aa7f4-445e-4031-b81f-de32a8c47eac",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "555d1d87-c66d-4815-8fbb-3b4317f2dd9d",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\fd58584e-1f2c-4a49-b31b-95d988d4c628\\RECIPE_OK.md] wrote 9 bytes",
+            "operation_id": "d55aa7f4-445e-4031-b81f-de32a8c47eac",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\2670f7c9-4b8a-4aaa-b38d-3684e6b1c941\\RECIPE_OK.md] wrote 9 bytes",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1535,11 +1320,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:27.775816300+00:00"
+          "updated_at": "2026-10-19T11:38:26.999020+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:17:25.622990900+00:00",
+        "captured_at": "2026-10-19T11:38:24.247997100+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -1548,7 +1333,7 @@
             "truncated": false
           }
         ],
-        "task_id": "e03050b4-53a1-4f6a-bd1d-b980b5e6743a"
+        "task_id": "78349f8f-db2a-466f-87dc-49c5fa4b9279"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
@@ -1559,13 +1344,13 @@
       "model": "lfm2:24b",
       "provider": "ollama",
       "recipe": "multi-tool",
-      "iteration": 3,
-      "project": "b6633984-d12e-49a6-a18f-e0e6b35313ca",
-      "task_id": "13dd949e-2f79-4772-abe8-68c5b72a3ea3",
+      "iteration": 2,
+      "project": "18d5e336-ec76-49bc-acb3-73444b6071f7",
+      "task_id": "04c63421-f332-43ed-922c-7ff5f699c477",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
-        "failed_tool_calls": 2,
+        "failed_tool_calls": 3,
         "reason": null,
         "result": "succeeded",
         "schema_version": 1,
@@ -1594,7 +1379,7 @@
       },
       "model_used": "lfm2:24b",
       "failure": null,
-      "reply": "Les trois fichiers ont été créés et leurs contenus vérifiés avec succès :\n\n- **FIRST.md** contient le texte exact `alpha`.\n- **SECOND.md** contient le texte exact `beta`.\n\nLa tâche est maintenant terminée.\n\nFIN",
+      "reply": "Les trois opérations demandées ont été réalisées avec succès :\n\n1. Création de `FIRST.md` avec le contenu `alpha`.\n2. Lecture de `FIRST.md` confirmant le contenu `alpha`.\n3. Création de `SECOND.md` avec le contenu `beta`.\n\nAucune modification ultérieure n'a été effectuée, conformément à votre instruction. La tâche est maintenant terminée.",
       "model_turns": [
         {
           "role": "assistant",
@@ -1602,37 +1387,44 @@
           "tool_calls": [
             {
               "function": {
-                "arguments": "{\"arguments\":{\"content\":\"# Alpha\\n\\nCeci est le premier fichier de la première étape du projet, créé selon la demande.\",\"expected_version\":\"missing\",\"workspace\":\"/workspace:/FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "arguments": "{\"arguments\":{\"content\":\"alpha\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
                 "name": "studio_call"
               },
               "id": "call_studio_1_0",
               "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"invalid file arguments: unknown field `workspace`, expected one of `path`, `content`, `expected_version`, `start_line`, `end_line`, `full`, `offset_line`, `limit_lines`. Use only the declared argument names; workspace paths belong in path.\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_1_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
+            },
             {
               "function": {
-                "arguments": "{\"arguments\":{\"content\":\"# Alpha\\n\\nCeci est le premier fichier de la première étape du projet, créé selon la demande.\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
                 "name": "studio_call"
               },
-              "id": "call_studio_2_0",
+              "id": "call_studio_1_1",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_1_2",
               "type": "function"
             }
           ]
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":\"No file written: the proposed content differs from the user's explicit literal. Request the tool again with these exact bytes; do not change case or add a template.\",\"error_code\":\"explicit_content_mismatch\",\"expected_literal\":\"alpha\",\"path\":\"FIRST.md\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_2_0"
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_1_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_1_1"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_1_2"
         },
         {
           "role": "assistant",
@@ -1643,143 +1435,798 @@
                 "arguments": "{\"arguments\":{\"content\":\"alpha\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
                 "name": "studio_call"
               },
-              "id": "call_studio_3_0",
+              "id": "call_studio_2_0",
               "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"abead94e-c4c3-4f51-a7e1-56edab53282a\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\b6633984-d12e-49a6-a18f-e0e6b35313ca\\\\FIRST.md] wrote 5 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_3_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
+            },
             {
               "function": {
-                "arguments": "{\"arguments\":{\"limit_lines\":5,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "arguments": "{\"arguments\":{\"full\":true,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
                 "name": "studio_call"
               },
-              "id": "call_studio_4_0",
+              "id": "call_studio_2_1",
               "type": "function"
-            }
-          ]
-        },
-        {
-          "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"bdfb871c-4bf6-41f2-b7a1-26d1b8a0c06b\",\"output\":\"[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\b6633984-d12e-49a6-a18f-e0e6b35313ca\\\\FIRST.md] requested lines 1..5; returned lines 1..1 (file has 1 lines):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
-          "tool_call_id": "call_studio_4_0"
-        },
-        {
-          "role": "assistant",
-          "content": "",
-          "tool_calls": [
+            },
             {
               "function": {
                 "arguments": "{\"arguments\":{\"content\":\"beta\",\"expected_version\":\"missing\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
                 "name": "studio_call"
               },
-              "id": "call_studio_5_0",
+              "id": "call_studio_2_2",
               "type": "function"
             }
           ]
         },
         {
           "role": "tool",
-          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"17a8e19e-2f1b-4bf7-be06-9d8c7ccb9a25\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\b6633984-d12e-49a6-a18f-e0e6b35313ca\\\\SECOND.md] wrote 4 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"ad65f793-0135-4aa8-a52a-c1fdf80d01bc\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\18d5e336-ec76-49bc-acb3-73444b6071f7\\\\FIRST.md] wrote 5 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_2_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"417376bd-3b01-456d-ad97-b6a631c15719\",\"output\":\"[read_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\18d5e336-ec76-49bc-acb3-73444b6071f7\\\\FIRST.md] full file (1 lines, 5 bytes):\\nalpha\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"read_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_2_1"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"d3ebace2-ed1a-43c0-bb56-f0e5691f7524\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\18d5e336-ec76-49bc-acb3-73444b6071f7\\\\SECOND.md] wrote 4 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_2_2"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        }
+      ],
+      "operations": [
+        {
+          "operation_id": "d3ebace2-ed1a-43c0-bb56-f0e5691f7524",
+          "result": {
+            "error": null,
+            "exit_code": null,
+            "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
+            "operation_id": "d3ebace2-ed1a-43c0-bb56-f0e5691f7524",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\18d5e336-ec76-49bc-acb3-73444b6071f7\\SECOND.md] wrote 4 bytes",
+            "result_unknown": false,
+            "schema_version": 1,
+            "success": true,
+            "tool": "write_file",
+            "truncated": false
+          },
+          "state": "completed",
+          "tool": "write_file",
+          "updated_at": "2026-10-19T11:38:33.671959700+00:00"
+        },
+        {
+          "operation_id": "417376bd-3b01-456d-ad97-b6a631c15719",
+          "result": {
+            "error": null,
+            "exit_code": null,
+            "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+            "operation_id": "417376bd-3b01-456d-ad97-b6a631c15719",
+            "output": "[read_file <isolated-data>\\lfm2-24b\\studio-projects\\18d5e336-ec76-49bc-acb3-73444b6071f7\\FIRST.md] full file (1 lines, 5 bytes):\nalpha",
+            "result_unknown": false,
+            "schema_version": 1,
+            "success": true,
+            "tool": "read_file",
+            "truncated": false
+          },
+          "state": "completed",
+          "tool": "read_file",
+          "updated_at": "2026-10-19T11:38:33.653241800+00:00"
+        },
+        {
+          "operation_id": "ad65f793-0135-4aa8-a52a-c1fdf80d01bc",
+          "result": {
+            "error": null,
+            "exit_code": null,
+            "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+            "operation_id": "ad65f793-0135-4aa8-a52a-c1fdf80d01bc",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\18d5e336-ec76-49bc-acb3-73444b6071f7\\FIRST.md] wrote 5 bytes",
+            "result_unknown": false,
+            "schema_version": 1,
+            "success": true,
+            "tool": "write_file",
+            "truncated": false
+          },
+          "state": "completed",
+          "tool": "write_file",
+          "updated_at": "2026-10-19T11:38:33.633918600+00:00"
+        }
+      ],
+      "diff": {
+        "captured_at": "2026-10-19T11:38:29.989577300+00:00",
+        "files": [
+          {
+            "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
+            "path": "FIRST.md",
+            "status": "added",
+            "truncated": false
+          },
+          {
+            "diff": "diff --git a/SECOND.md b/SECOND.md\n--- /dev/null\n+++ b/SECOND.md\n@@ -0,0 +1 @@\n+beta\n\\ No newline at end of file\n",
+            "path": "SECOND.md",
+            "status": "added",
+            "truncated": false
+          }
+        ],
+        "task_id": "04c63421-f332-43ed-922c-7ff5f699c477"
+      },
+      "verified_files": {
+        "FIRST.md": "alpha",
+        "SECOND.md": "beta"
+      },
+      "validation": "passed"
+    },
+    {
+      "model": "lfm2:24b",
+      "provider": "ollama",
+      "recipe": "single-write",
+      "iteration": 3,
+      "project": "d300992a-1804-4efb-a9cc-35caeffbf8ec",
+      "task_id": "33049f84-c1aa-454e-9639-987cd627214e",
+      "status": "completed",
+      "outcome": {
+        "acceptance_verified": false,
+        "failed_tool_calls": 0,
+        "reason": null,
+        "result": "succeeded",
+        "schema_version": 1,
+        "status": "completed",
+        "successful_tool_calls": 1,
+        "termination_reason": "success",
+        "verification": [
+          {
+            "exit_code": null,
+            "kind": "project_build",
+            "status": "not_run"
+          },
+          {
+            "detail": "requested literal content verified",
+            "kind": "requested_file",
+            "path": "RECIPE_OK.md",
+            "status": "passed"
+          }
+        ]
+      },
+      "model_used": "lfm2:24b",
+      "failure": null,
+      "reply": "Le fichier RECIPE_OK.md a bien été créé à la racine du projet avec le contenu exact demandé. La tâche est maintenant terminée.\n\nFin de l'opération.",
+      "model_turns": [
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"recipe-ok\",\"expected_version\":\"missing\",\"path\":\"RECIPE_OK.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_1_0",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0\",\"operation_id\":\"cde0a509-6f96-43a6-a8ca-e61be9edc7be\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\d300992a-1804-4efb-a9cc-35caeffbf8ec\\\\RECIPE_OK.md] wrote 9 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\",\"truncated\":false}\n\n[Original user task — remaining operations]\nCrée uniquement le fichier RECIPE_OK.md à la racine du projet. Son contenu doit être exactement la ligne recipe-ok. Utilise write_file ou write_code, puis arrête-toi.",
+          "tool_call_id": "call_studio_1_0"
+        }
+      ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        }
+      ],
+      "operations": [
+        {
+          "operation_id": "cde0a509-6f96-43a6-a8ca-e61be9edc7be",
+          "result": {
+            "error": null,
+            "exit_code": null,
+            "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
+            "operation_id": "cde0a509-6f96-43a6-a8ca-e61be9edc7be",
+            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\d300992a-1804-4efb-a9cc-35caeffbf8ec\\RECIPE_OK.md] wrote 9 bytes",
+            "result_unknown": false,
+            "schema_version": 1,
+            "success": true,
+            "tool": "write_file",
+            "truncated": false
+          },
+          "state": "completed",
+          "tool": "write_file",
+          "updated_at": "2026-10-19T11:38:40.161702400+00:00"
+        }
+      ],
+      "diff": {
+        "captured_at": "2026-10-19T11:38:37.329075700+00:00",
+        "files": [
+          {
+            "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
+            "path": "RECIPE_OK.md",
+            "status": "added",
+            "truncated": false
+          }
+        ],
+        "task_id": "33049f84-c1aa-454e-9639-987cd627214e"
+      },
+      "verified_files": {
+        "RECIPE_OK.md": "recipe-ok"
+      },
+      "validation": "passed"
+    },
+    {
+      "model": "lfm2:24b",
+      "provider": "ollama",
+      "recipe": "multi-tool",
+      "iteration": 3,
+      "project": "02bcac50-a937-4ca6-8c40-35781300bea5",
+      "task_id": "cead52cf-c897-41e6-97a0-e0e03c58cfa2",
+      "pending_question": {
+        "choices": [
+          "Continuer (+10 tours)",
+          "Réinitialiser et continuer (+10 tours)",
+          "Arrêter"
+        ],
+        "context": "La tâche a utilisé 12 tours d'outils (max 12). Une reprise exige une nouvelle décision ; aucune ancienne approbation n'est réutilisée.",
+        "question": "Limite de tours d'outils atteinte. Souhaitez-vous continuer la tâche ?",
+        "request_id": null,
+        "task_id": "cead52cf-c897-41e6-97a0-e0e03c58cfa2"
+      },
+      "status": "running",
+      "outcome": null,
+      "model_used": "lfm2:24b",
+      "failure": null,
+      "reply": "Tool lane execution: serial_exclusive (2 call(s))",
+      "model_turns": [
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"alpha\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_1_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_1_1",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_1_2",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_1_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_1_1"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_1_2"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_2_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_2_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_2_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_2_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_3_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_3_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_3_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_3_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_4_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_4_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_4_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_4_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_5_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_5_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
           "tool_call_id": "call_studio_5_0"
-        }
-      ],
-      "operations": [
-        {
-          "operation_id": "17a8e19e-2f1b-4bf7-be06-9d8c7ccb9a25",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "17a8e19e-2f1b-4bf7-be06-9d8c7ccb9a25",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\b6633984-d12e-49a6-a18f-e0e6b35313ca\\SECOND.md] wrote 4 bytes",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "write_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:35.389520200+00:00"
         },
         {
-          "operation_id": "bdfb871c-4bf6-41f2-b7a1-26d1b8a0c06b",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "bdfb871c-4bf6-41f2-b7a1-26d1b8a0c06b",
-            "output": "[read_file <isolated-data>\\lfm2-24b\\studio-projects\\b6633984-d12e-49a6-a18f-e0e6b35313ca\\FIRST.md] requested lines 1..5; returned lines 1..1 (file has 1 lines):\nalpha",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "read_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "read_file",
-          "updated_at": "2026-10-19T10:17:35.077474300+00:00"
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_5_1"
         },
         {
-          "operation_id": "abead94e-c4c3-4f51-a7e1-56edab53282a",
-          "result": {
-            "error": null,
-            "exit_code": null,
-            "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "abead94e-c4c3-4f51-a7e1-56edab53282a",
-            "output": "[write_file <isolated-data>\\lfm2-24b\\studio-projects\\b6633984-d12e-49a6-a18f-e0e6b35313ca\\FIRST.md] wrote 5 bytes",
-            "result_unknown": false,
-            "schema_version": 1,
-            "success": true,
-            "tool": "write_file",
-            "truncated": false
-          },
-          "state": "completed",
-          "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:33.207669300+00:00"
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_6_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_6_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_6_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_6_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_7_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_7_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_7_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_7_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_8_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_8_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_8_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_8_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_9_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_9_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_9_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_9_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_10_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_10_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_10_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_10_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_11_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_11_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_11_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_11_1"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_12_0",
+              "type": "function"
+            },
+            {
+              "function": {
+                "arguments": "{\"arguments\":{\"content\":\"beta\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+                "name": "studio_call"
+              },
+              "id": "call_studio_12_1",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains an invalid tool call or a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_12_0"
+        },
+        {
+          "role": "tool",
+          "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"error_code\":\"invalid_tool_call\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+          "tool_call_id": "call_studio_12_1"
         }
       ],
+      "native_tool_catalogues": [
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        },
+        {
+          "literal_values_bound": true,
+          "selection": "literal_file_only",
+          "tools": [
+            "read_file",
+            "write_file",
+            "write_code"
+          ]
+        }
+      ],
+      "operations": [],
       "diff": {
-        "captured_at": "2026-10-19T10:17:30.246797700+00:00",
-        "files": [
-          {
-            "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
-            "path": "FIRST.md",
-            "status": "added",
-            "truncated": false
-          },
-          {
-            "diff": "diff --git a/SECOND.md b/SECOND.md\n--- /dev/null\n+++ b/SECOND.md\n@@ -0,0 +1 @@\n+beta\n\\ No newline at end of file\n",
-            "path": "SECOND.md",
-            "status": "added",
-            "truncated": false
-          }
-        ],
-        "task_id": "13dd949e-2f79-4772-abe8-68c5b72a3ea3"
+        "captured_at": "2026-10-19T11:38:43.110569800+00:00",
+        "files": [],
+        "task_id": "cead52cf-c897-41e6-97a0-e0e03c58cfa2"
       },
       "verified_files": {
-        "FIRST.md": "alpha",
-        "SECOND.md": "beta"
+        "FIRST.md": null,
+        "SECOND.md": null
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "failed",
+      "error": "('running', None)"
     },
     {
       "model": "qwen2.5-coder:14b",
       "provider": "ollama",
       "recipe": "single-write",
       "iteration": 1,
-      "project": "df11ff9f-690f-437a-9d17-39bc8b90e672",
-      "task_id": "cae64f05-daa3-4c38-b160-b744c74f3da7",
+      "project": "d85a1c7a-6936-4d64-abe9-8f15f8519af7",
+      "task_id": "d6b278d9-e8aa-417a-a7ae-51d5d7868985",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -1806,22 +2253,23 @@
       },
       "model_used": "qwen2.5-coder:14b",
       "failure": null,
-      "reply": "Le fichier `RECIPE_OK.md` a été créé à la racine du projet avec le contenu exact `recipe-ok`.\n\n**Action à essayer :**\nOuvrez le fichier `RECIPE_OK.md` pour vérifier son contenu.\n\n**Limites :**\nAucune autre modification a été effectuée dans le projet.",
+      "reply": "Le fichier `RECIPE_OK.md` a été créé à la racine du projet avec le contenu exact `recipe-ok`.\n\n**Comment lancer ou essayer le résultat :**\nOuvrez le fichier `RECIPE_OK.md` pour vérifier son contenu.\n\n**Limites éventuelles :**\nAucune. Le fichier a été créé comme demandé.",
       "model_turns": [
         {
           "role": "assistant",
           "content": "TOOL: write_file workspace:/RECIPE_OK.md\nrecipe-ok"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "5c2405a5-4113-4701-9883-2784b47e3042",
+          "operation_id": "63d9c502-7ad0-432f-aaea-c0cb2e3a794d",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "5c2405a5-4113-4701-9883-2784b47e3042",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\df11ff9f-690f-437a-9d17-39bc8b90e672\\RECIPE_OK.md] saved (disk).",
+            "operation_id": "63d9c502-7ad0-432f-aaea-c0cb2e3a794d",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\d85a1c7a-6936-4d64-abe9-8f15f8519af7\\RECIPE_OK.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1830,11 +2278,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:48.088952300+00:00"
+          "updated_at": "2026-10-19T11:39:10.347317400+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:17:37.127767100+00:00",
+        "captured_at": "2026-10-19T11:38:57.662470500+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -1843,20 +2291,21 @@
             "truncated": false
           }
         ],
-        "task_id": "cae64f05-daa3-4c38-b160-b744c74f3da7"
+        "task_id": "d6b278d9-e8aa-417a-a7ae-51d5d7868985"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
       },
-      "validation": "passed"
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "qwen2.5-coder:14b",
       "provider": "ollama",
       "recipe": "multi-tool",
       "iteration": 1,
-      "project": "6764afc0-c1d1-4d0f-910e-c2b030fd31d2",
-      "task_id": "dc5b7474-12d5-4f60-8246-ee1ce740c2c0",
+      "project": "1bc28461-56b9-408b-b267-993f45f3ddd7",
+      "task_id": "fe3267ac-917c-4afa-b09a-1eadaa81f423",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -1889,22 +2338,23 @@
       },
       "model_used": "qwen2.5-coder:14b",
       "failure": null,
-      "reply": "Les trois opérations demandées ont été effectuées avec succès :\n\n1. **Création de FIRST.md** : Le fichier `FIRST.md` a été créé avec le contenu `alpha`.\n2. **Lecture de FIRST.md** : Le contenu de `FIRST.md` a été lu et vérifié. Il contient bien `alpha`.\n3. **Création de SECOND.md** : Le fichier `SECOND.md` a été créé avec le contenu `beta`.\n\nAucune autre modification n'a été effectuée.\n\n**Comment lancer ou essayer le résultat** :\n- Ouvrez le fichier `FIRST.md` pour vérifier qu'il contient `alpha`.\n- Ouvrez le fichier `SECOND.md` pour vérifier qu'il contient `beta`.\n\n**Limites éventuelles** :\n- Les fichiers `FIRST.md` et `SECOND.md` ont été créés dans le répertoire de travail actuel.\n- Aucune autre action n'est nécessaire pour utiliser ces fichiers.",
+      "reply": "Les trois opérations demandées ont été effectuées :\n\n1. **Création de FIRST.md** : Le fichier `FIRST.md` a été créé avec le contenu `alpha`.\n2. **Lecture de FIRST.md** : Le contenu de `FIRST.md` a été lu et vérifié. Le contenu est `alpha`.\n3. **Création de SECOND.md** : Le fichier `SECOND.md` a été créé avec le contenu `beta`.\n\nAucune autre modification n'a été effectuée.\n\n**Comment lancer ou essayer le résultat** :\n- Ouvrez le fichier `FIRST.md` pour voir le contenu `alpha`.\n- Ouvrez le fichier `SECOND.md` pour voir le contenu `beta`.\n\n**Limites éventuelles** :\n- Les fichiers `FIRST.md` et `SECOND.md` ont été créés dans le répertoire de travail actuel.\n- Aucune autre action n'est nécessaire pour vérifier le contenu des fichiers.",
       "model_turns": [
         {
           "role": "assistant",
           "content": "TOOL: write_file workspace:/FIRST.md\nalpha\n\nTOOL: read_file workspace:/FIRST.md\n\nTOOL: write_file workspace:/SECOND.md\nbeta"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "5f24512b-61e5-41a0-acca-0ad4146fa318",
+          "operation_id": "a630fe06-7c38-4668-a59c-5c95e2e18a0c",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "5f24512b-61e5-41a0-acca-0ad4146fa318",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\6764afc0-c1d1-4d0f-910e-c2b030fd31d2\\SECOND.md] saved (disk).",
+            "operation_id": "a630fe06-7c38-4668-a59c-5c95e2e18a0c",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\1bc28461-56b9-408b-b267-993f45f3ddd7\\SECOND.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1913,16 +2363,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:53.053776300+00:00"
+          "updated_at": "2026-10-19T11:39:17.171740300+00:00"
         },
         {
-          "operation_id": "e673c868-9e52-4626-9425-5ea8416d5fe0",
+          "operation_id": "bfffb888-b560-4391-965a-5a50a161f246",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "e673c868-9e52-4626-9425-5ea8416d5fe0",
-            "output": "[read_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\6764afc0-c1d1-4d0f-910e-c2b030fd31d2\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+            "operation_id": "bfffb888-b560-4391-965a-5a50a161f246",
+            "output": "[read_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\1bc28461-56b9-408b-b267-993f45f3ddd7\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1931,16 +2381,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:17:53.027671900+00:00"
+          "updated_at": "2026-10-19T11:39:17.125493800+00:00"
         },
         {
-          "operation_id": "114290dc-d194-46c1-b9b0-7f33016480f8",
+          "operation_id": "f5a52826-1b73-4c6e-81dd-3b5669c71d13",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "114290dc-d194-46c1-b9b0-7f33016480f8",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\6764afc0-c1d1-4d0f-910e-c2b030fd31d2\\FIRST.md] saved (disk).",
+            "operation_id": "f5a52826-1b73-4c6e-81dd-3b5669c71d13",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\1bc28461-56b9-408b-b267-993f45f3ddd7\\FIRST.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -1949,11 +2399,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:17:53.002959600+00:00"
+          "updated_at": "2026-10-19T11:39:17.098862400+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:17:51.286077600+00:00",
+        "captured_at": "2026-10-19T11:39:14.436058100+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -1968,22 +2418,22 @@
             "truncated": false
           }
         ],
-        "task_id": "dc5b7474-12d5-4f60-8246-ee1ce740c2c0"
+        "task_id": "fe3267ac-917c-4afa-b09a-1eadaa81f423"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "qwen2.5-coder:14b",
       "provider": "ollama",
       "recipe": "single-write",
       "iteration": 2,
-      "project": "4d2587da-6ac4-4d70-a05f-21c099ca7e9d",
-      "task_id": "f2bfcb29-b336-4740-8f95-23ac2f580f57",
+      "project": "35bebd3e-9b4c-415c-badd-624d67e0e864",
+      "task_id": "5caf1790-8c05-4bad-b34e-d28971b8574c",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -2010,22 +2460,23 @@
       },
       "model_used": "qwen2.5-coder:14b",
       "failure": null,
-      "reply": "Le fichier `RECIPE_OK.md` a été créé à la racine du projet avec le contenu exact `recipe-ok`.\n\n**Instructions pour l'utilisateur :**\n- Ouvrez le fichier `RECIPE_OK.md` pour vérifier son contenu.\n- Le fichier doit contenir uniquement la ligne `recipe-ok`.\n\n**Limites :**\n- Aucune autre modification a été apportée au projet.\n- Le contenu du fichier est strictement conforme à la demande initiale.",
+      "reply": "Le fichier `RECIPE_OK.md` a été créé à la racine du projet avec le contenu exact `recipe-ok`.\n\n**Instructions pour l'utilisateur :**\n- Le fichier `RECIPE_OK.md` a été créé avec le contenu `recipe-ok`.\n- Vous pouvez vérifier le contenu du fichier en ouvrant `RECIPE_OK.md` dans votre éditeur de texte.\n\n**Limites éventuelles :**\n- Aucune autre modification n'a été effectuée dans le projet.\n- Si vous avez besoin de faire d'autres modifications, veuillez préciser les nouvelles demandes.",
       "model_turns": [
         {
           "role": "assistant",
           "content": "TOOL: write_file workspace:/RECIPE_OK.md\nrecipe-ok"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "f0bb2d1a-cece-4eff-afc0-62d9003f7491",
+          "operation_id": "77f377a7-2250-4600-8849-90f50562f3d1",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "f0bb2d1a-cece-4eff-afc0-62d9003f7491",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\4d2587da-6ac4-4d70-a05f-21c099ca7e9d\\RECIPE_OK.md] saved (disk).",
+            "operation_id": "77f377a7-2250-4600-8849-90f50562f3d1",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\35bebd3e-9b4c-415c-badd-624d67e0e864\\RECIPE_OK.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2034,11 +2485,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:18:01.366323900+00:00"
+          "updated_at": "2026-10-19T11:39:26.767426800+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:18:00.143240500+00:00",
+        "captured_at": "2026-10-19T11:39:24.890245200+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -2047,20 +2498,21 @@
             "truncated": false
           }
         ],
-        "task_id": "f2bfcb29-b336-4740-8f95-23ac2f580f57"
+        "task_id": "5caf1790-8c05-4bad-b34e-d28971b8574c"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
       },
-      "validation": "passed"
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "qwen2.5-coder:14b",
       "provider": "ollama",
       "recipe": "multi-tool",
       "iteration": 2,
-      "project": "187ea66a-c8c3-4715-8c29-1d2e3e5dfa39",
-      "task_id": "ebdd0214-3a2d-4aa5-9c76-9fe3188d5715",
+      "project": "eedfad0b-5ff6-4981-94c5-0701ba829a25",
+      "task_id": "ca9fd7a5-ec95-4e6b-988d-a42cd70928e2",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -2093,22 +2545,23 @@
       },
       "model_used": "qwen2.5-coder:14b",
       "failure": null,
-      "reply": "Les trois opérations demandées ont été effectuées avec succès :\n\n1. **Création de FIRST.md** : Le fichier `FIRST.md` a été créé avec le contenu `alpha`.\n2. **Lecture de FIRST.md** : Le contenu de `FIRST.md` a été lu et vérifié, et il contient bien `alpha`.\n3. **Création de SECOND.md** : Le fichier `SECOND.md` a été créé avec le contenu `beta`.\n\nAucune autre modification n'a été effectuée.\n\n**Comment lancer ou essayer le résultat** :\n- Ouvrez le fichier `FIRST.md` pour voir le contenu `alpha`.\n- Ouvrez le fichier `SECOND.md` pour voir le contenu `beta`.\n\n**Limites éventuelles** :\n- Les fichiers `FIRST.md` et `SECOND.md` ont été créés dans le répertoire de travail actuel du projet.\n- Aucune autre action n'est nécessaire pour vérifier le contenu des fichiers.",
+      "reply": "Les opérations demandées ont été effectuées comme suit :\n\n1. **Création de FIRST.md** : Le fichier `FIRST.md` a été créé avec le contenu `alpha`.\n2. **Lecture de FIRST.md** : Le contenu de `FIRST.md` a été lu et vérifié. Le contenu est `alpha`.\n3. **Création de SECOND.md** : Le fichier `SECOND.md` a été créé avec le contenu `beta`.\n\nToutes les opérations demandées ont été effectuées avec succès.",
       "model_turns": [
         {
           "role": "assistant",
           "content": "TOOL: write_file workspace:/FIRST.md\nalpha\n\nTOOL: read_file workspace:/FIRST.md\n\nTOOL: write_file workspace:/SECOND.md\nbeta"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "96d69fc9-e1c6-450e-bddb-bd5b3e11b2f1",
+          "operation_id": "7a318216-d39a-4088-b020-cc361600a69f",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "96d69fc9-e1c6-450e-bddb-bd5b3e11b2f1",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\187ea66a-c8c3-4715-8c29-1d2e3e5dfa39\\SECOND.md] saved (disk).",
+            "operation_id": "7a318216-d39a-4088-b020-cc361600a69f",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\eedfad0b-5ff6-4981-94c5-0701ba829a25\\SECOND.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2117,16 +2570,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:18:06.996512+00:00"
+          "updated_at": "2026-10-19T11:39:33.936535500+00:00"
         },
         {
-          "operation_id": "614fbfcf-eae6-4582-bf6a-7891c8bafbce",
+          "operation_id": "c51651c1-330b-42ad-94c0-e3c135b71d07",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "614fbfcf-eae6-4582-bf6a-7891c8bafbce",
-            "output": "[read_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\187ea66a-c8c3-4715-8c29-1d2e3e5dfa39\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+            "operation_id": "c51651c1-330b-42ad-94c0-e3c135b71d07",
+            "output": "[read_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\eedfad0b-5ff6-4981-94c5-0701ba829a25\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2135,16 +2588,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:18:06.966151700+00:00"
+          "updated_at": "2026-10-19T11:39:33.912654200+00:00"
         },
         {
-          "operation_id": "791b3831-66c5-48ad-8cb5-6b94090cbe96",
+          "operation_id": "d14aced7-d922-4121-aec1-017c889f566c",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "791b3831-66c5-48ad-8cb5-6b94090cbe96",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\187ea66a-c8c3-4715-8c29-1d2e3e5dfa39\\FIRST.md] saved (disk).",
+            "operation_id": "d14aced7-d922-4121-aec1-017c889f566c",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\eedfad0b-5ff6-4981-94c5-0701ba829a25\\FIRST.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2153,11 +2606,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:18:06.939282600+00:00"
+          "updated_at": "2026-10-19T11:39:33.892333200+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:18:05.187401800+00:00",
+        "captured_at": "2026-10-19T11:39:31.596171400+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -2172,22 +2625,22 @@
             "truncated": false
           }
         ],
-        "task_id": "ebdd0214-3a2d-4aa5-9c76-9fe3188d5715"
+        "task_id": "ca9fd7a5-ec95-4e6b-988d-a42cd70928e2"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "qwen2.5-coder:14b",
       "provider": "ollama",
       "recipe": "single-write",
       "iteration": 3,
-      "project": "13663325-c37c-4ed3-ba98-2419918a5788",
-      "task_id": "5977938b-031a-4f55-9645-9db08c615c59",
+      "project": "37e7fc40-6570-457a-b70f-f5eb92f1d61e",
+      "task_id": "e59b810c-0c9b-41d4-8a0d-280c7a7fca38",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -2214,22 +2667,23 @@
       },
       "model_used": "qwen2.5-coder:14b",
       "failure": null,
-      "reply": "Le fichier `RECIPE_OK.md` a été créé à la racine du projet avec le contenu exact `recipe-ok`.\n\n**Instructions pour l'utilisateur :**\n- Ouvrez le fichier `RECIPE_OK.md` pour vérifier son contenu.\n- Le fichier doit contenir uniquement la ligne `recipe-ok`.\n\n**Limites :**\n- Aucune autre modification a été apportée au projet.\n- Le fichier `RECIPE_OK.md` est le seul fichier créé ou modifié par cette tâche.",
+      "reply": "Le fichier `RECIPE_OK.md` a été créé à la racine du projet avec le contenu exact `recipe-ok`.\n\n**Comment lancer ou essayer le résultat :**\nOuvrez le fichier `RECIPE_OK.md` dans un éditeur de texte pour vérifier son contenu.\n\n**Limites éventuelles :**\nAucune. Le fichier a été créé comme demandé.",
       "model_turns": [
         {
           "role": "assistant",
           "content": "TOOL: write_file workspace:/RECIPE_OK.md\nrecipe-ok"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "9364b6c0-bf74-4cba-a6e8-6237a869e0f9",
+          "operation_id": "f85a58b5-3d45-47fe-ba0c-e283790b9152",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "90c7219cf717c89f9cc418ba27b75c7d7a87fe0dbb976b995647e794e4f6dcb0",
-            "operation_id": "9364b6c0-bf74-4cba-a6e8-6237a869e0f9",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\13663325-c37c-4ed3-ba98-2419918a5788\\RECIPE_OK.md] saved (disk).",
+            "operation_id": "f85a58b5-3d45-47fe-ba0c-e283790b9152",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\37e7fc40-6570-457a-b70f-f5eb92f1d61e\\RECIPE_OK.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2238,11 +2692,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:18:15.276066200+00:00"
+          "updated_at": "2026-10-19T11:39:40.883231100+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:18:14.047002500+00:00",
+        "captured_at": "2026-10-19T11:39:38.891414600+00:00",
         "files": [
           {
             "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
@@ -2251,20 +2705,21 @@
             "truncated": false
           }
         ],
-        "task_id": "5977938b-031a-4f55-9645-9db08c615c59"
+        "task_id": "e59b810c-0c9b-41d4-8a0d-280c7a7fca38"
       },
       "verified_files": {
         "RECIPE_OK.md": "recipe-ok"
       },
-      "validation": "passed"
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     },
     {
       "model": "qwen2.5-coder:14b",
       "provider": "ollama",
       "recipe": "multi-tool",
       "iteration": 3,
-      "project": "f2668b11-4437-4afe-bc8c-eb0508222ae0",
-      "task_id": "ec77af83-e59c-44ae-8e11-847916229edd",
+      "project": "3e7c3a70-39f6-4913-8722-81cd301c7bee",
+      "task_id": "c89f8743-1fb5-41db-8346-a405b3fd5dcc",
       "status": "completed",
       "outcome": {
         "acceptance_verified": false,
@@ -2297,22 +2752,23 @@
       },
       "model_used": "qwen2.5-coder:14b",
       "failure": null,
-      "reply": "Les trois opérations demandées ont été effectuées :\n\n1. **Création de FIRST.md** : Le fichier `FIRST.md` a été créé avec le contenu `alpha`.\n2. **Lecture de FIRST.md** : Le contenu de `FIRST.md` a été lu et vérifié. Il contient bien `alpha`.\n3. **Création de SECOND.md** : Le fichier `SECOND.md` a été créé avec le contenu `beta`.\n\nAucune autre modification n'a été effectuée.\n\n**Comment lancer ou essayer le résultat** :\n- Ouvrez le fichier `FIRST.md` pour vérifier qu'il contient `alpha`.\n- Ouvrez le fichier `SECOND.md` pour vérifier qu'il contient `beta`.\n\n**Limites éventuelles** :\n- Les fichiers `FIRST.md` et `SECOND.md` ont été créés dans le répertoire de travail actuel.\n- Aucune autre action n'est nécessaire pour utiliser ces fichiers.",
+      "reply": "Les trois opérations demandées ont été effectuées :\n\n1. **Création de FIRST.md** : Le fichier `FIRST.md` a été créé avec le contenu `alpha`.\n2. **Lecture de FIRST.md** : Le contenu de `FIRST.md` a été lu et vérifié, contenant bien `alpha`.\n3. **Création de SECOND.md** : Le fichier `SECOND.md` a été créé avec le contenu `beta`.\n\nAucune autre modification a été effectuée.\n\n**Comment lancer ou essayer le résultat** :\n- Ouvrez le fichier `FIRST.md` pour voir le contenu `alpha`.\n- Ouvrez le fichier `SECOND.md` pour voir le contenu `beta`.\n\n**Limites éventuelles** :\n- Les fichiers `FIRST.md` et `SECOND.md` ont été créés dans le répertoire de travail actuel.\n- Aucune autre action n'est nécessaire pour vérifier le contenu des fichiers.",
       "model_turns": [
         {
           "role": "assistant",
           "content": "TOOL: write_file workspace:/FIRST.md\nalpha\n\nTOOL: read_file workspace:/FIRST.md\n\nTOOL: write_file workspace:/SECOND.md\nbeta"
         }
       ],
+      "native_tool_catalogues": [],
       "operations": [
         {
-          "operation_id": "e1a92447-4903-4bd8-9934-57ed42c4ed25",
+          "operation_id": "f57feecb-b5cd-43bb-8235-8a561f87a1d5",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
-            "operation_id": "e1a92447-4903-4bd8-9934-57ed42c4ed25",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\f2668b11-4437-4afe-bc8c-eb0508222ae0\\SECOND.md] saved (disk).",
+            "operation_id": "f57feecb-b5cd-43bb-8235-8a561f87a1d5",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\3e7c3a70-39f6-4913-8722-81cd301c7bee\\SECOND.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2321,16 +2777,16 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:18:20.995425300+00:00"
+          "updated_at": "2026-10-19T11:39:47.041373300+00:00"
         },
         {
-          "operation_id": "d985c0da-8af0-450e-803a-b4eb501f2875",
+          "operation_id": "c906cb48-175f-483e-ac58-a67be8c50615",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "d985c0da-8af0-450e-803a-b4eb501f2875",
-            "output": "[read_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\f2668b11-4437-4afe-bc8c-eb0508222ae0\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
+            "operation_id": "c906cb48-175f-483e-ac58-a67be8c50615",
+            "output": "[read_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\3e7c3a70-39f6-4913-8722-81cd301c7bee\\FIRST.md] requested lines 1..500; returned lines 1..1 (file has 1 lines):\nalpha",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2339,16 +2795,16 @@
           },
           "state": "completed",
           "tool": "read_file",
-          "updated_at": "2026-10-19T10:18:20.971093700+00:00"
+          "updated_at": "2026-10-19T11:39:47.016695700+00:00"
         },
         {
-          "operation_id": "b73c7fa6-008d-4308-8e39-aa0402147f9e",
+          "operation_id": "2110f141-20b9-444c-8ca3-ddab8771e3d6",
           "result": {
             "error": null,
             "exit_code": null,
             "file_version": "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
-            "operation_id": "b73c7fa6-008d-4308-8e39-aa0402147f9e",
-            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\f2668b11-4437-4afe-bc8c-eb0508222ae0\\FIRST.md] saved (disk).",
+            "operation_id": "2110f141-20b9-444c-8ca3-ddab8771e3d6",
+            "output": "[write_file <isolated-data>\\qwen2.5-coder-14b\\studio-projects\\3e7c3a70-39f6-4913-8722-81cd301c7bee\\FIRST.md] saved (disk).",
             "result_unknown": false,
             "schema_version": 1,
             "success": true,
@@ -2357,11 +2813,11 @@
           },
           "state": "completed",
           "tool": "write_file",
-          "updated_at": "2026-10-19T10:18:20.948216100+00:00"
+          "updated_at": "2026-10-19T11:39:46.975529200+00:00"
         }
       ],
       "diff": {
-        "captured_at": "2026-10-19T10:18:19.223601500+00:00",
+        "captured_at": "2026-10-19T11:39:44.645904900+00:00",
         "files": [
           {
             "diff": "diff --git a/FIRST.md b/FIRST.md\n--- /dev/null\n+++ b/FIRST.md\n@@ -0,0 +1 @@\n+alpha\n\\ No newline at end of file\n",
@@ -2376,18 +2832,21 @@
             "truncated": false
           }
         ],
-        "task_id": "ec77af83-e59c-44ae-8e11-847916229edd"
+        "task_id": "c89f8743-1fb5-41db-8346-a405b3fd5dcc"
       },
       "verified_files": {
         "FIRST.md": "alpha",
         "SECOND.md": "beta"
       },
-      "validation": "passed",
-      "read_before_second_write_verified": true
+      "validation": "failed",
+      "error": "Focused native catalogue was not selected"
     }
   ],
   "provider_fallback": false,
-  "daemon_sha256": "8bbd9836f54d3d396ca828327eb2325e2025f75c8b65afbc99f248bee3b30e1b",
-  "source_run": "studio-model-recipes-_kypjli8",
-  "status": "passed"
+  "daemon_sha256": "3592dacea6a593b58ca4a5eeac8f1af91447202fe710576719453911da675b38",
+  "source_run": "studio-model-recipes-yfai2vlq",
+  "status": "failed",
+  "functional_passed": 17,
+  "functional_total": 18,
+  "instrumentation_note": "Catalogue events were queried after completion and could be evicted by the bounded task_events journal. The runner now collects them during execution. Original case validations are preserved. Independently checked exact contents, successful write counts, FIRST read before SECOND write and exact diff paths: 17/18; LFM2 multi-tool iteration 3 genuinely exhausted its budget omitting expected_version."
 }
