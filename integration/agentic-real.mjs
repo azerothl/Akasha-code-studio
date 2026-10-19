@@ -201,7 +201,7 @@ await writeFile(
 );
 await writeFile(
   join(data, "mcp-fixture.mjs"),
-  `import{createInterface}from'node:readline';import{appendFileSync}from'node:fs';const rl=createInterface({input:process.stdin});rl.on('line',line=>{const q=JSON.parse(line);if(q.id===undefined)return;let result;if(q.method==='initialize')result={protocolVersion:'2025-06-18',capabilities:{tools:{}},serverInfo:{name:'fixture',version:'1'}};else if(q.method==='tools/list')result=q.params?.cursor?{tools:[{name:'second',description:'second page',inputSchema:{type:'object',properties:{},additionalProperties:false}}]}:{tools:[{name:'echo',description:'echo checked text',inputSchema:{type:'object',required:['text'],properties:{text:{type:'string'}},additionalProperties:false}}],nextCursor:'page2'};else if(q.method==='tools/call'){appendFileSync(${JSON.stringify(join(data, "mcp-calls.txt"))},JSON.stringify(q.params)+'\\n');result={content:[{type:'text',text:q.params.arguments.text??'second'}]};}else result={};process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:q.id,result})+'\\n');});`,
+  `import{createInterface}from'node:readline';import{appendFileSync}from'node:fs';const rl=createInterface({input:process.stdin});rl.on('line',line=>{const q=JSON.parse(line);if(q.id===undefined)return;let result;if(q.method==='initialize')process.stdout.write('\\n'+JSON.stringify({jsonrpc:'2.0',method:'notifications/message',params:{level:'info',data:'initializing'}})+'\\n');if(q.method==='initialize')result={protocolVersion:'2025-06-18',capabilities:{tools:{}},serverInfo:{name:'fixture',version:'1'}};else if(q.method==='tools/list')result=q.params?.cursor?{tools:[{name:'second',description:'second page',inputSchema:{type:'object',properties:{},additionalProperties:false}}]}:{tools:[{name:'echo',description:'echo checked text',inputSchema:{type:'object',required:['text'],properties:{text:{type:'string'}},additionalProperties:false}}],nextCursor:'page2'};else if(q.method==='tools/call'){appendFileSync(${JSON.stringify(join(data, "mcp-calls.txt"))},JSON.stringify(q.params)+'\\n');result={content:[{type:'text',text:q.params.arguments.text??'second'}]};}else result={};process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:q.id,result})+'\\n');});`,
 );
 await writeFile(
   join(data, "mcp.json"),
@@ -1252,7 +1252,7 @@ try {
     },
   );
   await check(
-    "nested rules defer the first mutation and skill activations are auditable",
+    "recursive search rules are active before the next mutation and skills are auditable",
     async () => {
       await writeFile(
         join(root, "AGENTS.md"),
@@ -1285,21 +1285,10 @@ try {
             );
           },
         },
-        {
-          tool: "write_file",
-          id: op,
-          args: fileArgs("nested/note.md", "rules respected\n"),
-          verify: async (text) => {
-            assert(text.includes("NESTED_RULE_VALIDATION"));
-            assert.equal(
-              await readFile(join(root, "nested/note.md"), "utf8").catch(
-                () => null,
-              ),
-              null,
-            );
-          },
-        },
-        { text: "TOOL: read_skill studio-explore" },
+        { text: "TOOL: read_skill studio-explore", verify: async (text) => {
+          assert(text.includes("NESTED_RULE_VALIDATION"));
+          assert.equal(await readFile(join(root,"nested/note.md"),"utf8"),"rules respected\n");
+        } },
         { text: "Règles et skill lus." },
       ]);
       const row = await finished(id);
@@ -1325,6 +1314,18 @@ try {
       return { id, context: manifest.active_context };
     },
   );
+  await check("fresh nested rules defer mutations until the model has read them", async () => {
+    const id=await task("fresh-rules",[
+      tool("write_file",fileArgs("nested/deferred.md","safe\n")),
+      {tool:"write_file",args:fileArgs("nested/deferred.md","safe\n"),verify:async(text)=>{
+        assert(text.includes("NESTED_RULE_VALIDATION"));
+        assert.equal(await readFile(join(root,"nested/deferred.md"),"utf8").catch(()=>null),null);
+      }},
+      {text:"Nested rules respected."}
+    ]);
+    const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));
+    assert.equal(await readFile(join(root,"nested/deferred.md"),"utf8"),"safe\n");return {id};
+  });
   await check(
     "rename loads destination rules when its directory contains spaces",
     async () => {
@@ -2121,6 +2122,26 @@ try {
     );
     assert.deepEqual(errors, []);
     return { screenshots: ["desktop.png", "mobile.png"], pageErrors: errors };
+  });
+  await check("delivery reads reject foreign and opaque browser origins", async () => {
+    for (const path of [`/api/studio/projects/${project.id}/delivery/status`, `/api/studio/projects/${project.id}/delivery/pr`, `/api/tasks/${randomUUID()}/delivery?ignored=1`]) {
+      for (const origin of ["https://evil.example", "null"]) {
+        const response=await fetch(base+path,{headers:{Origin:origin}});
+        assert.equal(response.status,403,`${origin} ${path}`);
+      }
+    }
+    return {denied:6};
+  });
+  await check("delivery refuses repository configured process helpers before GitHub access", async () => {
+    const root=join(data,"studio-projects",project.id);
+    const config=join(root,".git","config");const original=await readFile(config,"utf8");
+    try {
+      await writeFile(config,original+'\n[filter "studio-test"]\n clean = studio-never-execute-this\n');
+      const result=await api(`/api/studio/projects/${project.id}/delivery/status`);
+      assert.equal(result.success,false,JSON.stringify(result));
+      assert.match(JSON.stringify(result),/helper.*configuration.*unsupported/);
+      return {refused:true};
+    } finally {await writeFile(config,original);}
   });
   if (process.env.CODE_STUDIO_TEST_PUBLISH === "1") {
     await check(
