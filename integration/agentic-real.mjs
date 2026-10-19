@@ -219,7 +219,7 @@ const log = await import("node:fs").then((fs) =>
 );
 // Delivery must authenticate explicitly and ignore a global URL redirection.
 const hostileGlobalGitConfig=join(data,"hostile-global.gitconfig");
-await writeFile(hostileGlobalGitConfig,'[url "https://unapproved.invalid/"]\n  insteadOf = https://github.com/\n');
+await writeFile(hostileGlobalGitConfig,'[user]\n  name = Studio validation\n  email = studio-validation@example.invalid\n[url "https://unapproved.invalid/"]\n  insteadOf = https://github.com/\n');
 const daemonEnv = {
   ...process.env,
   GIT_CONFIG_GLOBAL: hostileGlobalGitConfig,
