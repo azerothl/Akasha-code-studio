@@ -888,7 +888,7 @@ try {
         tool("run_command", {
           program: "node",
           args: ["-e", "require('fs').writeFileSync('FORBIDDEN.txt','bad')"],
-        }),
+        }, randomUUID()),
         { text: "Fin de la revue." },
       ];
       let id;
