@@ -34,7 +34,7 @@ Un ticket ouvert ou une correction locale ne signifie pas livraison validée. Le
 
 ## Implémentations proposées
 
-Les 12 PR sont empilées et conservées ouvertes. Voir [la validation de reprise et des modèles](validation/agentic-recovery-models-2026-10-18.md) et les preuves archivées. REC-01 à REC-09 sont désormais exécutées ; #158 reste ouvert jusqu’à intégration. [Akasha #179](https://github.com/azerothl/Akasha/issues/179) conserve les échecs Devstral et LFM2. Les compléments sont dans Akasha #170 et Code Studio #35.
+Les 12 PR sont empilées et conservées ouvertes. Voir [la validation de reprise et des modèles](validation/agentic-recovery-models-2026-10-19.md) et les preuves archivées. REC-01 à REC-09 sont désormais exécutées ; #158 reste ouvert jusqu’à intégration. [Akasha #179](https://github.com/azerothl/Akasha/issues/179) dispose désormais de 18/18 recettes ciblées réussies ; les échecs exploratoires restent archivés et le ticket reste ouvert jusqu’à intégration. Les compléments sont dans Akasha #170 et Code Studio #35.
 
 | Priorité | Ticket | PR d’implémentation |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Les 12 PR sont empilées et conservées ouvertes. Voir [la validation de reprise
 - Compilation Windows du daemon avec `cargo check -p akasha-daemon --no-default-features --features embedded` : réussie sur les branches proposées. Le mode sans fonctionnalités, sans `embedded`, conserve un défaut préexistant distinct.
 - Build TypeScript/Vite : réussi. Avertissement du bundle principal >500 Ko persistant ; xterm est chargé séparément.
 - Les workflows CI automatiques sont consultables dans les PR. Ils ne remplacent pas les recettes MCP/PTY/LSP/publication ou crash/reprise ; le job GPU peut rester en attente.
-- Dernière validation : 21 tests unitaires UI, 32 Playwright simulés, 406 daemon + 109 bibliothèques Rust, 38 parcours techniques réels (37 standard + publication GitHub de test), REC-01 à REC-09. Recettes LLM finales : Qwen 6/6, Devstral 3/6, LFM2 1/6 ; #179 reste bloquant. La condition « tous les tests passent » n’est pas satisfaite. CUDA non exécuté, avec accord utilisateur.
+- Dernière validation (19 octobre) : 21 tests unitaires UI, 32 Playwright simulés, 416 daemon + 122 bibliothèques Rust = 538, 45 parcours techniques réels (44 standard + publication temporaire), REC-01 à REC-09. Vrais LLM : Qwen, Devstral et LFM2 6/6 chacun, soit 18/18. Les validations locales passent ; CI et intégration des PR restent à suivre. CUDA non exécuté, avec accord utilisateur.
 - Première tranche : MCP stdio (un serveur attaché), transports natifs Chat Completions sur trois providers, contrôle de version sur les outils de fichier documentés, reprise de la boucle Studio, LSP sur trois familles de langages, livraison GitHub.com. Les limites complémentaires sont explicites dans les contrats daemon et empêchent une clôture globale comme « solution agentique complète ».
 
 Documents de validation : [P0](validation/agentic-p0-implementation-2026-10-18.md), [capacités/skills](validation/agentic-capabilities-skills-2026-10-18.md), [observation](validation/agentic-observation-2026-10-18.md), [reprise](validation/agentic-recovery-2026-10-18.md), [LSP/livraison](validation/agentic-semantic-delivery-2026-10-18.md).

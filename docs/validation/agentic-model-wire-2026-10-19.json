@@ -1,0 +1,325 @@
+{
+  "purpose": "Raw HTTP probes return proposals only and execute no file operation. The read_window_regression_before_fix section is a separate executed daemon recipe that failed external validation. Both are separate from the final passing campaign.",
+  "empty_wrapper_responses": [
+    {
+      "stream": true,
+      "tool_choice": "required",
+      "functions": [
+        "studio_call"
+      ],
+      "http_status": 200,
+      "response": "data: {\"id\":\"chatcmpl-140\",\"object\":\"chat.completion.chunk\",\"created\":1792384100,\"model\":\"studio-validation-f4af837722ce\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-140\",\"object\":\"chat.completion.chunk\",\"created\":1792384100,\"model\":\"studio-validation-f4af837722ce\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "stream": true,
+      "tool_choice": "required",
+      "functions": [
+        "studio_call"
+      ],
+      "http_status": 200,
+      "response": "data: {\"id\":\"chatcmpl-358\",\"object\":\"chat.completion.chunk\",\"created\":1792384104,\"model\":\"studio-validation-f4af837722ce\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-358\",\"object\":\"chat.completion.chunk\",\"created\":1792384104,\"model\":\"studio-validation-f4af837722ce\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+    }
+  ],
+  "choice_variants": [
+    {
+      "variant": "auto-nonstream",
+      "request": {
+        "tool_choice": "auto",
+        "stream": false
+      },
+      "response": "{\"id\":\"chatcmpl-92\",\"object\":\"chat.completion\",\"created\":1792384171,\"model\":\"studio-wire-883ac399d41a\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":6632,\"prompt_tokens_details\":{\"cached_tokens\":6631},\"completion_tokens\":27,\"total_tokens\":6659}}\n"
+    },
+    {
+      "variant": "auto",
+      "request": {
+        "tool_choice": "auto",
+        "stream": true
+      },
+      "response": "data: {\"id\":\"chatcmpl-444\",\"object\":\"chat.completion.chunk\",\"created\":1792384163,\"model\":\"studio-wire-883ac399d41a\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-444\",\"object\":\"chat.completion.chunk\",\"created\":1792384163,\"model\":\"studio-wire-883ac399d41a\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "variant": "named",
+      "request": {
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "studio_call"
+          }
+        },
+        "stream": true
+      },
+      "response": "data: {\"id\":\"chatcmpl-290\",\"object\":\"chat.completion.chunk\",\"created\":1792384167,\"model\":\"studio-wire-883ac399d41a\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-290\",\"object\":\"chat.completion.chunk\",\"created\":1792384167,\"model\":\"studio-wire-883ac399d41a\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "variant": "required",
+      "request": {
+        "tool_choice": "required",
+        "stream": false
+      },
+      "response": "{\"id\":\"chatcmpl-497\",\"object\":\"chat.completion\",\"created\":1792384159,\"model\":\"studio-wire-883ac399d41a\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":6632,\"prompt_tokens_details\":{\"cached_tokens\":5255},\"completion_tokens\":32,\"total_tokens\":6664}}\n"
+    }
+  ],
+  "flat_function_responses": [
+    {
+      "variant": "flat",
+      "request": {
+        "functions": [
+          "read_file",
+          "write_file",
+          "write_code",
+          "delete_file",
+          "rename_path",
+          "move_tree",
+          "search_files",
+          "grep_content",
+          "run_command",
+          "run_terminal",
+          "run_command_background",
+          "terminal_session",
+          "process",
+          "file_diff",
+          "diff_unified",
+          "dir_compare",
+          "git_status",
+          "git_diff",
+          "git_log",
+          "git_rev_parse",
+          "edit_file",
+          "apply_patch",
+          "search_replace",
+          "web_fetch",
+          "workspace_graph_search",
+          "image",
+          "pdf",
+          "studio_list_tickets",
+          "studio_create_ticket",
+          "studio_update_ticket",
+          "git_delivery_status",
+          "git_commit",
+          "lsp_apply_rename",
+          "list_tools"
+        ]
+      },
+      "response": "{\"id\":\"chatcmpl-735\",\"object\":\"chat.completion\",\"created\":1792384231,\"model\":\"studio-wire-7c012be04d17\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"id\":\"call_iogcm545\",\"index\":0,\"type\":\"function\",\"function\":{\"name\":\"write_file\",\"arguments\":\"{\\\"path\\\":\\\"workspace:/RECIPE_OK.md\\\",\\\"content\\\":\\\"recipe-ok\\\",\\\"expected_version\\\":\\\"missing\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":8396,\"prompt_tokens_details\":{\"cached_tokens\":5266},\"completion_tokens\":32,\"total_tokens\":8428}}\n"
+    },
+    {
+      "variant": "write-only",
+      "request": {
+        "functions": [
+          "write_file"
+        ]
+      },
+      "response": "{\"id\":\"chatcmpl-27\",\"object\":\"chat.completion\",\"created\":1792384236,\"model\":\"studio-wire-7c012be04d17\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"id\":\"call_zesslq0f\",\"index\":0,\"type\":\"function\",\"function\":{\"name\":\"write_file\",\"arguments\":\"{\\\"path\\\":\\\"workspace:/RECIPE_OK.md\\\",\\\"content\\\":\\\"recipe-ok\\\",\\\"expected_version\\\":\\\"missing\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":6526,\"prompt_tokens_details\":{\"cached_tokens\":5266},\"completion_tokens\":32,\"total_tokens\":6558}}\n"
+    }
+  ],
+  "read_window_regression_before_fix": {
+    "source_run": "studio-model-recipes-hh7ivkg_",
+    "daemon_sha256": "79ab757a01fa5416473046fe2cce91ecf96ebe15a0ec65943d5488789737cdf0",
+    "model": "lfm2:24b",
+    "recipe": "multi-tool",
+    "iteration": 2,
+    "validation": "failed",
+    "model_turns": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"content\":\"# Alpha\\n\\nCeci est le premier fichier créé selon la demande.\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_1_0",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_1_1",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"content\":\"# Beta\\n\\nCeci est le second fichier créé selon la demande.\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_1_2",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_1_0"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":null,\"error_code\":\"file_not_found\",\"exit_code\":null,\"file_version\":\"missing\",\"operation_id\":\"934c79e6-ee6f-4e32-9921-7f5c6ef61e64\",\"output\":\"[read_file] failed: read_file bytes <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a2adf92d-0253-40cd-b138-410b67b0b3e0\\\\FIRST.md: Le fichier spécifié est introuvable. (os error 2)\",\"result_unknown\":false,\"retry_hint\":\"The file does not exist. Repeating read_file with another window/full cannot create it. If the ORIGINAL user request asks you to create this file, use write_file with expected_version: missing and the requested content. Otherwise report that it is absent; do not create unrelated files.\",\"schema_version\":1,\"success\":false,\"tool\":\"read_file\"}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_1_1"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"expected_version required: SHA-256 returned by read_file, or 'missing' for creation\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_1_2"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"content\":\"Alpha\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_2_0",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"limit_lines\":1,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_2_1",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"content\":\"Beta\",\"expected_version\":\"missing\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_2_2",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"No file written: the proposed content differs from the user's explicit literal. Request the tool again with these exact bytes; do not change case or add a template.\",\"error_code\":\"explicit_content_mismatch\",\"expected_literal\":\"alpha\",\"path\":\"FIRST.md\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_2_0"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"No operation executed: this batch contains a file content that violates the explicit user literal. Correct it and request the required operations again in order.\",\"error_code\":\"batch_deferred\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_2_1"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"No file written: the proposed content differs from the user's explicit literal. Request the tool again with these exact bytes; do not change case or add a template.\",\"error_code\":\"explicit_content_mismatch\",\"expected_literal\":\"beta\",\"path\":\"SECOND.md\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_2_2"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"content\":\"alpha\",\"expected_version\":\"missing\",\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_3_0",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"limit_lines\":1,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_3_1",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"content\":\"beta\",\"expected_version\":\"missing\",\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"write_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_3_2",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\"operation_id\":\"2ffa8ed0-d555-499a-a019-1913605876a5\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a2adf92d-0253-40cd-b138-410b67b0b3e0\\\\FIRST.md] wrote 5 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\"}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_3_0"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"positive offset_line required\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_3_1"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":null,\"exit_code\":null,\"file_version\":\"f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753\",\"operation_id\":\"24670abd-dde6-4688-a894-4dd20583f766\",\"output\":\"[write_file <isolated-data>\\\\lfm2-24b\\\\studio-projects\\\\a2adf92d-0253-40cd-b138-410b67b0b3e0\\\\SECOND.md] wrote 4 bytes\",\"result_unknown\":false,\"schema_version\":1,\"success\":true,\"tool\":\"write_file\"}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_3_2"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"limit_lines\":1,\"path\":\"FIRST.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_4_0",
+            "type": "function"
+          },
+          {
+            "function": {
+              "arguments": "{\"arguments\":{\"limit_lines\":1,\"path\":\"SECOND.md\"},\"schema_version\":1,\"tool\":\"read_file\"}",
+              "name": "studio_call"
+            },
+            "id": "call_studio_4_1",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"positive offset_line required\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_4_0"
+      },
+      {
+        "role": "tool",
+        "content": "[Recorded execution result]\n{\"error\":\"positive offset_line required\",\"schema_version\":1,\"success\":false}\n\n[Original user task — remaining operations]\nCrée FIRST.md avec exactement alpha. Puis lis FIRST.md avec read_file pour vérifier son contenu. Ensuite crée SECOND.md avec exactement beta. Termine après ces trois opérations, sans autre modification.",
+        "tool_call_id": "call_studio_4_1"
+      }
+    ],
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 9,
+      "reason": null,
+      "result": "succeeded",
+      "schema_version": 1,
+      "status": "completed",
+      "successful_tool_calls": 2,
+      "termination_reason": "success",
+      "verification": [
+        {
+          "exit_code": null,
+          "kind": "project_build",
+          "status": "not_run"
+        },
+        {
+          "detail": "FIRST.md: regular file present; content not certified",
+          "kind": "requested_file",
+          "path": "FIRST.md",
+          "status": "passed"
+        },
+        {
+          "detail": "SECOND.md: regular file present; content not certified",
+          "kind": "requested_file",
+          "path": "SECOND.md",
+          "status": "passed"
+        }
+      ]
+    },
+    "verified_files": {
+      "FIRST.md": "alpha",
+      "SECOND.md": "beta"
+    }
+  }
+}

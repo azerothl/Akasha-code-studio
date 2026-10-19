@@ -1,5 +1,7 @@
 # Reprise et compatibilité modèles — 18 octobre 2026
 
+> Historique du 18 octobre. Le [rapport du 19 octobre](agentic-recovery-models-2026-10-19.md) fournit les résultats actuels : 538 tests Rust, 45 parcours techniques et 18/18 recettes LLM réussis. Les PR restent ouvertes pendant la validation CI et jusqu’à intégration.
+
 Complément du [rapport initial](agentic-real-2026-10-18.md), pour [Akasha #158](https://github.com/azerothl/Akasha/issues/158) et [#179](https://github.com/azerothl/Akasha/issues/179). Corrections proposées dans [Akasha #170](https://github.com/azerothl/Akasha/pull/170) et [Code Studio #35](https://github.com/azerothl/Akasha-code-studio/pull/35), au sommet des piles existantes. **Les 12 PR d’implémentation restent ouvertes ; aucun ticket d’implémentation n’est clos.**
 
 ## Validation finale Windows CPU

@@ -27,6 +27,7 @@ const data = await mkdtemp(join(tmpdir(), "studio-agentic-real-"));
 const report = {
   at: new Date().toISOString(),
   data,
+  daemon_sha256: createHash("sha256").update(await readFile(bin)).digest("hex"),
   model: "deterministic protocol fixture (not an LLM evaluation)",
   cases: [],
 };
@@ -102,8 +103,8 @@ const server = createServer(async (req, res) => {
             id: "call_fixture",
             type: "function",
             function: {
-              name: "studio_call",
-              arguments: JSON.stringify({
+              name: next.nativeName ?? "studio_call",
+              arguments: JSON.stringify(next.nativeName ? next.args : {
                 schema_version: 1,
                 operation_id: next.id ?? randomUUID(),
                 tool,
@@ -470,9 +471,113 @@ try {
     assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
   });
+  await check("explicit literal mismatch has no disk effect and is corrected by a new tool request", async () => {
+    const id=await task("literal-content",[
+      tool("write_file",fileArgs("literal-case.txt","Token-42")),
+      {...tool("write_file",fileArgs("literal-case.txt","token-42")),verify:async (_text,body)=>{
+        assert.equal(await readFile(join(root,"literal-case.txt"),"utf8").catch(()=>null),null);
+        const output=body.messages.filter(m=>m.role==="tool").at(-1).content;
+        assert(output.includes("explicit_content_mismatch") && output.includes("token-42"));
+      }},
+      {text:"Fichier créé avec le contenu exact."},
+    ],"studio_scaffold",{message:"Crée literal-case.txt avec exactement token-42. CASE:literal-content"});
+    const row=await finished(id);
+    assert.equal(row.status,"completed");
+    assert.equal(row.outcome.failed_tool_calls,1);
+    assert.equal(row.outcome.successful_tool_calls,1);
+    assert.equal(row.outcome.acceptance_verified,false);
+    assert.equal(await readFile(join(root,"literal-case.txt"),"utf8"),"token-42");
+    return {id,outcome:row.outcome};
+  });
+  await check("one empty creation generation retries before effects while persistent emptiness remains failed", async () => {
+    const id=await task("empty-retry",[
+      {text:""},tool("write_file",fileArgs("empty-retry.txt","ok")),{text:"Fichier créé."},
+    ],"studio_scaffold",{message:"Crée empty-retry.txt avec exactement ok. CASE:empty-retry"});
+    const row=await finished(id);
+    assert.equal(row.status,"completed");assert.equal(row.outcome.successful_tool_calls,1);
+    assert.equal(row.outcome.verification.filter(c=>c.kind==="empty_generation_retry").length,1);
+    assert.equal(row.outcome.acceptance_verified,false);
+    const failed=await task("empty-retry-exhausted",[{text:""},{text:""}],"studio_scaffold",{message:"Crée empty-exhausted.txt avec exactement no. CASE:empty-retry-exhausted"});
+    const exhausted=await finished(failed);
+    assert.equal(exhausted.status,"failed");assert.equal(exhausted.outcome.termination_reason,"model_empty");
+    assert.equal(exhausted.outcome.successful_tool_calls,0);
+    assert.equal(await readFile(join(root,"empty-exhausted.txt"),"utf8").catch(()=>null),null);
+    const durable=await task("empty-retry-restart",[{text:""},{text:"",delay:30000}],"studio_scaffold",{message:"Crée empty-durable.txt avec exactement no. CASE:empty-retry-restart"});
+    await waitUntil(async()=>requests.filter(r=>r.case==="empty-retry-restart").length===2,"retry request checkpointed before crash");
+    await restart();
+    scripts.set("empty-retry-restart",[{text:""}]);
+    await api(`/api/tasks/${durable}/resume`,"POST",{});
+    const resumed=await finished(durable);
+    assert.equal(resumed.status,"failed");assert.equal(resumed.outcome.termination_reason,"model_empty");
+    assert.equal(requests.filter(r=>r.case==="empty-retry-restart").length,3,"Restart must not grant another empty retry");
+    assert.equal(resumed.outcome.successful_tool_calls,0);
+    return {id,outcome:row.outcome,persistent_empty:exhausted.outcome,durable_retry:resumed.outcome};
+  });
+  await check("a literal-invalid batch defers dependent effects and keeps distinct call results", async () => {
+    const batch=(last)=>JSON.stringify([
+      {name:"studio_call",arguments:{schema_version:1,tool:"write_file",arguments:fileArgs("batch-first.txt","un")}},
+      {name:"studio_call",arguments:{schema_version:1,tool:"read_file",arguments:{path:"workspace:/batch-first.txt"}}},
+      {name:"studio_call",arguments:{schema_version:1,tool:"write_file",arguments:fileArgs("batch-second.txt",last)}},
+    ]);
+    const id=await task("literal-batch",[
+      {text:batch("Deux")},
+      {text:batch("deux"),verify:async (_text,body)=>{
+        for (const path of ["batch-first.txt","batch-second.txt"]) assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);
+        const results=body.messages.filter(m=>m.role==="tool");
+        assert.equal(results.length,3);
+        assert(results[0].content.includes("batch_deferred") && !results[0].content.includes("explicit_content_mismatch"));
+        assert(results[2].content.includes("explicit_content_mismatch") && !results[2].content.includes("batch_deferred"));
+      }},
+      {text:"Les deux fichiers sont créés après lecture intermédiaire."},
+    ],"studio_scaffold",{message:"Crée batch-first.txt avec exactement un. Puis lis batch-first.txt. Ensuite crée batch-second.txt avec exactement deux. CASE:literal-batch"});
+    const row=await finished(id);
+    assert.equal(row.status,"completed");
+    assert.equal(row.outcome.failed_tool_calls,3);
+    assert.equal(row.outcome.successful_tool_calls,3);
+    assert.equal(await readFile(join(root,"batch-second.txt"),"utf8"),"deux");
+    return {id,outcome:row.outcome};
+  });
+  await check("direct file context retains repository rules and project constraints without maintenance examples", async () => {
+    const previous=project;
+    const item=await api("/api/studio/projects","POST",{name:"Scoped context",tech_stack:"fichier texte",project_summary:"Isolated context selection"},201);
+    project=item;
+    const scopedRoot=join(data,"studio-projects",project.id);
+    try {
+      await writeFile(join(scopedRoot,"AGENTS.md"),"SCOPED_REPOSITORY_RULE: preserve KEEP.txt.\n");
+      await writeFile(join(scopedRoot,"KEEP.txt"),"keep\n");
+      await writeFile(join(scopedRoot,"CODE_STUDIO_PLAN.md"),"# Title\n## Scope\nPRESERVED_SCOPE\n## Stack\nfichier texte\n## Fichiers hors scope\nKEEP.txt\n## Demandes d'évolutions utilisateur par phase\nMAINTENANCE_EXAMPLE_BAIT\n");
+      execFileSync("git",["add","AGENTS.md","KEEP.txt","CODE_STUDIO_PLAN.md"],{cwd:scopedRoot});
+      execFileSync("git",["-c","user.name=Studio validation","-c","user.email=studio-validation@localhost","commit","-m","context fixture"],{cwd:scopedRoot});
+      const id=await task("scoped-context",[
+        {...tool("write_file",fileArgs("FOCUSED.md","exact")),verify:(_text,body)=>{
+          const initial=body.messages.find(m=>m.role==="user").content;
+          assert(initial.includes("[Direct file task — explicit paths]"));
+          assert(initial.includes("PRESERVED_SCOPE") && initial.includes("KEEP.txt"));
+          assert(initial.includes("SCOPED_DESIGN_CONSTRAINT"));
+          assert(!initial.includes("MAINTENANCE_EXAMPLE_BAIT"));
+          assert(body.messages[0].content.includes("SCOPED_REPOSITORY_RULE"));
+        }},
+        {text:"Réponse interrompue.",delay:30000},
+      ],"studio_scaffold",{message:"Crée FOCUSED.md avec exactement exact. CASE:scoped-context",studio_delegate_single_level:true,studio_design_doc:"SCOPED_DESIGN_CONSTRAINT: preserve KEEP.txt."});
+      await waitUntil(async()=>{const r=await api(`/api/tasks/${id}/recovery`);return r.checkpoint?.round>=1&&r;},"scoped checkpoint");
+      await restart();
+      scripts.set("scoped-context",[{text:"Fichier créé.",verify:(_text,body)=>{
+        assert(body.messages[0].content.includes("direct file execution mode"),"The selected direct mode must survive daemon restart");
+        assert(body.messages.some(m=>m.role==="user" && m.content.includes("SCOPED_DESIGN_CONSTRAINT")));
+      }}]);
+      await api(`/api/tasks/${id}/resume`,"POST",{});
+      assert.equal((await finished(id)).status,"completed");
+      assert.equal(await readFile(join(scopedRoot,"FOCUSED.md"),"utf8"),"exact");
+      assert.equal(await readFile(join(scopedRoot,"KEEP.txt"),"utf8"),"keep\n");
+      return {id};
+    } finally {project=previous;}
+  });
   await check("native continuation ends in tool results without a new continue user turn", async () => {
     const id=await task("native-turns",[
-      tool("write_file",fileArgs("native-turns.md","turns\n")),
+      {...tool("write_file",fileArgs("native-turns.md","turns\n")),verify:(_text,body)=>{
+        const initial=body.messages.find(m=>m.role==="user").content;
+        assert(!initial.includes("the user is asking about transport routes"),"A Studio task must not receive the travel no-write reminder");
+      }},
       {...tool("read_file",{path:"workspace:/native-turns.md"}),verify:(_text,body)=>{
         assert.equal(body.messages.at(-1).role,"tool");
         assert.equal(body.messages.filter(m=>m.role==="user").length,1);
@@ -487,16 +592,77 @@ try {
     assert.equal((await finished(id)).status,"completed");
     return {id};
   });
+  await check("advertised native functions preserve bytes and call identity while unknown functions have no effect", async () => {
+    const id=await task("native-functions",[
+      {...tool("write_file",fileArgs("native-function.txt","exact-é")),nativeName:"write_file",verify:(_text,body)=>{
+        const names=body.tools.map(t=>t.function.name);
+        assert(names.includes("write_file") && names.includes("read_file") && !names.includes("studio_call"));
+      }},
+      {...tool("read_file",{path:"workspace:/native-function.txt"}),nativeName:"read_file",verify:(_text,body)=>{
+        const assistant=body.messages.findLast(m=>m.tool_calls?.length);
+        const result=body.messages.findLast(m=>m.role==="tool");
+        assert.equal(assistant.tool_calls[0].function.name,"write_file");
+        assert.equal(assistant.tool_calls[0].id,result.tool_call_id);
+        assert.equal(JSON.parse(assistant.tool_calls[0].function.arguments).content,"exact-é");
+      }},
+      {text:"Fichier créé et relu."},
+    ],"studio_scaffold",{message:"Crée native-function.txt avec exactement exact-é. Puis lis native-function.txt. CASE:native-functions"});
+    const row=await finished(id);assert.equal(row.status,"completed");assert.equal(row.outcome.successful_tool_calls,2);
+    assert.equal(await readFile(join(root,"native-function.txt"),"utf8"),"exact-é");
+    const invalid=await task("native-unknown",[{...tool("write_file",fileArgs("unknown-native.txt","wrong")),nativeName:"not_advertised"}],"studio_scaffold",{message:"Crée unknown-native.txt. CASE:native-unknown"});
+    const rejected=await finished(invalid);assert.equal(rejected.status,"failed");assert.equal(rejected.outcome.termination_reason,"provider_error");
+    assert.equal(rejected.outcome.successful_tool_calls,0);assert.equal(await readFile(join(root,"unknown-native.txt"),"utf8").catch(()=>null),null);
+    return {id,outcome:row.outcome,rejected:rejected.outcome};
+  });
+  await check("JSON content function requests execute both wrapped and native Devstral reads in order", async () => {
+    const variants=[];
+    for (const name of ["studio_call","read_file"]) {
+      const key="json-read-"+name, first="json-first-"+name+".md", second="json-second-"+name+".md";
+      const read={path:"workspace:/"+first};
+      const id=await task(key,[
+        tool("write_file",fileArgs(first,"alpha")),
+        {text:JSON.stringify([{name,arguments:name==="studio_call"?{schema_version:1,tool:"read_file",arguments:read}:read}])},
+        {...tool("write_file",fileArgs(second,"beta")),verify:(_text,body)=>{
+          assert.equal(body.messages.at(-1).role,"tool");
+          assert(body.messages.at(-1).content.includes("alpha"));
+          const previous=body.messages.at(-2).tool_calls[0].function;
+          assert.equal(previous.name,"read_file");
+          assert.equal(JSON.parse(previous.arguments).path,"workspace:/"+first);
+          assert.equal(body.messages.at(-2).content,"");
+        }},
+        {text:"Écriture, lecture puis seconde écriture terminées."},
+      ]);
+      const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));
+      const operations=(await api(`/api/tasks/${id}/recovery`)).ledger.operations.filter(o=>o.result?.success).sort((a,b)=>a.updated_at.localeCompare(b.updated_at));
+      assert.deepEqual(operations.map(o=>o.tool),["write_file","read_file","write_file"]);
+      variants.push({name,id,operations});
+    }
+    return {variants};
+  });
+  await check("malformed JSON function arguments never execute or become a success", async () => {
+    const id=await task("json-invalid",[
+      {text:JSON.stringify({name:"studio_call",arguments:{schema_version:1,tool:"write_file",arguments:{path:"workspace:/INVALID-JSON.md",content:"never"}}})},
+      {text:"Terminé."},
+    ]);
+    const row=await finished(id);
+    assert.equal(row.status,"failed");
+    assert.equal(row.outcome.termination_reason,"tool_error");
+    assert.equal(await readFile(join(root,"INVALID-JSON.md"),"utf8").catch(()=>null),null);
+    return {id,outcome:row.outcome};
+  });
   await check("premature final response resumes only the explicitly missing file", async () => {
     const id=await task("missing-deliverable",[
       tool("write_file",fileArgs("FIRST-REQUIRED.md","one\n")),
       {text:"Tout est terminé."},
       {...tool("write_file",fileArgs("SECOND-REQUIRED.md","two\n")),verify:(_text,body)=>{
         assert.equal(body.messages.at(-1).role,"user");
+        assert.equal(body.tool_choice,"required");
         assert(body.messages.at(-1).content.includes("[Pending physical deliverables]"));
         assert(body.messages.at(-1).content.includes("SECOND-REQUIRED.md"));
       }},
-      {text:"Les deux fichiers demandés sont présents."},
+      {text:"Les deux fichiers demandés sont présents.",verify:(_text,body)=>{
+        assert.notEqual(body.tool_choice,"required","The repair turn must not force extra calls after the missing file was written");
+      }},
     ],"studio_scaffold",{message:"Crée FIRST-REQUIRED.md. Ensuite crée SECOND-REQUIRED.md. CASE:missing-deliverable"});
     const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));
     assert.equal(await readFile(join(root,"FIRST-REQUIRED.md"),"utf8"),"one\n");
@@ -515,13 +681,27 @@ try {
       const id = await task("read-window", [
         tool("read_file", { path: "workspace:/large-read.txt" }),
         {
+          tool:"read_file",args:{path:"workspace:/large-read.txt",limit_lines:1},
+          verify:(text)=>assert(text.includes("read_file partial")),
+        },
+        {
+          tool:"read_file",args:{path:"workspace:/large-read.txt",offset_line:501},
+          verify:(_text,body)=>{
+            const result=JSON.parse(body.messages.at(-1).content.split("\n")[1]);
+            assert.equal(result.success,true);
+            assert.match(result.output,/\blines 1\.\.1\b/);
+            assert.match(result.output,/\nLINE_1$/);
+            assert(!result.output.includes("LINE_2"));
+          },
+        },
+        {
           tool: "read_file",
           args: {
             path: "workspace:/large-read.txt",
             offset_line: 501,
             limit_lines: 4,
           },
-          verify: (text) => assert(text.includes("read_file partial")),
+          verify: (_text,body) => assert(body.messages.at(-1).content.includes("LINE_700")),
         },
         {
           tool: "read_file",
@@ -533,6 +713,7 @@ try {
       const row = await finished(id);
       assert.equal(row.status, "completed", JSON.stringify(row));
       assert.equal(row.outcome.failed_tool_calls, 0);
+      assert.equal(row.outcome.successful_tool_calls,5);
       return { id, outcome: row.outcome };
     },
   );
@@ -1572,15 +1753,20 @@ try {
     },
   );
   await check("restart retains the full literal task beyond the truncated task title", async () => {
+    let initialDirectMode;
     const id=await task("durable-file-goals",[
-      tool("write_file",fileArgs("DURABLE-FIRST.md","first\n")),
+      {...tool("write_file",fileArgs("DURABLE-FIRST.md","first\n")),verify:(_text,body)=>{
+        initialDirectMode=body.messages.some(m=>m.role==="user" && m.content.includes("[Direct file task — explicit paths]"));
+      }},
       {text:"Réponse en attente.",delay:30000},
-    ],"studio_scaffold",{message:"Crée DURABLE-FIRST.md. Ensuite crée DURABLE-SECOND.md. CASE:durable-file-goals"});
+    ],"studio_scaffold",{message:"Crée DURABLE-FIRST.md. "+"Contexte complémentaire conservé. ".repeat(25)+"Ensuite crée DURABLE-SECOND.md. CASE:durable-file-goals"});
     const before=await waitUntil(async()=>{const r=await api(`/api/tasks/${id}/recovery`);return r.checkpoint?.round>=1&&r;},"recorded first file");
+    assert.equal(typeof initialDirectMode,"boolean");
     await restart();
     scripts.set("durable-file-goals",[
       {text:"Tout est terminé."},
       {...tool("write_file",fileArgs("DURABLE-SECOND.md","second\n")),verify:(_text,body)=>{
+        assert.equal(body.messages[0].content.includes("direct file execution mode"),initialDirectMode,"The selected context mode must survive daemon restart, including conservative full-plan fallback");
         assert(body.messages.at(-1).content.includes("[Pending physical deliverables]"));
         assert(body.messages.at(-1).content.includes("DURABLE-SECOND.md"));
       }},
@@ -1759,6 +1945,11 @@ try {
   });
   // Real browser -> Vite proxy -> daemon. No page.route() or API mocking.
   await check("real UI desktop/mobile consumes daemon APIs", async () => {
+    const uiProbe=createServer();
+    await new Promise(resolve=>uiProbe.listen(0,"127.0.0.1",resolve));
+    const uiPort=uiProbe.address().port;
+    await new Promise(resolve=>uiProbe.close(resolve));
+    const uiUrl=`http://127.0.0.1:${uiPort}`;
     ui = spawn(
       process.execPath,
       [
@@ -1766,7 +1957,7 @@ try {
         "--host",
         "127.0.0.1",
         "--port",
-        "5189",
+        String(uiPort),
         "--strictPort",
       ],
       {
@@ -1776,12 +1967,17 @@ try {
         stdio: ["ignore", log, log],
       },
     );
+    report.uiServer={url:uiUrl,pid:ui.pid,daemon:base};
+    let uiReady=false;
     for (let i = 0; i < 60; i++) {
+      assert.equal(ui.exitCode,null,"The isolated Vite process exited during startup");
       try {
-        if ((await fetch("http://127.0.0.1:5189")).ok) break;
+        const response=await fetch(uiUrl+"/api/studio/projects");
+        if (response.ok && (await response.text()).includes(project.id)) {uiReady=true;break;}
       } catch {}
       await pause(200);
     }
+    assert(uiReady,"The UI proxy must reach this campaign's isolated project");
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     const errors = [];
@@ -1795,7 +1991,7 @@ try {
         });
       }
     });
-    await page.goto("http://127.0.0.1:5189");
+    await page.goto(uiUrl);
     await page.getByRole("button", { name: "Choisir un projet" }).waitFor();
     await page.getByRole("button", { name: "Choisir un projet" }).click();
     await page.getByTestId(`studio-project-${project.id}`).click();
@@ -2047,8 +2243,13 @@ try {
   process.exitCode = 1;
 } finally {
   await browser?.close();
-  ui?.kill();
-  daemon?.kill();
+  for (const child of [ui,daemon]) {
+    if (child && child.exitCode===null && child.signalCode===null) {
+      const stopped=new Promise(resolve=>child.once("exit",resolve));
+      child.kill();
+      await Promise.race([stopped,pause(3000)]);
+    }
+  }
   server.closeAllConnections();
   server.close();
   report.requests = requests;

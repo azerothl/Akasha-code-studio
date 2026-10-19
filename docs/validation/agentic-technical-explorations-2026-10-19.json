@@ -1,0 +1,72 @@
+[
+  {
+    "source_run": "studio-agentic-real-GqT98i",
+    "status": "failed",
+    "completed_cases": 6,
+    "fixture_error": null,
+    "failed_case": {
+      "name": "JSON content function request executes the Devstral read before the next write",
+      "error_excerpt": "ReferenceError: json is not defined\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:505:22\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:276:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:490:3"
+    }
+  },
+  {
+    "source_run": "studio-agentic-real-Tnpg2N",
+    "status": "failed",
+    "completed_cases": 5,
+    "fixture_error": null,
+    "failed_case": {
+      "name": "direct file context retains repository rules and project constraints without maintenance examples",
+      "error_excerpt": "AssertionError [ERR_ASSERTION]: POST /api/studio/projects: {\"id\":\"65383080-65a6-4839-a684-158445429d1b\",\"path\":\"<isolated-data>\\\\studio-projects\\\\65383080-65a6-4839-a684-158445429d1b\"}\n\n201 !== 200\n\n    at api (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:266:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:475:16\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:276:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:473:3"
+    }
+  },
+  {
+    "source_run": "studio-agentic-real-r45HR0",
+    "status": "failed",
+    "completed_cases": 5,
+    "fixture_error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'Token-42' !== null\n",
+    "failed_case": {
+      "name": "explicit literal mismatch has no disk effect and is corrected by a real model tool request",
+      "error_excerpt": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:484:12\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:276:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:473:3"
+    }
+  },
+  {
+    "source_run": "studio-agentic-real-w3iFcg",
+    "status": "failed",
+    "completed_cases": 34,
+    "fixture_error": "AssertionError [ERR_ASSERTION]: The context mode must survive daemon restart",
+    "failed_case": {
+      "name": "restart retains the full literal task beyond the truncated task title",
+      "error_excerpt": "02d\"},{\"message\":\"Chargement du contexte et de la mémoire…\",\"progress_pct\":8,\"task_id\":\"ae44de0f-6a35-4c6b-8abf-a89f1d21f02d\"},{\"message\":\"Génération de la réponse…\",\"progress_pct\":12,\"task_id\":\"ae44de0f-6a35-4c6b-8abf-a89f1d21f02d\"},{\"message\":\"Tout est terminé.\",\"progress_pct\":50,\"task_id\":\"ae44de0f-6a35-4c6b-8abf-a89f1d21f02d\"},{\"message\":\"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\",\"progress_pct\":100,\"task_id\":\"ae44de0f-6a35-4c6b-8abf-a89f1d21f02d\"},{\"message\":\"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\",\"progress_pct\":100,\"task_id\":\"ae44de0f-6a35-4c6b-8abf-a89f1d21f02d\"}],\"status\":\"failed\",\"suggested_actions\":[{\"id\":\"analyze_failure\",\"kind\":\"message\",\"label\":\"Demander une analyse de l’échec\",\"message\":\"La dernière tâche a échoué ou été annulée. Contexte:\\nSorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\\n\\nPropose un plan de correction ciblé (fichiers et étapes) sans refaire toute l’implémentation.\"}],\"task_id\":\"ae44de0f-6a35-4c6b-8abf-a89f1d21f02d\",\"todos\":[],\"tokens_used\":0,\"updated_at\":\"2026-10-19T04:18:57.490229400+00:00\"}\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:1698:41\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:277:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:1681:3"
+    }
+  },
+  {
+    "source_run": "studio-agentic-real-C8Tsi3",
+    "status": "failed",
+    "completed_cases": 11,
+    "fixture_error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'read_file'\n",
+    "failed_case": {
+      "name": "JSON content function request executes the Devstral read before the next write",
+      "error_excerpt": "\\\":\\\"workspace:/json-first.md\\\"}}}]\",\"progress_pct\":50,\"task_id\":\"85440232-8b7e-48ae-9060-fe917263066d\"},{\"message\":\"Tool lane execution: serial_exclusive (1 call(s))\",\"progress_pct\":50,\"task_id\":\"85440232-8b7e-48ae-9060-fe917263066d\"},{\"message\":\"Reading the file…\",\"progress_pct\":50,\"task_id\":\"85440232-8b7e-48ae-9060-fe917263066d\"},{\"message\":\"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\",\"progress_pct\":100,\"task_id\":\"85440232-8b7e-48ae-9060-fe917263066d\"},{\"message\":\"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\",\"progress_pct\":100,\"task_id\":\"85440232-8b7e-48ae-9060-fe917263066d\"}],\"status\":\"failed\",\"suggested_actions\":[{\"id\":\"analyze_failure\",\"kind\":\"message\",\"label\":\"Demander une analyse de l’échec\",\"message\":\"La dernière tâche a échoué ou été annulée. Contexte:\\nSorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\\n\\nPropose un plan de correction ciblé (fichiers et étapes) sans refaire toute l’implémentation.\"}],\"task_id\":\"85440232-8b7e-48ae-9060-fe917263066d\",\"todos\":[],\"tokens_used\":0,\"updated_at\":\"2026-10-19T04:35:31.285175600+00:00\"}\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:631:12\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:277:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:617:3"
+    }
+  },
+  {
+    "source_run": "studio-agentic-real-upEFyb",
+    "status": "failed",
+    "completed_cases": 44,
+    "fixture_error": null,
+    "failed_case": {
+      "name": "real UI desktop/mobile consumes daemon APIs",
+      "error_excerpt": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Choisir un projet' }) to be visible\u001b[22m\n\n    at E:\\devs\\Akasha-code-studio\\integration\\agentic-real.mjs:1970:67\n    at async check (E:\\devs\\Akasha-code-studio\\integration\\agentic-real.mjs:277:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:1932:3"
+    }
+  },
+  {
+    "source_run": "studio-agentic-real-jAlYac",
+    "status": "failed",
+    "completed_cases": 14,
+    "fixture_error": "AssertionError [ERR_ASSERTION]: false == true",
+    "failed_case": {
+      "name": "native reads continue after the default 500-line window",
+      "error_excerpt": "4f-841d-19b60ea063d7\"},{\"message\":\"\",\"progress_pct\":50,\"task_id\":\"c49d8be5-17f7-474f-841d-19b60ea063d7\"},{\"message\":\"Tool lane execution: serial_exclusive (1 call(s))\",\"progress_pct\":50,\"task_id\":\"c49d8be5-17f7-474f-841d-19b60ea063d7\"},{\"message\":\"Reading the file…\",\"progress_pct\":50,\"task_id\":\"c49d8be5-17f7-474f-841d-19b60ea063d7\"},{\"message\":\"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\",\"progress_pct\":100,\"task_id\":\"c49d8be5-17f7-474f-841d-19b60ea063d7\"},{\"message\":\"Sorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\",\"progress_pct\":100,\"task_id\":\"c49d8be5-17f7-474f-841d-19b60ea063d7\"}],\"status\":\"failed\",\"suggested_actions\":[{\"id\":\"analyze_failure\",\"kind\":\"message\",\"label\":\"Demander une analyse de l’échec\",\"message\":\"La dernière tâche a échoué ou été annulée. Contexte:\\nSorry, I couldn't get a response (error: Tous les fournisseurs de la chaîne de secours ont échoué.).\\n\\nPropose un plan de correction ciblé (fichiers et étapes) sans refaire toute l’implémentation.\"}],\"task_id\":\"c49d8be5-17f7-474f-841d-19b60ea063d7\",\"todos\":[],\"tokens_used\":0,\"updated_at\":\"2026-10-19T04:49:10.592682900+00:00\"}\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:708:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:277:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:674:3"
+    }
+  }
+]

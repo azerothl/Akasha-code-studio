@@ -16,6 +16,7 @@ import yaml
 from uuid import uuid4
 import hashlib
 import sqlite3
+import shutil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--models', nargs='+', default=['lfm2:24b', 'qwen2.5-coder:14b', 'devstral:latest'])
@@ -28,6 +29,10 @@ binary = Path(os.environ['CODE_STUDIO_DAEMON_BIN']).resolve()
 original = yaml.safe_load((Path.home() / 'akasha/llm_router.yaml').read_text(encoding='utf-8'))
 ollama = original['providers']['ollama']['base_url'].rstrip('/')
 evidence = Path(tempfile.mkdtemp(prefix='studio-model-recipes-'))
+# Keep the tested executable immutable even if a later build updates the source.
+snapshot = evidence / binary.name
+shutil.copyfile(binary, snapshot)
+binary = snapshot
 report = {'models': [], 'cases': [], 'provider_fallback': False, 'data': str(evidence), 'daemon_sha256': hashlib.sha256(binary.read_bytes()).hexdigest()}
 def save():
     (evidence / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -68,6 +73,8 @@ for model in args.models:
                     if time.monotonic()>until:raise
                     time.sleep(.2)
             report['models'].append({'model':model,'actual_model':actual_model,'provider':provider,'temperature':0.1,'max_tokens':4096,'num_ctx':32768 if provider=='ollama' else (args.openai_context or 'provider default')})
+            if model.startswith('lfm2'):
+                report['models'][-1]['adapter_sampling_defaults']={'top_k':50,'repeat_penalty':1.05,'source':'LFM2 adapter defaults; request leaves these unset'}
             for iteration in range(args.repeat):
                 for kind in ['single-write', 'multi-tool']:
                     case={'model':model,'provider':provider,'recipe':kind,'iteration':iteration+1}
@@ -116,7 +123,7 @@ for model in args.models:
                             ordered=sorted([o for o in ledger if o.get('result',{}).get('success')],key=lambda o:o['updated_at'])
                             first=next(i for i,o in enumerate(ordered) if o['tool'] in ['write_file','write_code'] and 'FIRST.md]' in o['result'].get('output',''))
                             second=next(i for i,o in enumerate(ordered) if o['tool'] in ['write_file','write_code'] and 'SECOND.md]' in o['result'].get('output',''))
-                            assert any(first<i<second and o['tool']=='read_file' and 'alpha' in o['result'].get('output','') for i,o in enumerate(ordered)),ordered
+                            assert any(first<i<second and o['tool']=='read_file' and 'FIRST.md]' in o['result'].get('output','') and 'alpha' in o['result'].get('output','') for i,o in enumerate(ordered)),ordered
                         assert {f['path'] for f in case['diff']['files']}==set(files),case['diff']
                         case['validation']='passed'
                     except Exception as error:
