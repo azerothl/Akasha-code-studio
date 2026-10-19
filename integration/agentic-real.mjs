@@ -1066,12 +1066,13 @@ try {
       );
       const id = await task("mcp", [
         tool("mcp_fixture_echo", { text: 42 }),
-        {...tool("mcp_fixture_echo", { text: "MCP_REAL_OK" }),verify:(_text,body)=>{
-          const definition=body.tools.find(t=>t.function?.name==="studio_call");
-          const variant=definition.function.parameters.oneOf.find(v=>v.properties.tool.enum.includes("mcp_fixture_echo"));
-          assert.deepEqual(variant.properties.arguments.required,["text"]);
-          assert.equal(variant.properties.arguments.properties.text.type,"string");
-          assert.equal(variant.properties.arguments.properties.argv,undefined);
+        {...tool("mcp_fixture_echo", { text: "MCP_REAL_OK" }),nativeName:"mcp_fixture_echo",verify:(_text,body)=>{
+          const definition=body.tools.find(t=>t.function?.name==="mcp_fixture_echo");
+          assert(definition,"Discovered MCP function must be advertised natively");
+          const schema=definition.function.parameters;
+          assert.deepEqual(schema.required,["text"]);
+          assert.equal(schema.properties.text.type,"string");
+          assert.equal(schema.properties.argv,undefined);
         }},
         { text: "MCP terminé." },
       ]);
