@@ -7,6 +7,7 @@ import { createServer } from "node:http";
 import {
   mkdtemp,
   copyFile,
+  stat,
   mkdir,
   writeFile,
   readFile,
@@ -535,7 +536,12 @@ try {
     const overwrittenRow=await finished(overwritten);assert.equal(overwrittenRow.status,"failed");assert.equal(overwrittenRow.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,"renamed-overwrite.ts"),"utf8"),"wrong");
     const partial=await task("path-list-partial",[tool("write_file",fileArgs("list-a.txt","a")),...Array.from({length:4},()=>({text:"Done."}))],"studio_scaffold",{message:"Create list-a.txt and list-b.txt. CASE:path-list-partial"});const partialRow=await finished(partial);assert.equal(partialRow.status,"failed");assert.equal(partialRow.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,"list-b.txt"),"utf8").catch(()=>null),null);
     const complete=await task("path-list-complete",[tool("write_file",fileArgs("list-c.txt","c")),tool("write_file",fileArgs("list-d.txt","d")),{text:"Done."}],"studio_scaffold",{message:"Create list-c.txt and list-d.txt. CASE:path-list-complete"});const completeRow=await finished(complete);assert.equal(completeRow.status,"completed",JSON.stringify(completeRow));assert.equal(completeRow.outcome.confirmed_file_mutation,true);
-    return {variants,removed,renamed,outcome:row.outcome,overwritten,overwritten_outcome:overwrittenRow.outcome,path_list:{partial,partial_outcome:partialRow.outcome,complete,complete_outcome:completeRow.outcome}};
+    const directoryVariants=[];
+    for(const [key,noun] of [["folder-prose","folder"],["directory-prose","directory"],["dossier-prose","dossier"]]) {
+      const name=key+"-missing";const id=await task(key,Array.from({length:4},()=>({text:"Done."})),"studio_scaffold",{message:(noun==="dossier"?"Cr\u00e9e le dossier ":"Create "+noun+" ")+name+`. CASE:${key}`});const result=await finished(id);assert.equal(result.status,"failed");assert.equal(await stat(join(root,name)).catch(()=>null),null);directoryVariants.push({id,outcome:result.outcome});
+    }
+    const directory=await task("directory-real",[tool("run_command",{program:"node",args:["-e","require('fs').mkdirSync('agent-directory')"]}),{text:"Created."}],"studio_fullstack",{message:"Create folder agent-directory. CASE:directory-real"});const directoryRow=await finished(directory);assert.equal(directoryRow.status,"completed",JSON.stringify(directoryRow));assert((await stat(join(root,"agent-directory"))).isDirectory());
+    return {variants,removed,renamed,outcome:row.outcome,overwritten,overwritten_outcome:overwrittenRow.outcome,directoryVariants,directory,directory_outcome:directoryRow.outcome,path_list:{partial,partial_outcome:partialRow.outcome,complete,complete_outcome:completeRow.outcome}};
   });
   await check("stale human question replies cannot answer a newer question", async () => {
     const question=(question)=>({text:`TOOL: ask_user\n${JSON.stringify({question,choices:["Continuer","Arr\u00eater"]})}`});
