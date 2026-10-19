@@ -1169,7 +1169,7 @@ try {
       const delayed=await task("terminal-delayed",[
         tool("terminal_session",{argv:["start",JSON.stringify({argv:["node","-e","process.stdin.once('data',()=>setTimeout(()=>{require('fs').writeFileSync('terminal-delayed.txt','new');process.exit(0)},500))"],cols:80,rows:24})]}),
         tool("terminal_session",text=>({argv:["write",session(text),JSON.stringify({text:"execute\r"})]})),
-        {tool:"terminal_session",delay:1500,args:text=>({argv:["read",session(text)]}),verify:async()=>assert.equal(await readFile(join(root,"terminal-delayed.txt"),"utf8"),"new")},
+        {tool:"terminal_session",delay:1500,args:text=>({argv:["read",session(text)]}),verify:async()=>{await waitUntil(async()=>await readFile(join(root,"terminal-delayed.txt"),"utf8")==="new","delayed PTY command writes before read",10000);assert.equal(await readFile(join(root,"terminal-delayed.txt"),"utf8"),"new");}},
         {tool:"terminal_session",args:text=>({argv:["stop",session(text)]})},
         {text:"Modified."},
       ],"studio_fullstack",{message:"Modify terminal-delayed.txt. CASE:terminal-delayed"});
