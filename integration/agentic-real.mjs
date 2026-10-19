@@ -98,7 +98,8 @@ const server = createServer(async (req, res) => {
     return;
   }
   const tool = next.tool;
-  const delta = tool
+  const legacyText = tool && next.id ? `TOOL_JSON: ${JSON.stringify({schema_version:1,operation_id:next.id,tool,arguments:next.args})}` : null;
+  const delta = legacyText ? {content:legacyText} : tool
     ? {
         tool_calls: [
           {
@@ -106,13 +107,8 @@ const server = createServer(async (req, res) => {
             id: "call_fixture",
             type: "function",
             function: {
-              name: next.nativeName ?? "studio_call",
-              arguments: JSON.stringify(next.nativeName ? next.args : {
-                schema_version: 1,
-                operation_id: next.id ?? randomUUID(),
-                tool,
-                arguments: next.args,
-              }),
+              name: next.nativeName ?? tool,
+              arguments: JSON.stringify(next.nativeArguments ?? next.args),
             },
           },
         ],
@@ -121,7 +117,7 @@ const server = createServer(async (req, res) => {
   if (body.stream) {
     res.setHeader("Content-Type", "text/event-stream");
     res.end(
-      `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: tool ? "tool_calls" : "stop" }] })}\n\ndata: [DONE]\n\n`,
+      `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: tool && !legacyText ? "tool_calls" : "stop" }] })}\n\ndata: [DONE]\n\n`,
     );
   } else {
     res.setHeader("Content-Type", "application/json");
@@ -129,10 +125,10 @@ const server = createServer(async (req, res) => {
       JSON.stringify({
         choices: [
           {
-            message: tool
+            message: tool && !legacyText
               ? { tool_calls: delta.tool_calls }
-              : { content: next.text ?? "" },
-            finish_reason: tool ? "tool_calls" : "stop",
+              : { content: legacyText ?? next.text ?? "" },
+            finish_reason: tool && !legacyText ? "tool_calls" : "stop",
           },
         ],
         model: "fixture",
@@ -707,6 +703,14 @@ try {
     const rejected=await finished(invalid);assert.equal(rejected.status,"failed");assert.equal(rejected.outcome.termination_reason,"provider_error");
     assert.equal(rejected.outcome.successful_tool_calls,0);assert.equal(await readFile(join(root,"unknown-native.txt"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome,rejected:rejected.outcome};
+  });
+  await check("unadvertised native wrapper cannot bypass a focused tool catalogue", async () => {
+    const id=await task("native-wrapper-bypass",Array.from({length:4},()=>({...tool("run_command",{command:"echo forbidden > forbidden-wrapper.txt"}),nativeName:"studio_call",nativeArguments:{schema_version:1,tool:"run_command",arguments:{command:"echo forbidden > forbidden-wrapper.txt"}},verify:(_text,body)=>{
+      const names=body.tools.map(t=>t.function.name);assert(!names.includes("studio_call"));assert(!names.includes("run_command"));
+    }})),"studio_scaffold",{message:"Cr\u00e9e focused-wrapper.txt avec exactement safe. Puis lis focused-wrapper.txt. CASE:native-wrapper-bypass"});
+    const row=await finished(id);assert.equal(row.status,"failed");assert.equal(row.outcome.termination_reason,"provider_error");assert.equal(row.outcome.successful_tool_calls,0);
+    assert.equal(await readFile(join(root,"forbidden-wrapper.txt"),"utf8").catch(()=>null),null);
+    return {id,outcome:row.outcome};
   });
   await check("JSON content function requests execute both wrapped and native Devstral reads in order", async () => {
     const variants=[];
