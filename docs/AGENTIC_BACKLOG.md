@@ -32,9 +32,9 @@ Source : [audit des outils et skills](AGENTIC_CAPABILITY_AUDIT.md). Tickets publ
 
 Un ticket ouvert ou une correction locale ne signifie pas livraison validée. Les PR et les contrôles exécutés sont à référencer dans chaque ticket concerné.
 
-## Implémentations proposées
+## Implémentations et suivi
 
-Les 12 PR sont empilées et conservées ouvertes. Voir [la validation de reprise et des modèles](validation/agentic-recovery-models-2026-10-19.md) et les preuves archivées. REC-01 à REC-09 sont désormais exécutées ; #158 reste ouvert jusqu’à intégration. [Akasha #179](https://github.com/azerothl/Akasha/issues/179) dispose désormais de 18/18 recettes ciblées réussies ; les échecs exploratoires restent archivés et le ticket reste ouvert jusqu’à intégration. Les compléments sont dans Akasha #170 et Code Studio #35.
+Les 12 PR constituent deux piles à intégrer dans l'ordre ci-dessous. La [validation finale après revue](validation/agentic-ci-integration-2026-10-19.md) couvre REC-01 à REC-09, 48 parcours techniques et 18/18 recettes ciblées pour #179. Les échecs intermédiaires sont archivés. Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub ; #143 et #145 conservent leur périmètre distinct. Les correctifs communs de revue sont portés par Akasha #170 et les recettes par Code Studio #35.
 
 | Priorité | Ticket | PR d’implémentation |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Les 12 PR sont empilées et conservées ouvertes. Voir [la validation de reprise
 - Compilation Windows du daemon avec `cargo check -p akasha-daemon --no-default-features --features embedded` : réussie sur les branches proposées. Le mode sans fonctionnalités, sans `embedded`, conserve un défaut préexistant distinct.
 - Build TypeScript/Vite : réussi. Avertissement du bundle principal >500 Ko persistant ; xterm est chargé séparément.
 - Les workflows CI automatiques sont consultables dans les PR. Ils ne remplacent pas les recettes MCP/PTY/LSP/publication ou crash/reprise ; le job GPU peut rester en attente.
-- Dernière validation (19 octobre) : 21 tests unitaires UI, 32 Playwright simulés, 416 daemon + 122 bibliothèques Rust = 538, 45 parcours techniques réels (44 standard + publication temporaire), REC-01 à REC-09. Vrais LLM : Qwen, Devstral et LFM2 6/6 chacun, soit 18/18. Les validations locales passent ; CI et intégration des PR restent à suivre. CUDA non exécuté, avec accord utilisateur.
+- Dernière validation (19 octobre, après revue) : 21 tests unitaires UI, 32 Playwright simulés, 425 daemon + 124 bibliothèques Rust = 549, 48 parcours techniques réels dont publication temporaire, REC-01 à REC-09. Vrais LLM : Qwen, Devstral et LFM2 6/6 chacun, soit 18/18 sur le même binaire. Build daemon/UI, TypeScript de l'interface native et contrôle TUI réussis. La CI CPU doit être verte avant intégration ; le statut vivant est lié dans le rapport. CUDA embarqué non exécuté, avec accord utilisateur.
 - Première tranche : MCP stdio (un serveur attaché), transports natifs Chat Completions sur trois providers, contrôle de version sur les outils de fichier documentés, reprise de la boucle Studio, LSP sur trois familles de langages, livraison GitHub.com. Les limites complémentaires sont explicites dans les contrats daemon et empêchent une clôture globale comme « solution agentique complète ».
 
 Documents de validation : [P0](validation/agentic-p0-implementation-2026-10-18.md), [capacités/skills](validation/agentic-capabilities-skills-2026-10-18.md), [observation](validation/agentic-observation-2026-10-18.md), [reprise](validation/agentic-recovery-2026-10-18.md), [LSP/livraison](validation/agentic-semantic-delivery-2026-10-18.md).
