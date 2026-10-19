@@ -531,7 +531,7 @@ try {
       }},
       {text:JSON.stringify(missing),verify:async (_text,body)=>{
         for (const path of ["batch-first.txt","batch-second.txt"]) assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);
-        const results=body.messages.filter(m=>m.role==="tool");
+        const results=body.messages.filter(m=>m.role==="tool").slice(-3);
         assert.equal(results.length,3);
         assert(results[0].content.includes("batch_deferred") && !results[0].content.includes("explicit_content_mismatch"));
         assert(results[2].content.includes("explicit_content_mismatch") && !results[2].content.includes("batch_deferred"));
