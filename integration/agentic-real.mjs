@@ -2185,7 +2185,10 @@ try {
       const status=await api(`/api/studio/projects/${project.id}/delivery/status`);
       assert.equal(status.success,false,JSON.stringify(status));
       const response=await fetch(`${base}/api/studio/projects/${project.id}/delivery/commit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task_id:id,operation_id:randomUUID(),request:{paths:["selected.txt"],expected_versions:{"selected.txt":"missing"},expected_head:beforeOwn,message:"must not advance victim"}})});
-      assert.equal(response.status,409,await response.text());
+      const rejected=await response.json();
+      assert.equal(response.status,200,JSON.stringify(rejected));
+      assert.equal(rejected.result.success,false,JSON.stringify(rejected));
+      assert.match(rejected.result.error,/Git metadata|Git common metadata/);
       assert.equal(git(victimRoot,"rev-parse","HEAD"),beforeVictim);
     };
     await writeFile(join(root,".git/commondir"),join(victimRoot,".git")+"\n");
