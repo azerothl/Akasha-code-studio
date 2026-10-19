@@ -2176,6 +2176,27 @@ try {
       return {refused:true,configurations:3};
     } finally {await writeFile(config,original);}
   });
+  await check("Git metadata cannot redirect delivery to another Studio project",async()=>{
+    const victim=await api("/api/studio/projects","POST",{name:"Metadata victim",tech_stack:"texte"},201);
+    const victimRoot=join(data,"studio-projects",victim.id);
+    const beforeVictim=git(victimRoot,"rev-parse","HEAD"), beforeOwn=git(root,"rev-parse","HEAD");
+    const id=await task("metadata-binding",[{text:"Inspection prête."}]);await finished(id);
+    const refuse=async()=>{
+      const status=await api(`/api/studio/projects/${project.id}/delivery/status`);
+      assert.equal(status.success,false,JSON.stringify(status));
+      const response=await fetch(`${base}/api/studio/projects/${project.id}/delivery/commit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task_id:id,operation_id:randomUUID(),request:{paths:["selected.txt"],expected_versions:{"selected.txt":"missing"},expected_head:beforeOwn,message:"must not advance victim"}})});
+      assert.equal(response.status,409,await response.text());
+      assert.equal(git(victimRoot,"rev-parse","HEAD"),beforeVictim);
+    };
+    await writeFile(join(root,".git/commondir"),join(victimRoot,".git")+"\n");
+    try {await refuse();} finally {await unlink(join(root,".git/commondir"));}
+    const backup=join(root,".git-metadata-fixture-backup");
+    await rename(join(root,".git"),backup);
+    try {await writeFile(join(root,".git"),"gitdir: "+join(victimRoot,".git")+"\n");await refuse();}
+    finally {await unlink(join(root,".git"));await rename(backup,join(root,".git"));}
+    assert.equal(git(root,"rev-parse","HEAD"),beforeOwn);
+    return {refused:2,victim_head_unchanged:true,own_head_unchanged:true};
+  });
   if (process.env.CODE_STUDIO_TEST_PUBLISH === "1") {
     await check(
       "explicit GitHub push draft PR and CI state through delivery API",
