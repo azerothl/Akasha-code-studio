@@ -519,20 +519,33 @@ try {
       {name:"studio_call",arguments:{schema_version:1,tool:"read_file",arguments:{path:"workspace:/batch-first.txt"}}},
       {name:"studio_call",arguments:{schema_version:1,tool:"write_file",arguments:fileArgs("batch-second.txt",last)}},
     ]);
+    const malformed=JSON.parse(batch("deux"));
+    malformed[1].arguments.arguments={path:"workspace:/batch-first.txt",full:true,limit_lines:1};
+    const missing=JSON.parse(batch("deux"));
+    missing[1].arguments.arguments={path:"workspace:/does-not-exist.txt"};
     const id=await task("literal-batch",[
-      {text:batch("Deux")},
-      {text:batch("deux"),verify:async (_text,body)=>{
+      {text:JSON.stringify(malformed)},
+      {text:batch("Deux"),verify:async (_text,body)=>{
+        for (const path of ["batch-first.txt","batch-second.txt"]) assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);
+        assert(body.messages.filter(m=>m.role==="tool").some(m=>m.content.includes("invalid_tool_call")));
+      }},
+      {text:JSON.stringify(missing),verify:async (_text,body)=>{
         for (const path of ["batch-first.txt","batch-second.txt"]) assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);
         const results=body.messages.filter(m=>m.role==="tool");
         assert.equal(results.length,3);
         assert(results[0].content.includes("batch_deferred") && !results[0].content.includes("explicit_content_mismatch"));
         assert(results[2].content.includes("explicit_content_mismatch") && !results[2].content.includes("batch_deferred"));
       }},
+      {text:JSON.stringify(JSON.parse(batch("deux")).slice(1)),verify:async (_text,body)=>{
+        assert.equal(await readFile(join(root,"batch-first.txt"),"utf8"),"un");
+        assert.equal(await readFile(join(root,"batch-second.txt"),"utf8").catch(()=>null),null);
+        assert(body.messages.filter(m=>m.role==="tool").at(-1).content.includes("batch_deferred"));
+      }},
       {text:"Les deux fichiers sont créés après lecture intermédiaire."},
     ],"studio_scaffold",{message:"Crée batch-first.txt avec exactement un. Puis lis batch-first.txt. Ensuite crée batch-second.txt avec exactement deux. CASE:literal-batch"});
     const row=await finished(id);
     assert.equal(row.status,"completed");
-    assert.equal(row.outcome.failed_tool_calls,3);
+    assert.equal(row.outcome.failed_tool_calls,8);
     assert.equal(row.outcome.successful_tool_calls,3);
     assert.equal(await readFile(join(root,"batch-second.txt"),"utf8"),"deux");
     return {id,outcome:row.outcome};
@@ -2135,13 +2148,13 @@ try {
     return { screenshots: ["desktop.png", "mobile.png"], pageErrors: errors };
   });
   await check("delivery reads reject foreign and opaque browser origins", async () => {
-    for (const path of [`/api/studio/projects/${project.id}/delivery/status`, `/api/studio/projects/${project.id}/delivery/pr`, `/api/tasks/${randomUUID()}/delivery?ignored=1`,"/api/pending-human-input","/api/permissions/queue","/api/events",`/api/tasks/${randomUUID()}`,`/api/tasks/${randomUUID()}/events`]) {
+    for (const path of [`/api/studio/projects/${project.id}/delivery/status`, `/api/studio/projects/${project.id}/delivery/pr`, `/api/tasks/${randomUUID()}/delivery?ignored=1`,"/api/pending-human-input","/api/permissions/queue","/api/events",`/api/tasks/${randomUUID()}`,`/api/tasks/${randomUUID()}/events`,`//api/tasks/${randomUUID()}/delivery/`,`//api/studio/projects/${project.id}/delivery/status/`]) {
       for (const origin of ["https://evil.example", "null"]) {
         const response=await fetch(base+path,{headers:{Origin:origin}});
         assert.equal(response.status,403,`${origin} ${path}`);
       }
     }
-    return {denied:16};
+    return {denied:20};
   });
   await check("delivery refuses repository configured process helpers before GitHub access", async () => {
     const root=join(data,"studio-projects",project.id);

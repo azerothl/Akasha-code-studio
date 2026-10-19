@@ -116,7 +116,7 @@ for model in args.models:
                         case['verified_files']=contents
                         if args.require_file_catalogue:
                             assert case['native_tool_catalogues'], 'Focused native catalogue was not selected'
-                            assert all(set(item['tools'])=={'read_file','write_file','write_code'} for item in case['native_tool_catalogues']),case['native_tool_catalogues']
+                            assert all(set(item['tools'])=={'read_file','write_file','write_code'} and item.get('literal_values_bound') is True for item in case['native_tool_catalogues']),case['native_tool_catalogues']
                         assert task['status']=='completed',(task['status'],case.get('failure'))
                         assert task.get('outcome',{}).get('result')=='succeeded',case['outcome']
                         assert task.get('outcome',{}).get('termination_reason')=='success',case['outcome']
