@@ -1449,7 +1449,18 @@ try {
         git(root, "diff", "--cached", "--name-only"),
         "unrelated.txt",
       );
-      return { id, head, result, cached };
+      await writeFile(join(root,"agent-commit.txt"),"agent commit\n");
+      const beforeAgent=git(root,"rev-parse","HEAD");
+      const agentId=await task("agent-delivery-guard",[
+        tool("git_commit",{paths:["agent-commit.txt"],expected_versions:{"agent-commit.txt":createHash("sha256").update("agent commit\n").digest("hex")},expected_head:beforeAgent,message:"test: guarded agent commit"}),
+        {text:"Agent commit complete."}
+      ]);
+      const agent=await finished(agentId);assert.equal(agent.status,"completed",JSON.stringify(agent));
+      assert(agent.outcome.successful_tool_calls>=1,JSON.stringify(agent.outcome));
+      const agentHead=git(root,"rev-parse","HEAD");assert.notEqual(agentHead,beforeAgent);
+      assert.equal(git(root,"diff-tree","--no-commit-id","--name-only","-r",agentHead),"agent-commit.txt");
+      assert.equal(git(root,"diff","--cached","--name-only"),"unrelated.txt");
+      return { id, head, result, cached, agentId, agentHead, approvedAgentOutcome:agent.outcome };
     },
   );
   await check(
@@ -2124,13 +2135,13 @@ try {
     return { screenshots: ["desktop.png", "mobile.png"], pageErrors: errors };
   });
   await check("delivery reads reject foreign and opaque browser origins", async () => {
-    for (const path of [`/api/studio/projects/${project.id}/delivery/status`, `/api/studio/projects/${project.id}/delivery/pr`, `/api/tasks/${randomUUID()}/delivery?ignored=1`]) {
+    for (const path of [`/api/studio/projects/${project.id}/delivery/status`, `/api/studio/projects/${project.id}/delivery/pr`, `/api/tasks/${randomUUID()}/delivery?ignored=1`,"/api/pending-human-input","/api/permissions/queue","/api/events",`/api/tasks/${randomUUID()}`,`/api/tasks/${randomUUID()}/events`]) {
       for (const origin of ["https://evil.example", "null"]) {
         const response=await fetch(base+path,{headers:{Origin:origin}});
         assert.equal(response.status,403,`${origin} ${path}`);
       }
     }
-    return {denied:6};
+    return {denied:16};
   });
   await check("delivery refuses repository configured process helpers before GitHub access", async () => {
     const root=join(data,"studio-projects",project.id);

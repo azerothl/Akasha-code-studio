@@ -22,6 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--models', nargs='+', default=['lfm2:24b', 'qwen2.5-coder:14b', 'devstral:latest'])
 parser.add_argument('--repeat', type=int, default=3)
 parser.add_argument('--openai-context', type=int, help='Create and delete a temporary Ollama model alias with this num_ctx for the OpenAI transport')
+parser.add_argument('--require-file-catalogue', action='store_true', help='Assert the focused literal-file native tool selection is present in runtime events')
 args = parser.parse_args()
 assert args.repeat > 0
 repo = Path(os.environ.get('AKASHA_REPO_DIR', '../Akasha')).resolve()
@@ -101,6 +102,7 @@ for model in args.models:
                             saved=database.execute('SELECT body FROM studio_checkpoints WHERE task=?',(task_id,)).fetchone()
                             if saved:
                                 case['model_turns']=[m for m in json.loads(saved[0]).get('conversation',[]) if m['role'] in ['assistant','tool']]
+                            case['native_tool_catalogues']=[json.loads(row[0]) for row in database.execute("SELECT payload_json FROM task_events WHERE task_id=? AND event_type='studio_native_tool_catalog' ORDER BY seq",(task_id,)) if row[0]]
                         ledger=api(f'/api/tasks/{task_id}/recovery')['ledger']['operations']
                         case['operations']=ledger
                         case['diff']=api(f'/api/tasks/{task_id}/studio-diff')
@@ -112,6 +114,9 @@ for model in args.models:
                                 if error.code!=404:raise
                                 contents[path]=None
                         case['verified_files']=contents
+                        if args.require_file_catalogue:
+                            assert case['native_tool_catalogues'], 'Focused native catalogue was not selected'
+                            assert all(set(item['tools'])=={'read_file','write_file','write_code'} for item in case['native_tool_catalogues']),case['native_tool_catalogues']
                         assert task['status']=='completed',(task['status'],case.get('failure'))
                         assert task.get('outcome',{}).get('result')=='succeeded',case['outcome']
                         assert task.get('outcome',{}).get('termination_reason')=='success',case['outcome']
