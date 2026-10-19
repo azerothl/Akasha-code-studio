@@ -583,8 +583,8 @@ try {
         const history=body.messages.map(message=>typeof message.content==="string"?message.content:JSON.stringify(message.content)).join("\n");
         assert.match(history,/"replayed"\s*:\s*true/,"Legacy continuation must receive the verified cached receipt");
       }},
-      {text:"Fichier enregistré et relu."},
-    ],"studio_scaffold",{message:"Crée legacy-replay.txt avec exactement exact-replay puis lis legacy-replay.txt. CASE:legacy-write-replay"});
+      {text:"Fichier enregistrÃ© et relu."},
+    ],"studio_scaffold",{message:"CrÃ©e legacy-replay.txt avec exactement exact-replay puis lis legacy-replay.txt. CASE:legacy-write-replay"});
     const row=await finished(id);assert.equal(row.status,"completed");
     assert.equal(await readFile(join(root,"legacy-replay.txt"),"utf8"),"exact-replay");
     const operations=(await api(`/api/tasks/${id}/recovery`)).ledger.operations;
@@ -2075,7 +2075,7 @@ try {
       const id=await task(key,[{text:"Attente avant reprise.",delay:30000}]);
       await checkpointed(id);await restart();
       assert.equal((await api(`/api/tasks/${id}`)).status,"interrupted");
-      scripts.set(key,[{text:"Reprise exécutée après arbitrage de livraison."}]);
+      scripts.set(key,[{text:"Reprise exÃ©cutÃ©e aprÃ¨s arbitrage de livraison."}]);
       const name=`operator-resume-${iteration}.txt`,content=`operator ${iteration}\n`;
       await writeFile(join(root,name),content);
       const request={task_id:id,operation_id:randomUUID(),request:{paths:[name],expected_versions:{[name]:createHash("sha256").update(content).digest("hex")},expected_head:git(root,"rev-parse","HEAD"),message:"test: serialize operator delivery and resume"}};
