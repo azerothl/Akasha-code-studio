@@ -7,7 +7,7 @@ type FileRow = { path: string; status: string; version: string | null; unavailab
 type Snapshot = { head: string; branch: string | null; files: FileRow[]; files_truncated: boolean; author_configured: boolean; remote_head: string | null; remote_error?: string; repository: string | null; github: { accessible?: boolean; can_push?: boolean; default_branch?: string; reason?: string }; available_actions: { commit: boolean; push: boolean; create_pr: boolean; read_pr: boolean } };
 type DeliveryResult = { success?: boolean; result_unknown?: boolean; state?: string; error?: string; detail?: string; commit?: string; branch?: string; warning?: string; record_warning?: string; pr?: { number: number; url: string; state?: string; isDraft?: boolean; headRefOid?: string; statusCheckRollup?: { name?: string; context?: string; status?: string; conclusion?: string; state?: string }[] }; checks_state?: string; current_head_checks?: string; local_head?: string };
 type History = { status: string; execution_active: boolean; unknown_count: number; records: { kind: string; recorded_at: string; result: DeliveryResult }[] };
-type Pending = { action: "commit" | "push" | "pr"; operation_id: string; request: unknown };
+type Pending = { action: "commit" | "push" | "pr"; operation_id: string; expected_repository: string | null; request: unknown };
 
 async function read<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(path, { signal });
@@ -66,7 +66,7 @@ export function TaskDeliveryPanel({ projectId, taskId }: { projectId: string; ta
     setBusy(true); setError(""); setPending(operation);
     try {
       const url = `${endpoint}/${operation.action}`;
-      const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_id: taskId, operation_id: operation.operation_id, request: operation.request }) });
+      const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_id: taskId, operation_id: operation.operation_id, expected_repository: operation.expected_repository, request: operation.request }) });
       if (!response.ok) throw await normalizeHttpError("POST", url, response);
       const payload = await response.json() as { result: DeliveryResult };
       if (!alive.current) return;
@@ -78,7 +78,7 @@ export function TaskDeliveryPanel({ projectId, taskId }: { projectId: string; ta
     } catch (reason) { if (alive.current) setError(`Résultat de la requête non confirmé. Inspectez les effets avant de réessayer. ${String(reason)}`); }
     finally { if (alive.current) setBusy(false); }
   };
-  const start = (action: Pending["action"], request: unknown) => void execute({ action, request, operation_id: crypto.randomUUID() });
+  const start = (action: Pending["action"], request: unknown) => void execute({ action, request, expected_repository: snapshot?.repository ?? null, operation_id: crypto.randomUUID() });
   const inspectCi = async () => {
     setBusy(true); setError(""); setCi(null);
     try {

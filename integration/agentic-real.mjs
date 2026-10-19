@@ -2189,6 +2189,7 @@ try {
             api(path + "/" + action, "POST", {
               task_id: id,
               operation_id: randomUUID(),
+              expected_repository: "azerothl/Akasha-code-studio",
               request,
             });
           const committed = await mutate("commit", {
@@ -2205,6 +2206,9 @@ try {
             JSON.stringify(committed),
           );
           const head = git(publishRoot, "rev-parse", "HEAD");
+          const pushRequest={remote:"origin",branch,expected_head:head,expected_remote_head:"missing"};
+          await api(path+"/push","POST",{task_id:id,operation_id:randomUUID(),expected_repository:"example/wrong-destination",request:pushRequest},409);
+          await api(path+"/push","POST",{task_id:id,operation_id:randomUUID(),request:pushRequest},400);
           const pushed = await mutate("push", {
             remote: "origin",
             branch,
