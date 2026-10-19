@@ -217,8 +217,12 @@ await writeFile(
 const log = await import("node:fs").then((fs) =>
   fs.openSync(join(data, "daemon.log"), "a"),
 );
+// Delivery must authenticate explicitly and ignore a global URL redirection.
+const hostileGlobalGitConfig=join(data,"hostile-global.gitconfig");
+await writeFile(hostileGlobalGitConfig,'[url "https://unapproved.invalid/"]\n  insteadOf = https://github.com/\n');
 const daemonEnv = {
   ...process.env,
+  GIT_CONFIG_GLOBAL: hostileGlobalGitConfig,
   AKASHA_DATA_DIR: data,
   AKASHA_PORT: String(port),
   OPENAI_API_KEY: "fixture-not-secret",
@@ -1062,7 +1066,13 @@ try {
       );
       const id = await task("mcp", [
         tool("mcp_fixture_echo", { text: 42 }),
-        tool("mcp_fixture_echo", { text: "MCP_REAL_OK" }),
+        {...tool("mcp_fixture_echo", { text: "MCP_REAL_OK" }),verify:(_text,body)=>{
+          const definition=body.tools.find(t=>t.function?.name==="studio_call");
+          const variant=definition.function.parameters.oneOf.find(v=>v.properties.tool.enum.includes("mcp_fixture_echo"));
+          assert.deepEqual(variant.properties.arguments.required,["text"]);
+          assert.equal(variant.properties.arguments.properties.text.type,"string");
+          assert.equal(variant.properties.arguments.properties.argv,undefined);
+        }},
         { text: "MCP terminé." },
       ]);
       const row = await finished(id);
