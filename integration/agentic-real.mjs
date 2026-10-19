@@ -501,6 +501,23 @@ try {
     }
     return {results,exact_native_content:content,no_injected_effect:true};
   });
+  await check("identical legacy write reuses its receipt without a second disk effect", async () => {
+    const id=await task("legacy-write-replay",[
+      {text:"TOOL: write_file workspace:/legacy-replay.txt\nexact-replay"},
+      {text:"TOOL: write_file workspace:/legacy-replay.txt\nexact-replay"},
+      {...tool("read_file",{path:"workspace:/legacy-replay.txt"}),verify:(_text,body)=>{
+        const receipts=body.messages.filter(m=>m.role==="tool").map(m=>{try{return JSON.parse(m.content);}catch{return null;}}).filter(Boolean);
+        assert(receipts.some(receipt=>receipt.replayed===true),"Repeated legacy write must return a verified cached receipt");
+      }},
+      {text:"Fichier enregistré et relu."},
+    ],"studio_scaffold",{message:"Crée legacy-replay.txt avec exactement exact-replay puis lis legacy-replay.txt. CASE:legacy-write-replay"});
+    const row=await finished(id);assert.equal(row.status,"completed");
+    assert.equal(await readFile(join(root,"legacy-replay.txt"),"utf8"),"exact-replay");
+    const operations=(await api(`/api/tasks/${id}/recovery`)).ledger.operations;
+    assert.equal(operations.filter(op=>op.tool==="write_file").length,1);
+    assert.equal(operations.filter(op=>op.tool==="read_file").length,1);
+    return {id,outcome:row.outcome,one_write_effect:true,read_completed:true};
+  });
   await check("temporary creations can be deleted or renamed without forced recreation", async () => {
     const content="temporary";
     const deletion=await task("terminal-delete",[
