@@ -2389,7 +2389,7 @@ try {
           });
           assert.equal(pushed.result.success, true, JSON.stringify(pushed));
           report.publishedBranch = branch;
-          const created = await mutate("pr", {
+          const prRequest = {
             remote: "origin",
             head: branch,
             base: "main",
@@ -2397,13 +2397,23 @@ try {
             title: "test: temporary Code Studio delivery API validation",
             body: "Temporary integration test of the Code Studio commit/push/PR/CI API. This draft will be closed without merging after evidence collection.",
             draft: true,
-          });
+          };
+          const created = await mutate("pr",prRequest);
           report.testPullRequest = created.result.pr;
           await writeFile(
             join(data, "report.json"),
             JSON.stringify(report, null, 2),
           );
           assert.equal(created.result.success, true, JSON.stringify(created));
+          const reused=await mutate("pr",prRequest);assert.equal(reused.result.success,true,JSON.stringify(reused));
+          const rejectedMetadata=[];
+          for (const change of [{title:"Different unapproved title"},{body:"Different unapproved body"},{draft:false}]) {
+            const result=await mutate("pr",{...prRequest,...change});
+            assert.equal(result.result.success,false,JSON.stringify(result));assert.equal(result.result.error,"pr_metadata_differs_from_approved_request");rejectedMetadata.push(result);
+          }
+          const metadata=JSON.parse(execFileSync("gh",["api",`repos/azerothl/Akasha-code-studio/pulls/${created.result.pr.number}`],{encoding:"utf8",windowsHide:true}));
+          assert.equal(metadata.title,prRequest.title);assert.equal(metadata.body,prRequest.body);assert.equal(metadata.draft,true);
+
           const status = await api(
             `${path}/pr?remote=origin&number=${created.result.pr.number}&task_id=${id}`,
           );
@@ -2411,7 +2421,7 @@ try {
           assert.equal(status.pr.headRefOid, head);
           assert.equal(status.checks_match_local_head, true);
           assert.equal(status.checks_state, "not_run");
-          return { id, head, branch, created, status };
+          return { id, head, branch, created, reused, rejectedMetadata, status };
         } finally {
           project = previous;
         }
