@@ -525,7 +525,7 @@ try {
   });
   await check("deletion rename and polite edit requests require real effects", async () => {
     const variants=[];
-    for(const [key,message,name] of [["delete-prose","Delete obsolete-prose.txt.","obsolete-prose.txt"],["rename-prose","Rename rename-prose.ts to never-created.ts.","rename-prose.ts"],["polite-prose","Please modify polite-prose.txt.","polite-prose.txt"]]) {
+    for(const [key,message,name] of [["delete-prose","Delete obsolete-prose.txt.","obsolete-prose.txt"],["rename-prose","Rename rename-prose.ts to never-created.ts.","rename-prose.ts"],["polite-prose","Please modify polite-prose.txt.","polite-prose.txt"],["object-add-prose","Add logging to object-add.txt.","object-add.txt"],["object-update-prose","Update dependencies in object-update.toml.","object-update.toml"]]) {
       await writeFile(join(root,name),"old");const id=await task(key,Array.from({length:4},()=>({text:"Termin\u00e9."})),"studio_scaffold",{message:message+` CASE:${key}`});const row=await finished(id);assert.equal(row.status,"failed");assert.equal(row.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,name),"utf8"),"old");variants.push({id,outcome:row.outcome});
     }
     assert.equal(await readFile(join(root,"never-created.ts"),"utf8").catch(()=>null),null);
