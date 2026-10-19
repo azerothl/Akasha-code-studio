@@ -481,7 +481,12 @@ try {
       const key=`native-envelope-${variant}`, path=`${key}.txt`;
       const args=fileArgs(path,content);
       const proposal=variant==="native" ? tool("write_file",args) : {text:(variant==="reasoning-json" ? "<think>private reasoning</think>\n" : "")+JSON.stringify({name:"write_file",arguments:args})};
-      const id=await task(key,[proposal,{text:"Note enregistrée."}],"studio_scaffold",{message:`Enregistre une note dans ${path}. CASE:${key}`});
+      const id=await task(key,[proposal,{text:"Note enregistrée.",verify:async(_text,body)=>{
+        const assistant=body.messages.filter(message=>message.role==="assistant" && message.tool_calls?.length).at(-1);
+        assert(assistant,"Native history must retain the invocation");
+        assert.equal(assistant.content ?? "", "", "An executed JSON invocation must not be repeated as prose");
+        assert.equal(assistant.tool_calls.length,1);
+      }}],"studio_scaffold",{message:`Enregistre une note dans ${path}. CASE:${key}`});
       const row=await finished(id);
       assert.equal(row.status,"completed");
       assert.equal(row.outcome.successful_tool_calls,1);
