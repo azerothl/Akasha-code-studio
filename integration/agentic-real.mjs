@@ -779,11 +779,12 @@ try {
     const row=await finished(id);assert.equal(row.status,"failed");assert.equal(row.outcome.termination_reason,"provider_error");assert.equal(row.outcome.successful_tool_calls,0);
     assert.equal(await readFile(join(root,"forbidden-wrapper.txt"),"utf8").catch(()=>null),null);
     const contentVariants=[];
-    for(const variant of ["direct","wrapper","batch"]) {
+    for(const variant of ["direct","wrapper","batch","tool-json","legacy"]) {
       const key="json-catalogue-"+variant, path="focused-"+variant+".txt", content="CASE:"+key;
       const command={name:"run_command",arguments:{program:"node",args:["-e","require('fs').writeFileSync('FORBIDDEN_JSON.txt','bad')"]}};
       const envelope=variant==="wrapper"?{name:"studio_call",arguments:{schema_version:1,tool:"run_command",arguments:command.arguments}}:variant==="batch"?[{name:"write_file",arguments:fileArgs(path,content)},command]:command;
-      const bad=await task(key,Array.from({length:4},()=>({text:JSON.stringify(envelope),verify:(_text,body)=>{assert(!body.tools.some(t=>t.function.name==="run_command"));}})),"studio_scaffold",{message:`Cr\u00e9e ${path} avec exactement ${content}. Puis lis ${path} avec read_file pour v\u00e9rifier son contenu. Termine.`});
+      const response=variant==="tool-json"?"TOOL_JSON: "+JSON.stringify({schema_version:1,tool:"run_command",arguments:command.arguments}):variant==="legacy"?`TOOL: run_command node -e "require('fs').writeFileSync('FORBIDDEN_JSON.txt','bad')"`:JSON.stringify(envelope);
+      const bad=await task(key,Array.from({length:4},()=>({text:response,verify:(_text,body)=>{assert(!body.tools.some(t=>t.function.name==="run_command"));}})),"studio_scaffold",{message:`Cr\u00e9e ${path} avec exactement ${content}. Puis lis ${path} avec read_file pour v\u00e9rifier son contenu. Termine.`});
       const result=await finished(bad);assert.equal(result.status,"failed");assert.equal(result.outcome.successful_tool_calls,0);assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);contentVariants.push({id:bad,outcome:result.outcome});
     }
     assert.equal(await readFile(join(root,"FORBIDDEN_JSON.txt"),"utf8").catch(()=>null),null);
@@ -1164,7 +1165,16 @@ try {
       ]);
       const exitRow=await finished(exited);assert.equal(exitRow.outcome.failed_tool_calls,0,JSON.stringify(exitRow));
       const exitArtifacts=await api(`/api/tasks/${exited}/artifacts`);const exitTranscript=exitArtifacts.artifacts.find(a=>a.kind==="terminal_transcript");assert(exitTranscript);assert.equal(exitTranscript.details.exit_code,7);
-      return { id, transcript,exited,exitTranscript };
+      sid=undefined;await writeFile(join(root,"terminal-delayed.txt"),"old");
+      const delayed=await task("terminal-delayed",[
+        tool("terminal_session",{argv:["start",JSON.stringify({argv:["node","-e","process.stdin.once('data',()=>setTimeout(()=>{require('fs').writeFileSync('terminal-delayed.txt','new');process.exit(0)},500))"],cols:80,rows:24})]}),
+        tool("terminal_session",text=>({argv:["write",session(text),JSON.stringify({text:"execute\r"})]})),
+        {tool:"terminal_session",delay:1500,args:text=>({argv:["read",session(text)]}),verify:async()=>assert.equal(await readFile(join(root,"terminal-delayed.txt"),"utf8"),"new")},
+        {tool:"terminal_session",args:text=>({argv:["stop",session(text)]})},
+        {text:"Modified."},
+      ],"studio_fullstack",{message:"Modify terminal-delayed.txt. CASE:terminal-delayed"});
+      const delayedRow=await finished(delayed);assert.equal(delayedRow.status,"completed",JSON.stringify(delayedRow));assert.equal(delayedRow.outcome.confirmed_file_mutation,true);assert.equal(await readFile(join(root,"terminal-delayed.txt"),"utf8"),"new");
+      return { id, transcript,exited,exitTranscript,delayed,delayed_outcome:delayedRow.outcome };
     },
   );
   await check(
