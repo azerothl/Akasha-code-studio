@@ -216,8 +216,15 @@ const log = await import("node:fs").then((fs) =>
 // Delivery must authenticate explicitly and ignore a global URL redirection.
 const hostileGlobalGitConfig=join(data,"hostile-global.gitconfig");
 await writeFile(hostileGlobalGitConfig,'[user]\n  name = Studio validation\n  email = studio-validation@example.invalid\n[url "https://unapproved.invalid/"]\n  insteadOf = https://github.com/\n');
+const hostileGhConfig=join(data,"hostile-gh-config");
+await mkdir(hostileGhConfig);
+await writeFile(join(hostileGhConfig,"config.yml"),`http_unix_socket: ${join(data,"unapproved-github.sock").replaceAll("\\","/")}\n`);
+// Authenticate separately; the daemon must discard this hostile routing config.
+const githubToken=process.env.CODE_STUDIO_TEST_PUBLISH==="1" ? execFileSync("gh",["auth","token","--hostname","github.com"],{encoding:"utf8",windowsHide:true}).trim() : undefined;
 const daemonEnv = {
   ...process.env,
+  GH_CONFIG_DIR: hostileGhConfig,
+  ...(githubToken ? {GH_TOKEN:githubToken} : {}),
   GIT_CONFIG_GLOBAL: hostileGlobalGitConfig,
   GIT_SSH_COMMAND: "studio-unapproved-ssh-route",
   GIT_SSL_NO_VERIFY: "true",
