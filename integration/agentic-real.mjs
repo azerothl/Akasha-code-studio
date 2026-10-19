@@ -2334,7 +2334,7 @@ try {
           await inactive(id);
           const publishRoot = join(data, "studio-projects", project.id);
           const branch =
-            "validation/studio-agentic-" + randomUUID().slice(0, 8);
+            Date.now().toString() + Math.floor(Math.random()*1000000).toString().padStart(6,"0");
           git(
             publishRoot,
             "remote",
@@ -2421,7 +2421,10 @@ try {
           assert.equal(status.pr.headRefOid, head);
           assert.equal(status.checks_match_local_head, true);
           assert.equal(status.checks_state, "not_run");
-          return { id, head, branch, created, reused, rejectedMetadata, status };
+          const branchStatus=await api(`${path}/pr?remote=origin&task_id=${id}`);
+          assert.equal(branchStatus.pr.number,created.result.pr.number);assert.equal(branchStatus.pr.headRefName,branch);assert.equal(branchStatus.pr.headRefOid,head);assert.equal(branchStatus.checks_match_local_head,true);
+
+          return { id, head, branch, created, reused, rejectedMetadata, status, branchStatus };
         } finally {
           project = previous;
         }
