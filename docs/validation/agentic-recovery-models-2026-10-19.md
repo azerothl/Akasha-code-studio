@@ -1,5 +1,7 @@
 # Reprise et compatibilité des modèles — 19 octobre 2026
 
+> Rapport initial : voir la [validation après revue et régressions](agentic-ci-integration-2026-10-19.md) pour les derniers résultats.
+
 Suite du [rapport du 18 octobre](agentic-recovery-models-2026-10-18.md), pour [Akasha #179](https://github.com/azerothl/Akasha/issues/179) et [#158](https://github.com/azerothl/Akasha/issues/158). Correctifs dans [Akasha #170](https://github.com/azerothl/Akasha/pull/170), recettes et preuves dans [Code Studio #35](https://github.com/azerothl/Akasha-code-studio/pull/35).
 
 **Les 18 recettes ciblées passent. Les PR restent ouvertes pendant la validation CI et jusqu’à intégration dans l’ordre des dépendances.** Aucune fusion ni clôture de ticket d’implémentation dans ce suivi.
