@@ -497,6 +497,32 @@ try {
     }
     return {results,exact_native_content:content,no_injected_effect:true};
   });
+  await check("temporary creations can be deleted or renamed without forced recreation", async () => {
+    const content="temporary";
+    const deletion=await task("terminal-delete",[
+      tool("write_file",fileArgs("temp-terminal.txt",content)),
+      tool("read_file",{path:"workspace:/temp-terminal.txt"}),
+      tool("delete_file",{path:"workspace:/temp-terminal.txt",expected_version:createHash("sha256").update(content).digest("hex")}),
+      {text:"Temporary file inspected and removed."},
+    ],"studio_scaffold",{message:"Create temp-terminal.txt, inspect it, then delete temp-terminal.txt. CASE:terminal-delete"});
+    const deleted=await finished(deletion);
+    assert.equal(deleted.status,"completed",JSON.stringify(deleted));
+    assert.equal(deleted.outcome.successful_tool_calls,3);
+    assert.equal(deleted.outcome.failed_tool_calls,0);
+    assert.equal(await readFile(join(root,"temp-terminal.txt"),"utf8").catch(()=>null),null);
+    const renameId=await task("terminal-rename",[
+      tool("write_file",fileArgs("temp-rename.txt",content)),
+      tool("rename_path",{argv:["workspace:/temp-rename.txt","workspace:/final-renamed.txt"]}),
+      {text:"Fichier renommé."},
+    ],"studio_scaffold",{message:"Crée temp-rename.txt puis renomme temp-rename.txt en final-renamed.txt. CASE:terminal-rename"});
+    const renamed=await finished(renameId);
+    assert.equal(renamed.status,"completed",JSON.stringify(renamed));
+    assert.equal(renamed.outcome.successful_tool_calls,2);
+    assert.equal(renamed.outcome.failed_tool_calls,0);
+    assert.equal(await readFile(join(root,"temp-rename.txt"),"utf8").catch(()=>null),null);
+    assert.equal(await readFile(join(root,"final-renamed.txt"),"utf8"),content);
+    return {deletion,delete_outcome:deleted.outcome,renameId,rename_outcome:renamed.outcome};
+  });
   await check("explicit literal mismatch has no disk effect and is corrected by a new tool request", async () => {
     const id=await task("literal-content",[
       tool("write_file",fileArgs("literal-case.txt","Token-42")),

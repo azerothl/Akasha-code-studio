@@ -23,6 +23,7 @@ parser.add_argument('--models', nargs='+', default=['lfm2:24b', 'qwen2.5-coder:1
 parser.add_argument('--repeat', type=int, default=3)
 parser.add_argument('--openai-context', type=int, help='Create and delete a temporary Ollama model alias with this num_ctx for the OpenAI transport')
 parser.add_argument('--require-file-catalogue', action='store_true', help='Assert the focused literal-file native tool selection is present in runtime events')
+parser.add_argument('--preload-models', action='store_true', help='Load and verify each model/context before task recipes; record readiness separately from task timeouts')
 args = parser.parse_args()
 assert args.repeat > 0
 repo = Path(os.environ.get('AKASHA_REPO_DIR', '../Akasha')).resolve()
@@ -47,9 +48,9 @@ for model in args.models:
     base = f'http://127.0.0.1:{port}'
     provider = 'openai' if model.startswith('devstral') else 'ollama'
     actual_model=model
-    def ollama_api(path,body,method='POST'):
-        req=urllib.request.Request(ollama+path,data=json.dumps(body).encode(),headers={'Content-Type':'application/json'},method=method)
-        with urllib.request.urlopen(req,timeout=90) as response:
+    def ollama_api(path,body=None,method='POST',timeout=90):
+        req=urllib.request.Request(ollama+path,data=json.dumps(body).encode() if body is not None else None,headers={'Content-Type':'application/json'},method=method)
+        with urllib.request.urlopen(req,timeout=timeout) as response:
             raw=response.read();return json.loads(raw) if raw else {}
     if provider=='openai' and args.openai_context:
         actual_model='studio-validation-'+uuid4().hex[:12]
@@ -76,6 +77,18 @@ for model in args.models:
             report['models'].append({'model':model,'actual_model':actual_model,'provider':provider,'temperature':0.1,'max_tokens':4096,'num_ctx':32768 if provider=='ollama' else (args.openai_context or 'provider default')})
             if model.startswith('lfm2'):
                 report['models'][-1]['adapter_sampling_defaults']={'top_k':50,'repeat_penalty':1.05,'source':'LFM2 adapter defaults; request leaves these unset'}
+            if args.preload_models:
+                # Ollama's documented empty generate request loads without a task.
+                # Keep the task's 90 s timeout, budget and success assertions intact.
+                started=time.monotonic()
+                context=32768 if provider=='ollama' else (args.openai_context or 32768)
+                loaded=ollama_api('/api/generate',{'model':actual_model,'stream':False,'keep_alive':'5m','options':{'num_ctx':context}},timeout=300)
+                assert loaded.get('done') is True,loaded
+                resident=next((m for m in ollama_api('/api/ps',method='GET')['models'] if m['name'] in [actual_model,actual_model+':latest']),None)
+                assert resident is not None and resident.get('context_length')==context,resident
+                report['models'][-1]['readiness']={'preloaded':True,'elapsed_secs':round(time.monotonic()-started,3),'context_length':resident['context_length'],'size_vram':resident.get('size_vram'),'load_duration_ns':loaded.get('load_duration'),'task_timeout_secs':90,'task_deadline_secs':180}
+                save()
+                print('MODEL_READY',model,context,flush=True)
             for iteration in range(args.repeat):
                 for kind in ['single-write', 'multi-tool']:
                     case={'model':model,'provider':provider,'recipe':kind,'iteration':iteration+1}
