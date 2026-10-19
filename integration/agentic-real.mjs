@@ -533,7 +533,9 @@ try {
     await writeFile(join(root,"rename-real.ts"),"value");const renamed=await task("rename-real",[tool("rename_path",{argv:["workspace:/rename-real.ts","workspace:/renamed-real.ts"]}),{text:"Renomm\u00e9."}],"studio_scaffold",{message:"Rename rename-real.ts to renamed-real.ts. CASE:rename-real"});const row=await finished(renamed);assert.equal(row.status,"completed",JSON.stringify(row));assert.equal(await readFile(join(root,"renamed-real.ts"),"utf8"),"value");await writeFile(join(root,"rename-overwrite.ts"),"original");
     const overwritten=await task("rename-overwrite",[tool("rename_path",{argv:["workspace:/rename-overwrite.ts","workspace:/renamed-overwrite.ts"]}),tool("write_file",{path:"workspace:/renamed-overwrite.ts",content:"wrong",expected_version:createHash("sha256").update("original").digest("hex")}),...Array.from({length:4},()=>({text:"Termine."}))],"studio_scaffold",{message:"Rename rename-overwrite.ts to renamed-overwrite.ts. CASE:rename-overwrite"});
     const overwrittenRow=await finished(overwritten);assert.equal(overwrittenRow.status,"failed");assert.equal(overwrittenRow.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,"renamed-overwrite.ts"),"utf8"),"wrong");
-    return {variants,removed,renamed,outcome:row.outcome,overwritten,overwritten_outcome:overwrittenRow.outcome};
+    const partial=await task("path-list-partial",[tool("write_file",fileArgs("list-a.txt","a")),...Array.from({length:4},()=>({text:"Done."}))],"studio_scaffold",{message:"Create list-a.txt and list-b.txt. CASE:path-list-partial"});const partialRow=await finished(partial);assert.equal(partialRow.status,"failed");assert.equal(partialRow.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,"list-b.txt"),"utf8").catch(()=>null),null);
+    const complete=await task("path-list-complete",[tool("write_file",fileArgs("list-c.txt","c")),tool("write_file",fileArgs("list-d.txt","d")),{text:"Done."}],"studio_scaffold",{message:"Create list-c.txt and list-d.txt. CASE:path-list-complete"});const completeRow=await finished(complete);assert.equal(completeRow.status,"completed",JSON.stringify(completeRow));assert.equal(completeRow.outcome.confirmed_file_mutation,true);
+    return {variants,removed,renamed,outcome:row.outcome,overwritten,overwritten_outcome:overwrittenRow.outcome,path_list:{partial,partial_outcome:partialRow.outcome,complete,complete_outcome:completeRow.outcome}};
   });
   await check("stale human question replies cannot answer a newer question", async () => {
     const question=(question)=>({text:`TOOL: ask_user\n${JSON.stringify({question,choices:["Continuer","Arr\u00eater"]})}`});
@@ -776,7 +778,16 @@ try {
     }})),"studio_scaffold",{message:"Cr\u00e9e focused-wrapper.txt avec exactement CASE:native-wrapper-guard. Puis lis focused-wrapper.txt avec read_file pour v\u00e9rifier son contenu. Termine."});
     const row=await finished(id);assert.equal(row.status,"failed");assert.equal(row.outcome.termination_reason,"provider_error");assert.equal(row.outcome.successful_tool_calls,0);
     assert.equal(await readFile(join(root,"forbidden-wrapper.txt"),"utf8").catch(()=>null),null);
-    return {id,outcome:row.outcome};
+    const contentVariants=[];
+    for(const variant of ["direct","wrapper","batch"]) {
+      const key="json-catalogue-"+variant, path="focused-"+variant+".txt", content="CASE:"+key;
+      const command={name:"run_command",arguments:{program:"node",args:["-e","require('fs').writeFileSync('FORBIDDEN_JSON.txt','bad')"]}};
+      const envelope=variant==="wrapper"?{name:"studio_call",arguments:{schema_version:1,tool:"run_command",arguments:command.arguments}}:variant==="batch"?[{name:"write_file",arguments:fileArgs(path,content)},command]:command;
+      const bad=await task(key,Array.from({length:4},()=>({text:JSON.stringify(envelope),verify:(_text,body)=>{assert(!body.tools.some(t=>t.function.name==="run_command"));}})),"studio_scaffold",{message:`Cr\u00e9e ${path} avec exactement ${content}. Puis lis ${path} avec read_file pour v\u00e9rifier son contenu. Termine.`});
+      const result=await finished(bad);assert.equal(result.status,"failed");assert.equal(result.outcome.successful_tool_calls,0);assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);contentVariants.push({id:bad,outcome:result.outcome});
+    }
+    assert.equal(await readFile(join(root,"FORBIDDEN_JSON.txt"),"utf8").catch(()=>null),null);
+    return {id,outcome:row.outcome,contentVariants};
   });
   await check("JSON content function requests execute both wrapped and native Devstral reads in order", async () => {
     const variants=[];
