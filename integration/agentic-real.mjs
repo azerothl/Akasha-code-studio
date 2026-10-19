@@ -1127,7 +1127,7 @@ try {
           false,
         );
         const blocked = await task("mcp-profile", [
-          tool("mcp_fixture_echo", { text: "MUST_BE_DENIED" }),
+          tool("mcp_fixture_echo", { text: "MUST_BE_DENIED" }, randomUUID()),
           { text: "Refus constaté." },
         ]);
         const blockedRow = await finished(blocked);
@@ -2033,7 +2033,7 @@ try {
     await restart();
     try {
       await api("/api/tools/policy","POST",{policy:{...policy,allowed_write_paths:[]}});
-      scripts.set("policy-resume",[tool("write_file",fileArgs("NEVER-POLICY.md","bad")),{text:"Écriture refusée par la politique courante."}]);
+      scripts.set("policy-resume",[tool("write_file",fileArgs("NEVER-POLICY.md","bad"),randomUUID()),{text:"Écriture refusée par la politique courante."}]);
       await api(`/api/tasks/${id}/resume`,"POST",{});
       const row=await finished(id);
       assert.equal(await readFile(join(root,"NEVER-POLICY.md"),"utf8").catch(()=>null),null);
