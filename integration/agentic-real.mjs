@@ -533,8 +533,12 @@ try {
         for (const path of ["batch-first.txt","batch-second.txt"]) assert.equal(await readFile(join(root,path),"utf8").catch(()=>null),null);
         const results=body.messages.filter(m=>m.role==="tool").slice(-3);
         assert.equal(results.length,3);
-        assert(results[0].content.includes("batch_deferred") && !results[0].content.includes("explicit_content_mismatch"));
-        assert(results[2].content.includes("explicit_content_mismatch") && !results[2].content.includes("batch_deferred"));
+        const payload=message=>JSON.parse(message.content.split("[Recorded execution result]\n")[1].split("\n\n[Original user task")[0]);
+        const rejected=results.map(payload);
+        assert.equal(rejected[0].error.error_code,"batch_deferred");
+        assert.equal(rejected[2].error.error_code,"explicit_content_mismatch");
+        assert(rejected.every(result=>result.rejected_batch.calls.length===3));
+        assert(rejected.every(result=>result.rejected_batch.retry_hint.includes("FIRST unexecuted operation")));
       }},
       {text:JSON.stringify(JSON.parse(batch("deux")).slice(1)),verify:async (_text,body)=>{
         assert.equal(await readFile(join(root,"batch-first.txt"),"utf8"),"un");
