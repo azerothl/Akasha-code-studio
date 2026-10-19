@@ -2,7 +2,7 @@
 
 ## Périmètre et décision
 
-**Validation réussie : contrôles locaux, campagnes réelles et CI CPU verts ; revues traitées.** Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub. Ce rapport remplace le [constat de blocage précédent](agentic-ci-integration-2026-10-19.md) pour la version finale ; ses échecs restent conservés.
+**Contrôles locaux, campagnes réelles et CI CPU du commit final réussis.** Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub. Ce rapport remplace le [constat de blocage précédent](agentic-ci-integration-2026-10-19.md) pour la version finale ; ses échecs restent conservés.
 
 ## Corrections
 
@@ -23,11 +23,17 @@
 | Vrais modèles, sans fallback | **18/18** : Devstral, LFM2, Qwen, six recettes chacun |
 | LFM2 supplémentaire, sans fallback | **12/12**, six écritures simples et six séquences à trois opérations |
 | Builds daemon / Code Studio | Réussis ; avertissement de taille du bundle non bloquant |
-| Interface native | TypeScript réussi ; binaire Tauri non compilé |
+| Interface native | **57 Vitest + 1 Chromium ciblé**, TypeScript et build e2e réussis ; binaire Tauri non compilé |
 
-Source daemon : [6feefe5](https://github.com/azerothl/Akasha/commit/6feefe5016297b7678e49c13148d4e057cce9429). Les quatre campagnes finales utilisent le même exécutable SHA-256 : `1e8d3dbcb7842f1dbc3c552d80c2bf455925b2cf38c9353423833f55c6eb3287`.
+Source du daemon testé : [6feefe5](https://github.com/azerothl/Akasha/commit/6feefe5016297b7678e49c13148d4e057cce9429). Les quatre campagnes finales utilisent le même exécutable SHA-256 : `1e8d3dbcb7842f1dbc3c552d80c2bf455925b2cf38c9353423833f55c6eb3287`.
 
-[CI CPU de ce commit](https://github.com/azerothl/Akasha/actions/runs/39261235822) : **les trois jobs sont réussis** : test (workspace, cookbook, daemon/CLI), embedded-llama-cpp-linux et ui-e2e. Les contrôles des revues sont terminés ; aucun fil de revue actif ne reste non résolu. Les CI CPU des dépendances #167, #168 et #169 sont réussies après intégration de main ; le test du routeur a aussi été rejoué sur ces trois branches. Une simulation des sept merges produit le même arbre que la source finale. Les branches sont conservées et les merges doivent utiliser les SHA vérifiés.
+Le [commit d’intégration 146e592](https://github.com/azerothl/Akasha/commit/146e592dd3bf42eba062130c4ad87e6b93c8d56a) ajoute ensuite une correction native UI issue d’une revue tardive : transmission de ref par les panneaux différés et initialisation du graphe quand sa ref arrive après les données. Ses quatre fichiers modifiés sont tous sous `apps/akasha-ui` ; **l’arbre Rust entier est identique** à celui du binaire des campagnes. Les 57 tests UI natifs et le parcours Chromium avec import retardé valident cette correction ; Le binaire des campagnes valide la même source Rust.
+
+[CI CPU du commit d’intégration](https://github.com/azerothl/Akasha/actions/runs/39268414796) : réussie (tests workspace, daemon/CLI, llama.cpp Linux et parcours UI). La [CI du daemon testé](https://github.com/azerothl/Akasha/actions/runs/39261235822) est réussie, comme celles des dépendances #167 à #169. Une simulation des sept merges backend produit le même arbre que la source finale.
+
+Le groupement natif GitHub #226 a été dissous pour revenir aux PR dépendantes classiques et conserver l’historique de merges validé. Les piles natives demandent un historique linéaire et une procédure de fusion spécifique ([documentation GitHub](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests)). Après dissociation et relance, GitHub calcule à nouveau la fusion et crée la CI du dernier SHA. Aucun test ni workflow n’a été assoupli.
+
+[Preuve du correctif natif du graphe](agentic-native-panel-2026-10-19.json).
 
 Preuves : [49 parcours techniques](agentic-blockers-technical-2026-10-19.json), [18 recettes modèles](agentic-blockers-models-2026-10-19.json), [12 recettes LFM2 supplémentaires](agentic-blockers-lfm-stress-2026-10-19.json), [4 cas LSP](agentic-blockers-lsp-2026-10-19.json). [Historique des passages de ce traitement](agentic-blockers-development-2026-10-19.json). Captures : [desktop](agentic-blockers-2026-10-19/desktop.png), [mobile](agentic-blockers-2026-10-19/mobile.png), [éditeur LSP](agentic-blockers-2026-10-19/editor-lsp.png), [preuves de tâche](agentic-blockers-2026-10-19/task-evidence.png). Les recettes techniques emploient une fixture de protocole déterministe, distincte des vrais modèles. Les tests UI Playwright simulent les API ; les captures desktop/mobile et les parcours d’éditeur utilisent aussi un daemon réel.
 

@@ -1,0 +1,24 @@
+{
+  "source_commit": "146e592dd3bf42eba062130c4ad87e6b93c8d56a",
+  "changed_files": [
+    "apps/akasha-ui/e2e/audit-followup.spec.ts",
+    "apps/akasha-ui/src/App.tsx",
+    "apps/akasha-ui/src/components/deferPanel.test.tsx",
+    "apps/akasha-ui/src/components/deferPanel.tsx"
+  ],
+  "unit": {
+    "files": 16,
+    "passed": 57,
+    "failed": 0
+  },
+  "typescript": "passed",
+  "e2e_build": "passed",
+  "chromium": {
+    "test": "memory graph initializes after its deferred chunk and ref become available",
+    "passed": 1,
+    "chunk_delay_ms": 300,
+    "ipc": "simulated memory data; actual React/relation-graph components",
+    "ensures": "graph node renders when the graph chunk mounts after memory data"
+  },
+  "scope": "Native UI web build. Tauri binary not compiled. Rust crates tree unchanged."
+}

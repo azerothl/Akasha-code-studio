@@ -1515,8 +1515,8 @@
   ],
   "daemon_sha256": "1e8d3dbcb7842f1dbc3c552d80c2bf455925b2cf38c9353423833f55c6eb3287",
   "source_run": "studio-agentic-real-zoMKtQ",
-  "code_commit": "6feefe5016297b7678e49c13148d4e057cce9429",
-  "code_tree": "6dea030294be771b7591de23aa6831c7a0dddc08",
+  "code_commit": "146e592dd3bf42eba062130c4ad87e6b93c8d56a",
+  "code_tree": "04a05abd8bf2790df4e8b9bc38fa2006e5f7d410",
   "test_pr_cleanup": {
     "state": "CLOSED",
     "merged": false,
@@ -1530,7 +1530,10 @@
     "tools": 34,
     "ui_unit": 21,
     "ui_playwright_mocked": 32,
-    "native_tsc": "passed"
+    "native_tsc": "passed",
+    "native_ui_unit": 57,
+    "native_ui_delayed_graph_chromium": 1,
+    "native_ui_e2e_build": "passed"
   },
   "gpu": "not executed: no runner; user waiver",
   "ui_source_commit": "ad277adda6bc059a6442c6d5b7a227d97905832e",
@@ -1540,7 +1543,18 @@
     "integration/real-model-recipes.py": "8d3f14d3a2b778bb278083d2d24db4a1e013dea12216396581f1a3abe4713a59",
     "integration/studio-lsp-push.py": "b134997868f78847defb53f8a9aea826fa5bbf1dfff4847737a31a185194af1d"
   },
-  "ci": {
+  "daemon_source_commit": "6feefe5016297b7678e49c13148d4e057cce9429",
+  "source_equivalence": {
+    "daemon_crates_tree": "306af53f0d9529874a16b8df69b1b502e5c70f05",
+    "changed_since_binary_validation": [
+      "apps/akasha-ui/e2e/audit-followup.spec.ts",
+      "apps/akasha-ui/src/App.tsx",
+      "apps/akasha-ui/src/components/deferPanel.test.tsx",
+      "apps/akasha-ui/src/components/deferPanel.tsx"
+    ],
+    "note": "Only native UI ref forwarding/initialization and its tests changed. The entire Rust crates tree, Code Studio UI runtime, test recipes and validated daemon executable are unchanged."
+  },
+  "previous_runtime_ci": {
     "conclusion": "success",
     "headSha": "6feefe5016297b7678e49c13148d4e057cce9429",
     "jobs": [
@@ -1852,5 +1866,318 @@
     ],
     "status": "completed",
     "url": "https://github.com/azerothl/Akasha/actions/runs/39261235822"
+  },
+  "ci": {
+    "conclusion": "success",
+    "headSha": "146e592dd3bf42eba062130c4ad87e6b93c8d56a",
+    "jobs": [
+      {
+        "completedAt": "2026-10-19T14:28:09Z",
+        "conclusion": "success",
+        "databaseId": 118113980719,
+        "name": "embedded-llama-cpp-linux",
+        "startedAt": "2026-10-19T14:22:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-19T14:22:52Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-19T14:22:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:22:55Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-19T14:22:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:23:04Z",
+            "conclusion": "success",
+            "name": "Install Rust",
+            "number": 3,
+            "startedAt": "2026-10-19T14:22:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:23:14Z",
+            "conclusion": "success",
+            "name": "Install build deps (llama.cpp)",
+            "number": 4,
+            "startedAt": "2026-10-19T14:23:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:28:00Z",
+            "conclusion": "success",
+            "name": "Build embedded-llm with llama-cpp",
+            "number": 5,
+            "startedAt": "2026-10-19T14:23:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:28:07Z",
+            "conclusion": "success",
+            "name": "Unit tests (no GGUF e2e)",
+            "number": 6,
+            "startedAt": "2026-10-19T14:28:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:28:07Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 12,
+            "startedAt": "2026-10-19T14:28:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:28:07Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-10-19T14:28:07Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39268414796/job/118113980719"
+      },
+      {
+        "completedAt": "2026-10-19T14:32:01Z",
+        "conclusion": "success",
+        "databaseId": 118113981252,
+        "name": "test",
+        "startedAt": "2026-10-19T14:22:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-19T14:22:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-19T14:22:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:22:57Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-19T14:22:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:24:53Z",
+            "conclusion": "success",
+            "name": "Free disk space",
+            "number": 3,
+            "startedAt": "2026-10-19T14:22:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:25:02Z",
+            "conclusion": "success",
+            "name": "Install Rust",
+            "number": 4,
+            "startedAt": "2026-10-19T14:24:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:25:05Z",
+            "conclusion": "success",
+            "name": "Install system dependencies",
+            "number": 5,
+            "startedAt": "2026-10-19T14:25:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:25:30Z",
+            "conclusion": "success",
+            "name": "Cache cargo",
+            "number": 6,
+            "startedAt": "2026-10-19T14:25:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:29:40Z",
+            "conclusion": "success",
+            "name": "Cargo test (workspace)",
+            "number": 7,
+            "startedAt": "2026-10-19T14:25:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:29:42Z",
+            "conclusion": "success",
+            "name": "Validate cookbook recipes",
+            "number": 8,
+            "startedAt": "2026-10-19T14:29:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:31:58Z",
+            "conclusion": "success",
+            "name": "E2E tests (daemon + CLI binaries)",
+            "number": 9,
+            "startedAt": "2026-10-19T14:29:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:32:00Z",
+            "conclusion": "success",
+            "name": "Post Cache cargo",
+            "number": 17,
+            "startedAt": "2026-10-19T14:31:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:32:00Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 18,
+            "startedAt": "2026-10-19T14:32:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:32:00Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 19,
+            "startedAt": "2026-10-19T14:32:00Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39268414796/job/118113981252"
+      },
+      {
+        "completedAt": "2026-10-19T14:38:10Z",
+        "conclusion": "success",
+        "databaseId": 118118801991,
+        "name": "ui-e2e",
+        "startedAt": "2026-10-19T14:32:04Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-19T14:32:07Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-19T14:32:04Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:32:09Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-19T14:32:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:34:09Z",
+            "conclusion": "success",
+            "name": "Free disk space",
+            "number": 3,
+            "startedAt": "2026-10-19T14:32:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:34:16Z",
+            "conclusion": "success",
+            "name": "Install Rust",
+            "number": 4,
+            "startedAt": "2026-10-19T14:34:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:34:21Z",
+            "conclusion": "success",
+            "name": "Install system dependencies",
+            "number": 5,
+            "startedAt": "2026-10-19T14:34:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:34:44Z",
+            "conclusion": "success",
+            "name": "Cache cargo",
+            "number": 6,
+            "startedAt": "2026-10-19T14:34:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:37:06Z",
+            "conclusion": "success",
+            "name": "Build daemon for Playwright",
+            "number": 7,
+            "startedAt": "2026-10-19T14:34:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:37:09Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 8,
+            "startedAt": "2026-10-19T14:37:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:37:25Z",
+            "conclusion": "success",
+            "name": "Install UI deps and Playwright browser",
+            "number": 9,
+            "startedAt": "2026-10-19T14:37:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:38:06Z",
+            "conclusion": "success",
+            "name": "Playwright E2E (build --mode e2e + tests)",
+            "number": 10,
+            "startedAt": "2026-10-19T14:37:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:38:07Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 18,
+            "startedAt": "2026-10-19T14:38:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:38:08Z",
+            "conclusion": "success",
+            "name": "Post Cache cargo",
+            "number": 19,
+            "startedAt": "2026-10-19T14:38:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:38:08Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 20,
+            "startedAt": "2026-10-19T14:38:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-19T14:38:08Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-10-19T14:38:08Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39268414796/job/118118801991"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/azerothl/Akasha/actions/runs/39268414796"
   }
 }
