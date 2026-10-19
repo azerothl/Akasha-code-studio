@@ -2136,11 +2136,13 @@ try {
     const root=join(data,"studio-projects",project.id);
     const config=join(root,".git","config");const original=await readFile(config,"utf8");
     try {
-      await writeFile(config,original+'\n[filter "studio-test"]\n clean = studio-never-execute-this\n');
-      const result=await api(`/api/studio/projects/${project.id}/delivery/status`);
-      assert.equal(result.success,false,JSON.stringify(result));
-      assert.match(JSON.stringify(result),/helper.*configuration.*unsupported/);
-      return {refused:true};
+      for (const addition of ['\n[filter "studio-test"]\n clean = studio-never-execute-this\n','\n[http]\n sslVerify = false\n proxy = http://127.0.0.1:9\n extraHeader = Authorization: unsafe-test-header\n','\n[malformed']) {
+        await writeFile(config,original+addition);
+        const result=await api(`/api/studio/projects/${project.id}/delivery/status`);
+        assert.equal(result.success,false,JSON.stringify(result));
+        assert.match(JSON.stringify(result),/configuration.*(?:unsupported|refused)/);
+      }
+      return {refused:true,configurations:3};
     } finally {await writeFile(config,original);}
   });
   if (process.env.CODE_STUDIO_TEST_PUBLISH === "1") {
