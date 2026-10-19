@@ -705,9 +705,9 @@ try {
     return {id,outcome:row.outcome,rejected:rejected.outcome};
   });
   await check("unadvertised native wrapper cannot bypass a focused tool catalogue", async () => {
-    const id=await task("native-wrapper-bypass",Array.from({length:4},()=>({...tool("run_command",{command:"echo forbidden > forbidden-wrapper.txt"}),nativeName:"studio_call",nativeArguments:{schema_version:1,tool:"run_command",arguments:{command:"echo forbidden > forbidden-wrapper.txt"}},verify:(_text,body)=>{
+    const id=await task("native-wrapper-guard",Array.from({length:4},()=>({...tool("run_command",{command:"echo forbidden > forbidden-wrapper.txt"}),nativeName:"studio_call",nativeArguments:{schema_version:1,tool:"run_command",arguments:{command:"echo forbidden > forbidden-wrapper.txt"}},verify:(_text,body)=>{
       const names=body.tools.map(t=>t.function.name);assert(!names.includes("studio_call"));assert(!names.includes("run_command"));
-    }})),"studio_scaffold",{message:"Cr\u00e9e focused-wrapper.txt avec exactement safe. Puis lis focused-wrapper.txt. CASE:native-wrapper-bypass"});
+    }})),"studio_scaffold",{message:"Cr\u00e9e focused-wrapper.txt avec exactement safe. Puis lis focused-wrapper.txt. CASE:native-wrapper-guard"});
     const row=await finished(id);assert.equal(row.status,"failed");assert.equal(row.outcome.termination_reason,"provider_error");assert.equal(row.outcome.successful_tool_calls,0);
     assert.equal(await readFile(join(root,"forbidden-wrapper.txt"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
