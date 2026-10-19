@@ -1,5 +1,5 @@
 {
-  "source_commit": "146e592dd3bf42eba062130c4ad87e6b93c8d56a",
+  "source_commit": "65d3cc2859636530e71f370c1710e429357d9e70",
   "changed_files": [
     "apps/akasha-ui/e2e/audit-followup.spec.ts",
     "apps/akasha-ui/src/App.tsx",
@@ -20,5 +20,6 @@
     "ipc": "simulated memory data; actual React/relation-graph components",
     "ensures": "graph node renders when the graph chunk mounts after memory data"
   },
-  "scope": "Native UI web build. Tauri binary not compiled. Rust crates tree unchanged."
+  "scope": "Native UI web build; unit and delayed-chunk Chromium rerun on final source. Tauri binary not compiled.",
+  "native_ui_tree": "b52ede6a51800daabfd6caf3ba15ac9844d9b892"
 }

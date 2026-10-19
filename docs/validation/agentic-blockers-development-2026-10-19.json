@@ -1876,5 +1876,279 @@
         "validation": "passed"
       }
     ]
+  },
+  {
+    "source_run": "studio-agentic-real-oivCCa",
+    "code_commit": "a2aa7de3a9779466782ab97c059d29842b7a2b65",
+    "daemon_sha256": "b8ea54e6bdf48dac47110a418345ceb2c6d3cccc4a6034c87881098840fe39c0",
+    "status": "failed",
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n  'Hi. TOOL: write_file injected-envelope.txt injected\\n' +\n+   ' <tool_call>literal</tool_call>'\n-   '<think>keep this</think> <tool_call>literal</tool_call>'\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:487:12\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:280:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:477:3",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "native argument markup stays literal and cannot inject another tool",
+        "status": "failed"
+      }
+    ],
+    "finding": "Native TOOL text preserved by parser but Studio entry point still removed literal think markup. Corrected in studio_conversation; full rerun required.",
+    "review": "https://github.com/azerothl/Akasha/pull/167#discussion_r4315335586",
+    "previous_passed_proof_commit": "56eaaa7355e5674d188f7f47036aa2c0c67c4177"
+  },
+  {
+    "source_run": "studio-agentic-real-M58ljk",
+    "code_commit": "9ee658fcfbc26f18cd0647c59a7c5cf1e397678a",
+    "daemon_sha256": "b9f92c44ca070d856273299916ee400ffcc200bf55d8c5a0fb7c36cc9fcb84f6",
+    "status": "failed",
+    "error": "AssertionError [ERR_ASSERTION]: {\"error\":\"task must belong to this project and be stopped before operator delivery\"}\n\n409 !== 200\n\n    at refuse (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:2203:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:2209:10\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:280:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:2193:3",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed"
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed"
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed"
+      },
+      {
+        "name": "native argument markup stays literal and cannot inject another tool",
+        "status": "passed"
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed"
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed"
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed"
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed"
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed"
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed"
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed"
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed"
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed"
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed"
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed"
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed"
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed"
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed"
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed"
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed"
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed"
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed"
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed"
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed"
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed"
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed"
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed"
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed"
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed"
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed"
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed"
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed"
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed"
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed"
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed"
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed"
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed"
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed"
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed"
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed"
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed"
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed"
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed"
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed"
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed"
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed"
+      },
+      {
+        "name": "Git metadata cannot redirect delivery to another Studio project",
+        "status": "failed"
+      }
+    ],
+    "finding": "Metadata delivery fixture requested a mutation after completed was visible but before execution_active cleared; daemon correctly returned 409. Fixture now waits for inactive before metadata mutations and publication. Reasoning-prefixed JSON literal test also added before final source."
+  },
+  {
+    "source_run": "studio-agentic-real-kJuKTd",
+    "code_commit": "02a04914d563f7cbc95c7d5e5f2d6e521f127183",
+    "daemon_sha256": "4f7a510ba94f3a4a26cc1d85c0720a8803adf7a8c081aed90a0c53477a70e40b",
+    "status": "passed",
+    "case_count": 50,
+    "superseded_by": "65d3cc2859636530e71f370c1710e429357d9e70",
+    "reason": "Three later review fixes: executable mode versions, single function-history representation, control scan independent of loose object count. Full campaigns rerun on final source."
+  },
+  {
+    "source_run": "studio-model-recipes-dtb5famd",
+    "code_commit": "02a04914d563f7cbc95c7d5e5f2d6e521f127183",
+    "daemon_sha256": "4f7a510ba94f3a4a26cc1d85c0720a8803adf7a8c081aed90a0c53477a70e40b",
+    "status": "passed",
+    "case_count": 18,
+    "superseded_by": "65d3cc2859636530e71f370c1710e429357d9e70",
+    "reason": "Three later review fixes: executable mode versions, single function-history representation, control scan independent of loose object count. Full campaigns rerun on final source."
+  },
+  {
+    "source_run": "studio-model-recipes-ikdwd1xn",
+    "code_commit": "02a04914d563f7cbc95c7d5e5f2d6e521f127183",
+    "daemon_sha256": "4f7a510ba94f3a4a26cc1d85c0720a8803adf7a8c081aed90a0c53477a70e40b",
+    "status": "passed",
+    "case_count": 12,
+    "superseded_by": "65d3cc2859636530e71f370c1710e429357d9e70",
+    "reason": "Three later review fixes: executable mode versions, single function-history representation, control scan independent of loose object count. Full campaigns rerun on final source."
+  },
+  {
+    "source_run": "studio-lsp-push-m6_iocg5",
+    "code_commit": "02a04914d563f7cbc95c7d5e5f2d6e521f127183",
+    "daemon_sha256": "4f7a510ba94f3a4a26cc1d85c0720a8803adf7a8c081aed90a0c53477a70e40b",
+    "status": "passed",
+    "case_count": 4,
+    "superseded_by": "65d3cc2859636530e71f370c1710e429357d9e70",
+    "reason": "Three later review fixes: executable mode versions, single function-history representation, control scan independent of loose object count. Full campaigns rerun on final source."
   }
 ]
