@@ -525,12 +525,15 @@ try {
   });
   await check("deletion rename and polite edit requests require real effects", async () => {
     const variants=[];
-    for(const [key,message,name] of [["delete-prose","Delete obsolete-prose.txt.","obsolete-prose.txt"],["rename-prose","Rename rename-prose.ts to never-created.ts.","rename-prose.ts"],["polite-prose","Please modify polite-prose.txt.","polite-prose.txt"],["object-add-prose","Add logging to object-add.txt.","object-add.txt"],["object-update-prose","Update dependencies in object-update.toml.","object-update.toml"]]) {
+    for(const [key,message,name] of [["delete-prose","Delete obsolete-prose.txt.","obsolete-prose.txt"],["rename-prose","Rename rename-prose.ts to never-created.ts.","rename-prose.ts"],["polite-prose","Please modify polite-prose.txt.","polite-prose.txt"],["object-add-prose","Add logging to object-add.txt.","object-add.txt"],["object-update-prose","Update dependencies in object-update.toml.","object-update.toml"],["replace-prose","Replace foo with bar in replace.toml.","replace.toml"],["change-prose","Change the port in change.toml.","change.toml"]]) {
       await writeFile(join(root,name),"old");const id=await task(key,Array.from({length:4},()=>({text:"Termin\u00e9."})),"studio_scaffold",{message:message+` CASE:${key}`});const row=await finished(id);assert.equal(row.status,"failed");assert.equal(row.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,name),"utf8"),"old");variants.push({id,outcome:row.outcome});
     }
     assert.equal(await readFile(join(root,"never-created.ts"),"utf8").catch(()=>null),null);
     await writeFile(join(root,"delete-real.txt"),"old");const removed=await task("delete-real",[tool("read_file",{path:"workspace:/delete-real.txt"}),tool("delete_file",{path:"workspace:/delete-real.txt",expected_version:createHash("sha256").update("old").digest("hex")}),{text:"Supprim\u00e9."}],"studio_scaffold",{message:"Delete delete-real.txt. CASE:delete-real"});assert.equal((await finished(removed)).status,"completed");assert.equal(await readFile(join(root,"delete-real.txt"),"utf8").catch(()=>null),null);
-    await writeFile(join(root,"rename-real.ts"),"value");const renamed=await task("rename-real",[tool("rename_path",{argv:["workspace:/rename-real.ts","workspace:/renamed-real.ts"]}),{text:"Renomm\u00e9."}],"studio_scaffold",{message:"Rename rename-real.ts to renamed-real.ts. CASE:rename-real"});const row=await finished(renamed);assert.equal(row.status,"completed",JSON.stringify(row));assert.equal(await readFile(join(root,"renamed-real.ts"),"utf8"),"value");return {variants,removed,renamed,outcome:row.outcome};
+    await writeFile(join(root,"rename-real.ts"),"value");const renamed=await task("rename-real",[tool("rename_path",{argv:["workspace:/rename-real.ts","workspace:/renamed-real.ts"]}),{text:"Renomm\u00e9."}],"studio_scaffold",{message:"Rename rename-real.ts to renamed-real.ts. CASE:rename-real"});const row=await finished(renamed);assert.equal(row.status,"completed",JSON.stringify(row));assert.equal(await readFile(join(root,"renamed-real.ts"),"utf8"),"value");await writeFile(join(root,"rename-overwrite.ts"),"original");
+    const overwritten=await task("rename-overwrite",[tool("rename_path",{argv:["workspace:/rename-overwrite.ts","workspace:/renamed-overwrite.ts"]}),tool("write_file",{path:"workspace:/renamed-overwrite.ts",content:"wrong",expected_version:createHash("sha256").update("original").digest("hex")}),...Array.from({length:4},()=>({text:"Termine."}))],"studio_scaffold",{message:"Rename rename-overwrite.ts to renamed-overwrite.ts. CASE:rename-overwrite"});
+    const overwrittenRow=await finished(overwritten);assert.equal(overwrittenRow.status,"failed");assert.equal(overwrittenRow.outcome.confirmed_file_mutation,false);assert.equal(await readFile(join(root,"renamed-overwrite.ts"),"utf8"),"wrong");
+    return {variants,removed,renamed,outcome:row.outcome,overwritten,overwritten_outcome:overwrittenRow.outcome};
   });
   await check("stale human question replies cannot answer a newer question", async () => {
     const question=(question)=>({text:`TOOL: ask_user\n${JSON.stringify({question,choices:["Continuer","Arr\u00eater"]})}`});
@@ -994,7 +997,15 @@ try {
       );
       assert(row.outcome.failed_tool_calls > 0);
     }
-    return "No marker written; persisted roles and spoof refusal confirmed";
+    let commandAlias;
+    if(process.platform==="win32") {
+      const evil=join(root,"evilnode.exe");await copyFile(process.execPath,evil);
+      try {
+        const id=await task("command-alias",[tool("run_command",{program:evil,args:["-e","require('fs').writeFileSync('COMMAND_ALIAS_BYPASS.txt','bad')"]},randomUUID()),{text:"Fin."}],"studio_fullstack");
+        const row=await finished(id);assert(row.outcome.failed_tool_calls>0,JSON.stringify(row));assert.equal(await readFile(join(root,"COMMAND_ALIAS_BYPASS.txt"),"utf8").catch(()=>null),null);commandAlias={id,outcome:row.outcome};
+      } finally {await unlink(evil);}
+    }
+    return {roles:"No marker written; persisted roles and spoof refusal confirmed",commandAlias};
   });
   await check("planner writes only exact plan path", async () => {
     const planVersion = createHash("sha256")
