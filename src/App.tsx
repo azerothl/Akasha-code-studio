@@ -2316,7 +2316,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowAgentMatrix((v) => !v)}>
                 {showAgentMatrix ? "Masquer" : "Afficher"} la matrice des capacités agents
               </Button>
-              {showAgentMatrix ? <AgentCapabilitiesTable /> : null}
+              {showAgentMatrix ? <AgentCapabilitiesTable projectId={selectedId} codeMode={codeMode} /> : null}
             </div>
           ) : null}
         </div>
@@ -3415,9 +3415,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     <span>Matrice des capacités</span>
                   </h2>
                   <p className="hint">
-                    Référence synthétique des agents studio et de leurs limites opérationnelles.
+                    Capacités calculées par le daemon pour le projet et le rôle effectifs.
                   </p>
-                  <AgentCapabilitiesTable />
+                  <AgentCapabilitiesTable projectId={selectedId} codeMode={codeMode} />
                 </section>
               </div>
             </div>
@@ -3714,6 +3714,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         {selectedId ? <div className="chat-panel-footer">
           {selectedId ? (
             <SendContextSummaryPanel
+              projectId={selectedId}
               summary={summarizeSendContext({
                 message: chatInput,
                 files,
@@ -3941,6 +3942,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   {taskDetailTab === "summary" ? (
                     <section className="task-detail-section">
                       <h4>Résumé</h4>
+                      <details><summary>Outils, règles et skills de cette tâche</summary><AgentCapabilitiesTable projectId={selectedId} taskId={taskDetailPayload.task.task_id} /></details>
                       <TaskOutcomeSummary outcome={taskDetailPayload.task.outcome} status={taskDetailPayload.task.status} />
                       <p>
                         <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}

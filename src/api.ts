@@ -1219,6 +1219,52 @@ export async function fetchToolsEffective(): Promise<unknown> {
   return r.json();
 }
 
+export type StudioCapabilityTool = {
+  name: string;
+  description: string;
+  announced: boolean;
+  allowed: boolean;
+  runnable: boolean;
+  requires_user_approval: boolean;
+  rule_sources: string[];
+  notes: string[];
+  prerequisites: string[];
+};
+
+export type StudioCapabilities = {
+  schema_version: 1;
+  scope: "studio";
+  project_id: string;
+  task_id: string | null;
+  agent: string;
+  preview: boolean;
+  default_profile?: string | null;
+  tools: StudioCapabilityTool[];
+  generated_at?: string;
+  skills?: { name: string; description: string; source_root?: string; sha256?: string; version?: string }[];
+  rules?: { path: string; scope: string; sha256: string }[];
+  active_context?: {
+    schema_version: number;
+    rules: { path: string; scope: string; sha256: string }[];
+    skills: { name: string; source_root?: string; sha256?: string; version?: string; resource?: string; resource_sha256?: string; activation?: string }[];
+    error?: string;
+  };
+};
+
+export async function fetchStudioCapabilities(projectId: string, taskId?: string | null, signal?: AbortSignal, codeMode?: string): Promise<StudioCapabilities> {
+  const query = new URLSearchParams({ project_id: projectId });
+  if (taskId) query.set("task_id", taskId);
+  if (codeMode) query.set("code_mode", codeMode);
+  const path = `/api/tools/effective?${query}`;
+  const r = await fetch(api(path), { signal });
+  if (!r.ok) throw await normalizeHttpError("GET", path, r);
+  const payload = await r.json() as StudioCapabilities;
+  if (payload?.schema_version !== 1 || payload.scope !== "studio" || payload.project_id !== projectId || !Array.isArray(payload.tools)) {
+    throw new Error("Ce daemon ne fournit pas de manifeste contextuel compatible. Les capacités globales ne confirment pas celles de cette tâche.");
+  }
+  return payload;
+}
+
 export async function fetchMemoryRecallMetrics(): Promise<unknown> {
   const r = await fetch(api("/api/memory/recall-metrics"));
   if (!r.ok) throw await normalizeHttpError("GET", "/api/memory/recall-metrics", r);
