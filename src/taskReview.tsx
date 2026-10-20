@@ -5,6 +5,7 @@ import { ChatStudioDiffPanel } from "./chatStudioDiff";
 import { AsyncState } from "./asyncState";
 import { redactSecrets } from "./sendContext";
 import { classifyReviewChecks, type ReviewCheckState } from "./taskReviewModel";
+import { TaskOutcomeSummary } from "./taskOutcome";
 
 const CHECK_LABEL: Record<ReviewCheckState, string> = {
   executed: "exécuté", not_run: "exécution non confirmée", manual: "manuel", failed: "échec",
@@ -55,6 +56,7 @@ export function TaskReviewPanel({ diff, projectId, gitBranch, acceptanceCriteria
     progress: (task?.progress ?? []).filter(row => !row.task_id || row.task_id === diff.task_id).map(row => row.message),
     missingManual: task?.acceptance_review?.missing ?? [],
     buildLog,
+    outcome: task?.outcome,
   });
   return (
     <section className="task-review" aria-label="Revue des changements">
@@ -63,6 +65,7 @@ export function TaskReviewPanel({ diff, projectId, gitBranch, acceptanceCriteria
       </Button>
       {open ? <div className="task-review-body">
         <p className="hint">Branche de la tâche : {gitBranch || "non enregistrée"}{task ? ` · statut ${task.status}` : ""}</p>
+        {task ? <TaskOutcomeSummary outcome={task.outcome} status={task.status} /> : null}
         <p className="hint">Branche actuelle : {meta?.git_branch || "indisponible"} · Arbre Git : {meta?.git_worktree_clean === true ? "propre" : meta?.git_worktree_clean === false ? "modifié" : "indisponible"} · Conflits : {conflicts ? conflicts.length ? conflicts.join(", ") : "aucun" : "indisponibles"}</p>
         <p className="hint">Les fichiers ont déjà été modifiés par l’agent. Le dry-run vérifie si une sélection peut être réappliquée ; appliquez-la uniquement à une copie qui ne contient pas ces changements.</p>
         <div className="task-review-actions">
