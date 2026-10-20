@@ -127,3 +127,9 @@ Les anciennes lectures d’attente étaient incomplètes : la lecture rafraîchi
 CUDA embarqué non exécuté faute de runner, conformément à l’accord utilisateur. Les recettes Ollama sur RTX 4080 SUPER ne certifient pas ce backend CUDA. Binaire Tauri non compilé. Les verrous Git coordonnent les écrivains Git et ne constituent pas une sandbox OS contre les mutations arbitraires de processus externes.
 
 Ordre : Akasha #162 → #164 → #166 → #167 → #168 → #169 → #170, puis Code Studio #31 → #32 → #33 → #34 → #35. Périmètre validé : Akasha #151–#160 et #179 ; Code Studio #27–#30. Akasha **#143** (évaluations transversales) et **#145** (audit complet worktrees/sandbox) restent ouverts ; **#232** suit un défaut Deep Research hérité de main #225, hors de cette livraison ; **#235** suit la validation des citations du retry Deep Research, héritée inchangée de main #233 et non validée ici ; aucun adaptateur Akasha OS livré ici.
+
+## Raccordement après fusion des dépendances
+
+Après fusion de #167, #168 et #169, GitHub signalait un conflit lié aux deux ancêtres communs. La fusion locale standard `ort` a produit exactement l’arbre déjà validé. Le commit de raccordement [8e7bc61](https://github.com/azerothl/Akasha/commit/8e7bc6145bcdbff5a62adb48b58c16291ce84952) relie `2eada3a` et le main des dépendances `5f6a339`.
+
+Arbre complet identique : `27504d6db25b81f38f000a69a0cdc41d3cd464af`. Les campagnes locales et leur binaire conservent leur provenance `2eada3a` ; cette égalité couvre tous les fichiers du dépôt. La [CI du raccordement](https://github.com/azerothl/Akasha/actions/runs/39345222095) a également réussi ses trois jobs CPU sur `8e7bc61`. Les détails et parents sont enregistrés dans le champ integration du JSON technique.

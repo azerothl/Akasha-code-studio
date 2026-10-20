@@ -68,3 +68,5 @@ Les 12 PR constituent deux piles dont l’ordre de dépendance est indiqué ci-d
 - Première tranche : MCP stdio (un serveur attaché), transports natifs Chat Completions sur trois providers, contrôle de version sur les outils de fichier documentés, reprise de la boucle Studio, LSP sur trois familles de langages, livraison GitHub.com. Les limites complémentaires sont explicites dans les contrats daemon et empêchent une clôture globale comme « solution agentique complète ».
 
 Documents de validation : [P0](validation/agentic-p0-implementation-2026-10-18.md), [capacités/skills](validation/agentic-capabilities-skills-2026-10-18.md), [observation](validation/agentic-observation-2026-10-18.md), [reprise](validation/agentic-recovery-2026-10-18.md), [LSP/livraison](validation/agentic-semantic-delivery-2026-10-18.md).
+
+- Raccordement d’ascendance final : `8e7bc61`, arbre complet strictement identique au code validé `2eada3a` ; CI CPU dédiée réussie. Voir les [preuves finales](validation/agentic-blockers-2026-10-19.md).
