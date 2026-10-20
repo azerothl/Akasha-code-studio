@@ -1,5 +1,5 @@
 {
-  "daemon_sha256": "0e7b718c619160a016120ff0cd8f3ff44ca924d054aa657326517e3dd785b930",
+  "daemon_sha256": "d00ca6a66498a97b3126eab2a5e8503b779a0577306cbbc55fd195838d895d24",
   "cases": [
     {
       "name": "initial versionless push and rejection of wrong version",
@@ -11,7 +11,7 @@
         "result": {
           "diagnostics": [
             {
-              "code": "51404",
+              "code": "69504",
               "message": "old",
               "range": {
                 "end": {
@@ -42,7 +42,7 @@
         "result": {
           "diagnostics": [
             {
-              "code": "52544",
+              "code": "58816",
               "message": "new",
               "range": {
                 "end": {
@@ -73,7 +73,7 @@
         "result": {
           "diagnostics": [
             {
-              "code": "52544",
+              "code": "58816",
               "message": "new",
               "range": {
                 "end": {
@@ -97,12 +97,12 @@
     {
       "name": "unsaved sibling buffer reopened in fresh process",
       "result": {
-        "pid": "52544",
+        "pid": "58816",
         "unsaved_text": "unsaved-other"
       }
     }
   ],
   "model": "none: adversarial LSP protocol process",
   "status": "passed",
-  "source_run": "studio-lsp-push-_ie0cj58"
+  "source_run": "studio-lsp-push-17bv96j1"
 }

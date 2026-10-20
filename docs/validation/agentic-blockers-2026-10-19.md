@@ -1,3 +1,41 @@
+# Validation finale Code Studio — 20 octobre 2026
+
+Source finale daemon : [aadc55e](https://github.com/azerothl/Akasha/commit/aadc55ed2c3d88887266bf7cd5b2c516682b0004). Main intégré : `e18ca745cb72e2e0b1d7ef53d108003cd5185c53`. [CI CPU finale](https://github.com/azerothl/Akasha/actions/runs/39386826762) : les cinq jobs obligatoires réussissent, y compris les évaluations mock et le premier démarrage Linux. Binaire commun aux quatre campagnes : `d00ca6a66498a97b3126eab2a5e8503b779a0577306cbbc55fd195838d895d24`. Le reste du document conserve l'historique de validation des sources antérieures ; les fichiers JSON courants portent cette nouvelle source.
+
+| Validation actuelle | Résultat |
+| --- | --- |
+| Rust ciblé | 744 réussis : daemon 564, LLM 70, store 30, tools 35, core 22, vault 9, CLI 14 |
+| Tests ignorés existants | 1 ancien PTY couvert par recette réelle ; 1 corruption du coffre suivie dans #214 |
+| Évaluations déterministes mock | 8/8 ; aucune inférence modèle dans ces évaluations |
+| Code Studio | 21 Vitest, 32 Playwright avec API simulée ; compilation réussie |
+| Interface Akasha | 59 Vitest, deux Chromium ciblés ; compilation réussie. Binaire Tauri non compilé |
+| Parcours techniques sur vrai daemon | 59/59, comprenant les scénarios REC de reprise et publication GitHub réelle |
+| LSP push | 4/4 |
+| Modèles Ollama réels | 18/18 : Qwen, Devstral, LFM2, puis 12/12 LFM2 ; sans fallback |
+
+## Corrections et limites de cette intégration
+
+- Les tests du coffre sérialisent l'accès à la clé d'environnement et restaurent sa valeur. Le défaut distinct de fichier corrompu reste suivi dans #214.
+- L'évaluation importée utilise les champs `conversation` et `require_tool` du contrat actuel.
+- Les cibles « file named », « folder called », leurs pluriels et les variantes françaises sont résolues après le connecteur. Tests unitaires des types/espaces/listes, refus réels des effets absents/partiels au pluriel et création réelle d'un fichier et dossier sans chemins parasites `named`/`called`.
+- `search_replace` annonce les champs distincts `search`/`replacement`, conserve exactement espaces, retours et `|`, accepte le remplacement vide et maintient les anciens appels typés version 1. Régressions unitaires et mutations sur daemon réel.
+- Les demandes avec fichier explicite avant l’action (« In config.toml, update the port », « Pour le fichier `src/my parser.rs`, implémente le parseur ») exigent aussi un effet vérifié. Régressions unitaires et parcours réels de refus prose seule puis écriture effective.
+- Les adjectifs avant les noms typés et le fichier « vide nommé » restent soumis aux preuves ; les listes ne sont pas absorbées comme des adjectifs. La grammaire reste bornée et ne certifie pas la conformité sémantique universelle de toute demande.
+- `spec/api_integration.md` documente le contrat de réponse humaine version 2, sa migration et le rejet 409 des identifiants absents ou périmés. Aucun rejeu automatique d'une ancienne réponse.
+- La CI conserve l'état de la tâche et les journaux du smoke de release. La validation confirme la complétion d'une inférence CPU de la release v0.11.0 ; elle ne garantit pas que ce petit modèle respecte une consigne de réponse exacte « OK ».
+- Le parcours orchestré CPU par défaut a dépassé 240 secondes sur une exécution malgré le modèle chargé ; cet échec et la matrice des autres artefacts restent dans #141. Le smoke corrigé garde le délai de 240 secondes et n’ignore aucune inférence. Il ne certifie pas la latence du parcours orchestré ni les autres plateformes. [Preuve du smoke Linux](agentic-release-firstboot-2026-10-20.json).
+- La saturation du disque E a fait échouer l'écriture du cache/build UI. Le cache incrémental régénérable a été déplacé sur C ; les deux suites et builds ont ensuite été relancés avec succès.
+- La génération indépendante Ollama sur 11435 n'a pas été interrompue. Préchargement des modèles de recette consigné séparément ; délais des tâches inchangés.
+- CUDA non exécuté : aucun runner GPU configuré, conformément à l'accord utilisateur. Les cinq jobs CPU sont exigés.
+- La PR temporaire #102 a été fermée sans fusion et sa branche supprimée. La fusion externe de documentation #193 ne modifie aucun code compilé : le SHA-256 du binaire avant/après est strictement identique et les tests daemon ont été répétés. Les campagnes courantes sont relancées après les derniers correctifs de grammaire et de contrat. Les anciennes campagnes sont conservées dans l'historique.
+- #143 conserve son périmètre plus large ; #145 a été fermé par la fusion externe #146. Les suivis Deep Research #232/#235 ne sont pas certifiés par cette recette Code Studio.
+
+Les validations requises autorisent la fusion dans l’ordre Akasha #170, puis Code Studio #31 → #32 → #33 → #34 → #35. Les tickets validés ne sont clôturés qu’après les fusions et vérification que les arbres de main correspondent aux sources validées. Les états de livraison courants sont publiés dans les PR et les tickets.
+
+---
+
+## Historique antérieur
+
 # Corrections #179 / #159 et validation finale — 19-20 octobre 2026
 
 ## Décision et provenance

@@ -22884,5 +22884,685 @@
         "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 3\n\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:510:12\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:280:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:500:3"
       }
     ]
+  },
+  {
+    "code_commit": "2eada3ae28ad49d9ece053b552cf40e6913c2c84",
+    "integration": {
+      "commit": "8e7bc6145bcdbff5a62adb48b58c16291ce84952",
+      "parents": [
+        "2eada3ae28ad49d9ece053b552cf40e6913c2c84",
+        "5f6a33903430fb5bdf35ef06bb553f00921aa38e"
+      ],
+      "tree": "27504d6db25b81f38f000a69a0cdc41d3cd464af",
+      "identical_to_tested_tree": true,
+      "validated_source_commit": "2eada3ae28ad49d9ece053b552cf40e6913c2c84",
+      "dependency_main": "5f6a33903430fb5bdf35ef06bb553f00921aa38e",
+      "ci": {
+        "conclusion": "success",
+        "headSha": "8e7bc6145bcdbff5a62adb48b58c16291ce84952",
+        "jobs": [
+          {
+            "completedAt": "2026-10-20T00:14:03Z",
+            "conclusion": "success",
+            "databaseId": 118376074771,
+            "name": "test",
+            "startedAt": "2026-10-20T00:02:23Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-20T00:02:25Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-20T00:02:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:02:29Z",
+                "conclusion": "success",
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "startedAt": "2026-10-20T00:02:25Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:44Z",
+                "conclusion": "success",
+                "name": "Free disk space",
+                "number": 3,
+                "startedAt": "2026-10-20T00:02:29Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:44Z",
+                "conclusion": "success",
+                "name": "Install Rust",
+                "number": 4,
+                "startedAt": "2026-10-20T00:07:44Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:47Z",
+                "conclusion": "success",
+                "name": "Install system dependencies",
+                "number": 5,
+                "startedAt": "2026-10-20T00:07:44Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:08:30Z",
+                "conclusion": "success",
+                "name": "Cache cargo",
+                "number": 6,
+                "startedAt": "2026-10-20T00:07:47Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:12:02Z",
+                "conclusion": "success",
+                "name": "Cargo test (workspace)",
+                "number": 7,
+                "startedAt": "2026-10-20T00:08:30Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:12:03Z",
+                "conclusion": "success",
+                "name": "Validate cookbook recipes",
+                "number": 8,
+                "startedAt": "2026-10-20T00:12:02Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:13:58Z",
+                "conclusion": "success",
+                "name": "E2E tests (daemon + CLI binaries)",
+                "number": 9,
+                "startedAt": "2026-10-20T00:12:03Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:14:00Z",
+                "conclusion": "success",
+                "name": "Post Cache cargo",
+                "number": 17,
+                "startedAt": "2026-10-20T00:13:58Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:14:00Z",
+                "conclusion": "success",
+                "name": "Post Run actions/checkout@v4",
+                "number": 18,
+                "startedAt": "2026-10-20T00:14:00Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:14:00Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 19,
+                "startedAt": "2026-10-20T00:14:00Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/azerothl/Akasha/actions/runs/39345222095/job/118376074771"
+          },
+          {
+            "completedAt": "2026-10-20T00:07:16Z",
+            "conclusion": "success",
+            "databaseId": 118376075214,
+            "name": "embedded-llama-cpp-linux",
+            "startedAt": "2026-10-20T00:02:23Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-20T00:02:25Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-20T00:02:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:02:28Z",
+                "conclusion": "success",
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "startedAt": "2026-10-20T00:02:25Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:02:41Z",
+                "conclusion": "success",
+                "name": "Install Rust",
+                "number": 3,
+                "startedAt": "2026-10-20T00:02:28Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:03:00Z",
+                "conclusion": "success",
+                "name": "Install build deps (llama.cpp)",
+                "number": 4,
+                "startedAt": "2026-10-20T00:02:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:08Z",
+                "conclusion": "success",
+                "name": "Build embedded-llm with llama-cpp",
+                "number": 5,
+                "startedAt": "2026-10-20T00:03:00Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:14Z",
+                "conclusion": "success",
+                "name": "Unit tests (no GGUF e2e)",
+                "number": 6,
+                "startedAt": "2026-10-20T00:07:08Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:14Z",
+                "conclusion": "success",
+                "name": "Post Run actions/checkout@v4",
+                "number": 12,
+                "startedAt": "2026-10-20T00:07:14Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:07:15Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 13,
+                "startedAt": "2026-10-20T00:07:15Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/azerothl/Akasha/actions/runs/39345222095/job/118376075214"
+          },
+          {
+            "completedAt": "2026-10-20T00:22:17Z",
+            "conclusion": "success",
+            "databaseId": 118379986296,
+            "name": "ui-e2e",
+            "startedAt": "2026-10-20T00:14:05Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-20T00:14:06Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-20T00:14:05Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:14:09Z",
+                "conclusion": "success",
+                "name": "Run actions/checkout@v4",
+                "number": 2,
+                "startedAt": "2026-10-20T00:14:06Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:16:33Z",
+                "conclusion": "success",
+                "name": "Free disk space",
+                "number": 3,
+                "startedAt": "2026-10-20T00:14:09Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:16:42Z",
+                "conclusion": "success",
+                "name": "Install Rust",
+                "number": 4,
+                "startedAt": "2026-10-20T00:16:33Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:16:45Z",
+                "conclusion": "success",
+                "name": "Install system dependencies",
+                "number": 5,
+                "startedAt": "2026-10-20T00:16:42Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:16:58Z",
+                "conclusion": "success",
+                "name": "Cache cargo",
+                "number": 6,
+                "startedAt": "2026-10-20T00:16:45Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:20:51Z",
+                "conclusion": "success",
+                "name": "Build daemon for Playwright",
+                "number": 7,
+                "startedAt": "2026-10-20T00:16:58Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:20:53Z",
+                "conclusion": "success",
+                "name": "Setup Node.js",
+                "number": 8,
+                "startedAt": "2026-10-20T00:20:51Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:21:15Z",
+                "conclusion": "success",
+                "name": "Install UI deps and Playwright browser",
+                "number": 9,
+                "startedAt": "2026-10-20T00:20:53Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:22:13Z",
+                "conclusion": "success",
+                "name": "Playwright E2E (build --mode e2e + tests)",
+                "number": 10,
+                "startedAt": "2026-10-20T00:21:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:22:13Z",
+                "conclusion": "success",
+                "name": "Post Setup Node.js",
+                "number": 18,
+                "startedAt": "2026-10-20T00:22:13Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:22:15Z",
+                "conclusion": "success",
+                "name": "Post Cache cargo",
+                "number": 19,
+                "startedAt": "2026-10-20T00:22:13Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:22:15Z",
+                "conclusion": "success",
+                "name": "Post Run actions/checkout@v4",
+                "number": 20,
+                "startedAt": "2026-10-20T00:22:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-20T00:22:15Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 21,
+                "startedAt": "2026-10-20T00:22:15Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/azerothl/Akasha/actions/runs/39345222095/job/118379986296"
+          }
+        ],
+        "status": "completed",
+        "url": "https://github.com/azerothl/Akasha/actions/runs/39345222095"
+      },
+      "verified_at": "2026-10-20T00:22:49.431704+00:00"
+    },
+    "daemon_sha256": "0e7b718c619160a016120ff0cd8f3ff44ca924d054aa657326517e3dd785b930",
+    "source_run": "studio-agentic-real-3TLHht",
+    "status": "passed; superseded by new main integrations",
+    "reason": "External main merged release smoke, vault tests, worktree hardening and mock evals. Fixed parallel env race, updated CompletionRequest, named targets and API migration documentation. Repeated all campaigns."
+  },
+  {
+    "scheduled_source_commit": "3fa8887eb9c18343f4809bf38b5646c9b51624ae",
+    "source_run": "studio-agentic-real-izpzJn",
+    "daemon_sha256": "3c9ecb8d1e4fdd7d5d1bb05a849a8e4e00faa533840a89232af71a5be11746ad",
+    "case_count": 59,
+    "status": "passed; superseded by named-target parser correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "3fa8887eb9c18343f4809bf38b5646c9b51624ae",
+    "source_run": "studio-model-recipes-9d2uum6s",
+    "daemon_sha256": "3c9ecb8d1e4fdd7d5d1bb05a849a8e4e00faa533840a89232af71a5be11746ad",
+    "case_count": 18,
+    "status": "passed; superseded by named-target parser correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "3fa8887eb9c18343f4809bf38b5646c9b51624ae",
+    "source_run": "studio-model-recipes-h8oi40q1",
+    "daemon_sha256": "2226f02dcfc6af1be6d4f2f3f2903b0fea0de13059abe8ba9d8dcf26a9336a62",
+    "case_count": 12,
+    "status": "passed; superseded by named-target parser correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "3fa8887eb9c18343f4809bf38b5646c9b51624ae",
+    "source_run": "studio-lsp-push-4mzczmu4",
+    "daemon_sha256": "3c9ecb8d1e4fdd7d5d1bb05a849a8e4e00faa533840a89232af71a5be11746ad",
+    "case_count": 4,
+    "status": "passed; superseded by named-target parser correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "03b8eb6c3b23d5c4b19bfaeba436216e904ee2c6",
+    "source_run": "studio-agentic-real-KnqQg3",
+    "daemon_sha256": "2226f02dcfc6af1be6d4f2f3f2903b0fea0de13059abe8ba9d8dcf26a9336a62",
+    "case_count": 59,
+    "status": "passed; superseded by plural named-target guard correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "03b8eb6c3b23d5c4b19bfaeba436216e904ee2c6",
+    "source_run": "studio-model-recipes-ckqkd4tp",
+    "daemon_sha256": "2226f02dcfc6af1be6d4f2f3f2903b0fea0de13059abe8ba9d8dcf26a9336a62",
+    "case_count": 18,
+    "status": "passed; superseded by plural named-target guard correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "03b8eb6c3b23d5c4b19bfaeba436216e904ee2c6",
+    "source_run": "studio-model-recipes-q_66zyyc",
+    "daemon_sha256": "2226f02dcfc6af1be6d4f2f3f2903b0fea0de13059abe8ba9d8dcf26a9336a62",
+    "case_count": 12,
+    "status": "passed; superseded by plural named-target guard correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "03b8eb6c3b23d5c4b19bfaeba436216e904ee2c6",
+    "source_run": "studio-lsp-push-dvivt6ug",
+    "daemon_sha256": "2226f02dcfc6af1be6d4f2f3f2903b0fea0de13059abe8ba9d8dcf26a9336a62",
+    "case_count": 4,
+    "status": "passed; superseded by plural named-target guard correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "f1bc222a001a96af19cc45d40f2782cef2efcf31",
+    "integration_commit": "7082064d3a4a4c85489ed9c31ce49cbe2d52671c",
+    "source_run": "studio-agentic-real-8Zg1Q1",
+    "daemon_sha256": "6e1607a9aaa88930db1ccd415189adffe53de37a2eb1ee33ac29859b5c6e56bf",
+    "case_count": 59,
+    "status": "passed; superseded by structured search_replace and adjectival target correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "f1bc222a001a96af19cc45d40f2782cef2efcf31",
+    "integration_commit": "7082064d3a4a4c85489ed9c31ce49cbe2d52671c",
+    "source_run": "studio-model-recipes-0y8jzxnw",
+    "daemon_sha256": "6e1607a9aaa88930db1ccd415189adffe53de37a2eb1ee33ac29859b5c6e56bf",
+    "case_count": 18,
+    "status": "passed; superseded by structured search_replace and adjectival target correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "f1bc222a001a96af19cc45d40f2782cef2efcf31",
+    "integration_commit": "7082064d3a4a4c85489ed9c31ce49cbe2d52671c",
+    "source_run": "studio-model-recipes-sb8mnl25",
+    "daemon_sha256": "6e1607a9aaa88930db1ccd415189adffe53de37a2eb1ee33ac29859b5c6e56bf",
+    "case_count": 12,
+    "status": "passed; superseded by structured search_replace and adjectival target correction",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "f1bc222a001a96af19cc45d40f2782cef2efcf31",
+    "integration_commit": "7082064d3a4a4c85489ed9c31ce49cbe2d52671c",
+    "source_run": "studio-lsp-push-2on6uwr7",
+    "daemon_sha256": "6e1607a9aaa88930db1ccd415189adffe53de37a2eb1ee33ac29859b5c6e56bf",
+    "case_count": 4,
+    "status": "passed; superseded by structured search_replace and adjectival target correction",
+    "fixture_error": null
+  },
+  {
+    "status": "corrected local grammar regression",
+    "before": "553 passed, 1 failed: broad adjective matching consumed a later list item",
+    "after": "554 passed: one typed noun per determiner, bounded qualifiers, all conjunctive/list regressions retained"
+  },
+  {
+    "scheduled_source_commit": "ff40aac001638b24e288e92d7e202ecfc5b7814b",
+    "source_run": "studio-agentic-real-ySPhh5",
+    "daemon_sha256": "eca1aece30947fe5606a7853e5c4baaeb5c93cc14090b7c6405663f139d05439",
+    "case_count": 59,
+    "status": "passed; superseded by dynamic MCP JSON and append grammar corrections",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "ff40aac001638b24e288e92d7e202ecfc5b7814b",
+    "source_run": "studio-model-recipes-bt1miyd3",
+    "daemon_sha256": "eca1aece30947fe5606a7853e5c4baaeb5c93cc14090b7c6405663f139d05439",
+    "case_count": 18,
+    "status": "passed; superseded by dynamic MCP JSON and append grammar corrections",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "ff40aac001638b24e288e92d7e202ecfc5b7814b",
+    "source_run": "studio-model-recipes-imyxz6rm",
+    "daemon_sha256": "eca1aece30947fe5606a7853e5c4baaeb5c93cc14090b7c6405663f139d05439",
+    "case_count": 12,
+    "status": "passed; superseded by dynamic MCP JSON and append grammar corrections",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "ff40aac001638b24e288e92d7e202ecfc5b7814b",
+    "source_run": "studio-lsp-push-5er1him9",
+    "daemon_sha256": "eca1aece30947fe5606a7853e5c4baaeb5c93cc14090b7c6405663f139d05439",
+    "case_count": 4,
+    "status": "passed; superseded by dynamic MCP JSON and append grammar corrections",
+    "fixture_error": null
+  },
+  {
+    "status": "release CPU smoke failure retained",
+    "ci": "https://github.com/azerothl/Akasha/actions/runs/39352476481/job/118399606094",
+    "observed": "Candle loaded, root task and orchestrated child still running after 240 seconds, zero returned tokens",
+    "corrected_test": "Removed unsupported provider/max_tokens body fields; supported composer_mode technical_writer exercises one explicit embedded reply and verifies assigned agent/model/tokens. Timeout remains 240 seconds. Default orchestrated cold CPU path and multi-platform matrix remain in issue #141."
+  },
+  {
+    "scheduled_source_commit": "92e94b301bb9e2379e96cd9debb442053641d205",
+    "source_run": "studio-agentic-real-WzMAl9",
+    "daemon_sha256": "e7be0386729241fd2307811a4d405edd694bc1cc50d687e8d6cf29e1f21e6aa6",
+    "case_count": 59,
+    "status": "failed fixture assertion",
+    "fixture_error": "AssertionError [ERR_ASSERTION]: MCP JSON call must remain in execution history",
+    "reason": "History assertion initially matched only internal studio_call envelope; provider correctly flattens to mcp_fixture_echo. Corrected assertion accepts the declared transport shape and additionally requires the matching tool_call_id/result. No fixture failure suppressed. GitHub PR #93 closed without merge and branch deleted."
+  },
+  {
+    "scheduled_source_commit": "92e94b301bb9e2379e96cd9debb442053641d205",
+    "source_run": "studio-model-recipes-t7p7fo9i",
+    "daemon_sha256": "e7be0386729241fd2307811a4d405edd694bc1cc50d687e8d6cf29e1f21e6aa6",
+    "case_count": 18,
+    "status": "passed; superseded by Markdown list guard",
+    "fixture_error": null,
+    "reason": "History assertion initially matched only internal studio_call envelope; provider correctly flattens to mcp_fixture_echo. Corrected assertion accepts the declared transport shape and additionally requires the matching tool_call_id/result. No fixture failure suppressed. GitHub PR #93 closed without merge and branch deleted."
+  },
+  {
+    "scheduled_source_commit": "92e94b301bb9e2379e96cd9debb442053641d205",
+    "source_run": "studio-model-recipes-tukhstn1",
+    "daemon_sha256": "e7be0386729241fd2307811a4d405edd694bc1cc50d687e8d6cf29e1f21e6aa6",
+    "case_count": 12,
+    "status": "passed; superseded by Markdown list guard",
+    "fixture_error": null,
+    "reason": "History assertion initially matched only internal studio_call envelope; provider correctly flattens to mcp_fixture_echo. Corrected assertion accepts the declared transport shape and additionally requires the matching tool_call_id/result. No fixture failure suppressed. GitHub PR #93 closed without merge and branch deleted."
+  },
+  {
+    "scheduled_source_commit": "92e94b301bb9e2379e96cd9debb442053641d205",
+    "source_run": "studio-lsp-push-nb_rhzgt",
+    "daemon_sha256": "e7be0386729241fd2307811a4d405edd694bc1cc50d687e8d6cf29e1f21e6aa6",
+    "case_count": 4,
+    "status": "passed; superseded by Markdown list guard",
+    "fixture_error": null,
+    "reason": "History assertion initially matched only internal studio_call envelope; provider correctly flattens to mcp_fixture_echo. Corrected assertion accepts the declared transport shape and additionally requires the matching tool_call_id/result. No fixture failure suppressed. GitHub PR #93 closed without merge and branch deleted."
+  },
+  {
+    "scheduled_source_commit": "5725ec3422e01e0482334b5f9e0436a4eff9fc52",
+    "source_run": "studio-agentic-real-QCzDnK",
+    "daemon_sha256": "58ea8bb7d5186e88305f60788143d46e54adb29da0501c64f33efbb698d73a80",
+    "case_count": 59,
+    "status": "passed; superseded by explicit copy effect verification",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "5725ec3422e01e0482334b5f9e0436a4eff9fc52",
+    "source_run": "studio-model-recipes-11pmygfc",
+    "daemon_sha256": "58ea8bb7d5186e88305f60788143d46e54adb29da0501c64f33efbb698d73a80",
+    "case_count": 18,
+    "status": "passed; superseded by explicit copy effect verification",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "5725ec3422e01e0482334b5f9e0436a4eff9fc52",
+    "source_run": "studio-model-recipes-_qf8tgkr",
+    "daemon_sha256": "58ea8bb7d5186e88305f60788143d46e54adb29da0501c64f33efbb698d73a80",
+    "case_count": 12,
+    "status": "passed; superseded by explicit copy effect verification",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "5725ec3422e01e0482334b5f9e0436a4eff9fc52",
+    "source_run": "studio-lsp-push-1gomjpfz",
+    "daemon_sha256": "58ea8bb7d5186e88305f60788143d46e54adb29da0501c64f33efbb698d73a80",
+    "case_count": 4,
+    "status": "passed; superseded by explicit copy effect verification",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "75051c188b28178ee6fc1496a718d1b43897eb8e",
+    "source_run": "studio-agentic-real-k3EknF",
+    "daemon_sha256": "935f019be79f36b3beb88be78472aa8fd6b5d7674f4d7643df5c233850b0c6d8",
+    "case_count": 59,
+    "status": "passed; superseded by copy source baseline/prior writer binding",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "75051c188b28178ee6fc1496a718d1b43897eb8e",
+    "source_run": "studio-model-recipes-mt9etg12",
+    "daemon_sha256": "935f019be79f36b3beb88be78472aa8fd6b5d7674f4d7643df5c233850b0c6d8",
+    "case_count": 18,
+    "status": "passed; superseded by copy source baseline/prior writer binding",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "75051c188b28178ee6fc1496a718d1b43897eb8e",
+    "source_run": "studio-model-recipes-x0d78n44",
+    "daemon_sha256": "935f019be79f36b3beb88be78472aa8fd6b5d7674f4d7643df5c233850b0c6d8",
+    "case_count": 12,
+    "status": "passed; superseded by copy source baseline/prior writer binding",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "75051c188b28178ee6fc1496a718d1b43897eb8e",
+    "source_run": "studio-lsp-push-vlcin0nn",
+    "daemon_sha256": "935f019be79f36b3beb88be78472aa8fd6b5d7674f4d7643df5c233850b0c6d8",
+    "case_count": 4,
+    "status": "passed; superseded by copy source baseline/prior writer binding",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "0e822070f7c34b6ee2e29d1989549bac6784c1a8",
+    "source_run": "studio-agentic-real-pBiJoV",
+    "daemon_sha256": "dc1b1834820cf59ff7e1168d310d875d5557278a2371ed50a56a38dfba613048",
+    "case_count": 59,
+    "status": "passed; superseded by Unix executable PATH resolution fix; model campaign intentionally deferred until reviews stabilized",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "0e822070f7c34b6ee2e29d1989549bac6784c1a8",
+    "source_run": "studio-lsp-push-8u7uqo91",
+    "daemon_sha256": "dc1b1834820cf59ff7e1168d310d875d5557278a2371ed50a56a38dfba613048",
+    "case_count": 4,
+    "status": "passed; superseded by Unix executable PATH resolution fix; model campaign intentionally deferred until reviews stabilized",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "21e794bcdf4c45f565e3031dbf6a477ac98e319e",
+    "source_run": "studio-agentic-real-giYaCV",
+    "daemon_sha256": "0708800dd546e4c29fced816670484105b42dcaf707bc2d42654add0bdd3c70f",
+    "case_count": 59,
+    "status": "passed; superseded by remove-from destination disambiguation; model campaign deferred until review stabilization",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "21e794bcdf4c45f565e3031dbf6a477ac98e319e",
+    "source_run": "studio-lsp-push-3_80actn",
+    "daemon_sha256": "0708800dd546e4c29fced816670484105b42dcaf707bc2d42654add0bdd3c70f",
+    "case_count": 4,
+    "status": "passed; superseded by remove-from destination disambiguation; model campaign deferred until review stabilization",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "4b9c6a60f546d3b576ef9318a30ae105c25200fd",
+    "source_run": "studio-agentic-real-7iOgPJ",
+    "daemon_sha256": "6605b6cdc40b23f1673220ab7ff9b76d9471b4a4d4babf99c256352eada31df7",
+    "case_count": 59,
+    "status": "passed; superseded by approval-body redaction and explicit fix grammar; model campaign deferred until review stabilization",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "4b9c6a60f546d3b576ef9318a30ae105c25200fd",
+    "source_run": "studio-lsp-push-fglcqdl5",
+    "daemon_sha256": "6605b6cdc40b23f1673220ab7ff9b76d9471b4a4d4babf99c256352eada31df7",
+    "case_count": 4,
+    "status": "passed; superseded by approval-body redaction and explicit fix grammar; model campaign deferred until review stabilization",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "14da71694783d25aea78f153eca5333dff48ccf0",
+    "source_run": "studio-agentic-real-LixgOs",
+    "daemon_sha256": "2c57aabe7ad1ffedbac46bb52968fe001be27e18436552c29647f8e624d3d4f3",
+    "case_count": 59,
+    "status": "passed; superseded by test-only Ollama wrapper regression commit; production protocol unchanged",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "14da71694783d25aea78f153eca5333dff48ccf0",
+    "source_run": "studio-lsp-push-wmijgm27",
+    "daemon_sha256": "2c57aabe7ad1ffedbac46bb52968fe001be27e18436552c29647f8e624d3d4f3",
+    "case_count": 4,
+    "status": "passed; superseded by test-only Ollama wrapper regression commit; production protocol unchanged",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "e8a1d1567e151b3ec0eb689bd6a88359c53713ea",
+    "source_run": "studio-agentic-real-mv5aeA",
+    "daemon_sha256": "d3f508a43c417e45232201fb8ebb976713f69c4ca5f57113e6ea86fb78e4837b",
+    "case_count": 59,
+    "status": "passed; superseded by explicit implementation/common-edit grammar extension",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "e8a1d1567e151b3ec0eb689bd6a88359c53713ea",
+    "source_run": "studio-model-recipes-104dehng",
+    "daemon_sha256": "d3f508a43c417e45232201fb8ebb976713f69c4ca5f57113e6ea86fb78e4837b",
+    "case_count": 18,
+    "status": "passed; superseded by explicit implementation/common-edit grammar extension",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "e8a1d1567e151b3ec0eb689bd6a88359c53713ea",
+    "source_run": "studio-model-recipes-odeper4y",
+    "daemon_sha256": "d3f508a43c417e45232201fb8ebb976713f69c4ca5f57113e6ea86fb78e4837b",
+    "case_count": 12,
+    "status": "passed; superseded by explicit implementation/common-edit grammar extension",
+    "fixture_error": null
+  },
+  {
+    "scheduled_source_commit": "e8a1d1567e151b3ec0eb689bd6a88359c53713ea",
+    "source_run": "studio-lsp-push-_87l2pa4",
+    "daemon_sha256": "d3f508a43c417e45232201fb8ebb976713f69c4ca5f57113e6ea86fb78e4837b",
+    "case_count": 4,
+    "status": "passed; superseded by explicit implementation/common-edit grammar extension",
+    "fixture_error": null
+  },
+  {
+    "status": "corrected integration regressions",
+    "vault_parallel_before": "7 passed, 2 failed, 1 ignored: process-wide master-key race",
+    "vault_parallel_after": "9 passed, 1 ignored with shared env guard and original key restoration",
+    "evals_before": "CompletionRequest missing conversation and require_tool",
+    "evals_after": "8/8 mock scenarios passed",
+    "disk_before": "ENOSPC on E while persisting Vitest cache/build",
+    "disk_after": "Moved regenerable incremental cache to TEMP on C; UI suites and builds rerun successfully"
   }
 ]

@@ -1,5 +1,12 @@
 # Backlog agentique — audit du 18 octobre 2026
 
+## Livraison validée — 20 octobre 2026
+
+[Rapport final et preuves](validation/agentic-blockers-2026-10-19.md) : source daemon `aadc55ed2c3d88887266bf7cd5b2c516682b0004`, 744 tests Rust ciblés, 8 évaluations mock, 59 parcours techniques réels, 4 scénarios LSP, 18 recettes modèles et 12 LFM2 supplémentaires ; cinq jobs CI CPU réussis. La CI CUDA reste non exécutée conformément à l'accord utilisateur.
+
+La livraison suit Akasha #162 → #164 → #166 → #167 → #168 → #169 → #170, puis Code Studio #31 → #32 → #33 → #34 → #35. Les états de fusion et de clôture sont ceux de GitHub ; les clôtures exigent les arbres de main identiques aux sources validées. Les sections ci-dessous conservent l'historique de l'audit. Les suivis distincts #141, #143, #214 et Deep Research ne sont pas certifiés par ces seules validations.
+
+
 Source : [audit des outils et skills](AGENTIC_CAPABILITY_AUDIT.md). Tickets publiés après recherche des doublons. Les API et moteurs vivent dans **Akasha** ; leur présentation vit dans **Akasha-code-studio**. L’intégration Akasha OS demeure un chantier distinct.
 
 ## P0 — fiabilité et restrictions

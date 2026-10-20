@@ -1,0 +1,12 @@
+{
+  "source_commit": "aadc55ed2c3d88887266bf7cd5b2c516682b0004",
+  "ci_run": "39386826762",
+  "ci_url": "https://github.com/azerothl/Akasha/actions/runs/39386826762",
+  "platform": "Linux GitHub hosted runner",
+  "status": "passed",
+  "tests": [
+    "studio_delivery::executable_regressions::nonexecutable_shadow_does_not_hide_later_git_or_gh",
+    "studio_lsp::executable_resolution_tests::nonexecutable_shadow_does_not_hide_later_language_server"
+  ],
+  "scope": "Synthetic PATH with nonexecutable shadow files, later executable selection and actual isolated script spawn; workspace executable refusal remains tested."
+}
