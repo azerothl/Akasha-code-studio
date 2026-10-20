@@ -31,6 +31,7 @@ import { ForkTreePanel } from "./forkTreePanel";
 import { redactSecrets, summarizeSendContext } from "./sendContext";
 import { SendContextSummaryPanel } from "./sendContextSummary";
 import { SwarmIsolationPanel } from "./swarmIsolationPanel";
+import { TaskArtifactsPanel } from "./taskArtifacts";
 import { TaskReviewPanel } from "./taskReview";
 import { TaskOutcomeSummary, taskFeedbackKind, taskFeedbackTitle } from "./taskOutcome";
 import { DaemonOpsPanel } from "./daemonOpsPanel";
@@ -3274,7 +3275,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   .finally(() => setWorktreeBusy(false));
               }}
             />
-            <DaemonOpsPanel />
+            <DaemonOpsPanel projectId={selectedId} />
           </div>
         ) : centerTab === "docs" ? (
           <div className="center-body plan-pane docs-pane">
@@ -3944,6 +3945,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <h4>Résumé</h4>
                       <details><summary>Outils, règles et skills de cette tâche</summary><AgentCapabilitiesTable projectId={selectedId} taskId={taskDetailPayload.task.task_id} /></details>
                       <TaskOutcomeSummary outcome={taskDetailPayload.task.outcome} status={taskDetailPayload.task.status} />
+                      <TaskArtifactsPanel key={taskDetailPayload.task.task_id} taskId={taskDetailPayload.task.task_id} />
                       <p>
                         <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                       </p>

@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "./api";
 import { getLastProjectId } from "./lastProjectStorage";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "./components/ui/checkbox";
 
+const ProjectTerminalPanel = lazy(() => import("./projectTerminalPanel"));
+
 type RawSection = { title: string; ok: boolean; payload: unknown; error?: string };
 
 /** Cockpit opérateur : endpoints documentés dans `docs/OPERATOR_COCKPIT.md`. */
-export function DaemonOpsPanel() {
+export function DaemonOpsPanel({ projectId }: { projectId: string | null }) {
+  const [terminalOpen, setTerminalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -327,6 +330,9 @@ export function DaemonOpsPanel() {
 
         <div className="daemon-ops-card" data-testid="ops-terminal-card">
           <h4>Terminal</h4>
+          <details onToggle={event => setTerminalOpen(event.currentTarget.open)}><summary>Ouvrir le terminal du projet</summary>
+            {terminalOpen && projectId ? <Suspense fallback={<p role="status">Chargement du terminal…</p>}><ProjectTerminalPanel key={projectId} projectId={projectId} /></Suspense> : terminalOpen ? <p className="hint">Sélectionnez un projet.</p> : null}
+          </details>
           <p className="hint">Mode: <strong>{terminal.current}</strong> · PTY interactif: <strong>{terminal.interactivePty ? "oui" : "non"}</strong></p>
           <p className="hint">API PTY: {terminal.ptyApi.join(", ") || "—"}</p>
           <details><summary>Raw JSON</summary><pre className="daemon-ops-pre">{JSON.stringify(rawSections.find((s) => s.title.includes("/api/terminal/capabilities"))?.payload, null, 2)}</pre></details>
