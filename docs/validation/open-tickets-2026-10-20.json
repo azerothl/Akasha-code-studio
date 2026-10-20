@@ -1,0 +1,402 @@
+{
+  "date": "2026-10-20",
+  "scope": "Local validation; no remote CI or merge",
+  "daemon_sha256": "8d4cd465c7c0ff66a690048909b52eb9dafea6c536df4ea138c093e17850a6f5",
+  "ui": {
+    "api": "mocked",
+    "e2e_passed": 41,
+    "build": "passed",
+    "unit_passed": 24
+  },
+  "rust": {
+    "ignored": 1,
+    "passed": 637,
+    "features": "no-default-features"
+  },
+  "real_tools": {
+    "at": "2026-10-20T10:21:20.869Z",
+    "status": "passed",
+    "model": "deterministic protocol fixture (not an LLM evaluation)",
+    "native_requests": 460,
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed",
+        "ms": 527
+      },
+      {
+        "name": "explicit task model is validated and delivered as the provider model",
+        "status": "passed",
+        "ms": 925
+      },
+      {
+        "name": "goal performs another cycle only after failed mechanical evidence",
+        "status": "passed",
+        "ms": 1159
+      },
+      {
+        "name": "goal budget stops without a false success",
+        "status": "passed",
+        "ms": 948
+      },
+      {
+        "name": "audit action cannot invoke a file mutation",
+        "status": "passed",
+        "ms": 1027
+      },
+      {
+        "name": "goal resume restores contract and never replays an applied write",
+        "status": "passed",
+        "ms": 2132
+      },
+      {
+        "name": "goal command verification observes exit codes across cycles",
+        "status": "passed",
+        "ms": 1879
+      },
+      {
+        "name": "goal pause preserves state before explicit resume",
+        "status": "passed",
+        "ms": 3696
+      },
+      {
+        "name": "goal cancellation cannot verify or continue afterwards",
+        "status": "passed",
+        "ms": 2908
+      },
+      {
+        "name": "TypeScript build failure stays failed when Vite fallback succeeds",
+        "status": "passed",
+        "ms": 3991
+      },
+      {
+        "name": "empty model fails without inventing verification",
+        "status": "passed",
+        "ms": 561
+      },
+      {
+        "name": "file creation prose without any effect cannot become a success",
+        "status": "passed",
+        "ms": 4927
+      },
+      {
+        "name": "prose cannot attest a modification to an existing file without any executed tool",
+        "status": "passed",
+        "ms": 1458
+      },
+      {
+        "name": "reads and failed edits cannot attest an existing-file mutation",
+        "status": "passed",
+        "ms": 5444
+      },
+      {
+        "name": "file effects are bound to the requested path and final bytes",
+        "status": "passed",
+        "ms": 11687
+      },
+      {
+        "name": "deletion rename and polite edit requests require real effects",
+        "status": "passed",
+        "ms": 85719
+      },
+      {
+        "name": "stale human question replies cannot answer a newer question",
+        "status": "passed",
+        "ms": 1743
+      },
+      {
+        "name": "native argument markup stays literal and cannot inject another tool",
+        "status": "passed",
+        "ms": 5530
+      },
+      {
+        "name": "identical legacy write reuses its receipt without a second disk effect",
+        "status": "passed",
+        "ms": 4691
+      },
+      {
+        "name": "temporary creations can be deleted or renamed without forced recreation",
+        "status": "passed",
+        "ms": 3294
+      },
+      {
+        "name": "explicit literal mismatch has no disk effect and is corrected by a new tool request",
+        "status": "passed",
+        "ms": 4373
+      },
+      {
+        "name": "one empty creation generation retries before effects while persistent emptiness remains failed",
+        "status": "passed",
+        "ms": 12790
+      },
+      {
+        "name": "a literal-invalid batch defers dependent effects and keeps distinct call results",
+        "status": "passed",
+        "ms": 7280
+      },
+      {
+        "name": "direct file context retains repository rules and project constraints without maintenance examples",
+        "status": "passed",
+        "ms": 3588
+      },
+      {
+        "name": "native continuation ends in tool results without a new continue user turn",
+        "status": "passed",
+        "ms": 1475
+      },
+      {
+        "name": "advertised native functions preserve bytes and call identity while unknown functions have no effect",
+        "status": "passed",
+        "ms": 6380
+      },
+      {
+        "name": "unadvertised native wrapper cannot bypass a focused tool catalogue",
+        "status": "passed",
+        "ms": 46489
+      },
+      {
+        "name": "JSON content function requests execute both wrapped and native Devstral reads in order",
+        "status": "passed",
+        "ms": 3474
+      },
+      {
+        "name": "malformed JSON function arguments never execute or become a success",
+        "status": "passed",
+        "ms": 1225
+      },
+      {
+        "name": "premature final response resumes only the explicitly missing file",
+        "status": "passed",
+        "ms": 4634
+      },
+      {
+        "name": "native reads continue after the default 500-line window",
+        "status": "passed",
+        "ms": 2557
+      },
+      {
+        "name": "mechanical acceptance preserves each criterion result",
+        "status": "passed",
+        "ms": 935
+      },
+      {
+        "name": "provider failure keeps explicit structured failure",
+        "status": "passed",
+        "ms": 962
+      },
+      {
+        "name": "native Unicode write, partial failure and retained diff",
+        "status": "passed",
+        "ms": 1247
+      },
+      {
+        "name": "reviewer and planner refuse command effects",
+        "status": "passed",
+        "ms": 3148
+      },
+      {
+        "name": "planner writes only exact plan path",
+        "status": "passed",
+        "ms": 1100
+      },
+      {
+        "name": "real user PTY input, cursor, resize, isolation and close",
+        "status": "passed",
+        "ms": 2593
+      },
+      {
+        "name": "agent PTY remains task-owned and archives its transcript",
+        "status": "passed",
+        "ms": 15678
+      },
+      {
+        "name": "MCP real stdio pagination validation and task invocation",
+        "status": "passed",
+        "ms": 5299
+      },
+      {
+        "name": "agent browser desktop mobile logs PNG and denied redirect",
+        "status": "passed",
+        "ms": 4375
+      },
+      {
+        "name": "TypeScript real server diagnostics definition references rename",
+        "status": "passed",
+        "ms": 1475
+      },
+      {
+        "name": "Python real server navigation and explicit diagnostics",
+        "status": "passed",
+        "ms": 1352
+      },
+      {
+        "name": "Rust real server definition with build scripts disabled",
+        "status": "passed",
+        "ms": 1664
+      },
+      {
+        "name": "recursive search rules are active before the next mutation and skills are auditable",
+        "status": "passed",
+        "ms": 2328
+      },
+      {
+        "name": "fresh nested rules defer mutations until the model has read them",
+        "status": "passed",
+        "ms": 1438
+      },
+      {
+        "name": "rename loads destination rules when its directory contains spaces",
+        "status": "passed",
+        "ms": 1480
+      },
+      {
+        "name": "selected commit preserves unrelated staged paths and idempotency",
+        "status": "passed",
+        "ms": 35405
+      },
+      {
+        "name": "task manifest loads skills and rules from its persisted Git worktree",
+        "status": "passed",
+        "ms": 1359
+      },
+      {
+        "name": "daemon restart interrupts and explicitly resumes same checkpoint",
+        "status": "passed",
+        "ms": 1933
+      },
+      {
+        "name": "restart during tool-round human wait asks again before continuing",
+        "status": "passed",
+        "ms": 6340
+      },
+      {
+        "name": "restart during ask_user preserves the consumed round and asks again",
+        "status": "passed",
+        "ms": 2426
+      },
+      {
+        "name": "crash after an external effect blocks mutations until inspected",
+        "status": "passed",
+        "ms": 2516
+      },
+      {
+        "name": "crash after a recorded tool result does not repeat its effect",
+        "status": "passed",
+        "ms": 1907
+      },
+      {
+        "name": "restart retains the full literal task beyond the truncated task title",
+        "status": "passed",
+        "ms": 3257
+      },
+      {
+        "name": "REC-04 interrupted tool approval requires a fresh request",
+        "status": "passed",
+        "ms": 4495
+      },
+      {
+        "name": "REC-06 concurrent resume and cancel preserves cancellation",
+        "status": "passed",
+        "ms": 6013
+      },
+      {
+        "name": "operator delivery and resume cannot strand a queued task",
+        "status": "passed",
+        "ms": 6179
+      },
+      {
+        "name": "REC-07 pause during long command refuses overlapping resume",
+        "status": "passed",
+        "ms": 7717
+      },
+      {
+        "name": "pause and cancel release human waits without reusing their channels",
+        "status": "passed",
+        "ms": 2498
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed",
+        "ms": 2288
+      },
+      {
+        "name": "REC-05 missing worktree refuses resume without root fallback; restored worktree resumes",
+        "status": "passed",
+        "ms": null
+      },
+      {
+        "name": "REC-09 interrupted delegation retains children and uncertain effect",
+        "status": "passed",
+        "ms": 4522
+      },
+      {
+        "name": "real UI desktop/mobile consumes daemon APIs",
+        "status": "passed",
+        "ms": 9958
+      },
+      {
+        "name": "delivery reads reject foreign and opaque browser origins",
+        "status": "passed",
+        "ms": 19
+      },
+      {
+        "name": "delivery refuses repository configured process helpers before GitHub access",
+        "status": "passed",
+        "ms": 648
+      },
+      {
+        "name": "Git metadata cannot redirect delivery to another Studio project",
+        "status": "passed",
+        "ms": 1811
+      }
+    ]
+  },
+  "real_models": [
+    {
+      "at": "2026-10-20T10:23:16.232Z",
+      "model": "qwen2.5-coder:14b",
+      "status": "passed",
+      "elapsed_ms": 11355,
+      "task_status": "completed",
+      "observed_model": "qwen2.5-coder:14b",
+      "termination_reason": "success",
+      "successful_tool_calls": 1,
+      "failed_tool_calls": 0,
+      "goal": {
+        "objective": "Crée uniquement le fichier GOAL-REAL.txt à la racine du projet. Son contenu doit être exactement la ligne real-goal-ok. Utilise les outils de fichiers, puis termine sans effectuer d’autre changement.",
+        "state": "completed",
+        "cycles": 1,
+        "max_cycles": 3,
+        "max_seconds": 120,
+        "elapsed_ms": 11280,
+        "tokens_used": 16,
+        "max_tokens": 50000,
+        "detail": "Critères mécaniques vérifiés"
+      },
+      "content": "real-goal-ok"
+    },
+    {
+      "at": "2026-10-20T10:21:30.859Z",
+      "model": "qwen3.5:2b",
+      "status": "failed",
+      "elapsed_ms": 21026,
+      "task_status": "failed",
+      "observed_model": "qwen3.5:2b",
+      "termination_reason": "model_empty",
+      "successful_tool_calls": 0,
+      "failed_tool_calls": 3,
+      "goal": {
+        "objective": "Crée uniquement le fichier GOAL-REAL.txt à la racine du projet. Son contenu doit être exactement la ligne real-goal-ok. Utilise les outils de fichiers, puis termine sans effectuer d’autre changement.",
+        "state": "blocked",
+        "cycles": 2,
+        "max_cycles": 3,
+        "max_seconds": 120,
+        "elapsed_ms": 20871,
+        "tokens_used": 2837,
+        "max_tokens": 50000,
+        "detail": "No response from the model. Check Ollama or your LLM provider."
+      },
+      "content": null
+    }
+  ]
+}

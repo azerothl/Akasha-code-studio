@@ -9,6 +9,7 @@ const REASONS: Record<string, string> = {
   budget_exhausted: "Budget ou quota atteint",
   provider_error: "Erreur du fournisseur de modèle",
   timeout: "Délai dépassé",
+  inactivity_timeout: "Aucun signal de progression reçu",
   tool_round_limit: "Limite de tours d’outils atteinte",
   verification_failed: "Vérification en échec",
   context_unavailable: "Règles ou skills du projet indisponibles",

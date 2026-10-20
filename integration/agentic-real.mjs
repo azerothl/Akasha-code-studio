@@ -165,9 +165,10 @@ await writeFile(
         "utility",
         "orchestrator",
         "system_diagnostic",
+        "selected_test",
       ].map((k) => [
         k,
-        { primary: { provider: "openai", model: "fixture" }, fallback: [] },
+        { primary: { provider: "openai", model: k === "selected_test" ? "fixture-selected" : "fixture" }, fallback: [] },
       ]),
     ),
   }),
@@ -288,6 +289,7 @@ async function api(path, method = "GET", body, expected = 200) {
   return raw ? JSON.parse(raw) : {};
 }
 async function check(name, fn) {
+  if (process.env.CODE_STUDIO_CASE_FILTER && name !== "real project creation and clean initial Git" && !new RegExp(process.env.CODE_STUDIO_CASE_FILTER, "i").test(name)) return;
   const at = Date.now();
   try {
     const evidence = await fn();
@@ -396,6 +398,68 @@ try {
     return { id: project.id, head: git(root, "rev-parse", "HEAD") };
   });
   const root = join(data, "studio-projects", project.id);
+  await check("explicit task model is validated and delivered as the provider model", async () => {
+    const catalog = await api("/api/router/studio-options");
+    assert(catalog.models.some(model => model.model === "fixture-selected"));
+    const id = await task("selected-model", [{ text: "Route testée.", verify: (_text, body) => assert.equal(body.model, "fixture-selected") }], "studio_scaffold", { studio_model: { provider: "openai", model: "fixture-selected" } });
+    const row = await finished(id); assert.equal(row.status, "completed", JSON.stringify(row));
+    await api("/api/message", "POST", { studio_project_id: project.id, message: "Must not start", studio_model: { provider: "openai", model: "not-configured" } }, 400);
+    return { id, observed: row.last_turn_model_used, requested: "fixture-selected" };
+  });
+  const goalContract = (path, max_cycles = 3) => ({ objective: `Create ${path}`, criteria: { criteria: [{ id: "file", kind: "file_exists", text: "Requested artifact exists", path }] }, max_cycles, max_seconds: 120, max_tokens: 500000 });
+  await check("goal performs another cycle only after failed mechanical evidence", async () => {
+    const id = await task("goal-cycles", [{ text: "Les critères restent à vérifier." }, tool("write_file", fileArgs("GOAL-PASSED.md", "goal-ok")), { text: "Fichier produit." }], "studio_scaffold", { studio_action: "goal", studio_goal: goalContract("GOAL-PASSED.md") });
+    const row = await finished(id); const goal = await api(`/api/tasks/${id}/goal`);
+    assert.equal(row.status, "completed", JSON.stringify(row)); assert.equal(goal.state, "completed"); assert.equal(goal.cycles, 2);
+    assert.equal(await readFile(join(root, "GOAL-PASSED.md"), "utf8"), "goal-ok");
+    return { id, goal, outcome: row.outcome };
+  });
+  await check("goal budget stops without a false success", async () => {
+    const id = await task("goal-budget", [{ text: "Aucune preuve de fichier." }], "studio_scaffold", { studio_action: "goal", studio_goal: goalContract("GOAL-MISSING.md", 1) });
+    const row = await finished(id); const goal = await api(`/api/tasks/${id}/goal`);
+    assert.equal(row.status, "failed"); assert.equal(row.outcome.termination_reason, "budget_exhausted"); assert.equal(goal.state, "budget_exhausted");
+    return { id, goal, outcome: row.outcome };
+  });
+  await check("audit action cannot invoke a file mutation", async () => {
+    const id = await task("audit-read-only", [tool("write_file", fileArgs("AUDIT-MUST-NOT-WRITE.md", "bad")), { text: "Audit en lecture seule." }], "studio_scaffold", { studio_action: "audit" });
+    const row = await finished(id);
+    assert.equal(await stat(join(root, "AUDIT-MUST-NOT-WRITE.md")).then(() => true).catch(() => false), false);
+    const capabilities=await api(`/api/tools/effective?project_id=${project.id}&task_id=${id}`);
+    assert(!capabilities.tools.some(tool => tool.name === "write_file" && tool.announced));
+    return { id, status: row.status };
+  });
+  await check("goal resume restores contract and never replays an applied write", async () => {
+    const id=await task("goal-resume",[tool("write_file",fileArgs("GOAL-RESUMED.md","written-once")),{text:"Réponse en attente.",delay:30000}],"studio_scaffold",{studio_action:"goal",studio_goal:goalContract("GOAL-RESUMED-FINAL.md"),studio_model:{provider:"openai",model:"fixture-selected"}});
+    await waitUntil(async()=>{const r=await api(`/api/tasks/${id}/recovery`);return r.checkpoint?.round>=1 && r.ledger.operations.some(operation=>operation.tool==="write_file" && operation.state!=="started");},"goal write checkpoint");
+    await restart();
+    scripts.set("goal-resume",[{...tool("write_file",fileArgs("GOAL-RESUMED-FINAL.md","final")),verify:(_text,body)=>assert.equal(body.model,"fixture-selected")},{text:"Fichiers présents après reprise."}]);
+    await api(`/api/tasks/${id}/resume`,"POST",{});
+    const row=await finished(id); const goal=await api(`/api/tasks/${id}/goal`); const recovery=await api(`/api/tasks/${id}/recovery`);
+    assert.equal(row.status,"completed",JSON.stringify(row)); assert.equal(goal.state,"completed");
+    assert.equal(recovery.ledger.operations.filter(operation=>operation.tool==="write_file").length,2);
+    assert.equal(await readFile(join(root,"GOAL-RESUMED.md"),"utf8"),"written-once");
+    return {id,goal};
+  });
+  await check("goal command verification observes exit codes across cycles",async()=>{
+    await writeFile(join(root,"GOAL-COMMAND.md"),"expected"); git(root,"add","GOAL-COMMAND.md");
+    git(root,"-c","user.name=Studio","-c","user.email=fixture@example.invalid","commit","-m","Goal verification fixture");
+    await writeFile(join(root,"GOAL-COMMAND.md"),"incorrect");
+    const goal={...goalContract("GOAL-COMMAND.md"),criteria:{criteria:[{id:"command",kind:"command_ok",text:"Requested file matches committed content",argv:["git","diff","--exit-code","--","GOAL-COMMAND.md"]}]}};
+    const id=await task("goal-command",[{text:"Il faut encore vérifier."},tool("read_file",{path:"workspace:/GOAL-COMMAND.md"}),tool("write_file",{path:"workspace:/GOAL-COMMAND.md",content:"expected",expected_version:createHash("sha256").update("incorrect").digest("hex")}),{text:"Contenu corrigé."}],"studio_scaffold",{studio_action:"goal",studio_goal:goal});
+    const row=await finished(id);const state=await api(`/api/tasks/${id}/goal`);assert.equal(row.status,"completed",JSON.stringify(row));assert.equal(state.cycles,3);return{id,goal:state};
+  });
+  await check("goal pause preserves state before explicit resume",async()=>{
+    const id=await task("goal-pause",[{text:"Préparation suspendue.",delay:2000}],"studio_scaffold",{studio_action:"goal",studio_goal:goalContract("GOAL-PAUSED.md")});
+    await checkpointed(id);await api(`/api/tasks/${id}/pause`,"POST",{});await inactive(id);
+    assert.equal((await api(`/api/tasks/${id}/goal`)).state,"paused");
+    scripts.set("goal-pause",[tool("write_file",fileArgs("GOAL-PAUSED.md","resumed")),{text:"Objectif repris."}]);
+    await api(`/api/tasks/${id}/resume`,"POST",{});const row=await finished(id);assert.equal(row.status,"completed",JSON.stringify(row));return{id,goal:await api(`/api/tasks/${id}/goal`)};
+  });
+  await check("goal cancellation cannot verify or continue afterwards",async()=>{
+    const id=await task("goal-cancel",[{text:"À arrêter.",delay:2000}],"studio_scaffold",{studio_action:"goal",studio_goal:goalContract("GOAL-CANCELLED.md")});
+    await checkpointed(id);await api(`/api/tasks/${id}/cancel`,"POST",{});await inactive(id);
+    const state=await api(`/api/tasks/${id}/goal`);assert.equal(state.state,"cancelled");assert.equal(state.cycles,0);return{id,goal:state};
+  });
   await check(
     "TypeScript build failure stays failed when Vite fallback succeeds",
     async () => {

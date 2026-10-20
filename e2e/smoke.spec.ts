@@ -249,6 +249,7 @@ test("preview failures can be retried without leaving the view", async ({ page }
   await openSection(page, /Développement/i, /^Aperçu \/ Dev/);
   await page.getByRole("button", { name: /Lancer la prévisualisation/ }).click();
   await expect(page.getByRole("heading", { name: "L’aperçu n’est pas prêt" })).toBeVisible();
+  await page.screenshot({ path: "docs/screenshots/tickets-preview-error.png", fullPage: true });
   await page.getByRole("button", { name: "Réessayer", exact: true }).click();
   await expect(page.locator('iframe[title="Aperçu"]')).toHaveAttribute("src", "http://127.0.0.1:5180");
   await expect(page.getByRole("heading", { name: "L’aperçu n’est pas prêt" })).toHaveCount(0);
@@ -259,6 +260,7 @@ test("a nonzero build exit is an error even without stderr", async ({ page }) =>
   await page.goto("/");
   await selectDemoProject(page);
   await openSection(page, /Développement/i, /^Aperçu \/ Dev/);
+  await page.getByText("Environnement et vérifications", { exact: true }).click();
   await page.getByRole("button", { name: "Exécuter le build", exact: true }).click();
   await expect(page.getByRole("heading", { name: "La vérification a échoué" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Relancer le build", exact: true })).toBeVisible();
@@ -266,6 +268,7 @@ test("a nonzero build exit is an error even without stderr", async ({ page }) =>
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/**", route => route.fulfill({ status: 404, json: { error: "unconfigured_fixture" } }));
+  await page.route("**/api/router/studio-options", route => route.fulfill({ json: { schema_version: 1, goals: true, actions: true, models: [{ provider: "fixture", model: "code-test" }] } }));
   await page.route("**/api/trust-access", route => route.fulfill({ json: { channel_permissions_mode: "ask_me" } }));
   await page.route("**/api/studio/projects/*/git/conflicts", route => route.fulfill({ json: { conflict_files: [], merge_in_progress: false } }));
   await page.route("**/api/studio/projects/*/worktrees", route => route.fulfill({ json: { worktrees: [] } }));
@@ -1196,4 +1199,136 @@ test("SSE success path delivers live events to task detail modal", async ({ page
   await expect(modal.locator(".task-detail-event-group-title").filter({ hasText: /progress_update/i })).toBeVisible({
     timeout: 5_000,
   });
+});
+
+
+test("kanban stays inside its pane on desktop and mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto("/"); await selectDemoProject(page);
+  await openSection(page, /Développement/i, /^Kanban$/);
+  await page.getByRole("button", { name: "Vue adaptative", exact: true }).click();
+  for (const width of [1440, 1920, 1280]) {
+    await page.setViewportSize({ width, height: 960 });
+    const track = page.locator(".kanban-columns-grid");
+    const bounds = await track.boundingBox(); const pane = await page.locator(".center").boundingBox();
+    expect(bounds && pane && bounds.x + bounds.width <= pane.x + pane.width + 1).toBeTruthy();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.setViewportSize({ width: 1440, height: 960 });
+  const track = page.locator(".kanban-columns-grid");
+  await track.focus(); await track.press("ArrowRight");
+  await expect.poll(() => track.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+  await track.evaluate(element => { element.scrollLeft = 0; });
+  await page.screenshot({ path: "docs/screenshots/tickets-kanban-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("navigation", { name: "Navigation principale", exact: true })).not.toBeVisible();
+  await expect.poll(async () => (await page.locator(".center").boundingBox())?.width).toBeGreaterThan(350);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: "docs/screenshots/tickets-kanban-mobile.png", fullPage: true });
+});
+
+test("model selection and audit action are structured task fields", async ({ page }) => {
+  let sent: Record<string, unknown> | null = null;
+  await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
+  await page.goto("/"); await selectDemoProject(page);
+  await page.getByRole("combobox", { name: "Modèle de la tâche" }).selectOption({ label: "code-test · fixture" });
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("/audit inspecter les dépendances");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect.poll(() => sent).toMatchObject({ studio_model: { provider: "fixture", model: "code-test" }, studio_action: "audit", message: "inspecter les dépendances" });
+});
+
+test("slash palette supports keyboard selection and rejects unknown commands", async ({ page }) => {
+  let sends = 0;
+  await page.route("**/api/message", route => { sends++; return route.fulfill({ json: { task_id: demoId } }); });
+  await page.goto("/"); await selectDemoProject(page);
+  const input = page.getByRole("textbox", { name: "Message à l’agent" });
+  await input.fill("/deb"); await input.press("ArrowDown"); await page.keyboard.press("Enter");
+  await expect(input).toHaveValue("/debug ");
+  await expect(input).toBeFocused();
+  await input.fill("/inconnu une demande"); await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: /Commande \/inconnu inconnue/ })).toBeVisible(); expect(sends).toBe(0);
+  await expect(input).toHaveValue("/inconnu une demande");
+});
+
+test("goal configuration sends mechanical criteria and bounded budgets", async ({ page }) => {
+  let sent: Record<string, unknown> | null = null;
+  await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
+  await page.goto("/"); await selectDemoProject(page);
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("/goal Faire passer les tests");
+  await page.getByLabel("Type de vérification de l’objectif").selectOption("command_ok");
+  await page.getByLabel("Commande de vérification de l’objectif").fill('["npm","test"]');
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect.poll(() => sent).toMatchObject({ studio_action: "goal", studio_goal: { objective: "Faire passer les tests", max_cycles: 4, max_seconds: 600, max_tokens: 50000, criteria: { criteria: [{ kind: "command_ok", argv: ["npm", "test"] }] } } });
+});
+
+for (const action of ["debug", "test"]) {
+  test(`${action} workflow is sent as a structured action`, async ({ page }) => {
+    let sent: Record<string, unknown> | null = null;
+    await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
+    await page.goto("/"); await selectDemoProject(page);
+    await page.getByRole("textbox", { name: "Message à l’agent" }).fill(`/${action} Vérifier le jeu`);
+    await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+    await expect.poll(() => sent).toMatchObject({ studio_action: action, message: "Vérifier le jeu" });
+  });
+}
+
+test("goal controls pause resume and cancel the same task on mobile", async ({ page }) => {
+  let state = "active";
+  const controls: string[] = [];
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(`**/api/tasks/${demoId}/goal`, route => route.fulfill({ json: {
+    objective: "Créer le jeu", state, cycles: 1, max_cycles: 4, max_seconds: 600, elapsed_ms: 1000, tokens_used: 120, max_tokens: 50000,
+  } }));
+  for (const action of ["pause", "resume", "cancel"]) {
+    await page.route(`**/api/tasks/${demoId}/${action}`, route => {
+      controls.push(action); state = action === "pause" ? "paused" : action === "resume" ? "active" : "cancelled";
+      return route.fulfill({ json: { ok: true } });
+    });
+  }
+  await page.goto("/"); await selectDemoProject(page);
+  await page.getByRole("navigation", { name: "Navigation mobile" }).getByRole("button", { name: "Discussion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("Créer le jeu");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  const goal = page.getByRole("region", { name: "Objectif en cours" });
+  await goal.getByRole("button", { name: "Mettre en pause", exact: true }).click();
+  await goal.getByRole("button", { name: "Reprendre l’objectif", exact: true }).click();
+  await goal.getByRole("button", { name: "Arrêter l’objectif", exact: true }).click();
+  await expect(goal).toContainText("Arrêté");
+  expect(controls).toEqual(["pause", "resume", "cancel"]);
+});
+
+test("branch merge requires comparison and an explicit confirmation", async ({ page }) => {
+  let merged = false;
+  await page.route("**/git/branches", route => route.fulfill({ json: { current_branch: "main", branches: [
+    { name: "main", current: true, upstream: null, ahead: 0, behind: 0, last_commit_subject: "Initial" },
+    { name: "feature", current: false, upstream: "origin/feature", ahead: 1, behind: 0, last_commit_subject: "Game" },
+  ] } }));
+  await page.route("**/git/compare**", route => route.fulfill({ json: { base: "main", target: "feature", files_changed: 2, insertions: 10, deletions: 1, ahead: 1, behind: 0, commits: [] } }));
+  await page.route("**/git/merge", route => { merged = true; return route.fulfill({ json: { ok: true } }); });
+  await page.goto("/"); await selectDemoProject(page); await openSection(page, /Développement/i, /^Branches$/);
+  await expect(page.getByText("Aucun suivi distant configuré")).toBeVisible();
+  const merge = page.getByRole("button", { name: "Fusionner après examen", exact: true }); await expect(merge).toBeDisabled();
+  await page.getByRole("button", { name: "Comparer", exact: true }).click(); await expect(merge).toBeEnabled();
+  page.once("dialog", dialog => dialog.dismiss()); await merge.click(); expect(merged).toBe(false);
+  page.once("dialog", dialog => dialog.accept()); await merge.click(); await expect.poll(() => merged).toBe(true);
+  await page.screenshot({ path: "docs/screenshots/tickets-branches-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("navigation", { name: "Navigation principale", exact: true })).not.toBeVisible();
+  await expect.poll(async () => (await page.locator(".center").boundingBox())?.width).toBeGreaterThan(350);
+  await page.screenshot({ path: "docs/screenshots/tickets-branches-mobile.png", fullPage: true });
+});
+
+
+test("failed task recovery prepares a draft without replaying effects", async ({ page }) => {
+  let sends=0;
+  await page.route("**/api/message",route=>{sends++;return route.fulfill({json:{task_id:demoId}});});
+  await page.route(`**/api/tasks/${demoId}`,route=>route.fulfill({json:{task_id:demoId,status:"failed",failure_detail:"Aucun signal reçu après 180 secondes; cause non confirmée.",progress:[],outcome:{schema_version:1,termination_reason:"inactivity_timeout",result:"partial",acceptance_verified:false,verification:[]}}}));
+  await page.goto("/");await selectDemoProject(page);
+  await page.getByRole("textbox",{name:"Message à l’agent"}).fill("Modifier les fichiers du jeu");
+  await page.getByRole("button",{name:"Envoyer",exact:true}).click();
+  await expect(page.getByText("Résultat partiel · Aucun signal de progression reçu").first()).toBeVisible();
+  await page.getByRole("button",{name:"Préparer une nouvelle demande",exact:true}).click();
+  await expect(page.getByRole("textbox",{name:"Message à l’agent"})).toHaveValue("Modifier les fichiers du jeu");
+  expect(sends).toBe(1);
+  await expect(page.getByText(/Une nouvelle soumission crée une autre tâche/)).toBeVisible();
 });

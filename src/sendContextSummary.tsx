@@ -39,7 +39,7 @@ export function SendContextSummaryPanel({
           Modèle du dernier tour : {summary.modelLabel || "indisponible avant le premier tour"}
           {summary.providerLabel ? ` · ${summary.providerLabel}` : ""}
         </li>
-        <li>Le prochain modèle dépend du routage et des préférences de session confirmées.</li>
+        <li>Modèle demandé pour la prochaine tâche : {summary.requestedModelLabel || "Automatique"}. Le choix automatique utilise le routage du daemon.</li>
         <li>Permissions : {summary.permissionMode}</li>
         <li>Index code : {summary.ragLabel}</li>
         <li>Design : {summary.designIncluded ? "inclus" : "non inclus"}</li>

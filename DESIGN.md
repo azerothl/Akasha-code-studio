@@ -13,6 +13,8 @@ Cette direction remplace l’en-tête à plusieurs rangées et les surfaces viol
 - Mobile jusqu’à 900 px : un seul espace visible, navigation basse **Discussion / Fichiers / Aperçu**, menu latéral fermé au démarrage.
 - **Outils du projet** ouvre un panneau dédié : index, état Git, création/chargement, évolutions, import/build et actions agent. Le panneau gère le focus et Échap avec un dialogue natif.
 - Compositeur : texte, bouton d’envoi, choix de l’agent et options. **Contexte et permissions** ouvre le détail avant envoi. Le handoff de modèle reste dans les options.
+- Le modèle de la prochaine tâche se choisit directement dans le composeur, séparément du rôle; le handoff reste réservé aux reprises. La palette `/` découvre les workflows et `/goal` montre ses critères et limites.
+- Le Kanban garde son propre défilement horizontal dans les vues partagées. L’aperçu privilégie le lancement et le résultat; environnement, vérification et journaux se déplient à la demande. Les branches se lisent dans un seul flux, avec comparaison et confirmation avant fusion.
 - Sans projet : invitation à créer/ouvrir un projet. Aucun compositeur inutilisable.
 - Éditeur mobile : l’arborescence se replie après ouverture d’un fichier. Recherche et diagnostics sont repliables.
 
