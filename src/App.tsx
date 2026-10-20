@@ -1,3 +1,4 @@
+import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
 import { formatTaskStatusFr, looksLikeStructuredRefusal, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
 import { useStudioProjects } from "./hooks/useStudioProjects";
@@ -3946,6 +3947,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                       <details><summary>Outils, règles et skills de cette tâche</summary><AgentCapabilitiesTable projectId={selectedId} taskId={taskDetailPayload.task.task_id} /></details>
                       <TaskOutcomeSummary outcome={taskDetailPayload.task.outcome} status={taskDetailPayload.task.status} />
                       <TaskArtifactsPanel key={taskDetailPayload.task.task_id} taskId={taskDetailPayload.task.task_id} />
+                      <TaskRecoveryPanel key={`recovery-${taskDetailPayload.task.task_id}`} taskId={taskDetailPayload.task.task_id} />
                       <p>
                         <code>{taskDetailPayload.task.task_id}</code> — {formatTaskStatusFr(taskDetailPayload.task.status)}
                       </p>
