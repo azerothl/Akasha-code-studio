@@ -145,6 +145,7 @@ test("fork branches show hierarchy, statuses and the complete retained transcrip
   await page.goto("/");
   await selectDemoProject(page);
   await expect(page.locator(".fork-tree-children")).toHaveCount(1);
+  await page.locator(".fork-tree > summary").click();
   await page.locator(".fork-tree-children").getByRole("button", { name: /Enfant demande/ }).click();
   const transcript = page.getByRole("region", { name: "Transcript de la branche consultée" });
   await expect(transcript).toContainText("fin-transcript");
@@ -1327,6 +1328,7 @@ test("failed task recovery prepares a draft without replaying effects", async ({
   await page.getByRole("textbox",{name:"Message à l’agent"}).fill("Modifier les fichiers du jeu");
   await page.getByRole("button",{name:"Envoyer",exact:true}).click();
   await expect(page.getByText("Résultat partiel · Aucun signal de progression reçu").first()).toBeVisible();
+  await page.locator(".chat-task-status > summary").click();
   await page.getByRole("button",{name:"Préparer une nouvelle demande",exact:true}).click();
   await expect(page.getByRole("textbox",{name:"Message à l’agent"})).toHaveValue("Modifier les fichiers du jeu");
   expect(sends).toBe(1);

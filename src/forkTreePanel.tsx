@@ -60,8 +60,9 @@ export function ForkTreePanel({ messages, events, activeTaskId, activeTaskStatus
   // Corrupt/cyclic event data must not hide an entire branch or recurse forever.
   for (const node of nodes) if (!rendered.has(node.taskId)) tree.push(renderNode(node));
   return (
-    <section className="fork-tree" aria-label="Arbre de forks">
-      <h3 className="fork-tree-title">Branches de conversation</h3>
+    <details className="fork-tree" aria-label="Arbre de forks">
+      <summary>Branches de conversation <span className="hint">({nodes.length})</span></summary>
+      <div className="fork-tree-body">
       <ul className="fork-tree-list">{tree}</ul>
       {inspected ? (
         <div className="fork-tree-transcript" role="region" aria-label="Transcript de la branche consultée" tabIndex={0}>
@@ -76,6 +77,7 @@ export function ForkTreePanel({ messages, events, activeTaskId, activeTaskStatus
           <Button type="button" size="sm" variant="ghost" onClick={() => onInspect(null)}>Fermer le transcript</Button>
         </div>
       ) : null}
-    </section>
+      </div>
+    </details>
   );
 }

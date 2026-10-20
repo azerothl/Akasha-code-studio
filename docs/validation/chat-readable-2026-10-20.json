@@ -1,0 +1,68 @@
+{
+  "metrics": [
+    {
+      "name": "desktop-expanded",
+      "viewport": 960,
+      "reading": {
+        "top": 56,
+        "bottom": 535.234375,
+        "height": 479.234375
+      },
+      "input": {
+        "top": 804.828125,
+        "bottom": 898,
+        "height": 93.171875
+      },
+      "settings": {
+        "top": 547.234375,
+        "bottom": 796.828125,
+        "height": 249.59375
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440
+    },
+    {
+      "name": "short-expanded",
+      "viewport": 720,
+      "reading": {
+        "top": 56,
+        "bottom": 401.28125,
+        "height": 345.28125
+      },
+      "input": {
+        "top": 564.828125,
+        "bottom": 658,
+        "height": 93.171875
+      },
+      "settings": {
+        "top": 413.28125,
+        "bottom": 556.828125,
+        "height": 143.546875
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280
+    },
+    {
+      "name": "mobile-expanded",
+      "viewport": 844,
+      "reading": {
+        "top": 57,
+        "bottom": 434,
+        "height": 377
+      },
+      "input": {
+        "top": 630.828125,
+        "bottom": 724,
+        "height": 93.171875
+      },
+      "settings": {
+        "top": 442,
+        "bottom": 622.828125,
+        "height": 180.828125
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390
+    }
+  ],
+  "errors": []
+}
