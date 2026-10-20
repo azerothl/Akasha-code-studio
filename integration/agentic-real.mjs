@@ -74,7 +74,7 @@ const server = createServer(async (req, res) => {
   const match = [...scripts.keys()].find((key) =>
     markers.includes(`CASE:${key}`),
   );
-  const sequence = body.tools?.length ? scripts.get(match) : undefined;
+  const sequence = (body.tools?.length || match === "non-studio-default-denied") ? scripts.get(match) : undefined;
   const next = sequence?.length
     ? sequence.shift()
     : { text: "Validation terminée." };
@@ -405,10 +405,13 @@ try {
       await writeFile(join(data, "tools_policy.yaml"), "web_search_enabled: false\nallowed_web_domains: [doc.rust-lang.org]\n");
       await restart();
       const policy = (await api("/api/tools/policy")).policy;
-      assert(policy.allowed_read_paths.some(path => path.endsWith("studio-projects")));
-      assert(policy.allowed_write_paths.some(path => path.endsWith("studio-projects")));
-      assert(policy.allowed_commands.includes("npm"));
-      assert(policy.run_command_default_cwd_workspace);
+      assert.equal(policy.allowed_read_paths, undefined);
+      assert.equal(policy.allowed_write_paths, undefined);
+      assert.equal(policy.allowed_commands, undefined);
+      const capabilities = await api(`/api/tools/effective?project_id=${project.id}`);
+      for (const name of ["read_file", "write_file", "run_command"]) assert(capabilities.tools.find(row => row.name === name)?.runnable, name);
+      const globalCapabilities = await api("/api/tools/effective");
+      assert.equal(globalCapabilities.scope, "global");
       const id = await task("studio-default-access", [
         tool("read_file", { path: "workspace:/CODE_STUDIO_PLAN.md" }),
         tool("write_file", fileArgs("DEFAULT-ACCESS.md", "project access works")),
@@ -419,8 +422,21 @@ try {
       assert.equal(row.status, "completed", JSON.stringify(row));
       assert.equal(await readFile(join(root, "DEFAULT-ACCESS.md"), "utf8"), "project access works");
       assert(row.outcome.successful_tool_calls >= 3, JSON.stringify(row));
-      assert.equal(policy.allowed_read_paths.some(path => path === data), false);
-      return { id, outcome: row.outcome, configured_project_roots: policy.allowed_read_paths };
+      const secret = "NON-STUDIO-PRIVATE-CONTENT-" + randomUUID();
+      await writeFile(join(root, "PRIVATE.txt"), secret);
+      const deniedWrite = join(root, "NON-STUDIO-WRITE.txt");
+      const deniedCommand = join(root, "NON-STUDIO-COMMAND.txt");
+      const deniedId = await task("non-studio-default-denied", [
+        tool("read_file", {path: "workspace:/studio-projects/" + project.id + "/PRIVATE.txt"}),
+        tool("write_file", {path: deniedWrite, content: "forbidden", expected_version: "missing"}),
+        tool("run_command", {program: "node", args: ["-e", "require('fs').writeFileSync(" + JSON.stringify(deniedCommand) + ", 'forbidden')"]}),
+        {text: "Access denied.", verify: text => assert(!text.includes(secret), "Non-Studio model received private project content")},
+      ], "conversation", {studio_project_id: null, studio_assigned_agent: null, studio_delegate_single_level: false});
+      const denied = await finished(deniedId);
+      await assert.rejects(stat(deniedWrite));
+      await assert.rejects(stat(deniedCommand));
+      assert.equal(await readFile(join(root,"PRIVATE.txt"),"utf8"), secret);
+      return { id, outcome: row.outcome, non_studio_task: deniedId, non_studio_status: denied.status, non_studio_effects: false };
     } finally {
       await writeFile(join(data, "tools_policy.yaml"), original);
       await restart();
