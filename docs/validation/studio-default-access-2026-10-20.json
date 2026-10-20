@@ -1,50 +1,52 @@
 {
   "date": "2026-10-20",
-  "scope": "Partial tool policy defaults; local isolated validation",
-  "daemon_sha256": "7ce8c572dea41b52ab63cccf1f83ccca1f8e791814a969cb45f0953b2d94beed",
+  "scope": "Per-task Studio defaults; global executor receives no additional grants",
+  "daemon_commit": "c56c01884bd70ee90e24659b438b534802f88d49",
+  "daemon_sha256": "6cc3e5f88e9ca067c4e4a135086c4e8f8ba1e48201133dc97c7e0a3802043883",
   "rust": {
+    "passed": 675,
+    "daemon": 569,
+    "llm": 71,
+    "tools": 35,
     "ignored": 1,
     "features": "no-default-features",
-    "passed": 640
+    "locked": true
   },
-  "focused": {
-    "cases": [
-      {
-        "name": "real project creation and clean initial Git",
-        "status": "passed",
-        "ms": 471
-      },
-      {
-        "name": "partial web-only policy inherits Studio file and development access",
-        "status": "passed",
-        "ms": 4344
-      },
-      {
-        "name": "REC-08 resume uses the current revoked tool policy",
-        "status": "passed",
-        "ms": 1738
-      }
-    ],
-    "status": "passed"
+  "full_integration": {
+    "status": "passed",
+    "cases": 67,
+    "passed": 67,
+    "model": "deterministic protocol fixture (not an LLM evaluation)"
+  },
+  "scope_regression": {
+    "status": "passed",
+    "successful_studio_tool_calls": 3,
+    "non_studio_effects": false,
+    "non_studio_task_status": "completed",
+    "checks": [
+      "Studio reads project plan, writes requested file and runs Git without cwd",
+      "Ordinary conversation cannot read project secret, write a file or execute Node",
+      "REC-08 explicit revocation remains enforced after restart and resume"
+    ]
   },
   "real_model": {
     "status": "passed",
+    "model": "qwen2.5-coder:14b",
+    "observed_model": "qwen2.5-coder:14b",
+    "policy": "web-only config, inherited Studio defaults",
+    "task_status": "completed",
     "goal": {
       "objective": "Crée uniquement le fichier GOAL-REAL.txt à la racine du projet. Son contenu doit être exactement la ligne real-goal-ok. Utilise les outils de fichiers, puis termine sans effectuer d’autre changement.",
       "state": "completed",
       "cycles": 1,
       "max_cycles": 3,
       "max_seconds": 120,
-      "elapsed_ms": 9978,
+      "elapsed_ms": 6277,
       "tokens_used": 16,
       "max_tokens": 50000,
       "detail": "Critères mécaniques vérifiés"
     },
     "content": "real-goal-ok",
-    "observed_model": "qwen2.5-coder:14b",
-    "policy": "web-only config, inherited Studio defaults",
-    "elapsed_ms": 10261,
-    "model": "qwen2.5-coder:14b",
-    "task_status": "completed"
+    "elapsed_ms": 6695
   }
 }
