@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-20",
+  "scope": "Partial tool policy defaults; local isolated validation",
+  "daemon_sha256": "7ce8c572dea41b52ab63cccf1f83ccca1f8e791814a969cb45f0953b2d94beed",
+  "rust": {
+    "ignored": 1,
+    "features": "no-default-features",
+    "passed": 640
+  },
+  "focused": {
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed",
+        "ms": 471
+      },
+      {
+        "name": "partial web-only policy inherits Studio file and development access",
+        "status": "passed",
+        "ms": 4344
+      },
+      {
+        "name": "REC-08 resume uses the current revoked tool policy",
+        "status": "passed",
+        "ms": 1738
+      }
+    ],
+    "status": "passed"
+  },
+  "real_model": {
+    "status": "passed",
+    "goal": {
+      "objective": "Crée uniquement le fichier GOAL-REAL.txt à la racine du projet. Son contenu doit être exactement la ligne real-goal-ok. Utilise les outils de fichiers, puis termine sans effectuer d’autre changement.",
+      "state": "completed",
+      "cycles": 1,
+      "max_cycles": 3,
+      "max_seconds": 120,
+      "elapsed_ms": 9978,
+      "tokens_used": 16,
+      "max_tokens": 50000,
+      "detail": "Critères mécaniques vérifiés"
+    },
+    "content": "real-goal-ok",
+    "observed_model": "qwen2.5-coder:14b",
+    "policy": "web-only config, inherited Studio defaults",
+    "elapsed_ms": 10261,
+    "model": "qwen2.5-coder:14b",
+    "task_status": "completed"
+  }
+}

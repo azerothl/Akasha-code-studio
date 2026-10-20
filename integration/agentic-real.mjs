@@ -398,6 +398,34 @@ try {
     return { id: project.id, head: git(root, "rev-parse", "HEAD") };
   });
   const root = join(data, "studio-projects", project.id);
+  await check("partial web-only policy inherits Studio file and development access", async () => {
+    const original = await readFile(join(data, "tools_policy.yaml"), "utf8");
+    try {
+      // Reproduce the user's config: web settings only, no file/command keys.
+      await writeFile(join(data, "tools_policy.yaml"), "web_search_enabled: false\nallowed_web_domains: [doc.rust-lang.org]\n");
+      await restart();
+      const policy = (await api("/api/tools/policy")).policy;
+      assert(policy.allowed_read_paths.some(path => path.endsWith("studio-projects")));
+      assert(policy.allowed_write_paths.some(path => path.endsWith("studio-projects")));
+      assert(policy.allowed_commands.includes("npm"));
+      assert(policy.run_command_default_cwd_workspace);
+      const id = await task("studio-default-access", [
+        tool("read_file", { path: "workspace:/CODE_STUDIO_PLAN.md" }),
+        tool("write_file", fileArgs("DEFAULT-ACCESS.md", "project access works")),
+        tool("run_command", { program: "git", args: ["rev-parse", "--show-toplevel"] }),
+        { text: "DEFAULT-ACCESS.md créé et vérifié dans le projet fourni par le daemon." },
+      ], "studio_scaffold", { message: "Create DEFAULT-ACCESS.md after reading CODE_STUDIO_PLAN.md. CASE:studio-default-access" });
+      const row = await finished(id);
+      assert.equal(row.status, "completed", JSON.stringify(row));
+      assert.equal(await readFile(join(root, "DEFAULT-ACCESS.md"), "utf8"), "project access works");
+      assert(row.outcome.successful_tool_calls >= 3, JSON.stringify(row));
+      assert.equal(policy.allowed_read_paths.some(path => path === data), false);
+      return { id, outcome: row.outcome, configured_project_roots: policy.allowed_read_paths };
+    } finally {
+      await writeFile(join(data, "tools_policy.yaml"), original);
+      await restart();
+    }
+  });
   await check("explicit task model is validated and delivered as the provider model", async () => {
     const catalog = await api("/api/router/studio-options");
     assert(catalog.models.some(model => model.model === "fixture-selected"));

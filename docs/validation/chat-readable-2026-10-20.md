@@ -12,7 +12,7 @@ Les diagnostics et la liste des branches pouvaient occuper toute la hauteur disp
 
 ## Contrôles observés
 
-`npm run build` réussit (TypeScript et Vite). Le détecteur statique de mise en page ne remonte aucun problème. Les deux scénarios navigateur existants qui ouvraient directement une branche ou une récupération ont été adaptés aux nouveaux résumés; la suite automatisée n'a pas été exécutée pour cette correction.
+`npm run build` réussit (TypeScript et Vite). Le détecteur statique de mise en page ne remonte aucun problème. Après la demande de validation, `npm test` passe avec **24 tests** et `npm run test:e2e` avec **42 parcours**. Le scénario de reprise après rechargement a été adapté au résumé désormais replié; il continue de vérifier la reprise du polling et la suppression du suivi à la fin. Un parcours supplémentaire ouvre les détails, les branches, le contexte, l’objectif et les options aux trois dimensions ci-dessous, puis vérifie que la dernière ligne de réponse et la saisie restent accessibles.
 
 Inspection visuelle Chromium, deux passages au maximum, avec cinq branches, une erreur longue, un objectif et les réglages ouverts. Les captures utilisent un historique et des réponses de tâche simulés dans un navigateur isolé. Aucun message n'est envoyé au vrai agent et les données du navigateur utilisateur ne sont pas modifiées.
 

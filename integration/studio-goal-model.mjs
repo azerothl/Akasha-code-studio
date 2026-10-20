@@ -20,12 +20,14 @@ const port = reservation.address().port;
 await new Promise(resolve => reservation.close(resolve));
 const base = `http://127.0.0.1:${port}`;
 const report = { at: new Date().toISOString(), model, data, status: "running" };
+const defaultPolicy = process.env.CODE_STUDIO_TEST_DEFAULT_POLICY === "1";
+report.policy = defaultPolicy ? "web-only config, inherited Studio defaults" : "explicit fixture paths";
 await writeFile(join(data, "llm_router.yaml"), JSON.stringify({
   global: { enable_fallback: false, default_timeout_secs: 90, default_max_retries: 0 },
   providers: { ollama: { base_url: ollama } },
   task_types: Object.fromEntries(["conversation", "code_generation", "system", "utility", "orchestrator", "system_diagnostic"].map(name => [name, { primary: { provider: "ollama", model, config: { num_ctx: 16384, max_tokens: 2048, temperature: 0 } }, fallback: [] }])),
 }));
-await writeFile(join(data, "tools_policy.yaml"), JSON.stringify({ allowed_read_paths: [data], allowed_write_paths: [data], allowed_commands: ["git"], command_timeout_secs: 10 }));
+await writeFile(join(data, "tools_policy.yaml"), JSON.stringify(defaultPolicy ? { web_search_enabled: false, allowed_web_domains: ["doc.rust-lang.org"] } : { allowed_read_paths: [data], allowed_write_paths: [data], allowed_commands: ["git"], command_timeout_secs: 10 }));
 const log = openSync(join(data, "daemon.log"), "a");
 const daemon = spawn(bin, [], { cwd: data, windowsHide: true, stdio: ["ignore", log, log], env: { ...process.env, AKASHA_DATA_DIR: data, AKASHA_PORT: String(port), AKASHA_MAX_TOOL_ROUNDS: "10", AKASHA_STUDIO_VERIFY_MAX_PASSES: "1", AKASHA_STUDIO_VERIFY_AUTOFIX_LLM_ROUNDS: "0", AKASHA_STUDIO_VERIFY_EXPLAIN_FAILURE: "0" } });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));

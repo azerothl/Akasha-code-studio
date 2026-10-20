@@ -169,13 +169,13 @@ test("reload resumes polling until task completes", async ({ page }) => {
   await page.locator(".chat-form textarea").fill("resume e2e");
   await page.getByRole("button", { name: "Envoyer" }).click();
   const activity = page.locator(".chat-activity-area");
-  await expect(activity.getByRole("heading", { name: /^En cours/ })).toBeVisible({ timeout: 8000 });
+  await expect(activity.locator(".chat-task-status > summary")).toContainText(/^En cours/, { timeout: 8000 });
   const activeTaskKey = `akasha-code-studio-task-v1:${demoId}`;
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) || "null")?.taskId, activeTaskKey)).toBe(runTaskId);
   const requestsBeforeReload = taskGetCount;
   await page.reload();
   await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
-  await expect(activity.getByText(/reprise après rechargement|Mock — en cours|terminé/i).first()).toBeVisible({
+  await expect(activity.locator(".chat-task-status > summary")).toContainText(/En cours|terminé|vérifié/i, {
     timeout: 12_000,
   });
   await expect(page.locator(".bubble.assistant").getByText(/terminé|Mock/i).first()).toBeVisible({
