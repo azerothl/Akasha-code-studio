@@ -1,0 +1,16 @@
+{
+  "release": "v0.11.0",
+  "asset": "akasha-linux-x86_64.zip",
+  "os": "Linux x86_64 GitHub hosted runner",
+  "ci_run": "39386826762",
+  "job": "release-artifact-first-boot-linux",
+  "status": "completed",
+  "assigned_agent": "technical_writer",
+  "last_turn_model_used": "embedded",
+  "tokens_out": 103,
+  "first_inference_seconds": 58,
+  "timeout_seconds": 240,
+  "visible_reply_nonempty": true,
+  "exact_OK_not_asserted": true,
+  "scope": "One supported explicitly routed embedded reply on a fresh release install; default orchestration latency and other artifacts remain in issue #141."
+}

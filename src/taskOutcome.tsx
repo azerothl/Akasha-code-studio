@@ -5,6 +5,7 @@ const REASONS: Record<string, string> = {
   success: "Exécution terminée",
   model_empty: "Réponse du modèle vide",
   tool_loop: "Répétition d’outils détectée",
+  tool_error: "Aucune opération d’outil n’a abouti",
   budget_exhausted: "Budget ou quota atteint",
   provider_error: "Erreur du fournisseur de modèle",
   timeout: "Délai dépassé",

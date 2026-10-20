@@ -38,6 +38,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
   /** Réponse attendue par le daemon (`ask_user`, approbation, …) — alimenté par GET …/human-input. */
   const [pendingHumanInput, setPendingHumanInput] = useState<{
     taskId: string;
+    requestId?: string | null;
     question: string;
     context: string;
     choices: string[] | null;
@@ -157,6 +158,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
           if (hi?.question) {
             setPendingHumanInput({
               taskId,
+              requestId: hi.request_id,
               question: hi.question,
               context: (hi.context ?? "").trim(),
               choices: hi.choices?.length ? hi.choices : null,
@@ -357,7 +359,8 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
 
   useEffect(() => {
     setHumanRefusalStreak(0);
-  }, [pendingHumanInput?.taskId]);
+    setHumanReplyDraft("");
+  }, [pendingHumanInput?.taskId, pendingHumanInput?.requestId]);
 
   const lastAssistant = useMemo(() => {
     for (let i = chat.length - 1; i >= 0; i -= 1) {

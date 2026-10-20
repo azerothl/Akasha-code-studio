@@ -1,5 +1,7 @@
 # Manifeste effectif et skills — lot P1
 
+> Validation ultérieure : [tests et parcours réels](agentic-real-2026-10-18.md). Les résultats initiaux ci-dessous sont conservés comme historique.
+
 Suivi : [Akasha #153](https://github.com/azerothl/Akasha/issues/153), [#154](https://github.com/azerothl/Akasha/issues/154), [#155](https://github.com/azerothl/Akasha/issues/155), [Code Studio #28](https://github.com/azerothl/Akasha-code-studio/issues/28). Dépend du lot P0, PR Akasha #162 / Code Studio #31.
 
 ## Implémentation proposée

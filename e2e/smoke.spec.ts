@@ -2,6 +2,73 @@ import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
+test("tool approval reply keeps the request identifier from the current question", async ({ page }) => {
+  let reply: Record<string, unknown> | null = null;
+  await page.route(`**/api/tasks/${demoId}/human-input`, route => route.fulfill({ json: {
+    task_id: demoId, request_id: "fresh-approval-42", question: "Autoriser cette écriture ?", context: "write_file", choices: ["Approuver", "Refuser"],
+  } }));
+  await page.route(`**/api/tasks/${demoId}/human-reply`, route => {
+    reply = route.request().postDataJSON() as Record<string, unknown>;
+    return route.fulfill({ json: { ok: true } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Valider l’écriture demandée");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect(page.locator(".task-human-input-question")).toHaveText("Autoriser cette écriture ?");
+  await page.locator(".task-human-input-choices").getByRole("button", { name: "Approuver", exact: true }).click();
+  await page.locator(".task-human-input-submit").click();
+  await expect.poll(() => reply).toMatchObject({ response: "Approuver", request_id: "fresh-approval-42" });
+});
+
+test("stale approval refreshes the question and requires a new user decision", async ({ page }) => {
+  let phase=0;
+  const ids: unknown[]=[];
+  await page.route(`**/api/tasks/${demoId}/human-input`, route => phase===2 ? route.fulfill({status:404,body:""}) : route.fulfill({json:{
+    task_id:demoId,request_id:phase===0?"old-request":"new-request",question:phase===0?"Ancienne écriture ?":"Nouvelle écriture à examiner ?",context:"write_file",choices:["Approuver","Refuser"],
+  }}));
+  await page.route(`**/api/tasks/${demoId}/human-reply`, route => {
+    ids.push((route.request().postDataJSON() as {request_id:string}).request_id);
+    phase+=1;
+    return route.fulfill(phase===1?{status:409,json:{error:"stale_approval_request"}}:{json:{ok:true}});
+  });
+  await page.goto("/");await selectDemoProject(page);
+  await page.locator(".chat-form textarea").fill("Vérifier la demande");
+  await page.getByRole("button",{name:"Envoyer",exact:true}).click();
+  await expect(page.locator(".task-human-input-question")).toHaveText("Ancienne écriture ?");
+  await page.locator(".task-human-input-choices").getByRole("button",{name:"Approuver",exact:true}).click();
+  await page.locator(".task-human-input-submit").click();
+  await expect(page.locator(".task-human-input-question")).toHaveText("Nouvelle écriture à examiner ?");
+  await expect(page.locator(".task-human-input-textarea")).toHaveValue("");
+  await expect(page.locator(".task-human-input-submit")).toBeDisabled();
+  expect(ids).toEqual(["old-request"]);
+  await page.locator(".task-human-input-choices").getByRole("button",{name:"Approuver",exact:true}).click();
+  await page.locator(".task-human-input-submit").click();
+  await expect.poll(()=>ids).toEqual(["old-request","new-request"]);
+});
+
+test("semantic rename button submits the preview request before applying edits", async ({ page }) => {
+  await page.route(`**/api/studio/projects/${demoId}/files`, route => route.fulfill({ json: { files: ["sample.ts"] } }));
+  await page.route(`**/api/studio/projects/${demoId}/raw**`, route => route.fulfill({ json: { content: "const value = 1;\n" } }));
+  await page.route(`**/api/studio/projects/${demoId}/lsp/query`, route => {
+    const request = route.request().postDataJSON() as { action: string };
+    return route.fulfill({ json: { schema_version: 1, result: request.action === "diagnostics"
+      ? { status: "ready", diagnostics: [] }
+      : { status: "planned", plan_id: "00000000-0000-4000-8000-000000000099", files: [{ path: "sample.ts", before: "const value = 1;", after: "const renamed = 1;", edit_count: 1 }] } } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("button", { name: "sample.ts", exact: true }).click();
+  await page.locator(".monaco-editor").waitFor();
+  await page.getByText("Analyse sémantique LSP", { exact: true }).click();
+  await page.getByRole("checkbox", { name: "Activer le serveur pour ce projet" }).check();
+  await page.getByLabel("Nouveau nom", { exact: true }).fill("renamed");
+  const sent = page.waitForRequest(request => request.url().endsWith("/lsp/query") && request.postDataJSON()?.action === "rename");
+  await page.getByRole("button", { name: "Préparer le renommage", exact: true }).click();
+  expect((await sent).postDataJSON()).toMatchObject({ action: "rename", path: "sample.ts", new_name: "renamed" });
+  await expect(page.getByRole("button", { name: "Appliquer ce plan", exact: true })).toBeVisible();
+});
+
 test("project tools stay disclosed on demand and restore keyboard focus", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");

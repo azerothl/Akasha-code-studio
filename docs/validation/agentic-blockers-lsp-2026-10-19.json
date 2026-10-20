@@ -1,0 +1,108 @@
+{
+  "daemon_sha256": "d00ca6a66498a97b3126eab2a5e8503b779a0577306cbbc55fd195838d895d24",
+  "cases": [
+    {
+      "name": "initial versionless push and rejection of wrong version",
+      "result": {
+        "document_version": 1,
+        "file_version": "cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "diagnostics": [
+            {
+              "code": "69504",
+              "message": "old",
+              "range": {
+                "end": {
+                  "character": 1,
+                  "line": 0
+                },
+                "start": {
+                  "character": 0,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server",
+        "session_restarted_for_freshness": false
+      }
+    },
+    {
+      "name": "changed buffer uses isolated process, excludes old delayed diagnostics",
+      "result": {
+        "document_version": 1,
+        "file_version": "11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "diagnostics": [
+            {
+              "code": "58816",
+              "message": "new",
+              "range": {
+                "end": {
+                  "character": 1,
+                  "line": 0
+                },
+                "start": {
+                  "character": 0,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server",
+        "session_restarted_for_freshness": true
+      }
+    },
+    {
+      "name": "unchanged buffer reuses process",
+      "result": {
+        "document_version": 1,
+        "file_version": "11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437",
+        "language": "typescript",
+        "path": "sample.ts",
+        "result": {
+          "diagnostics": [
+            {
+              "code": "58816",
+              "message": "new",
+              "range": {
+                "end": {
+                  "character": 1,
+                  "line": 0
+                },
+                "start": {
+                  "character": 0,
+                  "line": 0
+                }
+              }
+            }
+          ],
+          "status": "ready"
+        },
+        "schema_version": 1,
+        "server": "typescript-language-server",
+        "session_restarted_for_freshness": false
+      }
+    },
+    {
+      "name": "unsaved sibling buffer reopened in fresh process",
+      "result": {
+        "pid": "58816",
+        "unsaved_text": "unsaved-other"
+      }
+    }
+  ],
+  "model": "none: adversarial LSP protocol process",
+  "status": "passed",
+  "source_run": "studio-lsp-push-17bv96j1"
+}

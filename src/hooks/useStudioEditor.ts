@@ -224,6 +224,21 @@ export function useStudioEditor({ selectedId, setStaticPreviewBlobUrl, setError,
     [selectedId, activateBuffer],
   );
 
+  const reloadChangedEditorFiles = useCallback(async (paths: string[]) => {
+    if (!selectedId) return;
+    const targets = paths.filter(path => editorBuffersRef.current.some(buffer => buffer.path === path));
+    const loaded = await Promise.all(targets.map(async path => ({ path, raw: await api.readRawFile(selectedId, path) })));
+    if (projectRef.current !== selectedId) return;
+    setEditorBuffers(previous => previous.map(buffer => {
+      const row = loaded.find(item => item.path === buffer.path);
+      if (!row || bufferDirty(buffer) || row.raw.content === undefined) return buffer;
+      return { ...buffer, text: row.raw.content, savedText: row.raw.content };
+    }));
+    const active = loaded.find(row => row.path === filePathRef.current);
+    if (active?.raw.content !== undefined && !editorDirtyRef.current) { setEditorText(active.raw.content); setSavedEditorText(active.raw.content); }
+    syncCodeRagAfterFileChange(selectedId);
+  }, [selectedId, syncCodeRagAfterFileChange]);
+
   const closeEditorTab = useCallback(
     (path: string) => {
       const buffer = editorBuffersRef.current.find((row) => row.path === path);
@@ -455,7 +470,7 @@ export function useStudioEditor({ selectedId, setStaticPreviewBlobUrl, setError,
     filePath,
     editorBinary,
     editorDirty,
-    reloadOpenFileFromServer,
+    reloadOpenFileFromServer, reloadChangedEditorFiles,
     filePathRef,
     editorDirtyRef,
     editorBinaryRef,

@@ -1,5 +1,12 @@
 # Backlog agentique — audit du 18 octobre 2026
 
+## Livraison validée — 20 octobre 2026
+
+[Rapport final et preuves](validation/agentic-blockers-2026-10-19.md) : source daemon `aadc55ed2c3d88887266bf7cd5b2c516682b0004`, 744 tests Rust ciblés, 8 évaluations mock, 59 parcours techniques réels, 4 scénarios LSP, 18 recettes modèles et 12 LFM2 supplémentaires ; cinq jobs CI CPU réussis. La CI CUDA reste non exécutée conformément à l'accord utilisateur.
+
+La livraison suit Akasha #162 → #164 → #166 → #167 → #168 → #169 → #170, puis Code Studio #31 → #32 → #33 → #34 → #35. Les états de fusion et de clôture sont ceux de GitHub ; les clôtures exigent les arbres de main identiques aux sources validées. Les sections ci-dessous conservent l'historique de l'audit. Les suivis distincts #141, #143, #214 et Deep Research ne sont pas certifiés par ces seules validations.
+
+
 Source : [audit des outils et skills](AGENTIC_CAPABILITY_AUDIT.md). Tickets publiés après recherche des doublons. Les API et moteurs vivent dans **Akasha** ; leur présentation vit dans **Akasha-code-studio**. L’intégration Akasha OS demeure un chantier distinct.
 
 ## P0 — fiabilité et restrictions
@@ -31,3 +38,42 @@ Source : [audit des outils et skills](AGENTIC_CAPABILITY_AUDIT.md). Tickets publ
 - [Akasha #143 — évaluations reproductibles](https://github.com/azerothl/Akasha/issues/143) : héberge les parcours de validation transverses ; aucun doublon créé.
 
 Un ticket ouvert ou une correction locale ne signifie pas livraison validée. Les PR et les contrôles exécutés sont à référencer dans chaque ticket concerné.
+
+## Implémentations et suivi
+
+Les 12 PR constituent deux piles dont l’ordre de dépendance est indiqué ci-dessous. La [validation des blocages et corrections de revue](validation/agentic-blockers-2026-10-19.md) couvre REC-01 à REC-09, 59 parcours techniques, quatre scénarios LSP et 30/30 recettes modèles sur le même binaire. Les échecs antérieurs restent archivés. Les états de fusion et de clôture courants sont ceux des PR et tickets GitHub ; #143 et #145 conservent leur périmètre distinct. Les correctifs communs de revue sont portés par Akasha #170 et les recettes par Code Studio #35.
+
+| Priorité | Ticket | PR d’implémentation |
+| --- | --- | --- |
+| P0 | Akasha #151 — terminaison | [#162](https://github.com/azerothl/Akasha/pull/162) |
+| P0 | Akasha #152 — rôles | [#162](https://github.com/azerothl/Akasha/pull/162), [#164](https://github.com/azerothl/Akasha/pull/164) |
+| P1 | Akasha #153 — capacités | [#164](https://github.com/azerothl/Akasha/pull/164) |
+| P1 | Akasha #154 — règles/skills | [#164](https://github.com/azerothl/Akasha/pull/164), [#170](https://github.com/azerothl/Akasha/pull/170) pour les nouvelles mutations |
+| P1 | Akasha #155 — sept workflows | [#164](https://github.com/azerothl/Akasha/pull/164) |
+| P1 | Akasha #156 — observation | [#166](https://github.com/azerothl/Akasha/pull/166) |
+| P1 | Akasha #157 — contrats | [#167](https://github.com/azerothl/Akasha/pull/167), [#170](https://github.com/azerothl/Akasha/pull/170) |
+| P1 | Akasha #158 — reprise | [#168](https://github.com/azerothl/Akasha/pull/168), [#170](https://github.com/azerothl/Akasha/pull/170) pour les publications incertaines |
+| P1 | Code Studio #27 — résultats/reprise | [#31](https://github.com/azerothl/Akasha-code-studio/pull/31), [#34](https://github.com/azerothl/Akasha-code-studio/pull/34) |
+| P1 | Code Studio #28 — capacités | [#32](https://github.com/azerothl/Akasha-code-studio/pull/32) |
+| P1 | Code Studio #29 — PTY/preuves | [#33](https://github.com/azerothl/Akasha-code-studio/pull/33) |
+| P2 | Akasha #159 — LSP | [#169](https://github.com/azerothl/Akasha/pull/169), [#170](https://github.com/azerothl/Akasha/pull/170) pour les règles imbriquées |
+| P2 | Akasha #160 — livraison | [#170](https://github.com/azerothl/Akasha/pull/170) |
+| P2 | Code Studio #30 — sémantique/livraison | [#35](https://github.com/azerothl/Akasha-code-studio/pull/35) |
+
+### Ordre de revue et d’intégration
+
+- Daemon : `main` → #162 → #164 → #166 → #167 → #168 → #169 → #170.
+- Interface : `main` → #31 → #32 → #33 → #34 → #35.
+- Chaque PR doit être revue avec les API de son lot daemon ; compiler l’interface seule ne prouve pas la présence du backend correspondant.
+
+### Contrôles et limites
+
+- Compilation Windows du daemon avec `cargo check -p akasha-daemon --no-default-features --features embedded` : réussie sur les branches proposées. Le mode sans fonctionnalités, sans `embedded`, conserve un défaut préexistant distinct.
+- Build TypeScript/Vite : réussi. Avertissement du bundle principal >500 Ko persistant ; xterm est chargé séparément.
+- Les workflows CI automatiques sont consultables dans les PR. Ils ne remplacent pas les recettes MCP/PTY/LSP/publication ou crash/reprise ; le job GPU peut rester en attente.
+- Dernière validation (20 octobre, après intégration de main #225 et #233) : **640 tests Rust** (507 daemon, 69 LLM, 29 store, 35 tools ; 1 ancien PTY ignoré), 21 Vitest et 32 Playwright Code Studio, 59 Vitest et 1 Chromium natifs. **59/59 parcours techniques**, REC-01 à REC-09, **4/4 LSP push**, **18/18 recettes modèles + 12/12 LFM2**, même binaire final sans fallback. Builds, TypeScript et CI CPU finale réussis. [Preuves finales](validation/agentic-blockers-2026-10-19.md). CUDA non exécuté avec accord utilisateur ; états de livraison vivants dans GitHub.
+- Première tranche : MCP stdio (un serveur attaché), transports natifs Chat Completions sur trois providers, contrôle de version sur les outils de fichier documentés, reprise de la boucle Studio, LSP sur trois familles de langages, livraison GitHub.com. Les limites complémentaires sont explicites dans les contrats daemon et empêchent une clôture globale comme « solution agentique complète ».
+
+Documents de validation : [P0](validation/agentic-p0-implementation-2026-10-18.md), [capacités/skills](validation/agentic-capabilities-skills-2026-10-18.md), [observation](validation/agentic-observation-2026-10-18.md), [reprise](validation/agentic-recovery-2026-10-18.md), [LSP/livraison](validation/agentic-semantic-delivery-2026-10-18.md).
+
+- Raccordement d’ascendance final : `8e7bc61`, arbre complet strictement identique au code validé `2eada3a` ; CI CPU dédiée réussie. Voir les [preuves finales](validation/agentic-blockers-2026-10-19.md).

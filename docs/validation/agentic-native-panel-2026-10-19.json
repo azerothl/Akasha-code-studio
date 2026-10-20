@@ -1,0 +1,31 @@
+{
+  "source_commit": "aadc55ed2c3d88887266bf7cd5b2c516682b0004",
+  "unit": {
+    "files": 16,
+    "passed": 59,
+    "failed": 0
+  },
+  "typescript": "passed",
+  "e2e_build": "passed",
+  "chromium": {
+    "tests": [
+      "memory graph initializes after its deferred chunk and ref become available",
+      "research quoted table retains rows and cost qualifiers"
+    ],
+    "passed": 2,
+    "failed": 0,
+    "graph_chunk_delay_ms": 300,
+    "ipc": "Simulated IPC data, actual React components; no Tauri binary compilation"
+  },
+  "scope": "59 Vitest, two targeted Chromium journeys (deferred graph and quoted research table), TypeScript and Vite build passed. Native source tree unchanged since tested 91da389. Tauri binary not built.",
+  "native_ui_tree": "be12c6540fec7e47780ea37956abe5dc15d4be6c",
+  "tested_backend_commit": "91da3896836fee310edbdbb4bad3c5635c3c3bff",
+  "tested_ui_tree": "be12c6540fec7e47780ea37956abe5dc15d4be6c",
+  "original_fix_files": [
+    "apps/akasha-ui/e2e/audit-followup.spec.ts",
+    "apps/akasha-ui/src/App.tsx",
+    "apps/akasha-ui/src/components/deferPanel.test.tsx",
+    "apps/akasha-ui/src/components/deferPanel.tsx"
+  ],
+  "targeted_chromium_passed": 2
+}

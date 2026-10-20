@@ -1,0 +1,155 @@
+[
+  {
+    "at": "2026-10-18T16:35:43.813Z",
+    "taskId": "8e35c7c1-2692-4299-ba9d-fe29a52698d4",
+    "status": "completed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": null,
+      "result": "succeeded",
+      "schema_version": 1,
+      "status": "completed",
+      "successful_tool_calls": 1,
+      "termination_reason": "success",
+      "verification": [
+        {
+          "exit_code": null,
+          "kind": "project_build",
+          "status": "not_run"
+        }
+      ]
+    },
+    "modelUsed": "qwen2.5-coder:14b",
+    "failureDetail": null,
+    "diffStatus": 200,
+    "diff": {
+      "captured_at": "2026-10-18T16:35:25.692762400+00:00",
+      "files": [
+        {
+          "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
+          "path": "RECIPE_OK.md",
+          "status": "added",
+          "truncated": false
+        }
+      ],
+      "task_id": "8e35c7c1-2692-4299-ba9d-fe29a52698d4"
+    },
+    "source_run": "studio-real-model-mm_zx3km",
+    "verifiedFile": {
+      "path": "RECIPE_OK.md",
+      "content": "recipe-ok"
+    }
+  },
+  {
+    "at": "2026-10-18T16:36:26.436Z",
+    "taskId": "3c59d800-3a16-42bf-9b87-07edcf7f0a60",
+    "status": "failed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+      "result": "partial",
+      "schema_version": 1,
+      "status": "failed",
+      "successful_tool_calls": 5,
+      "termination_reason": "tool_loop",
+      "verification": []
+    },
+    "modelUsed": "lfm2:24b",
+    "failureDetail": "Loop detected: same tool and arguments repeated. Stopping.",
+    "diffStatus": 200,
+    "diff": "{\"captured_at\":\"2026-10-18T16:36:06.261907800+00:00\",\"files\":[{\"diff\":\"diff --git a/RECIPE_OK.md b/RECIPE_OK.md\\n--- /dev/null\\n+++ b/RECIPE_OK.md\\n@@ -0,0 +1 @@\\n+recipe-ok\\n\",\"path\":\"RECIPE_OK.md\",\"status\":\"added\",\"truncated\":false}],\"task_id\":\"3c59d800-3a16-42bf-9b87-07edcf7f0a60\"}",
+    "source_run": "studio-real-model-r7a_jd4j",
+    "verifiedFile": null
+  },
+  {
+    "at": "2026-10-18T16:52:06.588Z",
+    "taskId": "4d286e41-caed-4fd6-9d8b-10cf6ef16182",
+    "status": "failed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+      "result": "partial",
+      "schema_version": 1,
+      "status": "failed",
+      "successful_tool_calls": 2,
+      "termination_reason": "tool_loop",
+      "verification": []
+    },
+    "modelUsed": "qwen2.5-coder:14b",
+    "failureDetail": "Loop detected: same tool and arguments repeated. Stopping.",
+    "diffStatus": 200,
+    "diff": "{\"captured_at\":\"2026-10-18T16:51:46.401131700+00:00\",\"files\":[{\"diff\":\"diff --git a/RECIPE_OK.md b/RECIPE_OK.md\\n--- /dev/null\\n+++ b/RECIPE_OK.md\\n@@ -0,0 +1 @@\\n+recipe-ok\\n\\\\ No newline at end of file\\n\",\"path\":\"RECIPE_OK.md\",\"status\":\"added\",\"truncated\":false}],\"task_id\":\"4d286e41-caed-4fd6-9d8b-10cf6ef16182\"}",
+    "verifiedFile": null,
+    "source_run": "studio-real-model-tsl2nqp9",
+    "transport": "Ollama generate text"
+  },
+  {
+    "at": "2026-10-18T16:53:45.306Z",
+    "taskId": "96898ddf-66c3-465a-84fe-5a906fad33ee",
+    "status": "completed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": null,
+      "result": "succeeded",
+      "schema_version": 1,
+      "status": "completed",
+      "successful_tool_calls": 1,
+      "termination_reason": "success",
+      "verification": [
+        {
+          "exit_code": null,
+          "kind": "project_build",
+          "status": "not_run"
+        }
+      ]
+    },
+    "modelUsed": "devstral:latest",
+    "failureDetail": null,
+    "diffStatus": 200,
+    "diff": {
+      "captured_at": "2026-10-18T16:53:13.083040700+00:00",
+      "files": [
+        {
+          "diff": "diff --git a/RECIPE_OK.md b/RECIPE_OK.md\n--- /dev/null\n+++ b/RECIPE_OK.md\n@@ -0,0 +1 @@\n+recipe-ok\n\\ No newline at end of file\n",
+          "path": "RECIPE_OK.md",
+          "status": "added",
+          "truncated": false
+        }
+      ],
+      "task_id": "96898ddf-66c3-465a-84fe-5a906fad33ee"
+    },
+    "verifiedFile": {
+      "path": "RECIPE_OK.md",
+      "content": "recipe-ok"
+    },
+    "source_run": "studio-real-model-ue80vn68",
+    "transport": "Ollama OpenAI-compatible chat completions"
+  },
+  {
+    "at": "2026-10-18T17:12:40.920Z",
+    "taskId": "ff6e4ad3-2e8b-402b-a38f-968d41c97dd6",
+    "status": "failed",
+    "outcome": {
+      "acceptance_verified": false,
+      "failed_tool_calls": 0,
+      "reason": "Loop detected: same tool and arguments repeated. Stopping.",
+      "result": "partial",
+      "schema_version": 1,
+      "status": "failed",
+      "successful_tool_calls": 2,
+      "termination_reason": "tool_loop",
+      "verification": []
+    },
+    "modelUsed": "devstral:latest",
+    "failureDetail": "Loop detected: same tool and arguments repeated. Stopping.",
+    "diffStatus": 200,
+    "diff": "{\"captured_at\":\"2026-10-18T17:12:20.816496100+00:00\",\"files\":[{\"diff\":\"diff --git a/RECIPE_OK.md b/RECIPE_OK.md\\n--- /dev/null\\n+++ b/RECIPE_OK.md\\n@@ -0,0 +1 @@\\n+recipe-ok\\n\\\\ No newline at end of file\\n\",\"path\":\"RECIPE_OK.md\",\"status\":\"added\",\"truncated\":false}],\"task_id\":\"ff6e4ad3-2e8b-402b-a38f-968d41c97dd6\"}",
+    "verifiedFile": null,
+    "source_run": "studio-real-model-keks9h1x",
+    "transport": "Ollama OpenAI-compatible chat completions"
+  }
+]

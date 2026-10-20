@@ -353,7 +353,7 @@ export default function App() {
     filePath,
     editorBinary,
     editorDirty,
-    reloadOpenFileFromServer,
+    reloadOpenFileFromServer, reloadChangedEditorFiles,
     filePathRef,
     editorDirtyRef,
     editorBinaryRef,
@@ -1587,7 +1587,7 @@ Procédure:
     setHumanReplyBusy(true);
     setError(null);
     try {
-      await api.postTaskHumanReply(pendingHumanInput.taskId, text);
+      await api.postTaskHumanReply(pendingHumanInput.taskId, text, pendingHumanInput.requestId);
       const tid = pendingHumanInput.taskId;
       setPendingHumanInput(null);
       setHumanReplyDraft("");
@@ -1601,6 +1601,11 @@ Procédure:
       });
       void pollTask(tid, ac.signal, selectedId);
     } catch (e) {
+      if (e instanceof api.HumanReplyConflictError) {
+        const fresh = await api.getTaskHumanInput(pendingHumanInput.taskId).catch(() => null);
+        setPendingHumanInput(fresh ? { taskId: pendingHumanInput.taskId, requestId: fresh.request_id, question: fresh.question, context: fresh.context, choices: fresh.choices } : null);
+        setHumanReplyDraft("");
+      }
       setError(String(e));
     } finally {
       setHumanReplyBusy(false);
@@ -2655,6 +2660,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   </div>
                 ) : (
                   <CodeEditor
+                    key={selectedId}
+                    projectId={selectedId}
+                    hasDirtyBuffers={editorBuffers.some(bufferDirty)}
+                    onOpenLocation={async (path) => { await openFile(path); }}
+                    onFilesApplied={reloadChangedEditorFiles}
                     path={filePath}
                     value={editorText}
                     onChange={onEditorChange}
