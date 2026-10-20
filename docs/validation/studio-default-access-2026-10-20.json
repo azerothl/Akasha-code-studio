@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-20",
+  "scope": "Per-task Studio defaults; global executor receives no additional grants",
+  "daemon_commit": "c56c01884bd70ee90e24659b438b534802f88d49",
+  "daemon_sha256": "6cc3e5f88e9ca067c4e4a135086c4e8f8ba1e48201133dc97c7e0a3802043883",
+  "rust": {
+    "passed": 675,
+    "daemon": 569,
+    "llm": 71,
+    "tools": 35,
+    "ignored": 1,
+    "features": "no-default-features",
+    "locked": true
+  },
+  "full_integration": {
+    "status": "passed",
+    "cases": 67,
+    "passed": 67,
+    "model": "deterministic protocol fixture (not an LLM evaluation)"
+  },
+  "scope_regression": {
+    "status": "passed",
+    "successful_studio_tool_calls": 3,
+    "non_studio_effects": false,
+    "non_studio_task_status": "completed",
+    "checks": [
+      "Studio reads project plan, writes requested file and runs Git without cwd",
+      "Ordinary conversation cannot read project secret, write a file or execute Node",
+      "REC-08 explicit revocation remains enforced after restart and resume"
+    ]
+  },
+  "real_model": {
+    "status": "passed",
+    "model": "qwen2.5-coder:14b",
+    "observed_model": "qwen2.5-coder:14b",
+    "policy": "web-only config, inherited Studio defaults",
+    "task_status": "completed",
+    "goal": {
+      "objective": "Crée uniquement le fichier GOAL-REAL.txt à la racine du projet. Son contenu doit être exactement la ligne real-goal-ok. Utilise les outils de fichiers, puis termine sans effectuer d’autre changement.",
+      "state": "completed",
+      "cycles": 1,
+      "max_cycles": 3,
+      "max_seconds": 120,
+      "elapsed_ms": 6277,
+      "tokens_used": 16,
+      "max_tokens": 50000,
+      "detail": "Critères mécaniques vérifiés"
+    },
+    "content": "real-goal-ok",
+    "elapsed_ms": 6695
+  }
+}

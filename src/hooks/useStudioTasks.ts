@@ -110,7 +110,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
       return;
     }
     setChatHasUnseen(true);
-  }, [chat, taskTrace?.line]);
+  }, [chat, taskTrace?.line, pendingHumanInput?.requestId, pendingHumanInput?.question]);
 
   useEffect(() => {
     if (!selectedId) return;

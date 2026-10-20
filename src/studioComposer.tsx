@@ -158,11 +158,14 @@ export function StudioComposer({
         </p>
       ) : null}
       {options.model ? (
-        <p className="hint">
+        <details className="composer-model-note">
+          <summary>À propos du modèle choisi</summary>
+          <p className="hint">
           Route demandée : {JSON.parse(options.model).model}. Le daemon signale
           une erreur si elle est indisponible. Le modèle réellement observé
           apparaît dans le contexte.
-        </p>
+          </p>
+        </details>
       ) : null}
       {goal ? (
         <fieldset className="composer-goal">

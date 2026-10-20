@@ -3436,16 +3436,101 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           </div>
         ) : null}
 
-        <div className="chat-activity-area">
-          {taskTrace ? <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
+        <div className="chat-activity-area" ref={chatLogRef} role="region" aria-label="Messages et suivi de l’agent" tabIndex={0} onScroll={() => {
+          const el = chatLogRef.current;
+          if (!el) return;
+          const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
+          chatPinnedByUserRef.current = !nearBottom;
+          if (nearBottom) setChatHasUnseen(false);
+        }}>
+          {taskTrace ? <details className="chat-task-status" key={taskTrace.id}>
+            <summary><span role="status" aria-atomic="true">{taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)}</span><span className="hint">Suivi et récupération</span></summary>
+            <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
             secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
               if (prompt) setChatInput(prompt.text);
               document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus();
-            } } : undefined} /> : null}
+            } } : undefined} />
           {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande.</p><p className="hint">La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets.</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
+          </details> : null}
+          <section className="chat-conversation-panel" aria-label="Conversation agent">
+            <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>
+            <ForkTreePanel
+              messages={chat}
+              events={forkEvents}
+              activeTaskId={taskTrace?.id ?? chat[chat.length - 1]?.task_id ?? null}
+              activeTaskStatus={taskTrace?.status}
+              inspectedTaskId={inspectedForkTaskId}
+              onInspect={setInspectedForkTaskId}
+            />
+            {chatHasUnseen ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="chat-unseen-btn"
+                onClick={() => {
+                  const el = chatLogRef.current;
+                  if (!el) return;
+                  el.scrollTop = el.scrollHeight;
+                  chatPinnedByUserRef.current = false;
+                  setChatHasUnseen(false);
+                }}
+              >
+                Nouveaux messages — aller en bas
+              </Button>
+            ) : null}
+            <div className="chat-log">
+              {chat.length === 0 ? <ChatWelcome hasProject={Boolean(selectedId)} onCreate={() => setModalCreateOpen(true)} onLoad={() => setModalLoadOpen(true)} onPrompt={text => { setChatInput(text); document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus(); }} /> : null}
+              {chat.map((m, i) => (
+                <div key={i} className={`bubble ${m.role}`}>
+                  <div className="bubble-inner">
+                    <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "assistant" && m.task_id ? <TaskOutcomeSummary outcome={m.task_outcome} status={m.task_status} /> : null}
+                    {m.role === "user" && m.task_id ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bubble-task-detail-btn"
+                        aria-label="Fork à partir de ce message"
+                        title="Fork à partir d’ici"
+                        onClick={() => onOpenForkDialog(i, m)}
+                      >
+                        ⎇
+                      </Button>
+                    ) : null}
+                    {m.role === "assistant" && m.task_id ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bubble-task-detail-btn"
+                        aria-label="Détails de la tâche"
+                        title="Voir statut, progression et événements daemon"
+                        onClick={() => void onOpenTaskDetailModal(m.task_id!)}
+                      >
+                        ℹ
+                      </Button>
+                    ) : null}
+                    {m.role === "assistant" && m.studio_diff?.files?.length ? (
+                      <TaskReviewPanel
+                        diff={m.studio_diff}
+                        projectId={selectedId}
+                        gitBranch={chat.find(message => message.role === "user" && message.task_id === m.task_id)?.git_branch ?? null}
+                        acceptanceCriteria={chat.find(message => message.role === "user" && message.task_id === m.task_id)?.acceptance_criteria}
+                        buildLog={buildLog}
+                        onApplied={() => void refreshFiles()}
+                        onOpenEditor={(path) => {
+                          setCenterTab("editor");
+                          if (path) void openFile(path);
+                        }}
+                        onOpenPreview={() => setCenterTab("preview")}
+                        onOpenBranches={() => setCenterTab("branches")}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              ))}
           {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
             <div className="task-human-input">
               {humanInputRiskLevel ? (
@@ -3499,92 +3584,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
           ) : null}
 
-          <section className="chat-conversation-panel" aria-label="Conversation agent">
-            <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>
-            <ForkTreePanel
-              messages={chat}
-              events={forkEvents}
-              activeTaskId={taskTrace?.id ?? chat[chat.length - 1]?.task_id ?? null}
-              activeTaskStatus={taskTrace?.status}
-              inspectedTaskId={inspectedForkTaskId}
-              onInspect={setInspectedForkTaskId}
-            />
-            {chatHasUnseen ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="chat-unseen-btn"
-                onClick={() => {
-                  const el = chatLogRef.current;
-                  if (!el) return;
-                  el.scrollTop = el.scrollHeight;
-                  chatPinnedByUserRef.current = false;
-                  setChatHasUnseen(false);
-                }}
-              >
-                Nouveaux messages — aller en bas
-              </Button>
-            ) : null}
-            <div
-              className="chat-log"
-              ref={chatLogRef}
-              onScroll={() => {
-                const el = chatLogRef.current;
-                if (!el) return;
-                const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 56;
-                chatPinnedByUserRef.current = !nearBottom;
-                if (nearBottom) setChatHasUnseen(false);
-              }}
-            >
-              {chat.length === 0 ? <ChatWelcome hasProject={Boolean(selectedId)} onCreate={() => setModalCreateOpen(true)} onLoad={() => setModalLoadOpen(true)} onPrompt={text => { setChatInput(text); document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus(); }} /> : null}
-              {chat.map((m, i) => (
-                <div key={i} className={`bubble ${m.role}`}>
-                  <div className="bubble-inner">
-                    <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
-                    {m.role === "assistant" && m.task_id ? <TaskOutcomeSummary outcome={m.task_outcome} status={m.task_status} /> : null}
-                    {m.role === "user" && m.task_id ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="bubble-task-detail-btn"
-                        aria-label="Fork à partir de ce message"
-                        title="Fork à partir d’ici"
-                        onClick={() => onOpenForkDialog(i, m)}
-                      >
-                        ⎇
-                      </Button>
-                    ) : null}
-                    {m.role === "assistant" && m.task_id ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="bubble-task-detail-btn"
-                        aria-label="Détails de la tâche"
-                        title="Voir statut, progression et événements daemon"
-                        onClick={() => void onOpenTaskDetailModal(m.task_id!)}
-                      >
-                        ℹ
-                      </Button>
-                    ) : null}
-                    {m.role === "assistant" && m.studio_diff?.files?.length ? (
-                      <TaskReviewPanel
-                        diff={m.studio_diff}
-                        projectId={selectedId}
-                        gitBranch={chat.find(message => message.role === "user" && message.task_id === m.task_id)?.git_branch ?? null}
-                        acceptanceCriteria={chat.find(message => message.role === "user" && message.task_id === m.task_id)?.acceptance_criteria}
-                        buildLog={buildLog}
-                        onApplied={() => void refreshFiles()}
-                        onOpenEditor={(path) => {
-                          setCenterTab("editor");
-                          if (path) void openFile(path);
-                        }}
-                        onOpenPreview={() => setCenterTab("preview")}
-                        onOpenBranches={() => setCenterTab("branches")}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              ))}
             </div>
             {lastAssistant?.suggested_actions && lastAssistant.suggested_actions.length > 0 ? (
               <div className="chat-suggestions" aria-label="Prochaines étapes suggérées">
@@ -3613,6 +3612,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         </div>
 
         {selectedId ? <div className="chat-panel-footer">
+          <div className="composer-context" role="region" aria-label="Réglages du message" tabIndex={0}>
           {selectedId ? (
             <SendContextSummaryPanel
               projectId={selectedId}
@@ -3645,46 +3645,6 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             />
           ) : null}
           <StudioComposer text={chatInput} onText={setChatInput} options={executionOptions} onOptions={setExecutionOptions} projectId={selectedId} taskId={taskTrace?.id} />
-          <div className="input-group input-group--textarea chat-form">
-            <Textarea
-              className="input-group-field input-group-field--textarea"
-              aria-label="Message à l’agent"
-              rows={3}
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder={selectedId ? "Demandez une modification… @ pour citer un fichier" : "Ouvrez un projet pour commencer"}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowDown" && /^\/\w*$/.test(chatInput)) { const palette = document.getElementById("studio-action-list"); if (palette) { e.preventDefault(); palette.focus(); return; } }
-                if (e.key === "Escape" && /^\/\w*$/.test(chatInput)) { e.preventDefault(); setChatInput(""); return; }
-                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                  e.preventDefault();
-                  void onSendChat();
-                }
-              }}
-            />
-            <div className="input-group-append">
-              <Button variant="default" className="composer-send" aria-label={chatSendBusy ? "Envoi en cours" : "Envoyer"} title="Envoyer (Ctrl + Entrée)" disabled={!selectedId || chatSendBusy || !chatInput.trim()} onClick={() => void onSendChat()}>
-                <ArrowUp size={19} aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-          <div className="chat-controls-row">
-            <label className="composer-agent"><span className="sr-only">Rôle agent</span><Bot size={15} aria-hidden="true" /><Select aria-label="Rôle agent" value={agent} onChange={event => setAgent(event.target.value)}>{AGENT_OPTIONS.map(option => <option key={option.value || "auto"} value={option.value}>{option.label}</option>)}</Select></label>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="chat-options-toggle"
-              onClick={() => setChatOptionsOpen((v) => !v)}
-              aria-expanded={chatOptionsOpen}
-              title="Afficher ou masquer les options avancées"
-            >
-              {chatOptionsOpen ? "Masquer options" : "Options"}
-            </Button>
-            <p className="kbd-hint">
-              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
-            </p>
-          </div>
           {chatOptionsOpen ? (
             <div className="chat-options-panel">
               <p className="hint">Les outils de l’agent restent limités au dossier de ce projet. Consultez le contexte pour les permissions effectives.</p>
@@ -3794,6 +3754,50 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </details>
             </div>
           ) : null}
+          </div>
+          <div className="input-group input-group--textarea chat-form">
+            <Textarea
+              className="input-group-field input-group-field--textarea"
+              aria-label="Message à l’agent"
+              rows={3}
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder={selectedId ? "Demandez une modification… @ pour citer un fichier" : "Ouvrez un projet pour commencer"}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown" && /^\/\w*$/.test(chatInput)) { const palette = document.getElementById("studio-action-list"); if (palette) { e.preventDefault(); palette.focus(); return; } }
+                if (e.key === "Escape" && /^\/\w*$/.test(chatInput)) { e.preventDefault(); setChatInput(""); return; }
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  void onSendChat();
+                }
+              }}
+            />
+            <div className="input-group-append">
+              <Button variant="default" className="composer-send" aria-label={chatSendBusy ? "Envoi en cours" : "Envoyer"} title="Envoyer (Ctrl + Entrée)" disabled={!selectedId || chatSendBusy || !chatInput.trim()} onClick={() => void onSendChat()}>
+                <ArrowUp size={19} aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+          <div className="chat-controls-row">
+            <label className="composer-agent"><span className="sr-only">Rôle agent</span><Bot size={15} aria-hidden="true" /><Select aria-label="Rôle agent" value={agent} onChange={event => setAgent(event.target.value)}>{AGENT_OPTIONS.map(option => <option key={option.value || "auto"} value={option.value}>{option.label}</option>)}</Select></label>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="chat-options-toggle"
+              onClick={() => {
+                setChatOptionsOpen((v) => !v);
+                if (!chatOptionsOpen) requestAnimationFrame(() => document.querySelector(".chat-options-panel")?.scrollIntoView({ block: "nearest" }));
+              }}
+              aria-expanded={chatOptionsOpen}
+              title="Afficher ou masquer les options avancées"
+            >
+              {chatOptionsOpen ? "Masquer options" : "Options"}
+            </Button>
+            <p className="kbd-hint">
+              Raccourci : <kbd>Ctrl</kbd>+<kbd>Entrée</kbd>
+            </p>
+          </div>
         </div> : null}
       </aside>
       </div>

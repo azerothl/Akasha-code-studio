@@ -145,6 +145,7 @@ test("fork branches show hierarchy, statuses and the complete retained transcrip
   await page.goto("/");
   await selectDemoProject(page);
   await expect(page.locator(".fork-tree-children")).toHaveCount(1);
+  await page.locator(".fork-tree > summary").click();
   await page.locator(".fork-tree-children").getByRole("button", { name: /Enfant demande/ }).click();
   const transcript = page.getByRole("region", { name: "Transcript de la branche consultée" });
   await expect(transcript).toContainText("fin-transcript");
@@ -1227,6 +1228,47 @@ test("kanban stays inside its pane on desktop and mobile", async ({ page }) => {
   await page.screenshot({ path: "docs/screenshots/tickets-kanban-mobile.png", fullPage: true });
 });
 
+test("expanded chat details keep responses and input reachable on desktop and mobile", async ({ page }) => {
+  await page.addInitScript(({ id }) => {
+    localStorage.setItem("akasha-code-studio-chat-v2:" + id, JSON.stringify(Array.from({ length: 5 }, (_, index) => ({
+      role: "user", text: `Demande précédente ${index + 1}`, task_id: `branch-${index}`, task_status: "completed",
+    }))));
+  }, { id: demoId });
+  const detail = "Détails du refus d’accès.\n\n" + "Le diagnostic reste consultable sans masquer la saisie.\n\n".repeat(15) + "Fin du diagnostic de la tâche.";
+  await page.route(`**/api/tasks/${demoId}`, route => route.fulfill({ json: {
+    task_id: demoId, status: "failed", failure_detail: detail, progress: [],
+    outcome: { schema_version: 1, termination_reason: "context_unavailable", result: "failed", acceptance_verified: false, verification: [] },
+  } }));
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto("/"); await selectDemoProject(page);
+  const input = page.getByRole("textbox", { name: "Message à l’agent" });
+  await input.fill("Préparer le projet");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect(page.locator(".task-recovery-context")).toBeAttached();
+  await expect(page.locator(".chat-task-status")).toHaveJSProperty("open", false);
+  await expect(page.locator(".fork-tree")).toHaveJSProperty("open", false);
+  await page.locator(".chat-task-status > summary").click();
+  await page.locator(".fork-tree > summary").click();
+  await page.locator(".send-context > summary").click();
+  await page.getByRole("button", { name: "Options", exact: true }).click();
+  await input.fill("/goal Vérifier le projet");
+  for (const [width, height] of [[1440, 960], [1280, 720], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    if (width < 900) await page.getByRole("navigation", { name: "Navigation mobile" }).getByRole("button", { name: "Discussion", exact: true }).click();
+    else await page.getByRole("button", { name: "Vue adaptative", exact: true }).click();
+    const reading = page.getByRole("region", { name: "Messages et suivi de l’agent" });
+    await expect.poll(async () => (await reading.boundingBox())?.height ?? 0).toBeGreaterThan(height * 0.35);
+    await expect(input).toBeInViewport({ ratio: 1 });
+    const lastLine = page.getByText("Fin du diagnostic de la tâche.", { exact: true }).last();
+    await lastLine.scrollIntoViewIfNeeded();
+    await expect(lastLine).toBeInViewport({ ratio: 1 });
+    await expect(input).toBeInViewport({ ratio: 1 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const settings = page.getByRole("region", { name: "Réglages du message" });
+    expect(await settings.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
+  }
+});
+
 test("model selection and audit action are structured task fields", async ({ page }) => {
   let sent: Record<string, unknown> | null = null;
   await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
@@ -1327,6 +1369,7 @@ test("failed task recovery prepares a draft without replaying effects", async ({
   await page.getByRole("textbox",{name:"Message à l’agent"}).fill("Modifier les fichiers du jeu");
   await page.getByRole("button",{name:"Envoyer",exact:true}).click();
   await expect(page.getByText("Résultat partiel · Aucun signal de progression reçu").first()).toBeVisible();
+  await page.locator(".chat-task-status > summary").click();
   await page.getByRole("button",{name:"Préparer une nouvelle demande",exact:true}).click();
   await expect(page.getByRole("textbox",{name:"Message à l’agent"})).toHaveValue("Modifier les fichiers du jeu");
   expect(sends).toBe(1);
