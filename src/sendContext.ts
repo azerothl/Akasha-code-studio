@@ -40,6 +40,7 @@ export type SendContextInput = {
   agent: string;
   codeMode: string;
   modelLabel: string;
+  requestedModelLabel?: string;
   providerLabel: string;
   permissionMode: string | null;
   ragStatus: string | null;
@@ -56,6 +57,7 @@ export type SendContextSummary = {
   agent: string;
   codeMode: string;
   modelLabel: string;
+  requestedModelLabel?: string;
   providerLabel: string;
   permissionMode: string;
   ragLabel: string;
@@ -79,6 +81,7 @@ export function summarizeSendContext(input: SendContextInput): SendContextSummar
     agent: input.agent || "agent par défaut",
     codeMode: input.codeMode,
     modelLabel: input.modelLabel.trim(),
+    requestedModelLabel: input.requestedModelLabel?.trim() || "Automatique",
     providerLabel: input.providerLabel.trim(),
     permissionMode: input.permissionMode?.trim() || "indisponible",
     ragLabel: input.ragError

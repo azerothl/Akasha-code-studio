@@ -572,9 +572,9 @@ export function KanbanBoard({
     <div className="kanban-board">
       <div className="kanban-toolbar panel card">
         <div>
-          <h3 style={{ margin: 0 }}>Board tickets</h3>
+          <h3 style={{ margin: 0 }}>Tâches du projet</h3>
           <p className="muted" style={{ margin: "6px 0 0 0" }}>
-            Lancez ticket par ticket ou en séquence globale depuis le board.
+            Créez des tâches, puis lancez-les individuellement ou dans l’ordre de leurs dépendances.
           </p>
         </div>
         <div className="kanban-toolbar-actions">
@@ -589,7 +589,7 @@ export function KanbanBoard({
             Nouveau ticket
           </Button>
           <Button onClick={() => void launchAllTickets()} disabled={playAllBusy}>
-            {playAllBusy ? "Play all…" : "Play all"}
+            {playAllBusy ? "Tout lancer…" : "Tout lancer"}
           </Button>
         </div>
       </div>
@@ -599,7 +599,7 @@ export function KanbanBoard({
       {error ? <AsyncState kind="error" title="Tickets indisponibles" detail={error} action={{ label: "Réessayer", onClick: () => void load(), disabled: loading }} /> : null}
       {!loading && !error && tickets.length === 0 ? <AsyncState kind="empty" title="Aucun ticket dans ce projet" description="Ajoutez une première tâche avec son résultat attendu." action={{ label: "Créer le premier ticket", onClick: () => setShowCreateModal(true) }} /> : null}
 
-      <div className="kanban-columns-grid">
+      <div className="kanban-columns-grid" tabIndex={0} role="region" aria-label="Colonnes du Kanban, défilement horizontal">
         {COLUMNS.map((col) => (
           <div key={col.id} className={`panel card kanban-column kanban-column--${col.theme}`}>
             <div className={`kanban-column-head kanban-theme-${col.theme}`}>

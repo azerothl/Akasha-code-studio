@@ -90,6 +90,7 @@ export function useStudioGit({ selectedId, centerTab }: Dependencies) {
   }, [selectedId]);
 
   useEffect(() => {
+    setGitHeadBranch(null); setGitWorktreeClean(null); setGitWorktreeLines([]);
     setGitBranches([]); setGitCompareBase(""); setGitCompareTarget(""); setGitCompareResult(null);
     setGitConflicts([]); setGitMergeInProgress(false); setEvolutions([]); setSelectedEvoId(null); setGitError(null);
     void refreshEvolutions();

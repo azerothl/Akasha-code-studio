@@ -191,3 +191,55 @@ button { border-radius: 7px; }
   .editor-toolbar .editor-open-path { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
+.app .app-main > .center, .app .app-main > .chat-column { min-width: 0; overflow: hidden; }
+.kanban-board { min-width: 0; width: 100%; overflow: hidden; }
+.kanban-columns-grid { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 12px; align-items: stretch; }
+.kanban-column { min-width: 0; }
+.app .kanban-toolbar { background: var(--akasha-bg-elevated); border: 0; display: flex; flex-wrap: wrap; gap: 16px; }
+.app .kanban-toolbar > div:first-child { flex: 1 1 220px; }
+.studio-preview { gap: 18px; padding: 24px; }
+.preview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.preview-heading h2 { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+.preview-heading p { margin: 0; }
+.preview-settings, .preview-journal { border-bottom: 1px solid var(--akasha-border); padding: 0 0 14px; }
+.preview-settings summary, .preview-journal summary { cursor: pointer; padding: 8px 0; font-size: 13px; }
+.preview-options { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-block: 16px; }
+.preview-options label { display: flex; gap: 8px; align-items: flex-start; }
+.studio-preview .preview-empty { flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+.studio-preview .preview-empty h3 { font-size: 18px; margin: 0; color: var(--akasha-text); }
+.studio-preview .preview-empty p { margin: 0; max-width: 52ch; line-height: 1.65; }
+.studio-preview .preview-frame { min-height: 280px; width: 100%; border-radius: 8px; }
+.studio-preview .preview-build-controls { flex-wrap: wrap; align-items: flex-end; }
+.studio-preview .preview-build-controls label { min-width: 0; flex: 1 1 220px; }
+.app .branches-layout { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; }
+.app .branches-panel { min-width: 0; background: transparent; border: 0; padding: 0; }
+.app .branches-pane { display: block; overflow: auto; padding: 24px; }
+.app .branches-panel { overflow: visible; }
+.app .branches-layout { align-items: start; margin-top: 24px; }
+.branches-toolbar .pane-title-inline { text-transform: none; font-size: 18px; letter-spacing: 0; }
+.app .branches-panel h2 { font-size: 16px; text-transform: none; letter-spacing: 0; }
+.app .branches-item { background: var(--akasha-bg-elevated); border: 1px solid var(--akasha-border); padding: 14px; border-radius: 10px; }
+.branches-item-meta { flex-wrap: wrap; overflow-wrap: anywhere; }
+.branches-panel .field-row { flex-wrap: wrap; }
+.branches-panel .field { min-width: min(100%, 180px); flex: 1; }
+.task-recovery-context { padding: 12px 18px; font-size: 13px; line-height: 1.6; background: var(--akasha-bg-elevated); overflow-wrap: anywhere; }
+.task-recovery-context p { margin: 0 0 8px; }
+.studio-composer-options { min-width: 0; }
+.composer-model { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--akasha-text-muted); margin-bottom: 8px; }
+.composer-model select { width: auto; max-width: 100%; min-width: 0; flex: 1; }
+.composer-palette { display: flex; flex-direction: column; max-height: 210px; overflow-y: auto; margin-bottom: 10px; border: 1px solid var(--akasha-border); border-radius: 12px; background: var(--akasha-bg-elevated); }
+.composer-palette button { padding: 10px 14px; text-align: left; display: flex; flex-direction: column; gap: 4px; background: transparent; border: 0; color: var(--akasha-text); font-size: 13px; cursor: pointer; }
+.composer-palette button:hover, .composer-palette button[aria-selected="true"] { background: var(--akasha-bg-surface-hover); }
+.composer-palette button span { color: var(--akasha-text-muted); font-size: 12px; }
+.composer-palette button:disabled { opacity: .55; cursor: not-allowed; }
+.composer-goal { border: 1px solid var(--akasha-border); border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 13px; }
+.goal-limits { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.goal-limits label { flex: 1; min-width: 100px; }
+.goal-progress { padding-block: 10px; font-size: 13px; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .studio-preview { padding: 16px; }
+  .kanban-columns-grid { grid-template-columns: repeat(5, minmax(260px, 80vw)); scroll-snap-type: x proximity; }
+  .kanban-column { scroll-snap-align: start; }
+  .preview-heading .project-actions-row { width: 100%; }
+  .app .branches-layout { grid-template-columns: minmax(0, 1fr); }
+}

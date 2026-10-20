@@ -1,6 +1,22 @@
 /** Base URL: dev server proxies /api to the daemon (see vite.config.ts). */
 const api = (path: string) => path.startsWith("/") ? path : `/${path}`;
 
+export type StudioExecutionCatalog = { schema_version: 1; goals: boolean; actions: boolean; models: { provider: string; model: string }[] };
+export async function getStudioExecutionCatalog(signal?: AbortSignal): Promise<StudioExecutionCatalog> {
+  const response = await fetch(api("/api/router/studio-options"), { signal });
+  if (!response.ok) throw new Error("Options Studio indisponibles");
+  const data = await response.json() as StudioExecutionCatalog;
+  if (data.schema_version !== 1 || !Array.isArray(data.models)) throw new Error("Options Studio incompatibles");
+  return data;
+}
+export type StudioGoalState = { objective: string; state: string; cycles: number; max_cycles: number; max_seconds: number; tokens_used: number; max_tokens: number; elapsed_ms: number; detail?: string };
+export async function getStudioGoal(taskId: string): Promise<StudioGoalState | null> {
+  const response = await fetch(api(`/api/tasks/${encodeURIComponent(taskId)}/goal`));
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("État de l’objectif indisponible");
+  return response.json() as Promise<StudioGoalState>;
+}
+
 export type StudioProject = { id: string; name: string; path: string };
 
 export type Evolution = {
@@ -501,6 +517,7 @@ export async function gitClone(projectId: string, repoUrl: string, branch?: stri
 }
 
 export type GitBranchEntry = {
+  remote?: boolean;
   name: string;
   current: boolean;
   upstream: string | null;
@@ -715,6 +732,9 @@ function defaultCodeStudioSessionId(
 
 export async function sendMessage(body: {
   message: string;
+  studio_model?: { provider: string; model: string };
+  studio_action?: "goal" | "debug" | "audit" | "test";
+  studio_goal?: { objective: string; criteria: StudioAcceptancePayload; max_cycles: number; max_seconds: number; max_tokens: number };
   session_id?: string;
   incognito?: boolean;
   message_delivery_mode?: "immediate" | "steering" | "follow_up";
@@ -749,6 +769,9 @@ export async function sendMessage(body: {
     body: JSON.stringify({
       session_id: defaultCodeStudioSessionId(body.session_id, body.studio_project_id),
       message: body.message,
+      ...(body.studio_model ? { studio_model: body.studio_model } : {}),
+      ...(body.studio_action ? { studio_action: body.studio_action } : {}),
+      ...(body.studio_goal ? { studio_goal: body.studio_goal } : {}),
       ...(body.message_delivery_mode ? { message_delivery_mode: body.message_delivery_mode } : {}),
       ...(body.incognito ? { incognito: true } : {}),
       ...(body.queue_mode ? { queue_mode: body.queue_mode } : {}),

@@ -1,3 +1,6 @@
+import { StudioPreviewPane } from "./studioPreviewPane";
+import { StudioComposer, defaultExecution } from "./studioComposer";
+import { parseStudioAction } from "./studioActions";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
 import { formatTaskStatusFr, looksLikeStructuredRefusal, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
@@ -38,7 +41,6 @@ import { TaskOutcomeSummary, taskFeedbackKind, taskFeedbackTitle } from "./taskO
 import { DaemonOpsPanel } from "./daemonOpsPanel";
 import { WorkspaceHeader, WorkspaceTools, MobileWorkspaceNav, ChatWelcome } from "./workspaceChrome";
 import { useNotifyOnMessage } from "./notifications/useNotifyOnMessage";
-import { InfoTip } from "./components/Tooltip";
 import { Sidebar, getTabsForGroup, getDefaultGroup, getGroupForTab } from "./sidebar";
 import { ProjectDashboard } from "./projectDashboard";
 import { KanbanBoard } from "./kanbanBoard";
@@ -320,30 +322,10 @@ export default function App() {
     gitConflicts
   } = useStudioGit({ selectedId, centerTab });
 
-  const {
-    setStaticPreviewBlobUrl,
-    buildCmd,
-    setBuildCmd,
-    onBuild,
-    buildLog,
-    buildState, buildError, previewError, previewAction,
-    previewProfile,
-    forceInstallBeforePreview,
-    setForceInstallBeforePreview,
-    strictWebSandbox,
-    setStrictWebSandbox,
-    depsInstallBusy,
-    onInstallDepsOnly,
-    previewBusy,
-    onPlayPreview,
-    devPreviewUrl,
-    onStopPreview,
-    previewUrl,
-    openPreviewInNewWindow,
-    previewLog,
-    staticPreviewBlobUrl,
-    devServerLog
-  } = useStudioPreview({ selectedId, setError, setCenterTab, setStatus, centerTab });
+  const preview = useStudioPreview({ selectedId, setError, setCenterTab, setStatus, centerTab });
+  const { setStaticPreviewBlobUrl, buildCmd, setBuildCmd, onBuild, buildLog, buildState, devServerLog } = preview;
+  const [executionOptions, setExecutionOptions] = useState(defaultExecution);
+  useEffect(() => setExecutionOptions(defaultExecution), [selectedId]);
 
   const {
     filesLoading, filesError, loadFiles, editorLoading, editorError, searchSummary,
@@ -1150,10 +1132,11 @@ export default function App() {
       await api.checkoutGitBranch(selectedId, branch);
       setStatus(`Branche active: ${branch}`);
       await refreshFiles();
+      await refreshGitBranches();
     } catch (e) {
       setError(String(e));
     }
-  }, [selectedId, refreshFiles]);
+  }, [selectedId, refreshFiles, refreshGitBranches]);
 
   const onCompareBranches = useCallback(async () => {
     if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
@@ -1168,23 +1151,27 @@ export default function App() {
   }, [selectedId, gitCompareBase, gitCompareTarget]);
 
   const onMergeBranches = useCallback(async () => {
-    if (!selectedId || !gitCompareBase || !gitCompareTarget) return;
+    if (!selectedId || !gitCompareBase || !gitCompareTarget || !gitCompareResult) return;
+    if (!window.confirm(`Fusionner ${gitCompareTarget} dans ${gitCompareBase} ? ${gitCompareResult.files_changed} fichiers concernés. Cette opération modifie la branche cible.`)) return;
     setError(null);
     try {
       const result = await api.mergeGitBranches(selectedId, gitCompareTarget, gitCompareBase);
       setStatus(result.message || "Merge effectué");
+      setGitCompareResult(null);
+      await refreshGitBranches();
       await refreshFiles();
       await refreshGitConflicts();
     } catch (e) {
       setError(String(e));
       await refreshGitConflicts();
     }
-  }, [selectedId, gitCompareBase, gitCompareTarget, refreshFiles, refreshGitConflicts]);
+  }, [selectedId, gitCompareBase, gitCompareTarget, gitCompareResult, refreshFiles, refreshGitConflicts, refreshGitBranches]);
 
   const onAbortMerge = useCallback(async () => {
     if (!selectedId) return;
     setError(null);
     try {
+      if (!window.confirm("Annuler la fusion ? Les résolutions de conflit non enregistrées seront perdues.")) return;
       await api.abortGitMerge(selectedId);
       setStatus("Merge annulé");
       await refreshGitConflicts();
@@ -1404,19 +1391,32 @@ Procédure:
     const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
     const queued =
       chatDeliveryMode !== "immediate" && activeTask !== null;
-    if (!queued) {
-      pollTaskAbortRef.current?.abort();
-      setPendingHumanInput(null);
-      setHumanReplyDraft("");
-      setTaskTrace(null);
-    }
     try {
       const acc = includeCriteriaOnSend
         ? api.parseStudioAcceptanceCriteriaInput(acceptanceCriteriaDraft)
         : undefined;
-      const expanded = includeFileRefs ? await api.expandAtFileRefs(selectedId, text) : text;
+      const parsed = parseStudioAction(text);
+      if (queued && parsed.action) throw new Error("Lancez cette action dans une nouvelle tâche après l’arrêt de la tâche active.");
+      if (parsed.action || (!queued && executionOptions.model)) {
+        const catalog = await api.getStudioExecutionCatalog();
+        if (!catalog.actions || (parsed.action === "goal" && !catalog.goals)) throw new Error("Cette action nécessite une mise à jour du daemon.");
+      }
+      if (parsed.action === "goal" && executionOptions.criterionKind === "file_exists" && (!executionOptions.criterionPath.trim() || /(^[\\/]|(^|[\\/])\.\.([\\/]|$)|:)/.test(executionOptions.criterionPath))) throw new Error("Choisissez un fichier attendu relatif au projet, sans traversée de dossier.");
+      let goalCriterion: api.StudioAcceptanceCriterion | undefined;
+      if (parsed.action === "goal") {
+        if (executionOptions.criterionKind === "file_exists") goalCriterion = { id: "goal-file", text: `Présence de ${executionOptions.criterionPath}`, kind: "file_exists", path: executionOptions.criterionPath };
+        else {
+          const argv: unknown = JSON.parse(executionOptions.verifyArgv);
+          if (!Array.isArray(argv) || !argv.length || !argv.every(value => typeof value === "string" && value.length > 0)) throw new Error("La commande doit être un tableau JSON non vide de chaînes de caractères.");
+          goalCriterion = { id: "goal-command", text: `Commande réussie : ${argv.join(" ")}`, kind: "command_ok", argv };
+        }
+      }
+      const expanded = includeFileRefs ? await api.expandAtFileRefs(selectedId, parsed.prompt) : parsed.prompt;
       const { task_id } = await api.sendMessage({
         message: expanded,
+        ...(!queued && executionOptions.model ? { studio_model: JSON.parse(executionOptions.model) as { provider: string; model: string } } : {}),
+        ...(parsed.action ? { studio_action: parsed.action } : {}),
+        ...(parsed.action === "goal" ? { studio_goal: { objective: parsed.prompt, criteria: { criteria: [goalCriterion!] }, max_cycles: executionOptions.cycles, max_seconds: executionOptions.seconds, max_tokens: executionOptions.tokens } } : {}),
         ...(queued && activeTask
           ? {
               message_delivery_mode: chatDeliveryMode,
@@ -1440,6 +1440,12 @@ Procédure:
       });
       if (!queued) saveActiveTask(selectedId, task_id);
       if (selectedIdRef.current !== selectedId) return;
+    if (!queued) {
+      pollTaskAbortRef.current?.abort();
+      setPendingHumanInput(null);
+      setHumanReplyDraft("");
+      setTaskTrace(null);
+    }
       setChatInput(current => current.trim() === text ? "" : current);
       if (queued && activeTask) {
         setChat((c) => [
@@ -2338,7 +2344,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             secondaryAction={{ label: "Ouvrir le cockpit", onClick: () => setCenterTab("cockpit") }} />
         ) : null}
         {projectsError && daemonStatus.ok ? <AsyncState kind="error" title="Projets indisponibles" detail={projectsError} action={{ label: "Réessayer", onClick: () => void refreshProjects(), disabled: projectsLoading }} /> : null}
-        {error ? <AsyncState kind="error" title="Envoi ou action interrompue" description="Vos saisies sont conservées." detail={error}
+        {error ? <AsyncState kind="error" title="Envoi ou action interrompue" description={`${redactSecrets(error).replace(/^Error: /, "").slice(0, 260)} Vos saisies sont conservées.`} detail={error}
           action={{ label: "Voir les logs", onClick: () => setCenterTab("logs") }} secondaryAction={{ label: "Fermer le message", onClick: () => setError(null) }} /> : null}
       </div>
       <div className={appMainClass}>
@@ -2719,129 +2725,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             </div>
           </div>
         ) : centerTab === "preview" ? (
-          <div className="center-body preview-pane">
-            <div className="preview-toolbar">
-              <span className="pane-title-inline">Aperçu</span>
-              {previewProfile ? (
-                <span
-                  className="preview-stack-badge"
-                  title="Stack détectée par le daemon depuis les manifestes du projet"
-                >
-                  Stack : {previewProfile}
-                </span>
-              ) : null}
-              <label
-                className="preview-checkbox"
-                title="Relance la commande d’installation détectée (npm install / uv sync / …) avant le serveur, utile après changement de dépendances."
-              >
-                <Checkbox
-                  checked={forceInstallBeforePreview}
-                  onChange={(e) => setForceInstallBeforePreview(e.target.checked)}
-                />
-                Forcer la réinstallation des dépendances
-              </label>
-              <label
-                className="preview-checkbox"
-                title="Sandbox iframe strict (sans same-origin) — mode WebContainer léger pour HTML/apercu statique."
-              >
-                <Checkbox
-                  checked={strictWebSandbox}
-                  onChange={(e) => setStrictWebSandbox(e.target.checked)}
-                />
-                Sandbox strict
-              </label>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!selectedId || depsInstallBusy || previewBusy}
-                title="Exécute uniquement la commande d’installation détectée (npm install / uv sync / …) sans démarrer le serveur."
-                onClick={() => void onInstallDepsOnly()}
-              >
-                {depsInstallBusy ? "Installation…" : "Installer les dépendances"}
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                disabled={!selectedId || previewBusy || depsInstallBusy}
-                title="Détecte la stack (Node, Python uv …), installe si nécessaire, puis lance le serveur de dev correspondant."
-                onClick={() => void onPlayPreview()}
-              >
-                {previewBusy ? "Démarrage…" : "▶ Lancer la prévisualisation"}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!selectedId || !devPreviewUrl}
-                title="Arrête le serveur de développement lancé par le daemon."
-                onClick={() => void onStopPreview()}
-              >
-                Arrêter le serveur
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!previewUrl}
-                title="Ouvre l’URL d’aperçu (serveur dev ou fichier HTML) dans un nouvel onglet ou une nouvelle fenêtre du navigateur."
-                onClick={() => openPreviewInNewWindow()}
-              >
-                Nouvelle fenêtre
-              </Button>
-            </div>
-            {previewBusy || depsInstallBusy ? <AsyncState kind="loading" title={depsInstallBusy ? "Installation des dépendances…" : "Démarrage de l’aperçu…"} description="Le daemon prépare le projet. Vous pouvez continuer à consulter vos fichiers." /> : previewError ? <AsyncState kind="error" title="L’aperçu n’est pas prêt" detail={previewError} action={{ label: "Réessayer", onClick: () => void (previewAction === "install" ? onInstallDepsOnly() : onPlayPreview()) }} secondaryAction={{ label: "Consulter les logs", onClick: () => setCenterTab("logs") }} /> : null}
-            <div className="preview-build-controls">
-              <label>Commande de vérification<Input aria-label="Commande de vérification" value={buildCmd} onChange={e => setBuildCmd(e.target.value)} /></label>
-              <Button disabled={!selectedId || buildState === "running"} onClick={() => void onBuild()}>{buildState === "running" ? "Build en cours…" : "Exécuter le build"}</Button>
-            </div>
-            {buildState !== "idle" ? <AsyncState kind={buildState === "running" ? "loading" : buildState} title={buildState === "running" ? "Vérification en cours…" : buildState === "error" ? "La vérification a échoué" : "Vérification terminée"} detail={buildError || buildLog} action={buildState === "error" ? { label: "Relancer le build", onClick: () => void onBuild() } : undefined} /> : null}
-            {previewLog ? (
-              <pre className="preview-install-log" title="Sortie installation / serveur de dev">
-                {previewLog}
-              </pre>
-            ) : null}
-            {devPreviewUrl || staticPreviewBlobUrl ? (
-              <iframe
-                className="preview-frame"
-                title="Aperçu"
-                src={devPreviewUrl ?? staticPreviewBlobUrl ?? undefined}
-                sandbox={
-                  devPreviewUrl
-                    ? strictWebSandbox
-                      ? "allow-scripts"
-                      : "allow-scripts allow-same-origin allow-forms allow-popups"
-                    : "allow-scripts"
-                }
-              />
-            ) : (
-              <div className="preview-empty">
-                {!previewBusy && !depsInstallBusy && !previewError ? <AsyncState kind="empty" title="Aucun aperçu lancé" description="Lancez le serveur de développement ou ouvrez un fichier HTML dans l’éditeur." action={selectedId ? { label: "Lancer l’aperçu", onClick: () => void onPlayPreview() } : { label: "Choisir un projet", onClick: () => setModalLoadOpen(true) }} /> : null}
-                <p>
-                  <strong>Serveur de dev</strong> : la stack est détectée automatiquement à partir des
-                  manifestes du projet, puis installée et lancée. Cliquez sur « Lancer la prévisualisation ».
-                </p>
-                <ul style={{ margin: "6px 0", paddingLeft: 20 }}>
-                  <li>
-                    <strong>Node.js</strong> — <code>package.json</code> (script <code>dev</code>) :
-                    {" "}
-                    <code>npm install</code> + <code>npm run dev</code>.
-                  </li>
-                  <li>
-                    <strong>Python · uv · Streamlit</strong> — <code>pyproject.toml</code> mentionnant
-                    {" "}
-                    <code>streamlit</code> : <code>uv sync</code> + <code>uv run streamlit run app.py</code>.
-                  </li>
-                  <li>
-                    <strong>Python · uv · FastAPI</strong> — <code>pyproject.toml</code> mentionnant
-                    {" "}
-                    <code>fastapi</code> : <code>uv sync</code> + <code>uv run uvicorn main:app</code>.
-                  </li>
-                </ul>
-                <p>
-                  <strong>HTML statique</strong> : ouvrez un fichier <code>.html</code> dans l’arborescence, puis
-                  revenez ici — l’aperçu s’affiche sans serveur.
-                </p>
-              </div>
-            )}
-          </div>
+          <StudioPreviewPane {...preview} projectId={selectedId} onChooseProject={() => setModalLoadOpen(true)} />
         ) : centerTab === "plan" ? (
           <div className="center-body plan-pane">
             <div className="preview-toolbar">
@@ -3081,7 +2965,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           <div className="center-body plan-pane branches-pane">
             <div className="preview-toolbar branches-toolbar">
               <span className="pane-title-inline">Gestion des branches</span>
-              <InfoTip content="Comparez deux branches, faites un checkout ou un merge, puis surveillez les conflits détectés par Git." />
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -3095,15 +2979,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               </Button>
             </div>
             <p className="hint plan-pane-hint">
-              Suivez les branches locales, comparez les divergences et pilotez les merges depuis cet écran.
+              Comparez les modifications avant de les intégrer à une autre branche. Les branches distantes sont affichées en lecture seule.
             </p>
+            <p className="hint">Branche courante : {gitHeadBranch || "non déterminée"} · {gitWorktreeClean === null ? "État des fichiers à actualiser" : gitWorktreeClean ? "Aucune modification non enregistrée dans Git" : `${gitWorktreeLines.length} fichier(s) modifié(s), à examiner avant de changer de branche`}</p>
+            {gitWorktreeLines.length ? <details><summary>Modifications locales</summary><ul>{gitWorktreeLines.map((line, index) => <li key={index}><code>{line.status} {line.path}</code></li>)}</ul></details> : null}
             <div className="branches-layout">
               <section className="panel branches-panel">
                 <h2>
-                  Branches disponibles <InfoTip content="Liste locale avec état courant, avance/retard et dernier commit." />
+                  Vos branches
                 </h2>
                 {gitBranchesLoading ? <AsyncState kind="loading" title="Chargement des branches…" /> : null}
                 {gitError ? <AsyncState kind="error" title="Données Git indisponibles" detail={gitError} action={{ label: "Actualiser Git", onClick: () => { void refreshGitBranches(); void refreshGitConflicts(); } }} /> : null}
+                {!gitBranchesLoading && !gitError && !gitBranches.length ? <p className="hint">Aucune branche disponible. Choisissez un projet avec un dépôt Git initialisé.</p> : null}
                 <ul className="branches-list">
                   {gitBranches.map((b) => (
                     <li key={b.name}>
@@ -3113,18 +3000,19 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                           {b.current ? <span className="branches-badge">active</span> : null}
                         </div>
                         <div className="branches-item-meta">
-                          <span>↑ {b.ahead}</span>
-                          <span>↓ {b.behind}</span>
+                          <span>{b.remote ? "Branche distante" : "Branche locale"}</span>
+                          <span>{b.remote ? "Référence du dépôt distant" : b.upstream ? `Suivi : ${b.upstream} · ${b.ahead} commit(s) en avance, ${b.behind} en retard` : "Aucun suivi distant configuré"}</span>
                           <span>{b.last_commit_subject || "Aucun commit"}</span>
+                          <span>Base de création : non enregistrée dans Git</span>
                         </div>
-                        {!b.current ? (
+                        {!b.current && !b.remote ? (
                           <Button
                             variant="secondary"
                             size="sm"
                             onClick={() => void onCheckoutBranch(b.name)}
                             title="Passer sur cette branche"
                           >
-                            Checkout
+                            Passer sur cette branche
                           </Button>
                         ) : null}
                       </div>
@@ -3135,14 +3023,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Comparer / merger <InfoTip content="La branche source est fusionnée dans la branche cible." />
+                  Examiner avant de fusionner
                 </h2>
                 <div className="field-row">
                   <label className="field">
                     <span>Branche cible</span>
                     <Select value={gitCompareBase} onChange={(e) => { setGitCompareBase(e.target.value); setGitCompareResult(null); }}>
                       <option value="">Choisir…</option>
-                      {gitBranches.map((b) => (
+                      {gitBranches.filter(b => !b.remote).map((b) => (
                         <option key={`base-${b.name}`} value={b.name}>
                           {b.name}
                         </option>
@@ -3161,11 +3049,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     </Select>
                   </label>
                 </div>
+                <p className="hint">{gitBranches.length < 2 ? "Une seule branche locale : créez une évolution depuis les outils du projet pour comparer des changements." : !gitCompareTarget || gitCompareBase === gitCompareTarget ? "Choisissez deux branches différentes." : !gitCompareResult ? "Comparez les changements avant de décider de leur fusion." : "La source sera intégrée dans la cible sélectionnée. Git peut demander une résolution de conflits."}</p>
                 <div className="project-actions-row">
                   <Button
                     variant="secondary"
                     size="sm"
-                    disabled={!gitCompareBase || !gitCompareTarget}
+                    disabled={!gitCompareBase || !gitCompareTarget || gitCompareBase === gitCompareTarget}
                     onClick={() => void onCompareBranches()}
                     title="Afficher les commits et statistiques de divergence"
                   >
@@ -3174,19 +3063,19 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <Button
                     variant="default"
                     size="sm"
-                    disabled={!gitCompareBase || !gitCompareTarget || gitCompareBase === gitCompareTarget}
+                    disabled={!gitCompareResult || gitCompareBase === gitCompareTarget || gitMergeInProgress}
                     onClick={() => void onMergeBranches()}
                     title="Fusionner la branche source dans la cible"
                   >
-                    Merger
+                    Fusionner après examen
                   </Button>
-                  <Button
+                  {selectedEvoId ? <Button
                     variant="danger"
                     size="sm"
                     disabled={!selectedId || !selectedEvoId}
                     title="Abandonne la branche d’évolution sélectionnée sans fusion."
                     onClick={() => {
-                      if (selectedId && selectedEvoId) {
+                      if (selectedId && selectedEvoId && window.confirm(`Abandonner l’évolution ${activeBranch ?? selectedEvoId} sans fusion ? Vérifiez ses modifications avant de continuer.`)) {
                         void api
                           .abandonEvolution(selectedId, selectedEvoId)
                           .then(() => refreshEvolutions())
@@ -3195,8 +3084,9 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                     }}
                   >
                     Abandonner la branche
-                  </Button>
+                  </Button> : null}
                 </div>
+                {!selectedEvoId ? <p className="hint">Pour abandonner une évolution, sélectionnez-la dans les outils du projet.</p> : null}
                 {gitCompareResult ? (
                   <div className="branches-compare-summary">
                     <p className="hint">
@@ -3220,7 +3110,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
 
               <section className="panel branches-panel">
                 <h2>
-                  Conflits de merge <InfoTip content="Affiche les fichiers en conflit; utilisez Annuler le merge pour revenir en arrière." />
+                  Résoudre les conflits
                 </h2>
                 {gitMergeInProgress ? (
                   <p className="hint branches-warning">
@@ -3232,13 +3122,11 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 {gitConflicts.length > 0 ? (
                   <ul className="branches-conflict-list">
                     {gitConflicts.map((f) => (
-                      <li key={f}>
-                        <code>{f}</code>
-                      </li>
+                      <li key={f}><code>{f}</code><p className="hint">Ouvrez ce fichier dans l’éditeur, résolvez les marqueurs de conflit puis enregistrez et créez un commit. Vous pouvez aussi annuler la fusion ci-dessous.</p></li>
                     ))}
                   </ul>
                 ) : null}
-                <Button
+                {gitMergeInProgress ? <Button
                   variant="danger"
                   size="sm"
                   disabled={!gitMergeInProgress}
@@ -3246,7 +3134,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   title="Annuler le merge en cours et revenir à l’état précédent"
                 >
                   Annuler le merge
-                </Button>
+                </Button> : null}
               </section>
             </div>
           </div>
@@ -3552,11 +3440,12 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
           {taskTrace ? <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
-            secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Reprendre la demande", onClick: () => {
+            secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
               if (prompt) setChatInput(prompt.text);
               document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus();
             } } : undefined} /> : null}
+          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande.</p><p className="hint">La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets.</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
           {pendingHumanInput && taskTrace && pendingHumanInput.taskId === taskTrace.id ? (
             <div className="task-human-input">
               {humanInputRiskLevel ? (
@@ -3739,6 +3628,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 agent,
                 codeMode,
                 modelLabel: lastObservedModel,
+                requestedModelLabel: executionOptions.model ? `${JSON.parse(executionOptions.model).model} · ${JSON.parse(executionOptions.model).provider}` : "Automatique",
                 providerLabel: "",
                 permissionMode,
                 ragStatus: codeRagStatus?.status ?? null,
@@ -3754,6 +3644,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               onIncludePolicy={setIncludePolicyOnSend}
             />
           ) : null}
+          <StudioComposer text={chatInput} onText={setChatInput} options={executionOptions} onOptions={setExecutionOptions} projectId={selectedId} taskId={taskTrace?.id} />
           <div className="input-group input-group--textarea chat-form">
             <Textarea
               className="input-group-field input-group-field--textarea"
@@ -3763,6 +3654,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               onChange={(e) => setChatInput(e.target.value)}
               placeholder={selectedId ? "Demandez une modification… @ pour citer un fichier" : "Ouvrez un projet pour commencer"}
               onKeyDown={(e) => {
+                if (e.key === "ArrowDown" && /^\/\w*$/.test(chatInput)) { const palette = document.getElementById("studio-action-list"); if (palette) { e.preventDefault(); palette.focus(); return; } }
+                if (e.key === "Escape" && /^\/\w*$/.test(chatInput)) { e.preventDefault(); setChatInput(""); return; }
                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
                   void onSendChat();

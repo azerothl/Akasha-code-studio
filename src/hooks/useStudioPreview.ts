@@ -152,7 +152,7 @@ export function useStudioPreview({ selectedId, centerTab, setError, setCenterTab
   }, [selectedId, buildCmd, setStatus]);
 
   useEffect(() => {
-    if (!selectedId || centerTab !== "logs") return;
+    if (!selectedId || (centerTab !== "logs" && !(centerTab === "preview" && devPreviewUrl))) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const tick = async () => {
@@ -166,7 +166,7 @@ export function useStudioPreview({ selectedId, centerTab, setError, setCenterTab
     };
     void tick();
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [selectedId, centerTab]);
+  }, [selectedId, centerTab, devPreviewUrl]);
 
   const previewUrl = devPreviewUrl ?? staticPreviewBlobUrl;
   const openPreviewInNewWindow = useCallback(() => {

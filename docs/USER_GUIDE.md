@@ -2,6 +2,21 @@
 
 This guide is for end users of Akasha Code Studio. It explains what Code Studio does, how to use it day-to-day, and which daemon options influence its behavior.
 
+## Task model and chat actions
+
+The composer has a **Modèle** selector separate from the agent role. **Automatique** keeps daemon routing. An explicit choice is limited to configured models and is stored with the new task; it never rewrites an active task or the global provider configuration. The context summary distinguishes the requested route from the model reported on the last turn. If the daemon is too old, update it or use ordinary chat with automatic routing.
+
+Type `/` to choose a workflow. Use Arrow Down to enter the list, arrows to select, Enter to choose and Escape to dismiss:
+
+- `/debug <symptom>` asks the agent to reproduce, diagnose, fix and verify a problem.
+- `/audit <scope>` starts a technically restricted audit: no file mutations, shell commands or delegation.
+- `/test <scope>` asks the agent to inspect the project scripts, select checks and report their actual results.
+- `/goal <objective>` opens verification and budget controls. Choose an expected file or a command as a JSON argument list, such as `["npm", "run", "test"]`. Review commands before sending: project scripts can have effects.
+
+An objective continues after failed mechanical verification until its criterion passes, it is blocked, or a cycle, time or token limit is reached. The goal panel shows progress and pause/resume/stop controls. A file-presence criterion verifies presence only; choose a meaningful test command for functional correctness. Resume preserves recorded effects and requires renewed decisions for interrupted approvals.
+
+On failure, **Préparer une nouvelle demande** only copies the prompt. Inspect partial files and the recovery ledger before submitting a new task, which may repeat effects. **Reprendre le suivi** reconnects the display to an existing task; it does not launch a replacement task.
+
 ## 1) What Code Studio Is
 
 Akasha Code Studio is a web UI that works with the Akasha daemon.  

@@ -9,6 +9,8 @@
 | Éditeur | `src/hooks/useStudioEditor.ts`, `src/editorSession.ts` | Fichiers, onglets, brouillons, sauvegarde et recherche |
 | Git | `src/hooks/useStudioGit.ts` | Branches, évolutions, comparaison et conflits ; App coordonne les mutations avec le rafraîchissement des fichiers |
 | Aperçu/build | `src/hooks/useStudioPreview.ts` | Installation, serveur, logs, vérification et état du build |
+| Présentation aperçu | `src/studioPreviewPane.tsx` | Action principale, environnement replié, iframe et journaux |
+| Actions et modèles | `src/studioComposer.tsx`, `src/studioActions.ts` | Palette accessible, route de la prochaine tâche, paramètres et suivi des objectifs |
 | Chat/tâches | `src/hooks/useStudioTasks.ts` | Historique local, reprise et annulation du suivi, progression et réponses attendues |
 | Envoi | `src/sendContext.ts` | Résumé du contexte et masquage des secrets |
 | Revue | `src/taskReviewModel.ts`, `src/taskReview.tsx` | Critères, vérifications, diff |
