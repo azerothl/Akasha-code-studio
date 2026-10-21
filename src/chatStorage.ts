@@ -7,6 +7,7 @@ export type ChatMessage = {
   role: "user" | "assistant";
   text: string;
   task_id?: string;
+  studio_ticket_id?: string;
   task_status?: string;
   task_outcome?: TaskOutcome | null;
   acceptance_criteria?: string;
@@ -24,6 +25,7 @@ function normalizeMessage(m: unknown): ChatMessage | null {
   if (typeof o.text !== "string") return null;
   if (o.role !== "user" && o.role !== "assistant") return null;
   const task_id = typeof o.task_id === "string" ? o.task_id : undefined;
+  const studio_ticket_id = typeof o.studio_ticket_id === "string" ? o.studio_ticket_id : undefined;
   const suggested_actions = Array.isArray(o.suggested_actions)
     ? (o.suggested_actions as TaskSuggestedAction[]).filter(
         (a) =>
@@ -64,7 +66,7 @@ function normalizeMessage(m: unknown): ChatMessage | null {
   }
   const fork_parent_task_id = typeof o.fork_parent_task_id === "string" ? o.fork_parent_task_id : undefined;
   const fork_cut_index = typeof o.fork_cut_index === "number" ? o.fork_cut_index : undefined;
-  return { role: o.role, text: o.text, task_id, task_status: typeof o.task_status === "string" ? o.task_status : undefined,
+  return { role: o.role, text: o.text, task_id, studio_ticket_id, task_status: typeof o.task_status === "string" ? o.task_status : undefined,
     acceptance_criteria: typeof o.acceptance_criteria === "string" ? o.acceptance_criteria : undefined,
     git_branch: typeof o.git_branch === "string" ? o.git_branch : undefined,
     task_outcome: o.task_outcome && typeof o.task_outcome === "object" ? o.task_outcome as TaskOutcome : undefined,

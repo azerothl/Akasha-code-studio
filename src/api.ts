@@ -84,6 +84,10 @@ export type StudioTicket = {
   requested_by: string;
   assigned_agent: string;
   review_agent: string;
+  /** Ticket de suivi parent; relation de regroupement sans effet sur le dispatch. */
+  parent_ticket_id?: string | null;
+  /** Clé stable de création utilisée pour éviter les doublons lors des reprises. */
+  creation_key?: string | null;
   /** Ticket du même projet à terminer avant de pouvoir lancer celui-ci (alias du premier prérequis). */
   depends_on_ticket_id?: string | null;
   /** Prérequis multiples (union avec depends_on_ticket_id côté daemon). */
@@ -253,6 +257,8 @@ export async function createStudioTicket(
     assigned_agent: string;
     review_agent?: string;
     requested_by?: string;
+    parent_ticket_id?: string | null;
+    creation_key?: string;
     depends_on_ticket_id?: string | null;
     depends_on_ticket_ids?: string[];
     acceptance_criteria?: StudioTicketAcceptanceCriterion[];
@@ -291,6 +297,7 @@ export async function patchStudioTicket(
     description?: string;
     assigned_agent?: string;
     review_agent?: string;
+    parent_ticket_id?: string | null;
     depends_on_ticket_id?: string | null;
     depends_on_ticket_ids?: string[] | null;
     status?: StudioTicketStatus;
@@ -762,7 +769,7 @@ export async function sendMessage(body: {
   studio_ticket_id?: string;
   /** Override ponctuel du mode enforcement ticket. */
   studio_ticket_enforcement_mode?: "off" | "soft" | "strict";
-}): Promise<{ task_id: string }> {
+}): Promise<{ task_id: string; studio_ticket_id?: string | null }> {
   const r = await fetch(api("/api/message"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -804,7 +811,7 @@ export async function sendMessage(body: {
     const t = await r.text();
     throw new Error(`sendMessage ${r.status}: ${t}`);
   }
-  const j = (await r.json()) as { task_id: string };
+  const j = (await r.json()) as { task_id: string; studio_ticket_id?: string | null };
   return j;
 }
 

@@ -184,3 +184,50 @@ test("reload resumes polling until task completes", async ({ page }) => {
   expect(taskGetCount).toBeGreaterThan(requestsBeforeReload);
   expect(await page.evaluate(key => localStorage.getItem(key), activeTaskKey)).toBeNull();
 });
+
+test("active task defaults to ticketed follow-up and steering stays available", async ({ page }) => {
+  const sent: Record<string, unknown>[] = [];
+  await page.route("**/api/message", async route => {
+    sent.push(route.request().postDataJSON() as Record<string, unknown>);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ack: true,
+        task_id: runTaskId,
+        session_id: "t",
+        studio_ticket_id: "ticket-12345678",
+        message: "ok",
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  const delivery = page.getByLabel("Livraison message (tâche en cours)");
+  await page.locator(".chat-form textarea").fill("resume e2e");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  await expect(page.locator(".chat-task-status > summary")).toContainText(/^En cours/, { timeout: 8000 });
+  await page.getByRole("button", { name: "Options", exact: true }).click();
+  await expect(delivery).toHaveValue("follow_up");
+  await page.locator(".chat-form textarea").fill("Une scène supplémentaire serait utile.");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  await expect.poll(() => sent.length).toBe(2);
+  expect(sent[1]).toMatchObject({
+    queue_mode: "follow_up",
+    message_delivery_mode: "follow_up",
+    target_task_id: runTaskId,
+  });
+  await expect(page.getByRole("button", { name: "Ticket Kanban · ticket-1" }).last()).toBeVisible();
+
+  await delivery.selectOption("steering");
+  await expect(delivery).toHaveValue("steering");
+  await page.locator(".chat-form textarea").fill("Continue la tâche active avec le code déjà lu.");
+  await page.getByRole("button", { name: "Envoyer" }).click();
+  await expect.poll(() => sent.length).toBe(3);
+  expect(sent[2]).toMatchObject({
+    queue_mode: "steering",
+    message_delivery_mode: "steering",
+    target_task_id: runTaskId,
+  });
+});

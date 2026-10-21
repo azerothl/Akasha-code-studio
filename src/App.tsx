@@ -171,7 +171,7 @@ export default function App() {
   const [chatInput, setChatInput] = useState("");
   const [chatSendBusy, setChatSendBusy] = useState(false);
   const chatSendLock = useRef(false);
-  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
+  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("follow_up");
   const [chatIncognito, setChatIncognito] = useState(false);
   const [handoffModel, setHandoffModel] = useState("");
   const [handoffProvider, setHandoffProvider] = useState("");
@@ -392,6 +392,16 @@ export default function App() {
     setChatHasUnseen,
     lastAssistant
   } = useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFiles, syncCodeRagAfterFileChange, filePathRef, editorDirtyRef, editorBinaryRef, setEditorText, setSavedEditorText, setStaticPreviewBlobUrl, setForkEvents });
+
+  const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+  const previousChatDeliveryTaskId = useRef<string | null>(null);
+  useEffect(() => {
+    const activeTaskId = activeTask?.id ?? null;
+    if (previousChatDeliveryTaskId.current !== activeTaskId) {
+      previousChatDeliveryTaskId.current = activeTaskId;
+      setChatDeliveryMode("follow_up");
+    }
+  }, [activeTask?.id]);
 
   const parsedDesignDoc = useMemo(() => parseDesignDoc(designDocText), [designDocText]);
   const designHint = useMemo(() => buildDesignPolicyHint(parsedDesignDoc), [parsedDesignDoc]);
@@ -943,8 +953,10 @@ export default function App() {
           message:
             "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
         })
-        .catch(() => {
-          /* bootstrap best-effort ; l’utilisateur peut relancer depuis le chat */
+        .catch((error) => {
+          setError(
+            `Le projet a été créé, mais la préparation du Kanban n’a pas pu être lancée : ${String(error)}`,
+          );
         });
       await refreshProjects();
       setSelectedId(p.id);
@@ -1388,7 +1400,6 @@ Procédure:
     chatSendLock.current = true;
     setChatSendBusy(true);
     setError(null);
-    const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
     const queued =
       chatDeliveryMode !== "immediate" && activeTask !== null;
     try {
@@ -1412,7 +1423,7 @@ Procédure:
         }
       }
       const expanded = includeFileRefs ? await api.expandAtFileRefs(selectedId, parsed.prompt) : parsed.prompt;
-      const { task_id } = await api.sendMessage({
+      const { task_id, studio_ticket_id } = await api.sendMessage({
         message: expanded,
         ...(!queued && executionOptions.model ? { studio_model: JSON.parse(executionOptions.model) as { provider: string; model: string } } : {}),
         ...(parsed.action ? { studio_action: parsed.action } : {}),
@@ -1454,11 +1465,12 @@ Procédure:
             role: "user",
             text: `[${chatDeliveryMode}] ${text}`,
             task_id: activeTask.id,
+            studio_ticket_id: studio_ticket_id ?? undefined,
           },
         ]);
         return;
       }
-      setChat((c) => [...c, { role: "user", text, task_id, task_status: "queued",
+      setChat((c) => [...c, { role: "user", text, task_id, studio_ticket_id: studio_ticket_id ?? undefined, task_status: "queued",
         acceptance_criteria: includeCriteriaOnSend ? redactSecrets(acceptanceCriteriaDraft) : undefined,
         git_branch: activeBranch || gitHeadBranch || undefined }]);
       setPolicyHintOneShot("");
@@ -2491,8 +2503,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         value={ticketEnforcementModeDraft}
                         onChange={(e) => setTicketEnforcementModeDraft(e.target.value as "off" | "soft" | "strict")}
                       >
-                        <option value="off">off (aucune contrainte ticket)</option>
-                        <option value="soft">soft (warning sans ticket)</option>
+                        <option value="off">off (suivi automatique, sans blocage)</option>
+                        <option value="soft">soft (avertit si aucun ticket n’est lié)</option>
                         <option value="strict">strict (ticket obligatoire)</option>
                       </Select>
                     </label>
@@ -3487,6 +3499,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "user" && m.studio_ticket_id ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="bubble-ticket-link"
+                        onClick={() => setCenterTab("kanban")}
+                        title="Ouvrir le Kanban du projet"
+                      >
+                        Ticket Kanban · {m.studio_ticket_id.slice(0, 8)}
+                      </Button>
+                    ) : null}
                     {m.role === "assistant" && m.task_id ? <TaskOutcomeSummary outcome={m.task_outcome} status={m.task_status} /> : null}
                     {m.role === "user" && m.task_id ? (
                       <Button
@@ -3677,7 +3701,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <span className="input-group-addon">Envoi</span>
                   <select
                     className="input-group-field"
-                    value={chatDeliveryMode}
+                    value={activeTask ? chatDeliveryMode : "immediate"}
+                    disabled={!activeTask}
                     onChange={(e) =>
                       setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
                     }
@@ -3689,7 +3714,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 </div>
               </label>
               <p className="hint">
-                Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
+                Pendant une tâche, Follow-up crée par défaut un ticket pour suivre chaque évolution dans le Kanban. Choisissez Steering pour donner une consigne à la tâche active sans créer de ticket. Utilisez <code>@chemin/relatif</code> pour citer un fichier.
               </p>
               <label className="field">
                 <span>Handoff provider (optionnel)</span>
