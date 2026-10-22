@@ -44,6 +44,13 @@ export function looksLikeTimeoutMessage(msg: string): boolean {
   );
 }
 
+export function looksLikeContextWindowFailure(message: string | null | undefined): boolean {
+  const text = message?.toLowerCase() ?? "";
+  return text.includes("context_window_exceeded")
+    || text.includes("maximum context length")
+    || (text.includes("context") && text.includes("too many tokens"));
+}
+
 export function looksLikeStructuredRefusal(text: string): boolean {
   const t = text.trim();
   if (/^refus\b/i.test(t)) return true;
@@ -77,6 +84,9 @@ export function chatMessageForTerminalTask(
           ? last
           : detail || null;
     if (body) {
+      if (looksLikeContextWindowFailure(body)) {
+        return "Le modèle a refusé la demande car le contexte transmis dépasse sa fenêtre. Code Studio peut reprendre cette même tâche avec les résumés redondants et l’historique compactés. Consultez le détail de la tâche pour le diagnostic complet; vérifiez les fichiers si des outils avaient déjà été exécutés.";
+      }
       const hint = looksLikeTimeoutMessage(body)
         ? "\n\n(Souvent un timeout réseau ou LLM — vous pouvez renvoyer la même consigne pour relancer.)"
         : "";

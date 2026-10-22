@@ -3,7 +3,7 @@ import { StudioComposer, defaultExecution } from "./studioComposer";
 import { parseStudioAction } from "./studioActions";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
-import { formatTaskStatusFr, looksLikeStructuredRefusal, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
+import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
 import { useStudioProjects } from "./hooks/useStudioProjects";
 import { AsyncState } from "./asyncState";
 import { useStudioGit } from "./hooks/useStudioGit";
@@ -166,6 +166,7 @@ export default function App() {
   const [codeRagReindexBusy, setCodeRagReindexBusy] = useState(false);
   const [dashboardLastSyncAt, setDashboardLastSyncAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [compactRetryTaskId, setCompactRetryTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
   const [chatInput, setChatInput] = useState("");
@@ -1708,7 +1709,7 @@ Procédure:
   }, [agent, composedStack]);
 
   const applyUiSuggestedAction = useCallback(
-    (action: string | undefined) => {
+    (action: string | undefined, taskId?: string) => {
       if (!action) return;
       switch (action) {
         case "open_editor":
@@ -1726,11 +1727,23 @@ Procédure:
         case "refresh_files":
           void refreshFiles();
           break;
+        case "retry_compacted_context":
+          if (!taskId || compactRetryTaskId) return;
+          setCompactRetryTaskId(taskId);
+          setError(null);
+          void api.resumeTask(taskId)
+            .then(() => {
+              setStatus("Reprise de la tâche avec le contexte compacté…");
+              resumeTaskTracking(taskId);
+            })
+            .catch((reason: unknown) => setError(`Reprise impossible : ${String(reason)}`))
+            .finally(() => setCompactRetryTaskId(null));
+          break;
         default:
           break;
       }
     },
-    [refreshFiles],
+    [compactRetryTaskId, refreshFiles, resumeTaskTracking],
   );
 
   /** Merges two event arrays: deduplicates by id when available; otherwise keeps all events using positional keys. */
@@ -3523,12 +3536,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
-            secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
+            secondaryAction={taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTrace.line)
+              ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Réessayer avec contexte allégé", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("retry_compacted_context", taskTrace.id) }
+              : taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
               if (prompt) setChatInput(prompt.text);
               document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus();
             } } : undefined} />
-          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande.</p><p className="hint">La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets.</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
+          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>{looksLikeContextWindowFailure(taskTrace.line)
+            ? "Le modèle a refusé cette requête parce que son contexte était trop volumineux. Une reprise compacte est proposée ci-dessus; elle conserve la demande et les règles utiles tout en réduisant les répétitions. Consultez le détail si des outils ont déjà modifié des fichiers."
+            : "La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande."}</p><p className="hint">{looksLikeContextWindowFailure(taskTrace.line)
+              ? "La reprise compacte conserve l’historique durable et relance la même tâche en réduisant les éléments redondants."
+              : "La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets."}</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
           </details> : null}
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>
@@ -3683,12 +3702,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         variant="ghost"
                         size="sm"
                         className="chat-suggestion-chip"
+                        disabled={a.ui_action === "retry_compacted_context" && compactRetryTaskId !== null}
                         onClick={() => {
                           if (a.kind === "message" && a.message) setChatInput(a.message);
-                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
+                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action, lastAssistant.task_id);
                         }}
                       >
-                        {a.label}
+                        {a.ui_action === "retry_compacted_context" && compactRetryTaskId === lastAssistant.task_id ? "Reprise…" : a.label}
                       </Button>
                     ))}
                   </div>

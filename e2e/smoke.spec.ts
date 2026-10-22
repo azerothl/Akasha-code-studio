@@ -1412,3 +1412,36 @@ test("failed task recovery prepares a draft without replaying effects", async ({
   expect(sends).toBe(1);
   await expect(page.getByText(/Une nouvelle soumission crée une autre tâche/)).toBeVisible();
 });
+
+test("context-window failure offers a clear same-task compact retry", async ({ page }) => {
+  let sends = 0;
+  let resumes = 0;
+  await page.route("**/api/message", route => {
+    sends++;
+    return route.fulfill({ json: { task_id: demoId } });
+  });
+  await page.route(`**/api/tasks/${demoId}`, route => route.fulfill({ json: {
+    task_id: demoId,
+    status: resumes ? "running" : "failed",
+    failure_detail: "context_window_exceeded: protected instructions and recent execution cannot fit",
+    progress: [],
+    outcome: { schema_version: 1, termination_reason: "provider_error", result: "partial", reason: "context_window_exceeded", acceptance_verified: false, verification: [] },
+    suggested_actions: [{ id: "retry_compacted_context", kind: "ui", ui_action: "retry_compacted_context", label: "Reprendre avec un contexte allégé" }],
+  } }));
+  await page.route(`**/api/tasks/${demoId}/resume`, route => {
+    resumes++;
+    return route.fulfill({ json: { ok: true } });
+  });
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("Créer une application dans le dépôt");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+
+  await expect(page.getByText("Contexte trop volumineux pour le modèle").first()).toBeVisible();
+  await expect(page.getByText(/contexte transmis dépasse sa fenêtre/)).toBeVisible();
+  await page.locator(".chat-task-status > summary").click();
+  await expect(page.getByText(/contexte était trop volumineux/)).toBeVisible();
+  await page.getByRole("button", { name: "Réessayer avec contexte allégé", exact: true }).click();
+  await expect.poll(() => resumes).toBe(1);
+  expect(sends).toBe(1);
+});
