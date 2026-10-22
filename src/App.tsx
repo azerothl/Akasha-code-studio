@@ -3,7 +3,7 @@ import { StudioComposer, defaultExecution } from "./studioComposer";
 import { parseStudioAction } from "./studioActions";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
-import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isLocalContextWindowPreflightFailure, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
+import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isLocalContextWindowPreflightFailure, isMarkdownPath, extractTicketDraftsFromPlan, buildInitialProjectRequest } from "./studioUiModel";
 import { useStudioProjects } from "./hooks/useStudioProjects";
 import { AsyncState } from "./asyncState";
 import { useStudioGit } from "./hooks/useStudioGit";
@@ -1018,12 +1018,9 @@ export default function App() {
       // Send the user's actual project request through the normal Code Studio
       // path. The daemon links it to the root Kanban ticket and seeds the
       // initial backlog before dispatching implementation work.
-      const initialRequest = summary
-        ? `Crée le projet « ${name} » selon ce résumé :\n\n${summary}`
-        : `Crée le projet « ${name} ».`;
-      const message = stack
-        ? `${initialRequest}\n\nStack demandée : ${stack}`
-        : initialRequest;
+      // The stack is persisted with project metadata and injected by the daemon
+      // once. Keep the first user request focused on the product summary.
+      const message = buildInitialProjectRequest(name, summary);
       setPendingProjectBootstrap({
         projectId: p.id,
         name,

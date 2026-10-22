@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { chatMessageForTerminalTask, isLocalContextWindowPreflightFailure, looksLikeContextWindowFailure } from "./studioUiModel";
+import { buildInitialProjectRequest, chatMessageForTerminalTask, isLocalContextWindowPreflightFailure, looksLikeContextWindowFailure } from "./studioUiModel";
+
+describe("initial project request", () => {
+  it("sends the summary once and leaves the saved stack to project metadata", () => {
+    expect(buildInitialProjectRequest("Todo", "Créer une webapp de todo list."))
+      .toBe("Crée le projet « Todo » selon ce résumé :\n\nCréer une webapp de todo list.");
+  });
+
+  it("uses a short request when no summary is provided", () => {
+    expect(buildInitialProjectRequest("  ", "  ")).toBe("Crée le projet « Nouveau projet ».");
+  });
+});
 
 describe("Code Studio context-window recovery copy", () => {
   it("recognizes daemon and provider context-limit errors", () => {

@@ -55,6 +55,14 @@ export function isLocalContextWindowPreflightFailure(message: string | null | un
   return message?.toLowerCase().includes("context_window_preflight_rejected") ?? false;
 }
 
+export function buildInitialProjectRequest(name: string, summary: string): string {
+  const projectName = name.trim() || "Nouveau projet";
+  const projectSummary = summary.trim();
+  return projectSummary
+    ? `Crée le projet « ${projectName} » selon ce résumé :\n\n${projectSummary}`
+    : `Crée le projet « ${projectName} ».`;
+}
+
 export function looksLikeStructuredRefusal(text: string): boolean {
   const t = text.trim();
   if (/^refus\b/i.test(t)) return true;
