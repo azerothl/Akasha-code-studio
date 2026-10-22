@@ -13,6 +13,12 @@ describe("initial project request", () => {
 });
 
 describe("Code Studio context-window recovery copy", () => {
+  it("explains provider timeout and offers checkpoint recovery without resubmitting a creation request", () => {
+    const message=chatMessageForTerminalTask("failed", undefined, "provider_generation_failed: ollama/lfm2:24b: timeout. Reprise depuis checkpoint.");
+    expect(message).toContain("ollama/lfm2:24b");
+    expect(message).toContain("Reprendre la tâche");
+    expect(message).not.toContain("renvoyer la même consigne");
+  });
   it("recognizes daemon and provider context-limit errors", () => {
     expect(looksLikeContextWindowFailure("context_window_exceeded: request too large")).toBe(true);
     expect(looksLikeContextWindowFailure("This model's maximum context length was exceeded")).toBe(true);

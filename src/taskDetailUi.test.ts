@@ -2,9 +2,16 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { TaskEventEntry } from "./api";
-import { TaskDetailWorkflowView } from "./taskDetailUi";
+import { TaskDetailWorkflowView, dedupeEventsLastPerTaskAndType, formatEventFallback } from "./taskDetailUi";
 
 const rootTaskId = "task-root";
+
+it("keeps the provider attempt phases and model switches visible",()=>{
+  const phases=["started","first_token","failed","fallback","succeeded"];
+  const events=phases.map((phase,index)=>event("llm_provider_attempt",`2026-10-22T19:00:0${index}Z`,{phase,attempt:index<3?1:2,provider:"ollama",model:index<3?"lfm2:24b":"qwen3.5:9b"}));
+  expect(dedupeEventsLastPerTaskAndType(events,rootTaskId)).toHaveLength(5);
+  expect(formatEventFallback(events[3])).toContain("qwen3.5:9b · Repli automatique · tentative 2");
+});
 
 function event(event_type: string, at: string, payload?: unknown): TaskEventEntry {
   return { event_type, at, task_id: rootTaskId, payload };

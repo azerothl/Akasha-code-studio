@@ -3,7 +3,7 @@ import { StudioComposer, defaultExecution } from "./studioComposer";
 import { parseStudioAction } from "./studioActions";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
-import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isLocalContextWindowPreflightFailure, isMarkdownPath, extractTicketDraftsFromPlan, buildInitialProjectRequest } from "./studioUiModel";
+import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, looksLikeModelTransportFailure, isLocalContextWindowPreflightFailure, isMarkdownPath, extractTicketDraftsFromPlan, buildInitialProjectRequest } from "./studioUiModel";
 import { useStudioProjects } from "./hooks/useStudioProjects";
 import { AsyncState } from "./asyncState";
 import { useStudioGit } from "./hooks/useStudioGit";
@@ -1725,13 +1725,14 @@ Procédure:
         case "refresh_files":
           void refreshFiles();
           break;
+        case "resume_task":
         case "retry_compacted_context":
           if (!taskId || compactRetryTaskId) return;
           setCompactRetryTaskId(taskId);
           setError(null);
           void api.resumeTask(taskId)
             .then(() => {
-              setStatus("Reprise de la tâche avec le contexte compacté…");
+              setStatus("Reprise de la tâche depuis son checkpoint…");
               resumeTaskTracking(taskId);
             })
             .catch((reason: unknown) => setError(`Reprise impossible : ${String(reason)}`))
@@ -3536,6 +3537,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
             secondaryAction={taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTraceFailureMessage) && !isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
               ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Réessayer avec contexte allégé", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("retry_compacted_context", taskTrace.id) }
+              : taskTrace.status === "failed" && looksLikeModelTransportFailure(taskTraceFailureMessage)
+                ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Reprendre la tâche", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("resume_task", taskTrace.id) }
               : taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
               if (prompt) setChatInput(prompt.text);
@@ -3545,10 +3548,14 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             ? "Code Studio a bloqué l’appel localement avant de contacter le fournisseur : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche donne l’estimation utilisée."
             : looksLikeContextWindowFailure(taskTraceFailureMessage)
               ? "Le fournisseur du modèle a refusé la requête car le contexte dépasse sa fenêtre. Choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif. Consultez le détail pour savoir si des outils ont déjà modifié des fichiers."
+            : looksLikeModelTransportFailure(taskTraceFailureMessage)
+              ? "La génération du modèle a échoué. Le détail indique le fournisseur, le modèle et les tentatives. Vérifiez la disponibilité du service et la mémoire, puis reprenez la tâche."
             : "La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande."}</p><p className="hint">{isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
               ? "La reprise de cette tâche ne change pas la fenêtre configurée. Changez le modèle ou le paramètre de contexte avant de relancer."
               : looksLikeContextWindowFailure(taskTraceFailureMessage)
                 ? "Le fournisseur peut être retenté après un changement de modèle ou de contexte; l’historique durable reste conservé."
+              : looksLikeModelTransportFailure(taskTraceFailureMessage)
+                ? "La reprise conserve la tâche, le ticket et les opérations enregistrées. Aucun nouveau message de création n’est envoyé."
               : "La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets."}</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
           </details> : null}
           <section className="chat-conversation-panel" aria-label="Conversation agent">

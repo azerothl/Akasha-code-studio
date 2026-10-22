@@ -94,7 +94,7 @@ export type StudioTicket = {
   depends_on_ticket_ids?: string[];
   related_task_id?: string | null;
   acceptance_criteria: StudioTicketAcceptanceCriterion[];
-  evidence: { files?: string[]; task_ids?: string[]; summary?: string };
+  evidence: { files?: string[]; task_ids?: string[]; summary?: string; resume_status?: string };
   review_outcome?: "approved" | "changes_requested" | null;
   review_notes?: string | null;
   corrective_steps?: string[];

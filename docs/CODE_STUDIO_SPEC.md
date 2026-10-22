@@ -273,6 +273,20 @@ Erreurs fréquentes : `invalid or unsafe argv`, timeout → JSON avec `error: "t
 | États UI et reprise | Livré | Composant `AsyncState` | Attente, vide, partiel, hors ligne, erreur, succès ; actions contextuelles et détails accessibles |
 | Recette bout en bout | — | Opt-in documentée ci-dessus | Nécessite un modèle |
 
+## Reprise des erreurs du fournisseur
+
+Les générations Studio partagent leur délai entre au plus trois routes configurées. Chaque route n'est tentée qu'une fois ; quand il n'y a qu'un modèle, une seule reprise de transport est possible si les retries sont autorisés. Un choix explicite reste sur ce modèle, et `default_max_retries: 0` désactive cette reprise. Le modèle qui a répondu est préféré aux tours suivants et ce choix est conservé dans le checkpoint.
+
+Les réponses incomplètes d'une tentative en échec ne sont jamais transmises au parseur d'outils. Les événements `llm_provider_attempt` conservent fournisseur, modèle, tentative, délai et phase (`started`, `retry`, `fallback`, `first_token`, `succeeded`, `empty`, `failed`). Un événement `llm_wait_heartbeat` est produit toutes les quinze secondes pendant l'attente. Les annonces temporisées de démarrage cessent dès cette attente effective. Un message d'échec ne constitue pas un jalon de progression utile.
+
+Un échec terminal déplace immédiatement le ticket lié vers `blocked`, indépendamment du scheduler. La lecture du board réconcilie aussi les anciens états périmés. `evidence.resume_status` conserve la phase de revue lorsque nécessaire. La reprise conserve le `task_id`, le ticket, le checkpoint et le registre d'opérations ; les opérations dont l'effet reste inconnu demeurent soumises à inspection. Le bouton de reprise n'envoie pas une nouvelle demande de création.
+
+La première demande fournit un ticket de coordination et quatre phases dépendantes, avec les besoins utilisateur repris dans les critères. Les anciens projets à ticket unique peuvent être migrés sans changer son identité. Le chef de projet doit toujours préciser les gabarits avant de déléguer l'implémentation ; les gabarits seuls ne valident pas la planification.
+
+Le rapport de fin déduplique les messages et ne présente pas un timeout ou une exécution sans critères vérifiés dans `done`. Les compteurs d'outils sont distingués des appels au modèle.
+
+Recette ciblée réelle : `CODE_STUDIO_DAEMON_BIN=<binaire reconstruit> npm run test:daemon:recovery`. Elle utilise un daemon isolé et un fournisseur HTTP scripté ; elle valide le protocole de reprise, pas la qualité d'un LLM ni la livraison autonome d'une application. Voir [les preuves du 22 octobre](validation/provider-recovery-2026-10-22.json).
+
 ## Gouvernance
 
 Une PR qui livre une phase **doit** mettre à jour ce fichier (cases cochées, nouvelles exigences, statuts `STU-*`).

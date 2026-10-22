@@ -2,6 +2,40 @@ import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
+test("provider timeout resumes its checkpoint without resubmitting the request", async ({page}) => {
+  let sends=0;let resumes=0;
+  const reason="provider_generation_failed: ollama/lfm2:24b: timeout. Les tentatives automatiques sont épuisées.";
+  await page.route("**/api/message",route=>{sends++;return route.fulfill({json:{task_id:demoId}});});
+  await page.route(`**/api/tasks/${demoId}/resume`,route=>{resumes++;return route.fulfill({json:{resumed:true,task_id:demoId}});});
+  await page.route(url=>url.pathname===`/api/tasks/${demoId}`,route=>route.fulfill({json:{task_id:demoId,status:resumes?"running":"failed",failure_detail:resumes?null:reason,progress:resumes?[{progress_pct:24,message:"Nouvelle tentative : ollama / lfm2:24b"}]:[],outcome:resumes?null:{schema_version:1,termination_reason:"timeout",result:"failed",reason,acceptance_verified:false,successful_tool_calls:0,failed_tool_calls:0,verification:[]}}}));
+  await page.goto("/");await selectDemoProject(page);
+  await page.getByRole("textbox",{name:"Message à l’agent"}).fill("Créer une Todo List");
+  await page.getByRole("button",{name:"Envoyer",exact:true}).click();
+  await expect(page.getByText(/Le fournisseur n’a pas terminé la génération/).first()).toBeVisible();
+  await page.locator(".chat-task-status > summary").click();
+  await page.getByRole("button",{name:"Reprendre la tâche",exact:true}).click();
+  await expect.poll(()=>resumes).toBe(1);
+  expect(sends).toBe(1);
+  await expect(page.locator(".chat-task-status")).toContainText("En cours");
+});
+
+test("stale failed Kanban ticket is blocked without a misleading progress bar", async ({page}) => {
+  let sends=0;let resumes=0;
+  await page.route("**/api/message",route=>{sends++;return route.fulfill({json:{task_id:demoId}});});
+  const ticket={id:"timeout-ticket",project_id:demoId,title:"Créer la Todo List",description:"Todo française",status:"in_progress",assigned_agent:"studio_fullstack",review_agent:"studio_reviewer",related_task_id:demoId,acceptance_criteria:[],evidence:{},created_at:"2026-10-22T19:14:00Z",updated_at:"2026-10-22T19:19:00Z"};
+  await page.route(url=>url.pathname===`/api/studio/projects/${demoId}/tickets`,route=>route.fulfill({json:{items:[ticket]}}));
+  await page.route(`**/api/studio/projects/${demoId}/tickets/timeout-ticket`,route=>route.fulfill({json:{ticket,timeline:[]}}));
+  await page.route(`**/api/tasks/${demoId}/resume`,route=>{resumes++;return route.fulfill({json:{resumed:true}});});
+  await page.route(url=>url.pathname===`/api/tasks/${demoId}`,route=>route.fulfill({json:{task_id:demoId,status:resumes?"running":"failed",assigned_agent:"studio_project_manager",failure_detail:resumes?null:"ollama/lfm2:24b: timeout",progress:[{progress_pct:resumes?24:100,message:resumes?"Reprise":"timeout"}]}}));
+  await page.goto("/");await selectDemoProject(page);await page.getByTestId("studio-kanban-tab").click();
+  const card=page.locator(".kanban-ticket-card").filter({hasText:"Créer la Todo List"});
+  await expect(card.locator(".kanban-status-badge")).toHaveText("Bloqué");
+  await expect(card.getByRole("progressbar")).toHaveCount(0);
+  await expect(card).toContainText("studio_project_manager");
+  await card.getByRole("button",{name:"Reprendre",exact:true}).click();
+  await expect.poll(()=>resumes).toBe(1);expect(sends).toBe(0);
+});
+
 test("tool approval reply keeps the request identifier from the current question", async ({ page }) => {
   let reply: Record<string, unknown> | null = null;
   await page.route(`**/api/tasks/${demoId}/human-input`, route => route.fulfill({ json: {

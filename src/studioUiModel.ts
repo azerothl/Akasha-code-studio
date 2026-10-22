@@ -51,6 +51,10 @@ export function looksLikeContextWindowFailure(message: string | null | undefined
     || (text.includes("context") && text.includes("too many tokens"));
 }
 
+export function looksLikeModelTransportFailure(message: string | null | undefined): boolean {
+  return !!message && (message.includes("provider_generation_failed:") || looksLikeTimeoutMessage(message));
+}
+
 export function isLocalContextWindowPreflightFailure(message: string | null | undefined): boolean {
   return message?.toLowerCase().includes("context_window_preflight_rejected") ?? false;
 }
@@ -102,10 +106,11 @@ export function chatMessageForTerminalTask(
         }
         return "Le fournisseur du modèle a refusé la requête parce que son contexte est trop volumineux. Vérifiez le détail de la tâche, puis choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif avant de relancer.";
       }
-      const hint = looksLikeTimeoutMessage(body)
-        ? "\n\n(Souvent un timeout réseau ou LLM — vous pouvez renvoyer la même consigne pour relancer.)"
+      const hint = looksLikeModelTransportFailure(body)
+        ? "\n\nConsultez le modèle et les tentatives dans le détail de la tâche. Vérifiez que le service du modèle répond et que la mémoire disponible suffit. Utilisez « Reprendre la tâche » pour conserver le ticket et l’avancement enregistrés."
         : "";
-      return body.length > 2800 ? `${body.slice(0, 2800)}…${hint}` : `${body}${hint}`;
+      const diagnostic = body.replace(/^provider_generation_failed:\s*/, "Le fournisseur n’a pas terminé la génération : ");
+      return diagnostic.length > 2800 ? `${diagnostic.slice(0, 2800)}…${hint}` : `${diagnostic}${hint}`;
     }
     return "Échec sans détail persisté. Vérifiez l’onglet « Logs serveur », le journal de build, ou renvoyez la consigne pour une nouvelle tentative.";
   }

@@ -57,8 +57,9 @@ export function TaskOutcomeSummary({ outcome: raw, status }: { outcome?: TaskOut
     <p><strong>{outcomeLabel(outcome)}</strong></p>
     <p className="hint">{outcome.acceptance_verified === true
       ? "Critères configurés vérifiés par le daemon."
+      : outcome.verification.length === 0 && status !== "completed" ? "Aucune vérification du résultat n’a pu être exécutée."
       : "Les critères d’acceptation ne sont pas tous vérifiés automatiquement."}
-      {typeof outcome.successful_tool_calls === "number" ? ` ${outcome.successful_tool_calls} appel(s) réussi(s), ${outcome.failed_tool_calls ?? 0} en échec.` : ""}
+      {typeof outcome.successful_tool_calls === "number" ? ` Outils : ${outcome.successful_tool_calls} opération(s) réussie(s), ${outcome.failed_tool_calls ?? 0} en échec.` : ""}
     </p>
     {outcome.result === "partial" ? <p className="hint">Des étapes ont réussi. Consultez les fichiers et le diff avant de relancer la demande.</p> : null}
     {outcome.reason ? <details><summary>Motif de terminaison</summary><pre className="build-pre">{redactSecrets(outcome.reason)}</pre></details> : null}
