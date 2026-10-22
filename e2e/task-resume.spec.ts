@@ -185,6 +185,34 @@ test("reload resumes polling until task completes", async ({ page }) => {
   expect(await page.evaluate(key => localStorage.getItem(key), activeTaskKey)).toBeNull();
 });
 
+test("local context preflight points to model selection without retrying the same task", async ({ page }) => {
+  await page.route("**/api/router/studio-options", route => route.fulfill({ json: {
+    schema_version: 1, goals: true, actions: true,
+    models: [{ provider: "ollama", model: "qwen3.5:9b", context_window_tokens: 8192 }],
+  } }));
+  await page.route(`**/api/tasks/${runTaskId}`, route => route.fulfill({ json: {
+    task_id: runTaskId,
+    status: "failed",
+    assigned_agent: "studio_project_manager",
+    failure_detail: "context_window_exceeded: context_window_preflight_rejected: estimated input exceeds configured window",
+    progress: [],
+    outcome: { schema_version: 1, termination_reason: "provider_error", result: "failed", verification: [] },
+  } }));
+
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  await page.locator(".chat-form textarea").fill("Créer une petite application de suivi");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+
+  await page.locator(".chat-task-status > summary").click();
+  await expect(page.locator(".task-recovery-context")).toContainText("Aucun appel au modèle ni outil");
+  await page.getByRole("button", { name: "Choisir un modèle", exact: true }).first().click();
+  const modelSelect = page.getByRole("combobox", { name: "Modèle de la tâche" });
+  await expect(modelSelect).toBeFocused();
+  await modelSelect.selectOption({ label: "qwen3.5:9b · ollama" });
+  await expect(page.locator(".composer-model-note")).toContainText("8 192 tokens");
+});
+
 test("active task defaults to ticketed follow-up and steering stays available", async ({ page }) => {
   const sent: Record<string, unknown>[] = [];
   await page.route("**/api/message", async route => {
