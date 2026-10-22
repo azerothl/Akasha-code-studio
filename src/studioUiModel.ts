@@ -44,6 +44,25 @@ export function looksLikeTimeoutMessage(msg: string): boolean {
   );
 }
 
+export function looksLikeContextWindowFailure(message: string | null | undefined): boolean {
+  const text = message?.toLowerCase() ?? "";
+  return text.includes("context_window_exceeded")
+    || text.includes("maximum context length")
+    || (text.includes("context") && text.includes("too many tokens"));
+}
+
+export function isLocalContextWindowPreflightFailure(message: string | null | undefined): boolean {
+  return message?.toLowerCase().includes("context_window_preflight_rejected") ?? false;
+}
+
+export function buildInitialProjectRequest(name: string, summary: string): string {
+  const projectName = name.trim() || "Nouveau projet";
+  const projectSummary = summary.trim();
+  return projectSummary
+    ? `Crée le projet « ${projectName} » selon ce résumé :\n\n${projectSummary}`
+    : `Crée le projet « ${projectName} ».`;
+}
+
 export function looksLikeStructuredRefusal(text: string): boolean {
   const t = text.trim();
   if (/^refus\b/i.test(t)) return true;
@@ -77,6 +96,12 @@ export function chatMessageForTerminalTask(
           ? last
           : detail || null;
     if (body) {
+      if (looksLikeContextWindowFailure(body)) {
+        if (isLocalContextWindowPreflightFailure(body)) {
+          return "Code Studio a bloqué l’appel avant de contacter le modèle : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Pour continuer, choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche indique l’estimation et le budget restants.";
+        }
+        return "Le fournisseur du modèle a refusé la requête parce que son contexte est trop volumineux. Vérifiez le détail de la tâche, puis choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif avant de relancer.";
+      }
       const hint = looksLikeTimeoutMessage(body)
         ? "\n\n(Souvent un timeout réseau ou LLM — vous pouvez renvoyer la même consigne pour relancer.)"
         : "";

@@ -3,7 +3,7 @@ import { StudioComposer, defaultExecution } from "./studioComposer";
 import { parseStudioAction } from "./studioActions";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
-import { formatTaskStatusFr, looksLikeStructuredRefusal, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
+import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isLocalContextWindowPreflightFailure, isMarkdownPath, extractTicketDraftsFromPlan, buildInitialProjectRequest } from "./studioUiModel";
 import { useStudioProjects } from "./hooks/useStudioProjects";
 import { AsyncState } from "./asyncState";
 import { useStudioGit } from "./hooks/useStudioGit";
@@ -13,7 +13,7 @@ import { useStudioTasks } from "./hooks/useStudioTasks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
-import { type ChatMessage } from "./chatStorage";
+import { saveChatMessages, type ChatMessage } from "./chatStorage";
 import { saveActiveTask } from "./taskStorage";
 
 import { STACK_PRESET_CUSTOM, STACK_PRESET_NONE, type StackAddonCategoryId, composeStackString, emptyStackAddons } from "./stackConfig";
@@ -166,12 +166,13 @@ export default function App() {
   const [codeRagReindexBusy, setCodeRagReindexBusy] = useState(false);
   const [dashboardLastSyncAt, setDashboardLastSyncAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [compactRetryTaskId, setCompactRetryTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [cloneUrl, setCloneUrl] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [chatSendBusy, setChatSendBusy] = useState(false);
   const chatSendLock = useRef(false);
-  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("immediate");
+  const [chatDeliveryMode, setChatDeliveryMode] = useState<"immediate" | "steering" | "follow_up">("follow_up");
   const [chatIncognito, setChatIncognito] = useState(false);
   const [handoffModel, setHandoffModel] = useState("");
   const [handoffProvider, setHandoffProvider] = useState("");
@@ -325,6 +326,14 @@ export default function App() {
   const preview = useStudioPreview({ selectedId, setError, setCenterTab, setStatus, centerTab });
   const { setStaticPreviewBlobUrl, buildCmd, setBuildCmd, onBuild, buildLog, buildState, devServerLog } = preview;
   const [executionOptions, setExecutionOptions] = useState(defaultExecution);
+  const [pendingProjectBootstrap, setPendingProjectBootstrap] = useState<{
+    projectId: string;
+    name: string;
+    message: string;
+    model?: { provider: string; model: string };
+    codeMode: StudioCodeMode;
+    ticketEnforcementMode: "off" | "soft" | "strict";
+  } | null>(null);
   useEffect(() => setExecutionOptions(defaultExecution), [selectedId]);
 
   const {
@@ -392,6 +401,17 @@ export default function App() {
     setChatHasUnseen,
     lastAssistant
   } = useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFiles, syncCodeRagAfterFileChange, filePathRef, editorDirtyRef, editorBinaryRef, setEditorText, setSavedEditorText, setStaticPreviewBlobUrl, setForkEvents });
+
+  const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+  const taskTraceFailureMessage = taskTrace?.outcome?.reason || taskTrace?.line;
+  const previousChatDeliveryTaskId = useRef<string | null>(null);
+  useEffect(() => {
+    const activeTaskId = activeTask?.id ?? null;
+    if (previousChatDeliveryTaskId.current !== activeTaskId) {
+      previousChatDeliveryTaskId.current = activeTaskId;
+      setChatDeliveryMode("follow_up");
+    }
+  }, [activeTask?.id]);
 
   const parsedDesignDoc = useMemo(() => parseDesignDoc(designDocText), [designDocText]);
   const designHint = useMemo(() => buildDesignPolicyHint(parsedDesignDoc), [parsedDesignDoc]);
@@ -735,6 +755,53 @@ export default function App() {
   }, [selectedId]);
 
   useEffect(() => {
+    if (!pendingProjectBootstrap) return;
+    const request = pendingProjectBootstrap;
+    setPendingProjectBootstrap(null);
+    void (async () => {
+      try {
+        const { task_id, studio_ticket_id } = await api.sendMessage({
+          message: request.message,
+          ...(request.model ? { studio_model: request.model } : {}),
+          studio_project_id: request.projectId,
+          studio_assigned_agent: "studio_project_manager",
+          studio_code_mode: request.codeMode,
+          studio_ticket_enforcement_mode: request.ticketEnforcementMode,
+        });
+        saveActiveTask(request.projectId, task_id);
+        const firstMessage: ChatMessage = {
+          role: "user",
+          text: request.message,
+          task_id,
+          studio_ticket_id: studio_ticket_id ?? undefined,
+          task_status: "queued",
+        };
+        saveChatMessages(request.projectId, [firstMessage]);
+        if (selectedIdRef.current !== request.projectId) return;
+
+        pollTaskAbortRef.current?.abort();
+        setPendingHumanInput(null);
+        setHumanReplyDraft("");
+        setTaskTrace({
+          id: task_id,
+          status: "queued",
+          line: "Première demande acceptée — préparation du Kanban…",
+          done: false,
+        });
+        setChat([firstMessage]);
+        const controller = new AbortController();
+        pollTaskAbortRef.current = controller;
+        void pollTask(task_id, controller.signal, request.projectId);
+        setStatus(`Projet « ${request.name} » créé — première tâche lancée, Kanban en préparation`);
+      } catch (error) {
+        if (selectedIdRef.current !== request.projectId) return;
+        setError(`Projet créé, mais la première demande n’a pas pu démarrer : ${String(error)}`);
+        setStatus(`Projet « ${request.name} » créé`);
+      }
+    })();
+  }, [pendingProjectBootstrap, pollTask, setChat, setError, setHumanReplyDraft, setPendingHumanInput, setStatus, setTaskTrace]);
+
+  useEffect(() => {
     persistCodeMode(codeMode);
   }, [codeMode]);
 
@@ -930,22 +997,14 @@ export default function App() {
       const name = newProjectName.trim() || "Nouveau projet";
       const stack = newProjectComposedStack.trim();
       const summary = newProjectSummary.trim();
+      const selectedModel = executionOptions.model
+        ? (JSON.parse(executionOptions.model) as { provider: string; model: string })
+        : undefined;
       const p = await api.createProject({
         name,
         ...(stack ? { tech_stack: stack } : {}),
         ...(summary ? { project_summary: summary } : {}),
       });
-      void api
-        .sendMessage({
-          session_id: `code-studio-bootstrap-${p.id}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`,
-          studio_project_id: p.id,
-          studio_assigned_agent: "studio_project_manager",
-          message:
-            "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
-        })
-        .catch(() => {
-          /* bootstrap best-effort ; l’utilisateur peut relancer depuis le chat */
-        });
       await refreshProjects();
       setSelectedId(p.id);
       setCenterTab("dashboard");
@@ -954,7 +1013,22 @@ export default function App() {
       setNewStackCustomText("");
       setNewStackAddons(emptyStackAddons());
       setModalCreateOpen(false);
-      setStatus(`Projet « ${name} » créé`);
+      setStatus(`Projet « ${name} » créé — démarrage de la première demande…`);
+
+      // Send the user's actual project request through the normal Code Studio
+      // path. The daemon links it to the root Kanban ticket and seeds the
+      // initial backlog before dispatching implementation work.
+      // The stack is persisted with project metadata and injected by the daemon
+      // once. Keep the first user request focused on the product summary.
+      const message = buildInitialProjectRequest(name, summary);
+      setPendingProjectBootstrap({
+        projectId: p.id,
+        name,
+        message,
+        ...(selectedModel ? { model: selectedModel } : {}),
+        codeMode,
+        ticketEnforcementMode: ticketEnforcementModeDraft,
+      });
     } catch (e) {
       setError(String(e));
       setStatus("");
@@ -1388,7 +1462,6 @@ Procédure:
     chatSendLock.current = true;
     setChatSendBusy(true);
     setError(null);
-    const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
     const queued =
       chatDeliveryMode !== "immediate" && activeTask !== null;
     try {
@@ -1412,7 +1485,7 @@ Procédure:
         }
       }
       const expanded = includeFileRefs ? await api.expandAtFileRefs(selectedId, parsed.prompt) : parsed.prompt;
-      const { task_id } = await api.sendMessage({
+      const { task_id, studio_ticket_id } = await api.sendMessage({
         message: expanded,
         ...(!queued && executionOptions.model ? { studio_model: JSON.parse(executionOptions.model) as { provider: string; model: string } } : {}),
         ...(parsed.action ? { studio_action: parsed.action } : {}),
@@ -1454,11 +1527,12 @@ Procédure:
             role: "user",
             text: `[${chatDeliveryMode}] ${text}`,
             task_id: activeTask.id,
+            studio_ticket_id: studio_ticket_id ?? undefined,
           },
         ]);
         return;
       }
-      setChat((c) => [...c, { role: "user", text, task_id, task_status: "queued",
+      setChat((c) => [...c, { role: "user", text, task_id, studio_ticket_id: studio_ticket_id ?? undefined, task_status: "queued",
         acceptance_criteria: includeCriteriaOnSend ? redactSecrets(acceptanceCriteriaDraft) : undefined,
         git_branch: activeBranch || gitHeadBranch || undefined }]);
       setPolicyHintOneShot("");
@@ -1633,7 +1707,7 @@ Procédure:
   }, [agent, composedStack]);
 
   const applyUiSuggestedAction = useCallback(
-    (action: string | undefined) => {
+    (action: string | undefined, taskId?: string) => {
       if (!action) return;
       switch (action) {
         case "open_editor":
@@ -1651,11 +1725,23 @@ Procédure:
         case "refresh_files":
           void refreshFiles();
           break;
+        case "retry_compacted_context":
+          if (!taskId || compactRetryTaskId) return;
+          setCompactRetryTaskId(taskId);
+          setError(null);
+          void api.resumeTask(taskId)
+            .then(() => {
+              setStatus("Reprise de la tâche avec le contexte compacté…");
+              resumeTaskTracking(taskId);
+            })
+            .catch((reason: unknown) => setError(`Reprise impossible : ${String(reason)}`))
+            .finally(() => setCompactRetryTaskId(null));
+          break;
         default:
           break;
       }
     },
-    [refreshFiles],
+    [compactRetryTaskId, refreshFiles, resumeTaskTracking],
   );
 
   /** Merges two event arrays: deduplicates by id when available; otherwise keeps all events using positional keys. */
@@ -2491,8 +2577,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         value={ticketEnforcementModeDraft}
                         onChange={(e) => setTicketEnforcementModeDraft(e.target.value as "off" | "soft" | "strict")}
                       >
-                        <option value="off">off (aucune contrainte ticket)</option>
-                        <option value="soft">soft (warning sans ticket)</option>
+                        <option value="off">off (suivi automatique, sans blocage)</option>
+                        <option value="soft">soft (avertit si aucun ticket n’est lié)</option>
                         <option value="strict">strict (ticket obligatoire)</option>
                       </Select>
                     </label>
@@ -3448,12 +3534,22 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
-            secondaryAction={taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
+            secondaryAction={taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTraceFailureMessage) && !isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
+              ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Réessayer avec contexte allégé", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("retry_compacted_context", taskTrace.id) }
+              : taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
               if (prompt) setChatInput(prompt.text);
               document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus();
             } } : undefined} />
-          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande.</p><p className="hint">La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets.</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
+          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>{isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
+            ? "Code Studio a bloqué l’appel localement avant de contacter le fournisseur : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche donne l’estimation utilisée."
+            : looksLikeContextWindowFailure(taskTraceFailureMessage)
+              ? "Le fournisseur du modèle a refusé la requête car le contexte dépasse sa fenêtre. Choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif. Consultez le détail pour savoir si des outils ont déjà modifié des fichiers."
+            : "La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande."}</p><p className="hint">{isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
+              ? "La reprise de cette tâche ne change pas la fenêtre configurée. Changez le modèle ou le paramètre de contexte avant de relancer."
+              : looksLikeContextWindowFailure(taskTraceFailureMessage)
+                ? "Le fournisseur peut être retenté après un changement de modèle ou de contexte; l’historique durable reste conservé."
+              : "La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets."}</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
           </details> : null}
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>
@@ -3487,6 +3583,18 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 <div key={i} className={`bubble ${m.role}`}>
                   <div className="bubble-inner">
                     <MarkdownBlock text={m.text} className="md-content md-content--bubble" />
+                    {m.role === "user" && m.studio_ticket_id ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="bubble-ticket-link"
+                        onClick={() => setCenterTab("kanban")}
+                        title="Ouvrir le Kanban du projet"
+                      >
+                        Ticket Kanban · {m.studio_ticket_id.slice(0, 8)}
+                      </Button>
+                    ) : null}
                     {m.role === "assistant" && m.task_id ? <TaskOutcomeSummary outcome={m.task_outcome} status={m.task_status} /> : null}
                     {m.role === "user" && m.task_id ? (
                       <Button
@@ -3596,12 +3704,13 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                         variant="ghost"
                         size="sm"
                         className="chat-suggestion-chip"
+                        disabled={a.ui_action === "retry_compacted_context" && compactRetryTaskId !== null}
                         onClick={() => {
                           if (a.kind === "message" && a.message) setChatInput(a.message);
-                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action);
+                          if (a.kind === "ui") applyUiSuggestedAction(a.ui_action, lastAssistant.task_id);
                         }}
                       >
-                        {a.label}
+                        {a.ui_action === "retry_compacted_context" && compactRetryTaskId === lastAssistant.task_id ? "Reprise…" : a.label}
                       </Button>
                     ))}
                   </div>
@@ -3677,7 +3786,8 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                   <span className="input-group-addon">Envoi</span>
                   <select
                     className="input-group-field"
-                    value={chatDeliveryMode}
+                    value={activeTask ? chatDeliveryMode : "immediate"}
+                    disabled={!activeTask}
                     onChange={(e) =>
                       setChatDeliveryMode(e.target.value as "immediate" | "steering" | "follow_up")
                     }
@@ -3689,7 +3799,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 </div>
               </label>
               <p className="hint">
-                Utilisez <code>@chemin/relatif</code> dans le message pour injecter un fichier du projet.
+                Pendant une tâche, Follow-up crée par défaut un ticket pour suivre chaque évolution dans le Kanban. Choisissez Steering pour donner une consigne à la tâche active sans créer de ticket. Utilisez <code>@chemin/relatif</code> pour citer un fichier.
               </p>
               <label className="field">
                 <span>Handoff provider (optionnel)</span>

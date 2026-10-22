@@ -1,5 +1,6 @@
 import type { TaskOutcome } from "./api";
 import { redactSecrets } from "./sendContext";
+import { looksLikeContextWindowFailure } from "./studioUiModel";
 
 const REASONS: Record<string, string> = {
   success: "Exécution terminée",
@@ -43,6 +44,9 @@ export function taskFeedbackKind(status: string, raw?: TaskOutcome | null): "par
 
 export function taskFeedbackTitle(status: string, raw?: TaskOutcome | null): string | null {
   const outcome = supportedOutcome(raw);
+  if (status === "failed" && looksLikeContextWindowFailure(outcome?.reason)) {
+    return "Contexte trop volumineux pour le modèle";
+  }
   return outcome ? outcomeLabel(outcome) : status === "completed" ? "Exécution terminée · résultat non vérifié" : null;
 }
 

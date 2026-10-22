@@ -256,6 +256,43 @@ test("preview failures can be retried without leaving the view", async ({ page }
   await expect(page.getByRole("heading", { name: "L’aperçu n’est pas prêt" })).toHaveCount(0);
 });
 
+test("Kanban shows when a linked agent is waiting for a user reply", async ({ page }) => {
+  const taskId = "00000000-0000-4000-8000-000000000042";
+  const ticketId = "00000000-0000-4000-8000-000000000043";
+  await page.route(`**/api/studio/projects/${demoId}/tickets`, route => route.fulfill({ json: { items: [{
+    id: ticketId,
+    project_id: demoId,
+    title: "Implement todo filters",
+    description: "Add the requested filters.",
+    status: "in_progress",
+    requested_by: "studio_project_manager",
+    assigned_agent: "studio_fullstack",
+    review_agent: "studio_reviewer",
+    parent_ticket_id: null,
+    depends_on_ticket_ids: [],
+    related_task_id: taskId,
+    acceptance_criteria: [],
+    evidence: {},
+    created_at: "2026-10-22T00:00:00Z",
+    updated_at: "2026-10-22T00:00:00Z",
+  }] } }));
+  await page.route(`**/api/tasks/${taskId}`, route => route.fulfill({ json: {
+    task_id: taskId,
+    status: "waiting_user_input",
+    assigned_agent: "studio_fullstack",
+    progress: [{ progress_pct: 50, message: "Limite d’outils atteinte; réponse attendue." }],
+  } }));
+
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-kanban-tab").click();
+
+  const card = page.locator(".kanban-ticket-card").filter({ hasText: "Implement todo filters" });
+  await expect(card).toContainText("Attente de votre réponse");
+  await expect(card).toContainText("L’agent est en pause jusqu’à votre réponse.");
+  await expect(card).not.toContainText("50%");
+});
+
 test("a nonzero build exit is an error even without stderr", async ({ page }) => {
   await page.route(`**/api/studio/projects/${demoId}/build`, route => route.fulfill({ status: 500, json: { exit_code: 17, stdout: "", stderr: "" } }));
   await page.goto("/");
@@ -1374,4 +1411,34 @@ test("failed task recovery prepares a draft without replaying effects", async ({
   await expect(page.getByRole("textbox",{name:"Message à l’agent"})).toHaveValue("Modifier les fichiers du jeu");
   expect(sends).toBe(1);
   await expect(page.getByText(/Une nouvelle soumission crée une autre tâche/)).toBeVisible();
+});
+
+test("local context preflight explains that no request was sent and shows a workaround", async ({ page }) => {
+  let sends = 0;
+  await page.route("**/api/message", route => {
+    sends++;
+    return route.fulfill({ json: { task_id: demoId } });
+  });
+  await page.route(`**/api/tasks/${demoId}`, route => route.fulfill({ json: {
+    task_id: demoId,
+    status: "failed",
+    failure_detail: "context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before contacting the model. Workaround: choose a model with a larger context window or increase AKASHA_OLLAMA_NUM_CTX.",
+    progress: [],
+    outcome: { schema_version: 1, termination_reason: "provider_error", result: "failed", reason: "context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before contacting the model. Workaround: choose a model with a larger context window or increase AKASHA_OLLAMA_NUM_CTX.", acceptance_verified: false, verification: [] },
+    suggested_actions: [{ id: "analyze_failure", kind: "message", message: "Choose a model with a larger context window or increase AKASHA_OLLAMA_NUM_CTX." }],
+  } }));
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("Créer une application dans le dépôt");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+
+  await expect(page.getByText("Contexte trop volumineux pour le modèle").first()).toBeVisible();
+  await expect(page.getByText(/Code Studio a bloqué l’appel avant de contacter le modèle/)).toBeVisible();
+  await expect(page.getByText(/Aucun appel au modèle ni outil n’a été exécuté/).last()).toBeVisible();
+  await expect(page.locator(".chat-conversation-panel code").filter({ hasText: "AKASHA_OLLAMA_NUM_CTX" })).toBeVisible();
+  await page.locator(".chat-task-status > summary").click();
+  await expect(page.getByText(/bloqué l’appel localement avant de contacter le fournisseur/)).toBeVisible();
+  await expect(page.getByText(/La reprise de cette tâche ne change pas la fenêtre configurée/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Réessayer avec contexte allégé", exact: true })).toHaveCount(0);
+  expect(sends).toBe(1);
 });
