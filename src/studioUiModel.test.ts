@@ -13,6 +13,11 @@ describe("initial project request", () => {
 });
 
 describe("Code Studio context-window recovery copy", () => {
+  it("does not claim zero model calls when only a fallback failed local context preflight", () => {
+    const detail='studio_routes_exhausted: qwen: tool_protocol_error: unadvertised function; fallback: context_window_preflight_rejected';
+    expect(isLocalContextWindowPreflightFailure(detail)).toBe(false);
+    expect(chatMessageForTerminalTask("failed", undefined, detail)).not.toContain("Aucun appel au modèle");
+  });
   it("identifies invalid role tools without diagnosing an external service outage", () => {
     const message=chatMessageForTerminalTask("failed", undefined, 'studio_routes_exhausted: tool_protocol_error: Unadvertised Qwen function "delegate_to_agent"');
     expect(message).toContain("appel d’outil invalide pour cette étape");

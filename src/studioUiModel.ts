@@ -56,7 +56,7 @@ export function looksLikeModelTransportFailure(message: string | null | undefine
 }
 
 export function isLocalContextWindowPreflightFailure(message: string | null | undefined): boolean {
-  return message?.toLowerCase().includes("context_window_preflight_rejected") ?? false;
+  return !!message && !message.includes("studio_routes_exhausted") && message.toLowerCase().includes("context_window_preflight_rejected");
 }
 
 export function buildInitialProjectRequest(name: string, summary: string): string {
@@ -100,7 +100,7 @@ export function chatMessageForTerminalTask(
           ? last
           : detail || null;
     if (body) {
-      if (looksLikeContextWindowFailure(body)) {
+      if (looksLikeContextWindowFailure(body) && !body.includes("studio_routes_exhausted")) {
         if (isLocalContextWindowPreflightFailure(body)) {
           return "Code Studio a bloqué l’appel avant de contacter le modèle : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Pour continuer, choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche indique l’estimation et le budget restants.";
         }
