@@ -13,7 +13,7 @@ import { useStudioTasks } from "./hooks/useStudioTasks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadThemePrefs, saveTheme, THEME_IDS, THEME_LABELS, type ThemeId } from "./themes";
 import * as api from "./api";
-import { type ChatMessage } from "./chatStorage";
+import { saveChatMessages, type ChatMessage } from "./chatStorage";
 import { saveActiveTask } from "./taskStorage";
 
 import { STACK_PRESET_CUSTOM, STACK_PRESET_NONE, type StackAddonCategoryId, composeStackString, emptyStackAddons } from "./stackConfig";
@@ -325,6 +325,14 @@ export default function App() {
   const preview = useStudioPreview({ selectedId, setError, setCenterTab, setStatus, centerTab });
   const { setStaticPreviewBlobUrl, buildCmd, setBuildCmd, onBuild, buildLog, buildState, devServerLog } = preview;
   const [executionOptions, setExecutionOptions] = useState(defaultExecution);
+  const [pendingProjectBootstrap, setPendingProjectBootstrap] = useState<{
+    projectId: string;
+    name: string;
+    message: string;
+    model?: { provider: string; model: string };
+    codeMode: StudioCodeMode;
+    ticketEnforcementMode: "off" | "soft" | "strict";
+  } | null>(null);
   useEffect(() => setExecutionOptions(defaultExecution), [selectedId]);
 
   const {
@@ -745,6 +753,53 @@ export default function App() {
   }, [selectedId]);
 
   useEffect(() => {
+    if (!pendingProjectBootstrap) return;
+    const request = pendingProjectBootstrap;
+    setPendingProjectBootstrap(null);
+    void (async () => {
+      try {
+        const { task_id, studio_ticket_id } = await api.sendMessage({
+          message: request.message,
+          ...(request.model ? { studio_model: request.model } : {}),
+          studio_project_id: request.projectId,
+          studio_assigned_agent: "studio_project_manager",
+          studio_code_mode: request.codeMode,
+          studio_ticket_enforcement_mode: request.ticketEnforcementMode,
+        });
+        saveActiveTask(request.projectId, task_id);
+        const firstMessage: ChatMessage = {
+          role: "user",
+          text: request.message,
+          task_id,
+          studio_ticket_id: studio_ticket_id ?? undefined,
+          task_status: "queued",
+        };
+        saveChatMessages(request.projectId, [firstMessage]);
+        if (selectedIdRef.current !== request.projectId) return;
+
+        pollTaskAbortRef.current?.abort();
+        setPendingHumanInput(null);
+        setHumanReplyDraft("");
+        setTaskTrace({
+          id: task_id,
+          status: "queued",
+          line: "Première demande acceptée — préparation du Kanban…",
+          done: false,
+        });
+        setChat([firstMessage]);
+        const controller = new AbortController();
+        pollTaskAbortRef.current = controller;
+        void pollTask(task_id, controller.signal, request.projectId);
+        setStatus(`Projet « ${request.name} » créé — première tâche lancée, Kanban en préparation`);
+      } catch (error) {
+        if (selectedIdRef.current !== request.projectId) return;
+        setError(`Projet créé, mais la première demande n’a pas pu démarrer : ${String(error)}`);
+        setStatus(`Projet « ${request.name} » créé`);
+      }
+    })();
+  }, [pendingProjectBootstrap, pollTask, setChat, setError, setHumanReplyDraft, setPendingHumanInput, setStatus, setTaskTrace]);
+
+  useEffect(() => {
     persistCodeMode(codeMode);
   }, [codeMode]);
 
@@ -940,24 +995,14 @@ export default function App() {
       const name = newProjectName.trim() || "Nouveau projet";
       const stack = newProjectComposedStack.trim();
       const summary = newProjectSummary.trim();
+      const selectedModel = executionOptions.model
+        ? (JSON.parse(executionOptions.model) as { provider: string; model: string })
+        : undefined;
       const p = await api.createProject({
         name,
         ...(stack ? { tech_stack: stack } : {}),
         ...(summary ? { project_summary: summary } : {}),
       });
-      void api
-        .sendMessage({
-          session_id: `code-studio-bootstrap-${p.id}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())}`,
-          studio_project_id: p.id,
-          studio_assigned_agent: "studio_project_manager",
-          message:
-            "[Bootstrap Kanban — exécution unique] Tu es le chef de projet Code Studio. Lis workspace:/CODE_STUDIO_PLAN.md et workspace:/DESIGN.md (read_file --full si besoin). À partir du résumé produit et de ces documents, crée ou complète **tous** les tickets Kanban avec les outils studio_list_tickets, studio_create_ticket et studio_update_ticket (JSON sur une ligne par TOOL), en renseignant depends_on_ticket_ids pour le graphe de prérequis. Aligne la grille avec le plan avant toute délégation d’implémentation.",
-        })
-        .catch((error) => {
-          setError(
-            `Le projet a été créé, mais la préparation du Kanban n’a pas pu être lancée : ${String(error)}`,
-          );
-        });
       await refreshProjects();
       setSelectedId(p.id);
       setCenterTab("dashboard");
@@ -966,7 +1011,25 @@ export default function App() {
       setNewStackCustomText("");
       setNewStackAddons(emptyStackAddons());
       setModalCreateOpen(false);
-      setStatus(`Projet « ${name} » créé`);
+      setStatus(`Projet « ${name} » créé — démarrage de la première demande…`);
+
+      // Send the user's actual project request through the normal Code Studio
+      // path. The daemon links it to the root Kanban ticket and seeds the
+      // initial backlog before dispatching implementation work.
+      const initialRequest = summary
+        ? `Crée le projet « ${name} » selon ce résumé :\n\n${summary}`
+        : `Crée le projet « ${name} ».`;
+      const message = stack
+        ? `${initialRequest}\n\nStack demandée : ${stack}`
+        : initialRequest;
+      setPendingProjectBootstrap({
+        projectId: p.id,
+        name,
+        message,
+        ...(selectedModel ? { model: selectedModel } : {}),
+        codeMode,
+        ticketEnforcementMode: ticketEnforcementModeDraft,
+      });
     } catch (e) {
       setError(String(e));
       setStatus("");

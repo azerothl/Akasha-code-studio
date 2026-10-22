@@ -228,6 +228,15 @@ export function extractEventDisplayMessage(payload: unknown): string | null {
   }
   if (typeof payload !== "object") return null;
   const o = payload as Record<string, unknown>;
+  if (
+    o.success === false &&
+    (o.tool === "run_command" || o.tool === "run_terminal") &&
+    typeof o.diagnostic_preview === "string" &&
+    o.diagnostic_preview.trim()
+  ) {
+    const exitCode = typeof o.exit_code === "number" ? ` (code ${o.exit_code})` : "";
+    return `${String(o.tool)} a échoué${exitCode}.\n${o.diagnostic_preview.trim()}`;
+  }
   for (const k of ["message", "text", "detail", "reason", "answer", "summary"]) {
     const v = o[k];
     if (typeof v === "string" && v.trim()) return v.trim();
