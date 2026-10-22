@@ -1722,6 +1722,14 @@ Procédure:
           setCenterTab("design");
           setMainSplit("balanced");
           break;
+        case "focus_model_selector": {
+          const selector = document.querySelector<HTMLSelectElement>(
+            '[aria-label="Modèle de la tâche"]',
+          );
+          selector?.scrollIntoView({ block: "center", behavior: "smooth" });
+          selector?.focus();
+          break;
+        }
         case "refresh_files":
           void refreshFiles();
           break;
@@ -3535,8 +3543,10 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
-            secondaryAction={taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTraceFailureMessage) && !isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
-              ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Réessayer avec contexte allégé", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("retry_compacted_context", taskTrace.id) }
+            secondaryAction={taskTrace.status === "failed" && isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
+              ? { label: "Choisir un modèle", onClick: () => applyUiSuggestedAction("focus_model_selector") }
+              : taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTraceFailureMessage)
+                ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Réessayer avec contexte allégé", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("retry_compacted_context", taskTrace.id) }
               : taskTrace.status === "failed" && looksLikeModelTransportFailure(taskTraceFailureMessage)
                 ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Reprendre la tâche", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("resume_task", taskTrace.id) }
               : taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
@@ -3556,7 +3566,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
                 ? "Le fournisseur peut être retenté après un changement de modèle ou de contexte; l’historique durable reste conservé."
               : looksLikeModelTransportFailure(taskTraceFailureMessage)
                 ? "La reprise conserve la tâche, le ticket et les opérations enregistrées. Aucun nouveau message de création n’est envoyé."
-              : "La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets."}</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
+              : "La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets."}</p>{isLocalContextWindowPreflightFailure(taskTraceFailureMessage) ? <Button size="sm" variant="ghost" onClick={() => applyUiSuggestedAction("focus_model_selector")}>Choisir un modèle</Button> : null}<Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
           </details> : null}
           <section className="chat-conversation-panel" aria-label="Conversation agent">
             <div className="conversation-heading"><span>Discussion</span><span className="conversation-project">{selectedProject?.name}</span></div>

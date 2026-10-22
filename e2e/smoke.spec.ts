@@ -340,7 +340,7 @@ test("a nonzero build exit is an error even without stderr", async ({ page }) =>
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/**", route => route.fulfill({ status: 404, json: { error: "unconfigured_fixture" } }));
-  await page.route("**/api/router/studio-options", route => route.fulfill({ json: { schema_version: 1, goals: true, actions: true, models: [{ provider: "fixture", model: "code-test" }] } }));
+  await page.route("**/api/router/studio-options", route => route.fulfill({ json: { schema_version: 1, goals: true, actions: true, models: [{ provider: "fixture", model: "code-test", context_window_tokens: 8192 }] } }));
   await page.route("**/api/trust-access", route => route.fulfill({ json: { channel_permissions_mode: "ask_me" } }));
   await page.route("**/api/studio/projects/*/git/conflicts", route => route.fulfill({ json: { conflict_files: [], merge_in_progress: false } }));
   await page.route("**/api/studio/projects/*/worktrees", route => route.fulfill({ json: { worktrees: [] } }));
@@ -1345,6 +1345,8 @@ test("model selection and audit action are structured task fields", async ({ pag
   await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
   await page.goto("/"); await selectDemoProject(page);
   await page.getByRole("combobox", { name: "Modèle de la tâche" }).selectOption({ label: "code-test · fixture" });
+  await page.locator(".composer-model-note > summary").click();
+  await expect(page.locator(".composer-model-note")).toContainText("8 192 tokens");
   await page.getByRole("textbox", { name: "Message à l’agent" }).fill("/audit inspecter les dépendances");
   await page.getByRole("button", { name: "Envoyer", exact: true }).click();
   await expect.poll(() => sent).toMatchObject({ studio_model: { provider: "fixture", model: "code-test" }, studio_action: "audit", message: "inspecter les dépendances" });

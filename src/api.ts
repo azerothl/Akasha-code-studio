@@ -1,7 +1,7 @@
 /** Base URL: dev server proxies /api to the daemon (see vite.config.ts). */
 const api = (path: string) => path.startsWith("/") ? path : `/${path}`;
 
-export type StudioExecutionCatalog = { schema_version: 1; goals: boolean; actions: boolean; models: { provider: string; model: string }[] };
+export type StudioExecutionCatalog = { schema_version: 1; goals: boolean; actions: boolean; models: { provider: string; model: string; context_window_tokens?: number | null }[] };
 export async function getStudioExecutionCatalog(signal?: AbortSignal): Promise<StudioExecutionCatalog> {
   const response = await fetch(api("/api/router/studio-options"), { signal });
   if (!response.ok) throw new Error("Options Studio indisponibles");
