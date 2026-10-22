@@ -1,7 +1,13 @@
 /** Base URL: dev server proxies /api to the daemon (see vite.config.ts). */
 const api = (path: string) => path.startsWith("/") ? path : `/${path}`;
 
-export type StudioExecutionCatalog = { schema_version: 1; goals: boolean; actions: boolean; models: { provider: string; model: string; context_window_tokens?: number | null }[] };
+export type StudioModelQualification = { status: string; detail: string; checked_at: string; latency_ms: number; context_window_tokens?: number | null };
+export type StudioExecutionCatalog = { schema_version: 1; goals: boolean; actions: boolean; models: { provider: string; model: string; context_window_tokens?: number | null; qualification?: StudioModelQualification | null }[] };
+export async function qualifyStudioModel(model: {provider: string; model: string}, signal?: AbortSignal): Promise<{ qualification?: StudioModelQualification | null; error?: string }> {
+  const response = await fetch(api("/api/router/studio-qualify"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: model.provider, model: model.model }), signal });
+  if (!response.ok) throw new Error(`Vérification du modèle indisponible (${response.status}).`);
+  return response.json();
+}
 export async function getStudioExecutionCatalog(signal?: AbortSignal): Promise<StudioExecutionCatalog> {
   const response = await fetch(api("/api/router/studio-options"), { signal });
   if (!response.ok) throw new Error("Options Studio indisponibles");
@@ -884,8 +890,9 @@ export type TaskStatusResponse = {
   suggested_actions?: TaskSuggestedAction[];
 };
 
-export async function getTask(taskId: string): Promise<TaskStatusResponse> {
-  const r = await fetch(api(`/api/tasks/${taskId}`));
+export async function getTask(taskId: string, signal?: AbortSignal): Promise<TaskStatusResponse> {
+  const deadline = AbortSignal.timeout(10000);
+  const r = await fetch(api(`/api/tasks/${taskId}`), { signal: signal ? AbortSignal.any([signal, deadline]) : deadline });
   if (!r.ok) throw new Error(`getTask ${r.status}`);
   return r.json() as Promise<TaskStatusResponse>;
 }
@@ -1172,8 +1179,9 @@ export type TaskHumanInputPayload = {
   choices: string[] | null;
 };
 
-export async function getTaskHumanInput(taskId: string): Promise<TaskHumanInputPayload | null> {
-  const r = await fetch(api(`/api/tasks/${taskId}/human-input`));
+export async function getTaskHumanInput(taskId: string, signal?: AbortSignal): Promise<TaskHumanInputPayload | null> {
+  const deadline = AbortSignal.timeout(10000);
+  const r = await fetch(api(`/api/tasks/${taskId}/human-input`), { signal: signal ? AbortSignal.any([signal, deadline]) : deadline });
   if (r.status === 404) return null;
   if (!r.ok) throw new Error(`getTaskHumanInput ${r.status}`);
   return r.json() as Promise<TaskHumanInputPayload>;

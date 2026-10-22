@@ -285,6 +285,14 @@ La première demande fournit un ticket de coordination et quatre phases dépenda
 
 Le rapport de fin déduplique les messages et ne présente pas un timeout ou une exécution sans critères vérifiés dans `done`. Les compteurs d'outils sont distingués des appels au modèle.
 
+### Qualification et reconnexion du suivi
+
+Le daemon vérifie le protocole d'outils avec un probe inerte avant d'utiliser une nouvelle route. Le résultat est disponible dans le catalogue et via `POST /api/router/studio-qualify` (`provider`, `model`) ; le composeur propose « Vérifier les outils du modèle » hors exécution active. Un résultat positif de ce probe ne valide pas la création d'une application. Les métadonnées du catalogue ne sont jamais envoyées dans `studio_model`, qui contient uniquement `provider` et `model`.
+
+Le profil facultatif `studio` permet de définir des modèles et replis adaptés au développement. Le daemon publie les phases `qualifying`, `qualified` et `skipped` en plus des tentatives de génération. Après épuisement des routes, le scheduler ne répète pas la même demande inchangée. Les détails de configuration sont documentés dans `spec/dev/integrations/studio-provider-recovery.md` du dépôt Akasha.
+
+Une erreur de lecture du suivi conserve le dernier statut métier et l'identifiant durable. Le chat indique la reconnexion automatique avec un délai croissant de 1,5 à 15 s. Les requêtes de suivi ont un délai de 10 s et sont annulées au changement de projet. Au rétablissement, le résultat terminal est récupéré et sa réponse est insérée ou actualisée sans doublon, sans renvoyer le message utilisateur. Le même chemin couvre un rechargement pendant une indisponibilité.
+
 Recette ciblée réelle : `CODE_STUDIO_DAEMON_BIN=<binaire reconstruit> npm run test:daemon:recovery`. Elle utilise un daemon isolé et un fournisseur HTTP scripté ; elle valide le protocole de reprise, pas la qualité d'un LLM ni la livraison autonome d'une application. Voir [les preuves du 22 octobre](validation/provider-recovery-2026-10-22.json).
 
 ## Gouvernance

@@ -27,7 +27,14 @@ const fixture = createServer(async (req, res) => {
     const body = JSON.parse(input);
     const text = (body.messages ?? []).map(message => JSON.stringify(message.content)).join("\n");
     const pinned = text.includes("CASE:pinned");
-    report.requests.push({ at: new Date().toISOString(), model: body.model, pinned });
+    const probe = text.includes("STUDIO_TOOL_PROBE");
+    report.requests.push({ at: new Date().toISOString(), model: body.model, pinned, probe });
+    if (probe) {
+        const delta = { tool_calls: [{ index: 0, id: "inert_probe", type: "function", function: { name: "studio_probe", arguments: JSON.stringify({ nonce: "akasha-studio-tool-probe-v1" }) } }] };
+        res.setHeader("Content-Type", "text/event-stream");
+        res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+        return;
+    }
     if (body.model === "stall" && !(pinned && restorePinned)) {
         res.setHeader("Content-Type", "text/event-stream");
         res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "TOOL: write_file SHOULD_NOT_EXIST.md unwanted" } }] })}\n\n`);
@@ -100,7 +107,7 @@ try {
     assert(!JSON.stringify(events.filter(event => event.event_type.startsWith("tool"))).includes("SHOULD_NOT_EXIST"));
     assert(events.some(event => event.event_type === "llm_provider_attempt" && event.payload.phase === "fallback" && event.payload.model === "healthy"));
     assert(events.some(event => event.event_type === "llm_wait_heartbeat"));
-    assert.equal(report.requests.filter(request => request.model === "stall" && !request.pinned && !request.cancelled).length, 1, "failed primary is not retried on each tool round");
+    assert.equal(report.requests.filter(request => request.model === "stall" && !request.probe && !request.pinned && !request.cancelled).length, 1, "failed primary is not retried on each tool round");
     assert(!(await api(`/api/studio/projects/${project.id}/files`)).files.some(path => path.includes("SHOULD_NOT_EXIST")), "discarded partial output must not execute tools");
     report.cases.push({ name: "fallback with heartbeat and no partial tool execution", task: fallback.id, status: recovered.status, events });
     const pinned = await start("pinned", true);

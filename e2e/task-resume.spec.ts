@@ -163,6 +163,57 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("temporary polling failures reconnect without resubmitting or changing task status", async ({ page }) => {
+  let reads = 0;
+  let submissions = 0;
+  let recovered = false;
+  await page.route("**/api/message", async route => {
+    submissions++;
+    await route.fulfill({ json: { task_id: runTaskId } });
+  });
+  await page.route(`**/api/tasks/${runTaskId}`, async route => {
+    reads++;
+    if (reads > 1 && !recovered) return route.abort("failed");
+    await route.fulfill({ json: {
+      task_id: runTaskId, status: recovered ? "completed" : "running",
+      progress: [{ progress_pct: recovered ? 100 : 24, message: recovered ? "Résultat après reconnexion" : "Génération en cours" }],
+    } });
+  });
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  await page.locator(".chat-form textarea").fill("Créer la Todo");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await page.locator(".chat-task-status > summary").click();
+  await expect(page.getByText(/Suivi momentanément indisponible/)).toBeVisible();
+  await expect(page.locator(".chat-task-status > summary")).toContainText(/^En cours/);
+  expect(await page.evaluate(key => !!localStorage.getItem(key), `akasha-code-studio-task-v1:${demoId}`)).toBe(true);
+  recovered = true;
+  await expect(page.locator(".bubble.assistant")).toContainText("Résultat après reconnexion", { timeout: 15000 });
+  await expect(page.getByText(/Suivi momentanément indisponible/)).toHaveCount(0);
+  await expect(page.locator(".bubble.assistant")).toHaveCount(1);
+  expect(submissions).toBe(1);
+});
+
+test("stored task reconnects after an initial outage and retrieves the terminal result", async ({ page }) => {
+  await page.addInitScript(({ project, task }) => {
+    localStorage.setItem(`akasha-code-studio-task-v1:${project}`, JSON.stringify({ taskId: task, startedAt: Date.now() }));
+  }, { project: demoId, task: runTaskId });
+  let reads = 0;
+  let recovered = false;
+  await page.route(`**/api/tasks/${runTaskId}`, async route => {
+    reads++;
+    if (!recovered) return route.abort("failed");
+    await route.fulfill({ json: { task_id: runTaskId, status: "failed", failure_detail: "Diagnostic terminal récupéré", progress: [] } });
+  });
+  await page.goto("/");
+  await page.locator(".chat-task-status > summary").click();
+  await expect(page.getByText(/Suivi momentanément indisponible/)).toBeVisible();
+  recovered = true;
+  await expect(page.locator(".bubble.assistant")).toContainText("Diagnostic terminal récupéré", { timeout: 15000 });
+  await expect(page.locator(".bubble.assistant")).toHaveCount(1);
+  expect(await page.evaluate(key => localStorage.getItem(key), `akasha-code-studio-task-v1:${demoId}`)).toBeNull();
+});
+
 test("reload resumes polling until task completes", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");

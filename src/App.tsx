@@ -3540,6 +3540,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
         }}>
           {taskTrace ? <details className="chat-task-status" key={taskTrace.id}>
             <summary><span role="status" aria-atomic="true">{taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)}</span><span className="hint">Suivi et récupération</span></summary>
+            {taskTrace.trackingNotice ? <p className="hint" role="status">{taskTrace.trackingNotice}</p> : null}
             <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
@@ -3770,7 +3771,7 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
               onIncludePolicy={setIncludePolicyOnSend}
             />
           ) : null}
-          <StudioComposer text={chatInput} onText={setChatInput} options={executionOptions} onOptions={setExecutionOptions} projectId={selectedId} taskId={taskTrace?.id} />
+          <StudioComposer text={chatInput} onText={setChatInput} options={executionOptions} onOptions={setExecutionOptions} projectId={selectedId} taskId={taskTrace?.id} busy={!!taskTrace && !taskTrace.done} />
           {chatOptionsOpen ? (
             <div className="chat-options-panel">
               <p className="hint">Les outils de l’agent restent limités au dossier de ce projet. Consultez le contexte pour les permissions effectives.</p>

@@ -70,6 +70,13 @@ const server = createServer(async (req, res) => {
         typeof m.content === "string" ? m.content : JSON.stringify(m.content),
       )
       .join("\n") ?? "";
+  if (text.includes("STUDIO_TOOL_PROBE")) {
+    report.qualification_probes = (report.qualification_probes ?? 0) + 1;
+    const delta = { tool_calls: [{ index: 0, id: "inert_probe", type: "function", function: { name: "studio_probe", arguments: JSON.stringify({ nonce: "akasha-studio-tool-probe-v1" }) } }] };
+    res.setHeader("Content-Type", "text/event-stream");
+    res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+    return;
+  }
   const markers = text.match(/CASE:([a-zA-Z0-9_-]+)/g) ?? [];
   const match = [...scripts.keys()].find((key) =>
     markers.includes(`CASE:${key}`),
@@ -408,17 +415,34 @@ try {
       assert.equal(policy.allowed_read_paths, undefined);
       assert.equal(policy.allowed_write_paths, undefined);
       assert.equal(policy.allowed_commands, undefined);
-      const capabilities = await api(`/api/tools/effective?project_id=${project.id}`);
+      const coordinator = await api(`/api/tools/effective?project_id=${project.id}`);
+      assert(!coordinator.tools.find(row => row.name === "write_file")?.runnable, "the coordinator must delegate application writes");
+      const capabilities = await api(`/api/tools/effective?project_id=${project.id}&agent=studio_fullstack`);
       for (const name of ["read_file", "write_file", "run_command"]) assert(capabilities.tools.find(row => row.name === name)?.runnable, name);
       const globalCapabilities = await api("/api/tools/effective");
       assert.equal(globalCapabilities.scope, "global");
+      const accessTicketResponse = await api(`/api/studio/projects/${project.id}/tickets`, "POST", {
+        title: "Vérifier les accès du spécialiste",
+        description: "Lire le plan, écrire DEFAULT-ACCESS.md et vérifier la racine Git.",
+        assigned_agent: "studio_fullstack", review_agent: "studio_reviewer",
+        acceptance_criteria: [{ id: "access-file", text: "Fichier écrit par le spécialiste", kind: "file_exists", path: "DEFAULT-ACCESS.md" }],
+      }, 201);
+      const accessTicket = accessTicketResponse.ticket ?? accessTicketResponse;
+      // An explicit bounded implementation goal owns write tools. A UI role
+      // preference alone deliberately keeps the root on the coordinator.
       const id = await task("studio-default-access", [
         tool("read_file", { path: "workspace:/CODE_STUDIO_PLAN.md" }),
-        tool("write_file", fileArgs("DEFAULT-ACCESS.md", "project access works")),
         tool("run_command", { program: "git", args: ["rev-parse", "--show-toplevel"] }),
+        tool("write_file", fileArgs("DEFAULT-ACCESS.md", "project access works")),
         { text: "DEFAULT-ACCESS.md créé et vérifié dans le projet fourni par le daemon." },
-      ], "studio_scaffold", { message: "Create DEFAULT-ACCESS.md after reading CODE_STUDIO_PLAN.md. CASE:studio-default-access" });
+      ], "studio_fullstack", {
+        studio_ticket_id: accessTicket.id,
+        studio_action: "goal",
+        studio_goal: { objective: "Vérifier les accès du spécialiste", criteria: { criteria: [{ id: "access-file", text: "Fichier écrit par le spécialiste", kind: "file_exists", path: "DEFAULT-ACCESS.md" }] }, max_cycles: 6, max_seconds: 60, max_tokens: 500000 },
+        message: "Lis CODE_STUDIO_PLAN.md, vérifie la racine Git puis écris DEFAULT-ACCESS.md dans ce projet. CASE:studio-default-access",
+      });
       const row = await finished(id);
+      assert.equal(row.assigned_agent, "studio_fullstack");
       assert.equal(row.status, "completed", JSON.stringify(row));
       assert.equal(await readFile(join(root, "DEFAULT-ACCESS.md"), "utf8"), "project access works");
       assert(row.outcome.successful_tool_calls >= 3, JSON.stringify(row));

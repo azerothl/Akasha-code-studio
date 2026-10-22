@@ -1350,6 +1350,29 @@ test("model selection and audit action are structured task fields", async ({ pag
   await page.getByRole("textbox", { name: "Message à l’agent" }).fill("/audit inspecter les dépendances");
   await page.getByRole("button", { name: "Envoyer", exact: true }).click();
   await expect.poll(() => sent).toMatchObject({ studio_model: { provider: "fixture", model: "code-test" }, studio_action: "audit", message: "inspecter les dépendances" });
+  expect((sent as { studio_model?: unknown }).studio_model).toEqual({ provider: "fixture", model: "code-test" });
+});
+
+test("model qualification is inert and its metadata never enters the execution contract", async ({ page }) => {
+  let sent: Record<string, unknown> | null = null;
+  let probe: unknown;
+  await page.route("**/api/router/studio-qualify", route => {
+    probe = route.request().postDataJSON();
+    return route.fulfill({ json: { qualification: { status: "qualified", detail: "Protocole vérifié sans opération projet", checked_at: "2026-10-23T00:00:00Z", latency_ms: 100 } } });
+  });
+  await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
+  await page.goto("/"); await selectDemoProject(page);
+  const select = page.getByRole("combobox", { name: "Modèle de la tâche" });
+  await select.selectOption({ label: "code-test · fixture" });
+  await page.locator(".composer-model-note > summary").click();
+  await page.getByRole("button", { name: "Vérifier les outils du modèle" }).click();
+  await expect(page.locator(".composer-model-note")).toContainText("Outils vérifiés");
+  expect(probe).toEqual({ provider: "fixture", model: "code-test" });
+  expect(sent).toBeNull();
+  await expect(select).toHaveValue(JSON.stringify({ provider: "fixture", model: "code-test" }));
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("Lire le plan");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect.poll(() => sent?.studio_model).toEqual({ provider: "fixture", model: "code-test" });
 });
 
 test("slash palette supports keyboard selection and rejects unknown commands", async ({ page }) => {
