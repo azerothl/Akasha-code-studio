@@ -256,6 +256,43 @@ test("preview failures can be retried without leaving the view", async ({ page }
   await expect(page.getByRole("heading", { name: "L’aperçu n’est pas prêt" })).toHaveCount(0);
 });
 
+test("Kanban shows when a linked agent is waiting for a user reply", async ({ page }) => {
+  const taskId = "00000000-0000-4000-8000-000000000042";
+  const ticketId = "00000000-0000-4000-8000-000000000043";
+  await page.route(`**/api/studio/projects/${demoId}/tickets`, route => route.fulfill({ json: { items: [{
+    id: ticketId,
+    project_id: demoId,
+    title: "Implement todo filters",
+    description: "Add the requested filters.",
+    status: "in_progress",
+    requested_by: "studio_project_manager",
+    assigned_agent: "studio_fullstack",
+    review_agent: "studio_reviewer",
+    parent_ticket_id: null,
+    depends_on_ticket_ids: [],
+    related_task_id: taskId,
+    acceptance_criteria: [],
+    evidence: {},
+    created_at: "2026-10-22T00:00:00Z",
+    updated_at: "2026-10-22T00:00:00Z",
+  }] } }));
+  await page.route(`**/api/tasks/${taskId}`, route => route.fulfill({ json: {
+    task_id: taskId,
+    status: "waiting_user_input",
+    assigned_agent: "studio_fullstack",
+    progress: [{ progress_pct: 50, message: "Limite d’outils atteinte; réponse attendue." }],
+  } }));
+
+  await page.goto("/");
+  await selectDemoProject(page);
+  await page.getByTestId("studio-kanban-tab").click();
+
+  const card = page.locator(".kanban-ticket-card").filter({ hasText: "Implement todo filters" });
+  await expect(card).toContainText("Attente de votre réponse");
+  await expect(card).toContainText("L’agent est en pause jusqu’à votre réponse.");
+  await expect(card).not.toContainText("50%");
+});
+
 test("a nonzero build exit is an error even without stderr", async ({ page }) => {
   await page.route(`**/api/studio/projects/${demoId}/build`, route => route.fulfill({ status: 500, json: { exit_code: 17, stdout: "", stderr: "" } }));
   await page.goto("/");

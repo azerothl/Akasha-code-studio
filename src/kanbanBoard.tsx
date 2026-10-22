@@ -683,21 +683,28 @@ export function KanbanBoard({
                   PROGRESS_TRACKED_STATUSES.includes(t.status) && taskId
                     ? progressByTaskId[taskId]
                     : undefined;
+                const waitingForUser = progressSnap?.status === "waiting_user_input";
+                const cardTheme = waitingForUser ? "amber" : getTheme(t.status);
                 return (
-                <article key={t.id} className={`kanban-ticket-card kanban-ticket-card--${getTheme(t.status)}`}>
+                <article key={t.id} className={`kanban-ticket-card kanban-ticket-card--${cardTheme}`}>
                   <div className="kanban-ticket-top">
                     <div className="kanban-ticket-title">{t.title}</div>
-                    <span className={`kanban-status-badge kanban-theme-${getTheme(t.status)}`}>
-                      {getStatusLabel(t.status)}
-                      {progressSnap ? ` ${progressSnap.pct}%` : ""}
+                    <span className={`kanban-status-badge kanban-theme-${cardTheme}`}>
+                      {waitingForUser ? "Attente de votre réponse" : getStatusLabel(t.status)}
+                      {progressSnap && !waitingForUser ? ` ${progressSnap.pct}%` : ""}
                     </span>
                   </div>
+                  {waitingForUser ? (
+                    <p className="kanban-card-waiting" role="status">
+                      L’agent est en pause jusqu’à votre réponse.
+                    </p>
+                  ) : null}
                   {t.status === "blocked" && t.evidence.summary ? (
                     <p className="kanban-blocked-reason" title={t.evidence.summary}>
                       {t.evidence.summary}
                     </p>
                   ) : null}
-                  {progressSnap ? (
+                  {progressSnap && !waitingForUser ? (
                     <div
                       className="kanban-card-progress"
                       role="progressbar"
@@ -783,6 +790,12 @@ export function KanbanBoard({
           <div className={`kanban-detail-pill kanban-theme-${getTheme(selected.status)}`}>
             Statut : {getStatusLabel(selected.status)} · Assigné : {selected.assigned_agent} · Revue : {selected.review_agent}
           </div>
+          {linkedTaskSnapshot && selected.related_task_id && linkedTaskSnapshot.task_id === selected.related_task_id && linkedTaskSnapshot.status === "waiting_user_input" ? (
+            <div className="kanban-task-waiting" role="status">
+              <strong>Réponse utilisateur attendue</strong>
+              <p>La tâche liée est suspendue. Consultez le détail de la tâche et la discussion associée pour répondre et permettre à l’agent de continuer.</p>
+            </div>
+          ) : null}
           {selected.status === "blocked" && selected.evidence.summary ? (
             <div className="kanban-blocked-detail" role="status">
               <strong>Dernière exécution bloquée</strong>

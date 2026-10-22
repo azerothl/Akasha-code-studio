@@ -5905,6 +5905,31 @@ textarea.editor {
   -webkit-line-clamp: 2;
 }
 
+.kanban-card-waiting {
+  margin: 0;
+  color: var(--akasha-warning);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.kanban-task-waiting {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.65rem 0;
+  padding: 0.65rem 0.75rem;
+  color: var(--akasha-warning);
+  background: color-mix(in srgb, var(--akasha-warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--akasha-warning) 28%, var(--border));
+  border-radius: 9px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.kanban-task-waiting p {
+  margin: 0;
+}
+
 .kanban-blocked-detail {
   margin: 0.7rem 0;
   padding: 0.7rem 0.8rem;
