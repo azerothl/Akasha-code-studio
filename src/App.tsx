@@ -3,7 +3,7 @@ import { StudioComposer, defaultExecution } from "./studioComposer";
 import { parseStudioAction } from "./studioActions";
 import { TaskRecoveryPanel } from "./taskRecovery";
 import type { CenterTab } from "./studioNavigation";
-import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
+import { formatTaskStatusFr, looksLikeStructuredRefusal, looksLikeContextWindowFailure, isLocalContextWindowPreflightFailure, isMarkdownPath, extractTicketDraftsFromPlan } from "./studioUiModel";
 import { useStudioProjects } from "./hooks/useStudioProjects";
 import { AsyncState } from "./asyncState";
 import { useStudioGit } from "./hooks/useStudioGit";
@@ -403,6 +403,7 @@ export default function App() {
   } = useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFiles, syncCodeRagAfterFileChange, filePathRef, editorDirtyRef, editorBinaryRef, setEditorText, setSavedEditorText, setStaticPreviewBlobUrl, setForkEvents });
 
   const activeTask = taskTrace && !taskTrace.done ? taskTrace : null;
+  const taskTraceFailureMessage = taskTrace?.outcome?.reason || taskTrace?.line;
   const previousChatDeliveryTaskId = useRef<string | null>(null);
   useEffect(() => {
     const activeTaskId = activeTask?.id ?? null;
@@ -3536,17 +3537,21 @@ Ne modifie aucun autre fichier pour cette tâche sauf lecture pour contexte.`;
             <AsyncState kind={!taskTrace.done ? "loading" : taskFeedbackKind(taskTrace.status, taskTrace.outcome)}
             title={taskFeedbackTitle(taskTrace.status, taskTrace.outcome) ?? formatTaskStatusFr(taskTrace.status)} description={taskTrace.line}
             action={{ label: "Détail de la tâche", onClick: () => void onOpenTaskDetailModal(taskTrace.id) }}
-            secondaryAction={taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTrace.line)
+            secondaryAction={taskTrace.status === "failed" && looksLikeContextWindowFailure(taskTraceFailureMessage) && !isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
               ? { label: compactRetryTaskId === taskTrace.id ? "Reprise…" : "Réessayer avec contexte allégé", disabled: compactRetryTaskId === taskTrace.id, onClick: () => applyUiSuggestedAction("retry_compacted_context", taskTrace.id) }
               : taskTrace.status === "interrupted" ? { label: "Reprendre le suivi", onClick: () => resumeTaskTracking(taskTrace.id) } : taskTrace.status === "failed" ? { label: "Préparer une nouvelle demande", onClick: () => {
               const prompt = [...chat].reverse().find(message => message.role === "user" && message.task_id === taskTrace.id);
               if (prompt) setChatInput(prompt.text);
               document.querySelector<HTMLTextAreaElement>(".chat-form textarea")?.focus();
             } } : undefined} />
-          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>{looksLikeContextWindowFailure(taskTrace.line)
-            ? "Le modèle a refusé cette requête parce que son contexte était trop volumineux. Une reprise compacte est proposée ci-dessus; elle conserve la demande et les règles utiles tout en réduisant les répétitions. Consultez le détail si des outils ont déjà modifié des fichiers."
-            : "La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande."}</p><p className="hint">{looksLikeContextWindowFailure(taskTrace.line)
-              ? "La reprise compacte conserve l’historique durable et relance la même tâche en réduisant les éléments redondants."
+          {taskTrace?.done && ["failed", "interrupted", "cancelled"].includes(taskTrace.status) ? <div className="task-recovery-context"><p>{isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
+            ? "Code Studio a bloqué l’appel localement avant de contacter le fournisseur : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche donne l’estimation utilisée."
+            : looksLikeContextWindowFailure(taskTraceFailureMessage)
+              ? "Le fournisseur du modèle a refusé la requête car le contexte dépasse sa fenêtre. Choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif. Consultez le détail pour savoir si des outils ont déjà modifié des fichiers."
+            : "La cause exacte dépend des événements enregistrés. Des fichiers ou commandes peuvent déjà avoir été modifiés : examinez le résultat avant une nouvelle demande."}</p><p className="hint">{isLocalContextWindowPreflightFailure(taskTraceFailureMessage)
+              ? "La reprise de cette tâche ne change pas la fenêtre configurée. Changez le modèle ou le paramètre de contexte avant de relancer."
+              : looksLikeContextWindowFailure(taskTraceFailureMessage)
+                ? "Le fournisseur peut être retenté après un changement de modèle ou de contexte; l’historique durable reste conservé."
               : "La préparation recopie votre demande sans exécuter d’action. Une nouvelle soumission crée une autre tâche et peut répéter ses effets."}</p><Button size="sm" variant="ghost" onClick={() => { setCenterTab("editor"); setMainSplit("balanced"); }}>Examiner les fichiers</Button><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(redactSecrets(`Tâche ${taskTrace.id}\n${taskTrace.status}\n${taskTrace.line}\n${JSON.stringify(taskTrace.outcome ?? {})}`)).catch(() => setError("Copie indisponible : consultez le détail de la tâche."))}>Copier le diagnostic</Button><TaskRecoveryPanel taskId={taskTrace.id} /></div> : null}
           </details> : null}
           <section className="chat-conversation-panel" aria-label="Conversation agent">
