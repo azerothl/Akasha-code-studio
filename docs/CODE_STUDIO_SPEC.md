@@ -297,6 +297,12 @@ Recette ciblée réelle : `CODE_STUDIO_DAEMON_BIN=<binaire reconstruit> npm run 
 
 ## Gouvernance
 
+### Jalon de planification
+
+Le résultat daemon peut porter `planning_verified: true` : le backlog initial et ses dépendances ont passé les contrôles structurels. Le chat affiche alors « Planification vérifiée » et indique que l'application reste à implémenter et valider. Ce champ ne remplace pas `acceptance_verified` et ne clôt aucun ticket de travail. Le scheduler passe aux spécialistes sur les tickets prêts, sans bloquer le coordinateur faute de fichiers applicatifs.
+
+Les outils Kanban du coordinateur initial reçoivent le parent lié à la tâche et les IDs stables des phases. Une création avec une clé de phase réutilise son ticket ; les créations supplémentaires sont refusées tant que les gabarits restent à préciser. Des critères de socle conservés ne disqualifient plus un ticket dont le titre et les critères ont été précisés. Les contrôles détaillés sont documentés dans `spec/dev/integrations/studio-provider-recovery.md` du dépôt Akasha.
+
 Une PR qui livre une phase **doit** mettre à jour ce fichier (cases cochées, nouvelles exigences, statuts `STU-*`).
 
 ---

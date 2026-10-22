@@ -263,7 +263,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
                 /* ignore */
               }
             }
-            const summary = chatMessageForTerminalTask(t.status, last?.message, t.failure_detail);
+            const summary = chatMessageForTerminalTask(t.status, last?.message, t.failure_detail, t.outcome);
             if (signal.aborted) return;
             setChat((c) => {
               const message: ChatMessage = {

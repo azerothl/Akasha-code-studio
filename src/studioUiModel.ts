@@ -83,10 +83,14 @@ export function chatMessageForTerminalTask(
   status: string,
   lastProgressMessage: string | undefined,
   failureDetail?: string | null,
+  outcome?: { planning_verified?: boolean } | null,
 ): string {
   const last = lastProgressMessage?.trim();
   const detail = failureDetail?.trim();
   if (status === "completed") {
+    if (outcome?.planning_verified) {
+      return "Planification vérifiée. Les tickets prêts seront confiés aux agents d’implémentation. L’application reste à créer et à valider ; ce message ne marque pas le projet terminé.";
+    }
     if (last && !isStubProgressMessage(last)) {
       return last;
     }

@@ -163,6 +163,21 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("verified planning does not claim that the app has been delivered", async ({ page }) => {
+  await page.route(`**/api/tasks/${runTaskId}`, route => route.fulfill({ json: {
+    task_id: runTaskId, status: "completed", assigned_agent: "studio_project_manager",
+    progress: [{ progress_pct: 100, message: "Application terminée" }],
+    outcome: { schema_version: 1, result: "succeeded", termination_reason: "success", planning_verified: true, acceptance_verified: false, verification: [] },
+  } }));
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Choisir un projet" })).toContainText("Démo E2E");
+  await page.locator(".chat-form textarea").fill("Créer la Todo");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect(page.locator(".bubble.assistant")).toContainText("Planification vérifiée");
+  await expect(page.locator(".bubble.assistant")).toContainText("reste à créer et à valider");
+  await expect(page.locator(".bubble.assistant")).not.toContainText("Application terminée");
+});
+
 test("temporary polling failures reconnect without resubmitting or changing task status", async ({ page }) => {
   let reads = 0;
   let submissions = 0;

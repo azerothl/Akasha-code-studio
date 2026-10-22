@@ -868,6 +868,7 @@ export type TaskOutcome = {
   successful_tool_calls?: number;
   failed_tool_calls?: number;
   acceptance_verified?: boolean;
+  planning_verified?: boolean;
   verification: TaskVerification[];
 };
 
