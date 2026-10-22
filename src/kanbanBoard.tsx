@@ -7,11 +7,11 @@ import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
 
 const COLUMNS: { id: api.StudioTicketStatus; label: string; theme: string }[] = [
-  { id: "todo", label: "Todo", theme: "slate" },
-  { id: "in_progress", label: "In progress", theme: "blue" },
-  { id: "review", label: "Review", theme: "amber" },
-  { id: "done", label: "Done", theme: "green" },
-  { id: "blocked", label: "Blocked", theme: "red" },
+  { id: "todo", label: "À faire", theme: "slate" },
+  { id: "in_progress", label: "En cours", theme: "blue" },
+  { id: "review", label: "À valider", theme: "amber" },
+  { id: "done", label: "Terminé", theme: "green" },
+  { id: "blocked", label: "Bloqué", theme: "red" },
 ];
 
 /** Snapshot léger pour afficher la progression sur les tickets actifs (in_progress / review). */
@@ -626,6 +626,10 @@ export function KanbanBoard({
     return COLUMNS.find((col) => col.id === status)?.theme ?? "slate";
   }
 
+  function getStatusLabel(status: api.StudioTicketStatus): string {
+    return COLUMNS.find((col) => col.id === status)?.label ?? status;
+  }
+
   if (!projectId) {
     return <AsyncState kind="empty" title="Choisissez un projet" description="Créez ou chargez un projet depuis le menu Projet pour organiser ses tâches." />;
   }
@@ -635,8 +639,8 @@ export function KanbanBoard({
       <div className="kanban-toolbar panel card">
         <div>
           <h3 style={{ margin: 0 }}>Tâches du projet</h3>
-          <p className="muted" style={{ margin: "6px 0 0 0" }}>
-            Les demandes actionnables du chat créent des tickets ici. Le daemon vérifie régulièrement les tâches ouvertes et confie un ticket prêt à l’agent assigné dès que le projet est libre, avec le modèle choisi dans le chat. Le parent regroupe le travail; les prérequis fixent l’ordre. « Tout lancer » reste disponible pour une séquence manuelle.
+          <p className="muted" style={{ margin: "5px 0 0 0" }}>
+            Suivez ici les tâches créées depuis le chat. Les prérequis définissent l’ordre de lancement.
           </p>
         </div>
         <div className="kanban-toolbar-actions">
@@ -665,8 +669,9 @@ export function KanbanBoard({
       <div className="kanban-columns-grid" tabIndex={0} role="region" aria-label="Colonnes du Kanban, défilement horizontal">
         {COLUMNS.map((col) => (
           <div key={col.id} className={`panel card kanban-column kanban-column--${col.theme}`}>
-            <div className={`kanban-column-head kanban-theme-${col.theme}`}>
-              <h3 style={{ margin: 0 }}>{col.label}</h3>
+            <div className="kanban-column-head">
+              <span className={`kanban-column-indicator kanban-theme-${col.theme}`} aria-hidden="true" />
+              <h3 className="kanban-column-title">{col.label}</h3>
               <span className="kanban-column-count">{(byStatus.get(col.id) ?? []).length}</span>
             </div>
             <div className="kanban-column-body">
@@ -683,10 +688,15 @@ export function KanbanBoard({
                   <div className="kanban-ticket-top">
                     <div className="kanban-ticket-title">{t.title}</div>
                     <span className={`kanban-status-badge kanban-theme-${getTheme(t.status)}`}>
-                      {t.status}
+                      {getStatusLabel(t.status)}
                       {progressSnap ? ` ${progressSnap.pct}%` : ""}
                     </span>
                   </div>
+                  {t.status === "blocked" && t.evidence.summary ? (
+                    <p className="kanban-blocked-reason" title={t.evidence.summary}>
+                      {t.evidence.summary}
+                    </p>
+                  ) : null}
                   {progressSnap ? (
                     <div
                       className="kanban-card-progress"
@@ -709,14 +719,13 @@ export function KanbanBoard({
                     </div>
                   ) : null}
                   {t.parent_ticket_id ? (
-                    <div className="muted" style={{ fontSize: 12 }}>
+                    <div className="kanban-card-parent muted">
                       Sous-tâche de : {tickets.find((parent) => parent.id === t.parent_ticket_id)?.title ?? t.parent_ticket_id}
                     </div>
                   ) : null}
                   {depIds.length > 0 ? (
                     <div
                       className={`kanban-card-prereq ${prereqOk ? "kanban-card-prereq--ok" : "kanban-card-prereq--wait"}`}
-                      style={{ fontSize: 11 }}
                     >
                       {prereqOk ? "Prérequis OK — " : "Après : "}
                       {depIds.map((did, i) => {
@@ -725,17 +734,18 @@ export function KanbanBoard({
                           <span key={did}>
                             {i > 0 ? ", " : ""}
                             <span title={did}>{dep?.title ?? `${did.slice(0, 8)}…`}</span>
-                            {!prereqOk && dep ? <span className="muted"> ({dep.status})</span> : null}
+                            {!prereqOk && dep ? <span className="muted"> ({getStatusLabel(dep.status)})</span> : null}
                           </span>
                         );
                       })}
                     </div>
                   ) : null}
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    {t.assigned_agent} {"->"} {t.review_agent}
+                  <div className="kanban-card-meta muted">
+                    <span>Agent <strong>{t.assigned_agent}</strong></span>
+                    <span>Revue <strong>{t.review_agent}</strong></span>
                   </div>
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    task: {t.related_task_id ?? "—"}
+                  <div className="kanban-task-id muted" title={t.related_task_id ?? undefined}>
+                    Tâche liée <code>{t.related_task_id ?? "—"}</code>
                   </div>
                   <div className="kanban-card-actions">
                     <Button size="sm" variant="ghost" onClick={() => void openTicket(t)}>Détail</Button>
@@ -745,13 +755,13 @@ export function KanbanBoard({
                       disabled={playBusyId === t.id || playBlockedReason(t) != null}
                       title={playBlockedReason(t) ?? undefined}
                     >
-                      {playBusyId === t.id ? "Play…" : "Play"}
+                      {playBusyId === t.id ? "Lancement…" : "Lancer"}
                     </Button>
                   </div>
                 </article>
                 );
               })}
-              {(byStatus.get(col.id) ?? []).length === 0 ? <div className="muted">Aucun ticket.</div> : null}
+              {(byStatus.get(col.id) ?? []).length === 0 ? <div className="kanban-column-empty muted">Aucune tâche</div> : null}
             </div>
           </div>
         ))}
@@ -771,8 +781,15 @@ export function KanbanBoard({
             <Button variant="ghost" onClick={() => setSelected(null)}>Fermer</Button>
           </div>
           <div className={`kanban-detail-pill kanban-theme-${getTheme(selected.status)}`}>
-            Statut: {selected.status} - Assigné: {selected.assigned_agent} - Reviewer: {selected.review_agent}
+            Statut : {getStatusLabel(selected.status)} · Assigné : {selected.assigned_agent} · Revue : {selected.review_agent}
           </div>
+          {selected.status === "blocked" && selected.evidence.summary ? (
+            <div className="kanban-blocked-detail" role="status">
+              <strong>Dernière exécution bloquée</strong>
+              <p>{selected.evidence.summary}</p>
+              {selected.related_task_id ? <code>Tâche : {selected.related_task_id}</code> : null}
+            </div>
+          ) : null}
           <p className="muted">{selected.description || "Aucune description."}</p>
           <div className="panel card" style={{ marginTop: 10 }}>
             <h4 style={{ margin: "0 0 8px 0" }}>Ticket parent (regroupement)</h4>
@@ -784,7 +801,7 @@ export function KanbanBoard({
               <Select value={parentDraftId} onChange={(e) => setParentDraftId(e.target.value)}>
                 <option value="">Aucun parent</option>
                 {tickets.filter((ticket) => ticket.id !== selected.id).map((ticket) => (
-                  <option key={ticket.id} value={ticket.id}>{ticket.title} ({ticket.status})</option>
+                  <option key={ticket.id} value={ticket.id}>{ticket.title} ({getStatusLabel(ticket.status)})</option>
                 ))}
               </Select>
             </label>
@@ -807,7 +824,7 @@ export function KanbanBoard({
                         {d ? (
                           <span>
                             {" "}
-                            (<code>{d.status}</code>
+                            (<code>{getStatusLabel(d.status)}</code>
                             {d.status === "done" ? " ✓" : ""})
                           </span>
                         ) : (
@@ -844,7 +861,7 @@ export function KanbanBoard({
                   .map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.title.slice(0, 72)}
-                      {x.title.length > 72 ? "…" : ""} ({x.status})
+                      {x.title.length > 72 ? "…" : ""} ({getStatusLabel(x.status)})
                     </option>
                   ))}
               </select>
@@ -1068,7 +1085,7 @@ export function KanbanBoard({
                 <Select value={newParentTicketId} onChange={(e) => setNewParentTicketId(e.target.value)}>
                   <option value="">Aucun parent</option>
                   {tickets.map((ticket) => (
-                    <option key={ticket.id} value={ticket.id}>{ticket.title} ({ticket.status})</option>
+                    <option key={ticket.id} value={ticket.id}>{ticket.title} ({getStatusLabel(ticket.status)})</option>
                   ))}
                 </Select>
               </label>
@@ -1099,7 +1116,7 @@ export function KanbanBoard({
                   {tickets.map((x) => (
                     <option key={x.id} value={x.id}>
                       {x.title.slice(0, 72)}
-                      {x.title.length > 72 ? "…" : ""} ({x.status})
+                      {x.title.length > 72 ? "…" : ""} ({getStatusLabel(x.status)})
                     </option>
                   ))}
                 </select>
