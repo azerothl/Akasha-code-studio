@@ -13,6 +13,13 @@ describe("initial project request", () => {
 });
 
 describe("Code Studio context-window recovery copy", () => {
+  it("identifies invalid role tools without diagnosing an external service outage", () => {
+    const message=chatMessageForTerminalTask("failed", undefined, 'studio_routes_exhausted: tool_protocol_error: Unadvertised Qwen function "delegate_to_agent"');
+    expect(message).toContain("appel d’outil invalide pour cette étape");
+    expect(message).toContain("refusé avant exécution");
+    expect(message).toContain("delegate_to_agent");
+    expect(message).not.toContain("Vérifiez que le service");
+  });
   it("explains provider timeout and offers checkpoint recovery without resubmitting a creation request", () => {
     const message=chatMessageForTerminalTask("failed", undefined, "provider_generation_failed: ollama/lfm2:24b: timeout. Reprise depuis checkpoint.");
     expect(message).toContain("ollama/lfm2:24b");

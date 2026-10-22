@@ -35,3 +35,9 @@ Le profil local de recette utilise Qwen 3.5 9B en primaire et GPT-OSS 20B en sec
 - [Code Studio #114](https://github.com/azerothl/Akasha-code-studio/pull/114), après #113 et le daemon #259.
 
 Les PR restent ouvertes pendant la validation du parcours réel.
+
+## Premier essai après publication et ajustement du repli
+
+Le projet `5810e103-30dd-42be-b1ec-7e1d027c6887`, tâche `a7abc086-e13e-44b2-b001-0e4f9ebae258`, a reçu une seule demande. Il a échoué sans exécution d'outil après environ dix secondes : Qwen a demandé `delegate_to_agent` pendant la phase ne proposant que `studio_list_tickets`, `studio_create_ticket` et `studio_update_ticket`. Le ticket est bloqué et aucune application n'a été produite. Aucune intervention n'a eu lieu pendant son exécution.
+
+L'observation a révélé que les routes embarquées ajoutées par défaut à une nouvelle catégorie occupaient les places avant GPT-OSS dans la limite de tentatives. Après la fin du scénario, le filtre a été déplacé avant cette limite et couvert par un test. Une erreur d'outil liée au rôle ne met plus globalement en quarantaine un transport valide, afin que les réparations sémantiques puissent réellement le réinterroger. Le diagnostic garde aussi son action de reprise avant ses détails abrégés, et le chat distingue un appel invalide d'une panne externe supposée. Après ces ajustements : 107 tests LLM et 36 tests UI réussis, build UI réussi. Un autre projet neuf est prévu pour observer le repli corrigé ; le premier projet échoué est conservé.

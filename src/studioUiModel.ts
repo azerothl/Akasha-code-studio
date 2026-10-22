@@ -106,8 +106,14 @@ export function chatMessageForTerminalTask(
         }
         return "Le fournisseur du modèle a refusé la requête parce que son contexte est trop volumineux. Vérifiez le détail de la tâche, puis choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif avant de relancer.";
       }
+      if (body.includes("tool_protocol_error") || body.includes("LFM2 tool generation incomplete")) {
+        return `Le modèle a proposé un appel d’outil invalide pour cette étape. Cet appel a été refusé avant exécution. Le détail de la tâche conserve les autres opérations éventuelles.\n\n${body}\n\nVérifiez les outils autorisés pour le rôle et la compatibilité du modèle. Ce diagnostic ne prouve pas une panne réseau ni un manque de mémoire.`;
+      }
+      if (body.includes("studio_routes_exhausted")) {
+        return `Aucune route de modèle compatible n’a permis de poursuivre. Les tentatives automatiques sont arrêtées ; le ticket conserve son état et son checkpoint.\n\n${body}`;
+      }
       const hint = looksLikeModelTransportFailure(body)
-        ? "\n\nConsultez le modèle et les tentatives dans le détail de la tâche. Vérifiez que le service du modèle répond et que la mémoire disponible suffit. Utilisez « Reprendre la tâche » pour conserver le ticket et l’avancement enregistrés."
+        ? "\n\nConsultez le modèle et les tentatives dans le détail de la tâche. Vérifiez que le service du modèle répond. Utilisez « Reprendre la tâche » pour conserver le ticket et l’avancement enregistrés."
         : "";
       const diagnostic = body.replace(/^provider_generation_failed:\s*/, "Le fournisseur n’a pas terminé la génération : ");
       return diagnostic.length > 2800 ? `${diagnostic.slice(0, 2800)}…${hint}` : `${diagnostic}${hint}`;
