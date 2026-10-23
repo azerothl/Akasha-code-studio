@@ -196,7 +196,7 @@ await writeFile(
       "pyright-langserver",
       "rust-analyzer",
     ],
-    command_timeout_secs: 15,
+    command_timeout_secs: 60,
     mcp_max_calls_per_task: 1,
     browser_enabled: true,
     browser_allowed_domains: ["127.0.0.1"],
@@ -643,6 +643,65 @@ try {
     assert.equal(row.outcome.successful_tool_calls,0);
     assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
+  });
+  await check("Vite scaffold installs and TypeScript repair follows fresh compiler diagnostics", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Typed scaffold repair",tech_stack:"Vite React TypeScript strict"},201);
+      const buildRoot=join(data,"studio-projects",project.id);
+      for(const file of ["package.json","tsconfig.json","index.html","src/main.tsx","src/App.tsx",".gitignore","STUDIO_SCAFFOLD.md"]) assert((await stat(join(buildRoot,file))).isFile());
+      assert.equal(git(buildRoot,"status","--porcelain"),"");
+      const originalConfig=await readFile(join(buildRoot,"tsconfig.json"),"utf8");
+      const command={program:"npm",args:["run","build"],cwd:"workspace:/"};
+      const bad='const value: string = "one";\nconst invalid = value === 1;\nconst options = {label: "old", label: "new"};\nexport default function App() { return <main>{String(invalid)}{options.label}</main>; }\n';
+      const half=bad.replace('value === 1','value === "one"');
+      const good=half.replace('label: "old", label: "new"','label: "new"');
+      const assertPhase=(phase,path)=>(text,body)=>{
+        assert.match(text,new RegExp(`Phase: ${phase}`));
+        assert.equal(body.tool_choice,"required");
+        const definitions=body.tools.map(t=>t.function);
+        if(phase==="verify") {
+          assert.deepEqual(definitions.map(t=>t.name),["run_command"]);
+          assert.deepEqual(definitions[0].parameters.properties.args.enum,[["run","build"]]);
+        } else for(const definition of definitions) {
+          assert.deepEqual(definition.parameters.properties.path.enum,[path]);
+          assert.equal(definition.parameters.properties.content?.enum,undefined);
+        }
+      };
+      scripts.set("typescript-repair-worker",[
+        // The harness deliberately poisons HTTPS_PROXY for delivery tests;
+        // bypass it only for this public package installation, not for Git.
+        tool("run_command",{program:"npm",args:["install","--noproxy=registry.npmjs.org","--no-audit","--no-fund"],cwd:"workspace:/"}),
+        tool("run_command",command),
+        tool("read_file",{path:"workspace:/tsconfig.json"}),
+        tool("write_file",{path:"workspace:/tsconfig.json",content:"{} {}"}),
+        tool("read_file",{path:"workspace:/src/App.tsx"}),
+        tool("write_file",{path:"workspace:/src/App.tsx",content:bad}),
+        tool("run_command",command),
+        {...tool("read_file",{path:"workspace:/tsconfig.json"}),verify:assertPhase("read","workspace:/src/App.tsx")},
+        tool("read_file",{path:"workspace:/src/App.tsx",offset_line:1,limit_lines:20}),
+        {...tool("write_file",{path:"workspace:/src/App.tsx",content:half}),verify:assertPhase("edit","workspace:/src/App.tsx")},
+        {...tool("run_command",{program:"npm",args:["test"],cwd:"workspace:/"}),verify:assertPhase("verify")},
+        tool("run_command",command),
+        {...tool("read_file",{path:"workspace:/src/App.tsx"}),verify:assertPhase("read","workspace:/src/App.tsx")},
+        tool("search_replace",{path:"workspace:/src/App.tsx",search:'label: "old", label: "new"',replacement:'label: "new"'}),
+        tool("run_command",command),
+        {text:"Compilation TypeScript et Vite reussie apres deux corrections verifiees."},
+      ]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Verifier le socle TypeScript",assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",acceptance_criteria:[{id:"build",text:"Le build TypeScript puis Vite reussit",kind:"command_ok",argv:["npm","run","build"]}]},201);
+      const parent=await task("typescript-repair-parent",[{text:"TOOL: delegate_to_agent studio_scaffold CASE:typescript-repair-worker Verifie le socle puis corrige les diagnostics TypeScript sans modifier les verifications."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:(response.ticket??response).id});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_scaffold"),"TypeScript repair worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert(row.outcome.failed_tool_calls>=5);
+      assert.equal(await readFile(join(buildRoot,"src/App.tsx"),"utf8"),good);
+      assert.equal(await readFile(join(buildRoot,"tsconfig.json"),"utf8"),originalConfig);
+      assert.match(await readFile(join(buildRoot,"dist/index.html"),"utf8"),/assets/);
+      const check=row.outcome.verification.find(c=>c.kind==="command"&&c.verification===true);
+      assert.equal(check.status,"passed"); assert.equal(check.attempts,4);
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return {id:row.id??row.task_id,checks:row.outcome.verification,failed_tool_calls:row.outcome.failed_tool_calls};
+    } finally {project=previous;}
   });
   await check("build repair persists the exact missing entrypoint through surveys and reaches a fresh build", async () => {
     const previous = project;
