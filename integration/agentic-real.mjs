@@ -641,6 +641,102 @@ try {
     assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
   });
+  await check("supplied foundation verifies then hands off to review without product edits", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Foundation handoff",tech_stack:"Vite React TypeScript strict"},201);
+      const root=join(data,"studio-projects",project.id);
+      await writeFile(join(root,".npmrc"),"noproxy=registry.npmjs.org\n");
+      const before=await readFile(join(root,"src/App.tsx"),"utf8");
+      const parentResponse=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Projet suivi",assigned_agent:"studio_project_manager",review_agent:"studio_reviewer"},201);
+      const parentTicket=(parentResponse.ticket??parentResponse).id;
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Verifier le socle fourni",assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",parent_ticket_id:parentTicket},201);
+      const ticket=(response.ticket??response).id;
+      // Isolated fixture represents the daemon-owned seed, not model authority.
+      const file=join(root,".akasha-studio-tickets.json");
+      const board=JSON.parse(await readFile(file,"utf8"));
+      Object.assign(board.tickets.find(t=>t.id===parentTicket),{initial_backlog_root:true});
+      Object.assign(board.tickets.find(t=>t.id===ticket),{requested_by:"system_initial_backlog",creation_key:`initial:${parentTicket}:foundation`});
+      await writeFile(file,JSON.stringify(board));
+      scripts.set("foundation-worker",[
+        {...tool("run_command",{program:"npm",args:["run","build"],cwd:"workspace:/"}),verify:(text,body)=>{
+          assert.match(text,/Supplied foundation boundary/);
+          assert.deepEqual(body.tools.map(t=>t.function.name),["run_command"]);
+        }},
+        {...tool("studio_update_ticket",{ticket_id:ticket,status:"review",evidence:{summary:"Configured build succeeded."}}),verify:(text,body)=>{
+          assert.match(text,/fresh successful receipt/);
+          assert.deepEqual(body.tools.map(t=>t.function.name),["studio_update_ticket"]);
+        }},
+      ]);
+      const parent=await task("foundation-parent",[{text:"TOOL: delegate_to_agent studio_scaffold CASE:foundation-worker Verifie uniquement le socle fourni."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:ticket});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_scaffold"),"Foundation worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert(row.outcome.verification.some(c=>c.kind==="foundation_handoff"&&c.status==="passed"&&c.product_acceptance===false));
+      assert.equal(await readFile(join(root,"src/App.tsx"),"utf8"),before);
+      const final=await api(`/api/studio/projects/${project.id}/tickets`);
+      assert.equal(final.items.find(t=>t.id===ticket).status,"review");
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return {task_id:child.id??child.task_id,outcome:row.outcome};
+    } finally {project=previous;}
+  });
+  await check("bounded inspection makes a specialist implement after repeated identical reads", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Inspection action",tech_stack:"Vite React TypeScript strict"},201);
+      const root=join(data,"studio-projects",project.id);
+      await writeFile(join(root,".npmrc"),"noproxy=registry.npmjs.org\n");
+      const content='export default function App() { return <main><h1>Implementation verifiee</h1></main>; }\n';
+      const read=()=>tool("read_file",{path:"workspace:/src/App.tsx"});
+      scripts.set("inspection-worker",[
+        read(),read(),read(),
+        {...tool("write_file",{path:"workspace:/src/App.tsx",content}),verify:(text,body)=>{
+          assert.match(text,/Inspection action boundary/);
+          assert.equal(body.tool_choice,"required");
+          assert(!body.tools.some(t=>["read_file","list_directory","search_files"].includes(t.function.name)));
+        }},
+        {text:"Implementation terminee, verifier."},
+        {text:"Build verifie."},
+      ]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Implementer une interface",assigned_agent:"studio_fullstack",review_agent:"studio_reviewer"},201);
+      const parent=await task("inspection-parent",[{text:"TOOL: delegate_to_agent studio_fullstack CASE:inspection-worker Implemente le ticket puis verifie son build."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:(response.ticket??response).id});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_fullstack"),"Inspection worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert.equal(await readFile(join(root,"src/App.tsx"),"utf8"),content);
+      assert(row.outcome.verification.some(c=>c.kind==="project_build"&&c.status==="passed"));
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return {task_id:child.id??child.task_id,outcome:row.outcome};
+    } finally {project=previous;}
+  });
+  await check("Vitest scaffold runs DOM matchers and strict TSX tests without rewriting configuration", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"DOM baseline",tech_stack:"Vite React TypeScript strict"},201);
+      const root=join(data,"studio-projects",project.id);
+      await writeFile(join(root,".npmrc"),"noproxy=registry.npmjs.org\n");
+      const config=await readFile(join(root,"vitest.config.ts"),"utf8");
+      const tsconfig=await readFile(join(root,"tsconfig.json"),"utf8");
+      const content=`import { render, screen } from '@testing-library/react';\nimport App from './App';\nit('renders the supplied root in a DOM', () => { render(<App />); expect(screen.getByRole('heading')).toBeInTheDocument(); });\nit('isolates DOM between tests', () => { expect(screen.queryByRole('heading')).not.toBeInTheDocument(); });\n`;
+      scripts.set("dom-worker",[
+        tool("write_file",{path:"workspace:/src/App.test.tsx",content}),
+        tool("run_command",{program:"npm",args:["test"],cwd:"workspace:/"}),
+        tool("run_command",{program:"npm",args:["run","build"],cwd:"workspace:/"}),
+        {text:"Tests DOM et compilation stricte verifies."},
+      ]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Ajouter et verifier des tests DOM",assigned_agent:"studio_fullstack",review_agent:"studio_reviewer"},201);
+      const parent=await task("dom-parent",[{text:"TOOL: delegate_to_agent studio_fullstack CASE:dom-worker Ajoute un test du composant et verifie tests et build."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:(response.ticket??response).id});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_fullstack"),"DOM worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert.equal(row.outcome.failed_tool_calls,0);
+      assert.equal(await readFile(join(root,"vitest.config.ts"),"utf8"),config);
+      assert.equal(await readFile(join(root,"tsconfig.json"),"utf8"),tsconfig);
+      assert.equal(await stat(join(root,"src/vitest.config.ts")).catch(()=>null),null);
+      assert.equal(row.outcome.verification.filter(c=>c.kind==="command"&&c.verification&&c.status==="passed").length,2);
+      return {task_id:child.id??child.task_id,outcome:row.outcome};
+    } finally {project=previous;}
+  });
   await check("unified repair installs dependencies before a runtime-scheduled build and repairs TypeScript", async () => {
     const previous=project;
     try {
