@@ -5,6 +5,8 @@
   "description": "Akasha Code Studio — operator cockpit for project-scoped agents",
   "license": "MIT",
   "type": "module",
+  "engines": { "node": "^22.12.0 || ^24.0.0 || >=26.0.0" },
+  "overrides": { "monaco-editor": { "dompurify": "3.4.17" } },
   "repository": {
     "type": "git",
     "url": "https://github.com/azerothl/akasha-code-studio.git"
@@ -28,6 +30,8 @@
     "test:unit": "vitest run",
     "test:daemon": "vitest run --config vitest.daemon.config.ts",
     "test:daemon:task": "vitest run --config vitest.daemon-task.config.ts",
+    "test:daemon:recovery": "node integration/provider-recovery.mjs",
+    "test:daemon:models": "node integration/studio-model-qualification.mjs",
     "test:daemon:agentic": "node integration/agentic-real.mjs",
     "test:daemon:goal": "node integration/studio-goal-model.mjs",
     "test:e2e": "playwright test",
@@ -56,7 +60,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "tailwindcss": "^4.2.4",
     "typescript": "~5.6.3",
-    "vite": "^6.0.1",
-    "vitest": "^3.0.5"
+    "vite": "^6.4.5",
+    "vitest": "^5.0.5"
   }
 }

@@ -30,6 +30,7 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
     status: string;
     line: string;
     done: boolean;
+    trackingNotice?: string;
     outcome?: api.TaskOutcome | null;
     /** Étiquettes courtes dérivées des progressions daemon. */
     progressChips?: string[];
@@ -141,16 +142,35 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
 
   const pollTask = useCallback(
     async (taskId: string, signal: AbortSignal, studioProjectId: string | null) => {
-      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const sleep = (ms: number) => new Promise<void>((resolve) => {
+        if (signal.aborted) return resolve();
+        const finish = () => { clearTimeout(timer); signal.removeEventListener("abort", finish); resolve(); };
+        const timer = setTimeout(finish, ms);
+        signal.addEventListener("abort", finish, { once: true });
+      });
+      let failures = 0;
       try {
         while (!signal.aborted) {
-          const t = await api.getTask(taskId);
+          let t: api.TaskStatusResponse;
+          try {
+            t = await api.getTask(taskId, signal);
+            failures = 0;
+          } catch {
+            if (signal.aborted) return;
+            const delay = Math.min(1500 * 2 ** Math.min(failures++, 4), 15000);
+            setTaskTrace((prev) => ({
+              ...(prev?.id === taskId ? prev : { id: taskId, status: "pending", line: "En attente du statut de la tâche…", done: false }),
+              trackingNotice: `Suivi momentanément indisponible. Reconnexion automatique dans ${Math.ceil(delay / 1000)} s ; la tâche continue côté serveur.`,
+            }));
+            await sleep(delay);
+            continue;
+          }
           if (signal.aborted) return;
           if (t.last_turn_model_used) setLastObservedModel(t.last_turn_model_used);
 
           let hi: api.TaskHumanInputPayload | null = null;
           try {
-            hi = await api.getTaskHumanInput(taskId);
+            hi = await api.getTaskHumanInput(taskId, signal);
           } catch {
             hi = null;
           }
@@ -243,19 +263,20 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
                 /* ignore */
               }
             }
-            const summary = chatMessageForTerminalTask(t.status, last?.message, t.failure_detail);
+            const summary = chatMessageForTerminalTask(t.status, last?.message, t.failure_detail, t.outcome);
             if (signal.aborted) return;
-            setChat((c) => [
-              ...c,
-              {
+            setChat((c) => {
+              const message: ChatMessage = {
                 role: "assistant",
                 text: summary,
                 task_id: taskId,
                 task_status: t.status,
                 task_outcome: t.outcome,
                 suggested_actions: t.suggested_actions,
-              },
-            ]);
+              };
+              const existing = c.findIndex(row => row.role === "assistant" && row.task_id === taskId);
+              return existing < 0 ? [...c, message] : c.map((row, index) => index === existing ? { ...row, ...message } : row);
+            });
             void (async () => {
               try {
                 const sd = await api.getTaskStudioDiff(taskId);
@@ -292,39 +313,15 @@ export function useStudioTasks({ selectedId, setAcceptanceCriteriaDraft, setFile
   /** Au chargement / changement de projet : reprendre le polling si une tâche non terminale était en cours. */
   useEffect(() => {
     if (!selectedId) return;
-    let cancelled = false;
     const stored = loadActiveTask(selectedId);
     if (!stored?.taskId) return;
-    void (async () => {
-      try {
-        const t = await api.getTask(stored.taskId);
-        if (cancelled) return;
-        if (api.isTaskTerminal(t.status)) {
-          clearActiveTask(selectedId);
-          return;
-        }
-        pollTaskAbortRef.current?.abort();
-        const ac = new AbortController();
-        pollTaskAbortRef.current = ac;
-        setTaskTrace({
-          id: stored.taskId,
-          status: t.status,
-          line: "Tâche en cours (reprise après rechargement)…",
-          done: false,
-        });
-        void pollTask(stored.taskId, ac.signal, selectedId);
-      } catch (error) {
-        if (!cancelled) setTaskTrace({
-          id: stored.taskId,
-          status: "interrupted",
-          line: `Suivi indisponible : ${error}`,
-          done: true,
-        });
-      }
-    })();
+    pollTaskAbortRef.current?.abort();
+    const ac = new AbortController();
+    pollTaskAbortRef.current = ac;
+    setTaskTrace({ id: stored.taskId, status: "pending", line: "Récupération du suivi…", done: false });
+    void pollTask(stored.taskId, ac.signal, selectedId);
     return () => {
-      cancelled = true;
-      pollTaskAbortRef.current?.abort();
+      ac.abort();
     };
   }, [selectedId, pollTask]);
 

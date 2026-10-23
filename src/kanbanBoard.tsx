@@ -5,6 +5,7 @@ import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Textarea } from "./components/ui/textarea";
 import { Select } from "./components/ui/select";
+import { ticketStatusForTask, taskHasActiveProgress } from "./kanbanTaskState";
 
 const COLUMNS: { id: api.StudioTicketStatus; label: string; theme: string }[] = [
   { id: "todo", label: "À faire", theme: "slate" },
@@ -19,10 +20,11 @@ type TicketProgressSnapshot = {
   pct: number;
   message: string;
   status: string;
+  assignedAgent?: string;
 };
 
 /** Statuts de ticket pour lesquels on affiche une barre de progression de la tâche liée. */
-const PROGRESS_TRACKED_STATUSES: api.StudioTicketStatus[] = ["in_progress", "review"];
+const PROGRESS_TRACKED_STATUSES: api.StudioTicketStatus[] = ["in_progress", "review", "blocked"];
 
 /** Dernière progression non vide (sinon 0%). */
 function lastProgress(task: api.TaskStatusResponse): { pct: number; message: string } {
@@ -227,7 +229,7 @@ export function KanbanBoard({
             const t = await api.tryGetTask(taskId);
             if (!t) return;
             const { pct, message } = lastProgress(t);
-            snapshots.push([taskId, { pct, message, status: t.status }]);
+            snapshots.push([taskId, { pct, message: t.failure_detail || message, status: t.status, assignedAgent: t.assigned_agent }]);
           } catch {
             // Ignore individual failures: keep last known snapshot.
           }
@@ -310,9 +312,13 @@ export function KanbanBoard({
   const byStatus = useMemo(() => {
     const map = new Map<api.StudioTicketStatus, api.StudioTicket[]>();
     for (const col of COLUMNS) map.set(col.id, []);
-    for (const t of tickets) map.get(t.status)?.push(t);
+    for (const t of tickets) {
+      const snapshot = t.related_task_id ? progressByTaskId[t.related_task_id] : undefined;
+      const status = ticketStatusForTask(t.status, snapshot?.status);
+      map.get(status)?.push(status === t.status ? t : { ...t, status, evidence: { ...t.evidence, summary: snapshot?.message || t.evidence.summary } });
+    }
     return map;
-  }, [tickets]);
+  }, [tickets, progressByTaskId]);
 
   const stuckExecutionHint = useMemo(() => {
     if (!selected?.related_task_id?.trim()) return null;
@@ -448,8 +454,14 @@ export function KanbanBoard({
       if (action === "pause") await api.pauseTask(taskId);
       else if (action === "resume") await api.resumeTask(taskId);
       else await api.cancelTask(taskId);
+      await load();
+      if (projectId && selected) await openTicket(selected);
       const t = await api.tryGetTask(taskId);
       setLinkedTaskSnapshot(t);
+      if (t) {
+        const progress=lastProgress(t);
+        setProgressByTaskId(previous=>({...previous,[taskId]:{...progress,status:t.status,assignedAgent:t.assigned_agent}}));
+      }
       if (t === null) {
         setLinkedTaskError(
           "Tâche introuvable après l’action (souvent après annulation définitive ou redémarrage du daemon).",
@@ -488,6 +500,9 @@ export function KanbanBoard({
   }
 
   function composeTicketMessage(ticket: api.StudioTicket): string {
+    if (ticket.status === "review" || ticket.evidence.resume_status === "review") {
+      return `Examine le ticket Kanban #${ticket.id}, vérifie ses critères avec des preuves et consigne un verdict de revue. Demande des corrections si les critères ne sont pas validés.\n${ticket.description}`;
+    }
     return [
       `Implémente le ticket Kanban #${ticket.id}.`,
       `Titre: ${ticket.title}`,
@@ -559,10 +574,20 @@ export function KanbanBoard({
     setPlayBusyId(ticket.id);
     setError(null);
     try {
+      const previous = ticket.related_task_id ? progressByTaskId[ticket.related_task_id] : undefined;
+      if (ticket.related_task_id && previous && ["failed", "interrupted", "paused"].includes(previous.status)) {
+        await api.resumeTask(ticket.related_task_id);
+        const taskId=ticket.related_task_id;
+        setProgressByTaskId(snapshots=>({...snapshots,[taskId]:{...previous,status:"queued",pct:0,message:"Reprise depuis le checkpoint…"}}));
+        await load();
+        await openTicket(ticket);
+        onLaunchTicket(ticket);
+        return;
+      }
       const payload = await api.sendMessage({
         message: composeTicketMessage(ticket),
         studio_project_id: projectId,
-        studio_assigned_agent: ticket.assigned_agent,
+        studio_assigned_agent: ticket.status === "review" || ticket.evidence.resume_status === "review" ? ticket.review_agent : ticket.assigned_agent,
         studio_ticket_id: ticket.id,
         studio_ticket_enforcement_mode: ticketEnforcementMode ?? "soft",
       });
@@ -684,6 +709,7 @@ export function KanbanBoard({
                     ? progressByTaskId[taskId]
                     : undefined;
                 const waitingForUser = progressSnap?.status === "waiting_user_input";
+                const showProgress = progressSnap && taskHasActiveProgress(progressSnap.status);
                 const cardTheme = waitingForUser ? "amber" : getTheme(t.status);
                 return (
                 <article key={t.id} className={`kanban-ticket-card kanban-ticket-card--${cardTheme}`}>
@@ -691,7 +717,7 @@ export function KanbanBoard({
                     <div className="kanban-ticket-title">{t.title}</div>
                     <span className={`kanban-status-badge kanban-theme-${cardTheme}`}>
                       {waitingForUser ? "Attente de votre réponse" : getStatusLabel(t.status)}
-                      {progressSnap && !waitingForUser ? ` ${progressSnap.pct}%` : ""}
+                      {showProgress ? ` ${Math.min(99, progressSnap.pct)}%` : ""}
                     </span>
                   </div>
                   {waitingForUser ? (
@@ -704,20 +730,20 @@ export function KanbanBoard({
                       {t.evidence.summary}
                     </p>
                   ) : null}
-                  {progressSnap && !waitingForUser ? (
+                  {showProgress ? (
                     <div
                       className="kanban-card-progress"
                       role="progressbar"
                       aria-valuemin={0}
                       aria-valuemax={100}
-                      aria-valuenow={progressSnap.pct}
-                      aria-label={`Progression du ticket : ${progressSnap.pct}%`}
+                      aria-valuenow={Math.min(99, progressSnap.pct)}
+                      aria-label={`Progression du ticket : ${Math.min(99, progressSnap.pct)}%`}
                       title={progressSnap.message || `Progression : ${progressSnap.pct}%`}
                     >
                       <div className="kanban-card-progress-track">
                         <div
                           className="kanban-card-progress-fill"
-                          style={{ width: `${progressSnap.pct}%` }}
+                          style={{ width: `${Math.min(99, progressSnap.pct)}%` }}
                         />
                       </div>
                       {progressSnap.message ? (
@@ -748,7 +774,8 @@ export function KanbanBoard({
                     </div>
                   ) : null}
                   <div className="kanban-card-meta muted">
-                    <span>Agent <strong>{t.assigned_agent}</strong></span>
+                    <span>Responsable <strong>{t.assigned_agent}</strong></span>
+                    {progressSnap?.assignedAgent ? <span>Exécution <strong>{progressSnap.assignedAgent}</strong> · {formatTaskStatusFr(progressSnap.status)}</span> : null}
                     <span>Revue <strong>{t.review_agent}</strong></span>
                   </div>
                   <div className="kanban-task-id muted" title={t.related_task_id ?? undefined}>
@@ -762,7 +789,7 @@ export function KanbanBoard({
                       disabled={playBusyId === t.id || playBlockedReason(t) != null}
                       title={playBlockedReason(t) ?? undefined}
                     >
-                      {playBusyId === t.id ? "Lancement…" : "Lancer"}
+                      {playBusyId === t.id ? "Lancement…" : progressSnap && ["failed", "interrupted", "paused"].includes(progressSnap.status) ? "Reprendre" : t.status === "review" ? "Lancer la revue" : "Lancer"}
                     </Button>
                   </div>
                 </article>

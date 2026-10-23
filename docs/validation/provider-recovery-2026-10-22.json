@@ -1,0 +1,995 @@
+{
+  "at": "2026-10-22T21:16:47.350Z",
+  "data": "C:\\Users\\azero\\AppData\\Local\\Temp\\studio-provider-recovery-qfxKWp",
+  "daemon_sha256": "53ca2a6c0650e58a3c2958269e0976428e52ad120eb67fab306e8406cad6240c",
+  "provider": "scripted HTTP fixture",
+  "cases": [
+    {
+      "name": "fallback with heartbeat and no partial tool execution",
+      "task": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5",
+      "status": "completed",
+      "events": [
+        {
+          "at": "2026-10-22T21:16:48.725187900+00:00",
+          "event_type": "session_bound",
+          "kind": "session_bound",
+          "payload": {
+            "session_id": "provider-fallback"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.725741200+00:00",
+          "event_type": "user_request_received",
+          "kind": "user_request_received",
+          "payload": {
+            "message": "[Planification bornée : utiliser les outils de lecture et uniquement CODE_STUDIO_PLAN.md pour l’écriture. Aucune délégation ni commande système.]\n\n[Contexte code projet (index hybride symbolique+sémantique; extraits non exhaustifs)]\n- CODE_STUDIO_PLAN.md:1-48 (score 0.42, sym 0.53, sem 0.20)\n```\n# Titre : Provider recovery fixture\n\n## Description\n\n(Brève description du produit et de l’usage attendu.)\n\n## Scope\n\n- **Inclus** : …\n- **Exclus / hors périmètre actuel** : …\n\n## Stack\n\n(À compléter — stack enregistrée dans `.akasha-studio.json` ou déduite du manifeste.)\n\n## Structure du projet\n\n(Grands dossiers ou modules importants ; rester concis.)\n\n## Commandes\n\n- **Dev** : …\n- **Build** : …\n- **Tests** : …\n\n## Fichiers hors scope\n\n(Fichiers ou zones que les agents ne modifient pas sans instruction explicite — ex. `node_modules`, artefacts de build.)\n\n## Demandes d'évolutions utilisateur par phase\n\n- (Une ligne datée par demande ou regroupement logique ; lier à la phase ou au lot concerné.)\n\n## Recommandations\n\n(Pièges connus, ordre de lecture du code, conventions à respecter.)\n\n## Todos\n\n- [ ] …\n\n## Informations complémentaires\n\n(Notes diverses, liens internes, détails d’exécution, résultats de commandes utiles.)\n\n---\n\n_Gabarit Code Studio (Akasha) : **conserver ces titres de section** (`## …`). Pour une modification mineure, **ne pas** réécrire tout le fichier : éditer uniquement les sections concernées et ajouter des **lignes datées** dans *Informations complémentaires* ou *Demandes d'évolutions utilisateur par phase* pour l’historique des lots._\n```\n- DESIGN.md:1-57 (score 0.35, sym 0.47, sem 0.13)\n```\n---\nversion: alpha\nname: \"Provider recovery fixture\"\ndescription: \"Initial design scaffold — refine with implementation.\"\ncolors:\n  primary: \"#6366F1\"\n  surface: \"#0F172A\"\n  text: \"#F8FAFC\"\n  muted: \"#94A3B8\"\ntypography:\n  body-md:\n    fontFamily: system-ui\n    fontSize: 16px\n    fontWeight: \"400\"\n    lineHeight: \"1.5\"\n  display-lg:\n    fontFamily: system-ui\n    fontSize: 32px\n    fontWeight: \"600\"\n    lineHeight: \"1.2\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\ncomponents: {}\n\n---\n\n## Brand & Style\n\n(À compléter — identité visuelle, références, mood, public cible.)\n\n## Colors\n\nPalette de départ — à aligner sur la marque et le code livré.\n\n## Typography\n\nHiérarchie de base — ajuster selon le produit.\n\n## Layout & Spacing\n\nGrille et gouttières — à définir (mobile d’abord recommandé).\n\n## Elevation & depth\n\nOmbres et profondeur — à préciser.\n\n## Shapes\n\nRayons et formes (cartes, boutons).\n\n## Components\n\n_Principaux blocs UI — détailler en `###` au fil de l’implémentation._\n```\n- .akasha-studio.json:1-8 (score 0.09, sym 0.13, sem 0.00)\n```\n{\n  \"id\": \"3fea720e-674a-4509-be64-f6782f680cde\",\n  \"name\": \"Provider recovery fixture\",\n  \"created_at\": \"2026-10-22T21:16:48.384041500+00:00\",\n  \"evolutions\": [],\n  \"verify_skip\": false,\n  \"ticket_enforcement_mode\": \"off\"\n}\n```\n\n[Ticket Kanban obligatoire]\n- ticket_id: ea1f7188-b621-4a28-b4be-3b8888192aa8\n- titre: Audit fallback\n- assigned_agent: studio_planner\n- review_agent: studio_reviewer\n- status: todo\n- dépendances: aucune\n- critères:\n- Design exists\n- contraintes: ne pas clôturer en done; produire un résultat exécutable et laisser le ticket en review pour validation.\n\n[Mode Code Studio — PLANIFICATION : rôle studio_planner, lecture du dépôt et seule écriture de CODE_STUDIO_PLAN.md. Shell, implémentation, extensions et délégation désactivés. Passer en mode implémentation pour modifier les sources.]\n\n[Contexte projet — contenu de CODE_STUDIO_PLAN.md. Le gabarit et ses titres s’appliquent uniquement à CODE_STUDIO_PLAN.md ; ne pas les copier dans les fichiers demandés. Mettre ce plan à jour par section seulement si la tâche le nécessite, sans réécriture totale systématique :\n# Titre : Provider recovery fixture\n\n## Description\n\n(Brève description du produit et de l’usage attendu.)\n\n## Scope\n\n- **Inclus** : …\n- **Exclus / hors périmètre actuel** : …\n\n## Stack\n\n(À compléter — stack enregistrée dans `.akasha-studio.json` ou déduite du manifeste.)\n\n## Structure du projet\n\n(Grands dossiers ou modules importants ; rester concis.)\n\n## Commandes\n\n- **Dev** : …\n- **Build** : …\n- **Tests** : …\n\n## Fichiers hors scope\n\n(Fichiers ou zones que les agents ne modifient pas sans instruction explicite — ex. `node_modules`, artefacts de build.)\n\n## Demandes d'évolutions utilisateur par phase\n\n- (Une ligne datée par demande ou regroupement logique ; lier à la phase ou au lot concerné.)\n\n## Recommandations\n\n(Pièges connus, ordre de lecture du code, conventions à respecter.)\n\n## Todos\n\n- [ ] …\n\n## Informations complémentaires\n\n(Notes diverses, liens internes, détails d’exécution, résultats de commandes utiles.)\n\n---\n\n_Gabarit Code Studio (Akasha) : **conserver ces titres de section** (`## …`). Pour une modification mineure, **ne pas** réécrire tout le fichier : éditer uniquement les sections concernées et ajouter des **lignes datées** dans *Informations complémentaires* ou *Demandes d'évolutions utilisateur par phase* pour l’historique des lots._\n]\n\n[Kanban — instantané compact des tickets non terminés; les détails du ticket courant sont fournis séparément. Vérifie les prérequis avant toute délégation.\n{\"current_ticket_included_below\":\"ea1f7188-b621-4a28-b4be-3b8888192aa8\",\"included\":0,\"tickets\":[],\"unfinished_total\":1}\n]\n\n[Current user request — task scope]\nCASE:fallback Lis DESIGN.md avec read_file puis rapporte son titre. Ne modifie aucun fichier.\n[End current user request]\n\nRespect the exact requested paths and contents. Project templates and examples are context; do not modify them unless this request requires it."
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.733453+00:00",
+          "event_type": "timeline_milestone",
+          "kind": "timeline_milestone",
+          "payload": {
+            "elapsed_ms": 8,
+            "name": "request_received"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.733487500+00:00",
+          "event_type": "acknowledgment_sent",
+          "kind": "acknowledgment_sent",
+          "payload": {
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.741568800+00:00",
+          "event_type": "studio_ticket_link",
+          "kind": "studio_ticket_link",
+          "payload": {
+            "ticket_id": "ea1f7188-b621-4a28-b4be-3b8888192aa8"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.753060500+00:00",
+          "event_type": "timeline_milestone",
+          "kind": "timeline_milestone",
+          "payload": {
+            "elapsed_ms": 26,
+            "name": "selector_start"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.753088100+00:00",
+          "event_type": "timeline_milestone",
+          "kind": "timeline_milestone",
+          "payload": {
+            "decision_found": true,
+            "duration_ms": 0,
+            "elapsed_ms": 28,
+            "name": "selector_end",
+            "selector_enabled": true,
+            "studio_forced_agent": "studio_planner",
+            "timed_out": false
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.767958400+00:00",
+          "event_type": "timeline_milestone",
+          "kind": "timeline_milestone",
+          "payload": {
+            "decision_found": true,
+            "duration_ms": 0,
+            "elapsed_ms": 43,
+            "name": "selector_end",
+            "selector_enabled": true,
+            "timed_out": false
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.767981500+00:00",
+          "event_type": "task_created",
+          "kind": "task_created",
+          "payload": {
+            "assigned_agent": "studio_planner",
+            "execution_mode": "orchestrated",
+            "fallback_used": false,
+            "parent_task_id": null,
+            "selector_mode": "direct",
+            "selector_reason": "studio_assigned_agent",
+            "selector_target_agent": "studio_planner",
+            "selector_task_type": "code_generation",
+            "selector_used": true,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.775203600+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Analyzing your request…",
+            "progress_pct": 5,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.793978400+00:00",
+          "event_type": "llm_route_planned",
+          "kind": "llm_route_planned",
+          "payload": {
+            "model": "stall",
+            "phase": "pre_context",
+            "provider": "openai",
+            "task_type": "code_generation"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.802667900+00:00",
+          "event_type": "user_request_received",
+          "kind": "user_request_received",
+          "payload": {
+            "message": "[Planification bornée : utiliser les outils de lecture et uniquement CODE_STUDIO_PLAN.md pour l’écriture. Aucune délégation ni commande système.]\n\n[Contexte code projet (index hybride symbolique+sémantique; extraits non exhaustifs)]\n- CODE_STUDIO_PLAN.md:1-48 (score 0.42, sym 0.53, sem 0.20)\n```\n# Titre : Provider recovery fixture\n\n## Description\n\n(Brève description du produit et de l’usage attendu.)\n\n## Scope\n\n- **Inclus** : …\n- **Exclus / hors périmètre actuel** : …\n\n## Stack\n\n(À compléter — stack enregistrée dans `.akasha-studio.json` ou déduite du manifeste.)\n\n## Structure du projet\n\n(Grands dossiers ou modules importants ; rester concis.)\n\n## Commandes\n\n- **Dev** : …\n- **Build** : …\n- **Tests** : …\n\n## Fichiers hors scope\n\n(Fichiers ou zones que les agents ne modifient pas sans instruction explicite — ex. `node_modules`, artefacts de build.)\n\n## Demandes d'évolutions utilisateur par phase\n\n- (Une ligne datée par demande ou regroupement logique ; lier à la phase ou au lot concerné.)\n\n## Recommandations\n\n(Pièges connus, ordre de lecture du code, conventions à respecter.)\n\n## Todos\n\n- [ ] …\n\n## Informations complémentaires\n\n(Notes diverses, liens internes, détails d’exécution, résultats de commandes utiles.)\n\n---\n\n_Gabarit Code Studio (Akasha) : **conserver ces titres de section** (`## …`). Pour une modification mineure, **ne pas** réécrire tout le fichier : éditer uniquement les sections concernées et ajouter des **lignes datées** dans *Informations complémentaires* ou *Demandes d'évolutions utilisateur par phase* pour l’historique des lots._\n```\n- DESIGN.md:1-57 (score 0.35, sym 0.47, sem 0.13)\n```\n---\nversion: alpha\nname: \"Provider recovery fixture\"\ndescription: \"Initial design scaffold — refine with implementation.\"\ncolors:\n  primary: \"#6366F1\"\n  surface: \"#0F172A\"\n  text: \"#F8FAFC\"\n  muted: \"#94A3B8\"\ntypography:\n  body-md:\n    fontFamily: system-ui\n    fontSize: 16px\n    fontWeight: \"400\"\n    lineHeight: \"1.5\"\n  display-lg:\n    fontFamily: system-ui\n    fontSize: 32px\n    fontWeight: \"600\"\n    lineHeight: \"1.2\"\nrounded:\n  sm: \"4px\"\n  md: \"8px\"\nspacing:\n  xs: \"4px\"\n  sm: \"8px\"\ncomponents: {}\n\n---\n\n## Brand & Style\n\n(À compléter — identité visuelle, références, mood, public cible.)\n\n## Colors\n\nPalette de départ — à aligner sur la marque et le code livré.\n\n## Typography\n\nHiérarchie de base — ajuster selon le produit.\n\n## Layout & Spacing\n\nGrille et gouttières — à définir (mobile d’abord recommandé).\n\n## Elevation & depth\n\nOmbres et profondeur — à préciser.\n\n## Shapes\n\nRayons et formes (cartes, boutons).\n\n## Components\n\n_Principaux blocs UI — détailler en `###` au fil de l’implémentation._\n```\n- .akasha-studio.json:1-8 (score 0.09, sym 0.13, sem 0.00)\n```\n{\n  \"id\": \"3fea720e-674a-4509-be64-f6782f680cde\",\n  \"name\": \"Provider recovery fixture\",\n  \"created_at\": \"2026-10-22T21:16:48.384041500+00:00\",\n  \"evolutions\": [],\n  \"verify_skip\": false,\n  \"ticket_enforcement_mode\": \"off\"\n}\n```\n\n[Ticket Kanban obligatoire]\n- ticket_id: ea1f7188-b621-4a28-b4be-3b8888192aa8\n- titre: Audit fallback\n- assigned_agent: studio_planner\n- review_agent: studio_reviewer\n- status: todo\n- dépendances: aucune\n- critères:\n- Design exists\n- contraintes: ne pas clôturer en done; produire un résultat exécutable et laisser le ticket en review pour validation.\n\n[Mode Code Studio — PLANIFICATION : rôle studio_planner, lecture du dépôt et seule écriture de CODE_STUDIO_PLAN.md. Shell, implémentation, extensions et délégation désactivés. Passer en mode implémentation pour modifier les sources.]\n\n[Contexte projet — contenu de CODE_STUDIO_PLAN.md. Le gabarit et ses titres s’appliquent uniquement à CODE_STUDIO_PLAN.md ; ne pas les copier dans les fichiers demandés. Mettre ce plan à jour par section seulement si la tâche le nécessite, sans réécriture totale systématique :\n# Titre : Provider recovery fixture\n\n## Description\n\n(Brève description du produit et de l’usage attendu.)\n\n## Scope\n\n- **Inclus** : …\n- **Exclus / hors périmètre actuel** : …\n\n## Stack\n\n(À compléter — stack enregistrée dans `.akasha-studio.json` ou déduite du manifeste.)\n\n## Structure du projet\n\n(Grands dossiers ou modules importants ; rester concis.)\n\n## Commandes\n\n- **Dev** : …\n- **Build** : …\n- **Tests** : …\n\n## Fichiers hors scope\n\n(Fichiers ou zones que les agents ne modifient pas sans instruction explicite — ex. `node_modules`, artefacts de build.)\n\n## Demandes d'évolutions utilisateur par phase\n\n- (Une ligne datée par demande ou regroupement logique ; lier à la phase ou au lot concerné.)\n\n## Recommandations\n\n(Pièges connus, ordre de lecture du code, conventions à respecter.)\n\n## Todos\n\n- [ ] …\n\n## Informations complémentaires\n\n(Notes diverses, liens internes, détails d’exécution, résultats de commandes utiles.)\n\n---\n\n_Gabarit Code Studio (Akasha) : **conserver ces titres de section** (`## …`). Pour une modification mineure, **ne pas** réécrire tout le fichier : éditer uniquement les sections concernées et ajouter des **lignes datées** dans *Informations complémentaires* ou *Demandes d'évolutions utilisateur par phase* pour l’historique des lots._\n]\n\n[Kanban — instantané compact des tickets non terminés; les détails du ticket courant sont fournis séparément. Vérifie les prérequis avant toute délégation.\n{\"current_ticket_included_below\":\"ea1f7188-b621-4a28-b4be-3b8888192aa8\",\"included\":0,\"tickets\":[],\"unfinished_total\":1}\n]\n\n[Current user request — task scope]\nCASE:fallback Lis DESIGN.md avec read_file puis rapporte son titre. Ne modifie aucun fichier.\n[End current user request]\n\nRespect the exact requested paths and contents. Project templates and examples are context; do not modify them unless this request requires it."
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.889424900+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Chargement du contexte et de la mémoire…",
+            "progress_pct": 8,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.893641100+00:00",
+          "event_type": "memory_recall_started",
+          "kind": "memory_recall_started",
+          "payload": {
+            "semantic_top_k": 0,
+            "timeout_secs": 45
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.897837100+00:00",
+          "event_type": "memory_recall_finished",
+          "kind": "memory_recall_finished",
+          "payload": {
+            "had_results": false,
+            "timed_out": false
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.902813+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Génération de la réponse…",
+            "progress_pct": 12,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.906900900+00:00",
+          "event_type": "llm_call_started",
+          "kind": "llm_call_started",
+          "payload": {
+            "model": "stall",
+            "provider": "openai",
+            "round": 1,
+            "task_type": "code_generation"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.965579400+00:00",
+          "event_type": "bounded_native_model_wait",
+          "kind": "bounded_native_model_wait",
+          "payload": {
+            "files_changed": false,
+            "round": 1,
+            "timeout_secs": 34
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.970750800+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 1,
+            "detail": null,
+            "elapsed_ms": 0,
+            "max_attempts": 2,
+            "model": "stall",
+            "phase": "started",
+            "provider": "openai",
+            "timeout_ms": 16949
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:48.971334200+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Appel au modèle : openai / stall · tentative 1/2",
+            "progress_pct": 24,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:16:49.035641100+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 1,
+            "detail": null,
+            "elapsed_ms": 62,
+            "max_attempts": 2,
+            "model": "stall",
+            "phase": "first_token",
+            "provider": "openai",
+            "timeout_ms": 16949
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:03.978599+00:00",
+          "event_type": "llm_wait_heartbeat",
+          "kind": "llm_wait_heartbeat",
+          "payload": {
+            "attempt": 1,
+            "elapsed_secs": 15,
+            "files_changed": false,
+            "model": "stall",
+            "phase": "first_token",
+            "provider": "openai"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:03.979918600+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "openai / stall : génération en cours depuis 15 s · tentative 1/2.",
+            "progress_pct": 24,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.939423300+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 1,
+            "detail": {
+              "class": "timeout",
+              "error": "openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs)"
+            },
+            "elapsed_ms": 16970,
+            "max_attempts": 2,
+            "model": "stall",
+            "phase": "failed",
+            "provider": "openai",
+            "timeout_ms": 16949
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.953348900+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 2,
+            "detail": null,
+            "elapsed_ms": 0,
+            "max_attempts": 2,
+            "model": "healthy",
+            "phase": "fallback",
+            "provider": "openai",
+            "timeout_ms": 16918
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.956662900+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Repli automatique : openai / healthy · tentative 2/2",
+            "progress_pct": 24,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.963497400+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 2,
+            "detail": null,
+            "elapsed_ms": 11,
+            "max_attempts": 2,
+            "model": "healthy",
+            "phase": "succeeded",
+            "provider": "openai",
+            "timeout_ms": 16918
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.971287400+00:00",
+          "event_type": "timeline_milestone",
+          "kind": "timeline_milestone",
+          "payload": {
+            "elapsed_ms": 17243,
+            "name": "first_meaningful_progress",
+            "source": "stream_chunk"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.971319800+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "",
+            "progress_pct": 50,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.975575700+00:00",
+          "event_type": "llm_call_finished",
+          "kind": "llm_call_finished",
+          "payload": {
+            "completion_tokens": 0,
+            "latency_ms": 10,
+            "model_used": "healthy",
+            "prompt_tokens": 0,
+            "round": 1,
+            "success": true
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.978770600+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Tool lane execution: serial_exclusive (1 call(s))",
+            "progress_pct": 50,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.978803300+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Reading the file…",
+            "progress_pct": 50,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:05.978808200+00:00",
+          "event_type": "tool_call_started",
+          "kind": "tool_call_started",
+          "payload": {
+            "args_preview": "DESIGN.md",
+            "call_id": "ecc32b37-f8d1-4674-ba2f-cbc2ec93887d",
+            "schema_version": 1,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5",
+            "tool": "read_file"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.003473900+00:00",
+          "event_type": "tool_invoked",
+          "kind": "tool_invoked",
+          "payload": {
+            "args": [
+              "DESIGN.md"
+            ],
+            "explanation": null,
+            "result_preview": "{\"error\":null,\"exit_code\":null,\"file_effects\":[],\"file_version\":\"e83e8afa1d084652f8454d6b7c8969ed4dcfbcbce5faef76d64f43556d029891\",\"operation_id\":\"1a919fd4-711e-40a7-8d07-5414602a745a\",\"output\":\"[read_file C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\Temp\\\\studio-provider-recovery-qfxKWp\\\\studio-projects\\\\3fea...",
+            "skill": null,
+            "success": true,
+            "tool": "read_file"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.003510500+00:00",
+          "event_type": "tool_call_finished",
+          "kind": "tool_call_finished",
+          "payload": {
+            "call_id": "ecc32b37-f8d1-4674-ba2f-cbc2ec93887d",
+            "duration_ms": 24,
+            "schema_version": 1,
+            "success": true,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5",
+            "tool": "read_file"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.017327100+00:00",
+          "event_type": "llm_call_started",
+          "kind": "llm_call_started",
+          "payload": {
+            "model": "healthy",
+            "provider": "openai",
+            "round": 2,
+            "task_type": "code_generation"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.104066600+00:00",
+          "event_type": "bounded_native_model_wait",
+          "kind": "bounded_native_model_wait",
+          "payload": {
+            "files_changed": false,
+            "round": 2,
+            "timeout_secs": 34
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.110448300+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 1,
+            "detail": null,
+            "elapsed_ms": 0,
+            "max_attempts": 2,
+            "model": "healthy",
+            "phase": "started",
+            "provider": "openai",
+            "timeout_ms": 16949
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.111972300+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "Appel au modèle : openai / healthy · tentative 1/2",
+            "progress_pct": 24,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.122489+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 1,
+            "detail": null,
+            "elapsed_ms": 10,
+            "max_attempts": 2,
+            "model": "healthy",
+            "phase": "first_token",
+            "provider": "openai",
+            "timeout_ms": 16949
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.124038400+00:00",
+          "event_type": "assistant_text_delta",
+          "kind": "assistant_text_delta",
+          "payload": {
+            "delta": "DESIGN.md a été lu. Vérification terminée.",
+            "schema_version": 1
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.124096400+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "DESIGN.md a été lu. Vérification terminée.",
+            "progress_pct": 50,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.128250700+00:00",
+          "event_type": "llm_provider_attempt",
+          "kind": "llm_provider_attempt",
+          "payload": {
+            "attempt": 1,
+            "detail": null,
+            "elapsed_ms": 18,
+            "max_attempts": 2,
+            "model": "healthy",
+            "phase": "succeeded",
+            "provider": "openai",
+            "timeout_ms": 16949
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.133229900+00:00",
+          "event_type": "llm_call_finished",
+          "kind": "llm_call_finished",
+          "payload": {
+            "completion_tokens": 0,
+            "latency_ms": 17,
+            "model_used": "healthy",
+            "prompt_tokens": 0,
+            "round": 2,
+            "success": true
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.136103800+00:00",
+          "event_type": "progress_update",
+          "kind": "progress_update",
+          "payload": {
+            "message": "DESIGN.md a été lu. Vérification terminée.",
+            "progress_pct": 100,
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.154246900+00:00",
+          "event_type": "task_completed",
+          "kind": "task_completed",
+          "payload": {
+            "completion_tokens": 0,
+            "cost_usd": 0,
+            "latency_ms": 17,
+            "model_used": "healthy",
+            "outcome": {
+              "acceptance_verified": false,
+              "confirmed_file_mutation": false,
+              "failed_tool_calls": 0,
+              "reason": null,
+              "result": "succeeded",
+              "schema_version": 1,
+              "status": "completed",
+              "successful_tool_calls": 1,
+              "termination_reason": "success",
+              "verification": [
+                {
+                  "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                  "kind": "provider_route_recovered",
+                  "model": "healthy",
+                  "provider": "openai",
+                  "status": "passed"
+                }
+              ]
+            },
+            "prompt_tokens": 0,
+            "status": "completed",
+            "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.154246900+00:00",
+          "event_type": "studio_worker_state_changed",
+          "kind": "studio_worker_state_changed",
+          "payload": {
+            "state": "completed",
+            "worker_task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.154281+00:00",
+          "event_type": "timeline_milestone",
+          "kind": "timeline_milestone",
+          "payload": {
+            "elapsed_ms": 17429,
+            "name": "task_completed",
+            "outcome": {
+              "acceptance_verified": false,
+              "confirmed_file_mutation": false,
+              "failed_tool_calls": 0,
+              "reason": null,
+              "result": "succeeded",
+              "schema_version": 1,
+              "status": "completed",
+              "successful_tool_calls": 1,
+              "termination_reason": "success",
+              "verification": [
+                {
+                  "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                  "kind": "provider_route_recovered",
+                  "model": "healthy",
+                  "provider": "openai",
+                  "status": "passed"
+                }
+              ]
+            },
+            "status": "completed"
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        },
+        {
+          "at": "2026-10-22T21:17:06.165934300+00:00",
+          "event_type": "session_state_snapshot",
+          "kind": "session_state_snapshot",
+          "payload": {
+            "schema_version": 1,
+            "session_id": "provider-fallback",
+            "state": {
+              "artifact_refs": [],
+              "constraints": [],
+              "facts": [
+                "DESIGN.md a été lu. Vérification terminée."
+              ],
+              "goals": [
+                "[Planification bornée : utiliser les outils de lecture et uniquement CODE_STUDIO_PLAN.md pour l’écriture. Aucune délégation ni commande système.]\n\n[Contexte code projet (index hybride symbolique+sémantique; extraits non exhaustifs)]\n- CODE_"
+              ],
+              "last_plan_id": null,
+              "open_questions": [],
+              "updated_at": "2026-10-22T21:16:48.796627800+00:00"
+            }
+          },
+          "schema_version": 1,
+          "task_id": "a314224f-4b66-45ac-b1b0-a6dafff6f7f5"
+        }
+      ]
+    },
+    {
+      "name": "pinned timeout, blocked ticket, truthful report and same-task resume",
+      "task": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d",
+      "failed": {
+        "assigned_agent": "studio_planner",
+        "cost_usd": 0,
+        "created_at": "2026-10-22T21:17:06.211325+00:00",
+        "failure_detail": "provider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.",
+        "last_turn_cost_usd": 0,
+        "last_turn_latency_ms": 0,
+        "last_turn_model_used": null,
+        "last_turn_tokens_in": 0,
+        "last_turn_tokens_out": 0,
+        "outcome": {
+          "acceptance_verified": false,
+          "confirmed_file_mutation": false,
+          "failed_tool_calls": 0,
+          "reason": "provider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.",
+          "result": "failed",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 0,
+          "termination_reason": "timeout",
+          "verification": []
+        },
+        "progress": [
+          {
+            "message": "Analyzing your request…",
+            "progress_pct": 5,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Chargement du contexte et de la mémoire…",
+            "progress_pct": 8,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Génération de la réponse…",
+            "progress_pct": 12,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Appel au modèle : openai / stall · tentative 1/1",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "openai / stall : génération en cours depuis 15 s · tentative 1/1.",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "openai / stall : génération en cours depuis 30 s · tentative 1/1.",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "provider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.",
+            "progress_pct": 100,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "provider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.",
+            "progress_pct": 100,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          }
+        ],
+        "status": "failed",
+        "suggested_actions": [
+          {
+            "id": "analyze_failure",
+            "kind": "message",
+            "label": "Demander une analyse de l’échec",
+            "message": "La dernière tâche a échoué ou été annulée.\nContexte:\nprovider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.\n\nPropose un plan de correction ciblé sans répéter l’implémentation. Si la cause est un contexte trop volumineux, identifie les résumés ou historiques redondants à compacter tout en conservant la demande, les règles et les résultats récents nécessaires."
+          }
+        ],
+        "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d",
+        "todos": [],
+        "tokens_used": 0,
+        "updated_at": "2026-10-22T21:17:40.463503800+00:00"
+      },
+      "resumed": {
+        "assigned_agent": "studio_planner",
+        "cost_usd": 0,
+        "created_at": "2026-10-22T21:17:06.211325+00:00",
+        "last_turn_cost_usd": 0,
+        "last_turn_latency_ms": 31,
+        "last_turn_model_used": "stall",
+        "last_turn_tokens_in": 0,
+        "last_turn_tokens_out": 0,
+        "outcome": {
+          "acceptance_verified": false,
+          "confirmed_file_mutation": false,
+          "failed_tool_calls": 0,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 1,
+          "termination_reason": "success",
+          "verification": []
+        },
+        "progress": [
+          {
+            "message": "Analyzing your request…",
+            "progress_pct": 5,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Chargement du contexte et de la mémoire…",
+            "progress_pct": 8,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Génération de la réponse…",
+            "progress_pct": 12,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Appel au modèle : openai / stall · tentative 1/1",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "openai / stall : génération en cours depuis 15 s · tentative 1/1.",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "openai / stall : génération en cours depuis 30 s · tentative 1/1.",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "provider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.",
+            "progress_pct": 100,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "provider_generation_failed: openai/stall: openai: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs). Les tentatives automatiques sont épuisées dans le budget de 33 s. Vérifiez que le fournisseur répond, que le modèle est installé et que la mémoire disponible suffit ; choisissez un modèle configuré plus léger si nécessaire, puis reprenez la tâche depuis son checkpoint.",
+            "progress_pct": 100,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Analyzing your request…",
+            "progress_pct": 5,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Chargement du contexte et de la mémoire…",
+            "progress_pct": 8,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Génération de la réponse…",
+            "progress_pct": 12,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Appel au modèle : openai / stall · tentative 1/1",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "",
+            "progress_pct": 50,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Tool lane execution: serial_exclusive (1 call(s))",
+            "progress_pct": 50,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Reading the file…",
+            "progress_pct": 50,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "Appel au modèle : openai / stall · tentative 1/1",
+            "progress_pct": 24,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "DESIGN.md a été lu. Vérification terminée.",
+            "progress_pct": 50,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "DESIGN.md a été lu. Vérification terminée.",
+            "progress_pct": 100,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          },
+          {
+            "message": "DESIGN.md a été lu. Vérification terminée.",
+            "progress_pct": 100,
+            "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d"
+          }
+        ],
+        "status": "completed",
+        "suggested_actions": [
+          {
+            "id": "refresh_files",
+            "kind": "ui",
+            "label": "Rafraîchir la liste des fichiers",
+            "ui_action": "refresh_files"
+          },
+          {
+            "id": "open_editor",
+            "kind": "ui",
+            "label": "Onglet Éditeur",
+            "ui_action": "open_editor"
+          },
+          {
+            "id": "open_preview",
+            "kind": "ui",
+            "label": "Ouvrir l’aperçu",
+            "ui_action": "open_preview"
+          },
+          {
+            "id": "open_design",
+            "kind": "ui",
+            "label": "Voir DESIGN.md",
+            "ui_action": "open_design"
+          }
+        ],
+        "task_id": "f22fe82a-a3ba-4b98-8e87-bd536da84b0d",
+        "todos": [],
+        "tokens_used": 0,
+        "updated_at": "2026-10-22T21:17:41.305743400+00:00"
+      }
+    }
+  ],
+  "requests": [
+    {
+      "at": "2026-10-22T21:16:48.974Z",
+      "model": "stall",
+      "pinned": false
+    },
+    {
+      "model": "stall",
+      "cancelled": true
+    },
+    {
+      "at": "2026-10-22T21:17:05.956Z",
+      "model": "healthy",
+      "pinned": false
+    },
+    {
+      "at": "2026-10-22T21:17:06.114Z",
+      "model": "healthy",
+      "pinned": false
+    },
+    {
+      "at": "2026-10-22T21:17:06.527Z",
+      "model": "stall",
+      "pinned": true
+    },
+    {
+      "model": "stall",
+      "cancelled": true
+    },
+    {
+      "at": "2026-10-22T21:17:41.023Z",
+      "model": "stall",
+      "pinned": true
+    },
+    {
+      "at": "2026-10-22T21:17:41.237Z",
+      "model": "stall",
+      "pinned": true
+    }
+  ],
+  "status": "passed"
+}

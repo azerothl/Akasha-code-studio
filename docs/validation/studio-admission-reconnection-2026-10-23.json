@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-10-23",
+  "provider_recovery": {
+    "status": "passed",
+    "daemon_sha256": "e61ba810b78752f5c6b78810a43b8bbabb544018248c17c2264935c621710b2b",
+    "cases": [
+      {
+        "name": "fallback with heartbeat and no partial tool execution",
+        "status": "completed",
+        "task": "163b3d30-3b65-4c4b-957b-73bd3fc35798"
+      },
+      {
+        "name": "pinned timeout, blocked ticket, truthful report and same-task resume",
+        "status": null,
+        "task": "e6129070-493c-4d5d-bfab-a1aac42bbea7"
+      }
+    ]
+  },
+  "real_model_qualification": {
+    "at": "2026-10-22T22:39:24.112Z",
+    "kind": "real configured providers, inert tool qualification only",
+    "cases": [
+      {
+        "provider": "ollama",
+        "model": "qwen3.5:9b",
+        "qualification": {
+          "checked_at": "2026-10-22T22:39:30.006020800+00:00",
+          "context_window_tokens": 32768,
+          "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+          "latency_ms": 5873,
+          "status": "qualified"
+        },
+        "passed": true
+      },
+      {
+        "provider": "ollama",
+        "model": "gpt-oss:20b",
+        "qualification": {
+          "checked_at": "2026-10-22T22:39:41.257684100+00:00",
+          "context_window_tokens": 16384,
+          "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+          "latency_ms": 11242,
+          "status": "qualified"
+        },
+        "passed": true
+      }
+    ]
+  },
+  "agentic_scoped": {
+    "status": "passed",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed",
+        "ms": 414,
+        "evidence": {
+          "id": "12335ed7-6320-4794-96ee-5a57f39754a4",
+          "head": "fed61278883afc6d4440a63356a540f9422f3113"
+        }
+      },
+      {
+        "name": "partial web-only policy inherits Studio file and development access",
+        "status": "passed",
+        "ms": 2528,
+        "evidence": {
+          "id": "d502951e-b873-4fdc-8ece-de0cb517ac4d",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 3,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "exit_code": 0,
+                "kind": "command",
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command"
+              },
+              {
+                "detail": "Goal mechanical criteria passed",
+                "kind": "acceptance",
+                "status": "passed"
+              },
+              {
+                "exit_code": null,
+                "kind": "project_build",
+                "status": "not_run"
+              }
+            ]
+          },
+          "non_studio_task": "e7a82b82-e097-47c1-800c-920af090fc85",
+          "non_studio_status": "completed",
+          "non_studio_effects": false
+        }
+      }
+    ],
+    "qualification_probes": 1
+  },
+  "ui": {
+    "unit_passed": 35,
+    "e2e_passed": 51,
+    "first_full_run_failed": 1,
+    "final_full_run_failed": 0,
+    "build": "passed"
+  },
+  "rust": {
+    "llm_passed": 105,
+    "studio_passed": 188
+  },
+  "limitations": [
+    "full agentic suite not rerun",
+    "small inert probe does not validate project delivery",
+    "initial send-failure test flake did not reproduce alone or on full rerun"
+  ]
+}

@@ -182,6 +182,10 @@ function semanticEventPayloadKey(ev: TaskEventEntry): string {
     payloadString(ev.payload, "command"),
     payloadString(ev.payload, "path"),
     payloadString(ev.payload, "status"),
+    payloadString(ev.payload, "phase"),
+    payloadString(ev.payload, "provider"),
+    payloadString(ev.payload, "model"),
+    o?.attempt == null ? "" : String(o.attempt),
   ]
     .filter(Boolean)
     .join("|");
@@ -247,6 +251,14 @@ export function extractEventDisplayMessage(payload: unknown): string | null {
 }
 
 export function formatEventFallback(ev: TaskEventEntry): string {
+  if (ev.event_type === "llm_provider_attempt" || ev.event_type === "llm_wait_heartbeat") {
+    const value=payloadObject(ev.payload);
+    if (value) {
+      const phase:Record<string,string>={started:"Appel démarré",retry:"Nouvelle tentative",fallback:"Repli automatique",first_token:"Le modèle répond",succeeded:"Réponse reçue",empty:"Réponse vide",failed:"Tentative en échec"};
+      const detail=payloadObject(value.detail);
+      return `${value.provider ?? "Fournisseur"} / ${value.model ?? "modèle"} · ${phase[String(value.phase)] ?? "Attente de réponse"} · tentative ${value.attempt ?? "?"}${value.max_attempts ? `/${value.max_attempts}` : ""}${value.elapsed_secs != null ? ` · ${value.elapsed_secs} s` : ""}${detail?.error ? ` · ${String(detail.error)}` : ""}`;
+    }
+  }
   const bits: string[] = [];
   if (ev.task_id) bits.push(`tâche ${ev.task_id}`);
   if (ev.payload != null && typeof ev.payload === "object") {

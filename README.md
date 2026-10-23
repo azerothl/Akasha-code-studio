@@ -2,11 +2,11 @@
 
 Interface web du mode Code Studio. Elle pilote un projet isolé par le daemon Akasha : demande à un agent, édition des fichiers, aperçu, branches Git et suivi d’exécution.
 
-Le daemon écoute par défaut sur `http://127.0.0.1:3876`. L’interface de développement est sur `http://127.0.0.1:5178` et proxifie `/api` vers ce daemon.
+Le daemon Akasha 0.12.0 écoute par défaut sur `http://127.0.0.1:3876`. L’interface de développement est sur `http://127.0.0.1:5178` et proxifie `/api` vers ce daemon.
 
 ## Démarrer
 
-Prérequis : Node.js 18+, le daemon Akasha déjà lancé, Git si vous utilisez les évolutions.
+Prérequis : Node.js 22.12+, 24.x ou 26+, le daemon Akasha déjà lancé, Git si vous utilisez les évolutions.
 
 ```bash
 npm install

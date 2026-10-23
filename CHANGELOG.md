@@ -1,10 +1,17 @@
-# CHANGELOG - Akasha Code Studio Refactor
+# Akasha Code Studio — journal des changements
 
-**Branch**: `refonte-UX`  
-**Status**: ✅ COMPLETE & BUILD PASSING  
-**Date**: December 2024  
+## 0.10.0 — 23 octobre 2026
+
+- **Conversation et Kanban** : lier les demandes à des tickets, créer un backlog initial et afficher les phases, dépendances, blocages et reprises.
+- **Pilotage agentique** : choisir un modèle pour une tâche, conserver son contexte et définir un objectif vérifiable avec /goal.
+- **Suivi plus fiable** : reconnecter le suivi après une erreur réseau et reprendre la tâche existante sans soumettre une seconde demande.
+- **Travail vérifiable** : créer un socle Vite, React et TypeScript strict, préparer les dépendances, exécuter les vérifications et garder leurs résultats dans le circuit de réparation.
+- **Chat plus lisible** : conserver la conversation et la zone de réponse visibles lorsque les détails sont ouverts.
+
+La création autonome d'une application complète avec un vrai LLM n'est pas garantie par ces changements ; vérifier le résultat généré, ses tests et son aperçu.
 
 ---
+## Archive historique — refonte UX initiale (décembre 2024)
 
 ## Executive Summary
 

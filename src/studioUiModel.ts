@@ -51,8 +51,12 @@ export function looksLikeContextWindowFailure(message: string | null | undefined
     || (text.includes("context") && text.includes("too many tokens"));
 }
 
+export function looksLikeModelTransportFailure(message: string | null | undefined): boolean {
+  return !!message && (message.includes("provider_generation_failed:") || looksLikeTimeoutMessage(message));
+}
+
 export function isLocalContextWindowPreflightFailure(message: string | null | undefined): boolean {
-  return message?.toLowerCase().includes("context_window_preflight_rejected") ?? false;
+  return !!message && !message.includes("studio_routes_exhausted") && message.toLowerCase().includes("context_window_preflight_rejected");
 }
 
 export function buildInitialProjectRequest(name: string, summary: string): string {
@@ -79,10 +83,14 @@ export function chatMessageForTerminalTask(
   status: string,
   lastProgressMessage: string | undefined,
   failureDetail?: string | null,
+  outcome?: { planning_verified?: boolean } | null,
 ): string {
   const last = lastProgressMessage?.trim();
   const detail = failureDetail?.trim();
   if (status === "completed") {
+    if (outcome?.planning_verified) {
+      return "Planification vérifiée. Les tickets prêts seront confiés aux agents d’implémentation. L’application reste à créer et à valider ; ce message ne marque pas le projet terminé.";
+    }
     if (last && !isStubProgressMessage(last)) {
       return last;
     }
@@ -96,16 +104,32 @@ export function chatMessageForTerminalTask(
           ? last
           : detail || null;
     if (body) {
-      if (looksLikeContextWindowFailure(body)) {
+      if (body.includes("studio_no_verified_progress")) {
+        return "L’agent a été arrêté après des modifications répétées sans vérification réussie. Ses fichiers et son checkpoint sont conservés. Consultez le dernier diagnostic de build ou de test avant de reprendre ; le Kanban ne relancera pas automatiquement la même boucle.";
+      }
+      if (body.includes("studio_command_verification_failed")) {
+        return `Le build ou les tests restent en échec, ou leur résultat est périmé après des modifications. L’agent a épuisé ses tentatives de correction ; le projet n’est pas validé. Consultez les commandes et leurs diagnostics dans le détail de la tâche avant de reprendre.\n\n${body}`;
+      }
+      if (body.includes("studio_round_budget_exhausted")) {
+        return "Le budget de travail est atteint sans nouveau jalon vérifié pour autoriser une prolongation. Les changements sont conservés et la relance automatique est arrêtée. Consultez le Kanban et les vérifications avant une reprise explicite.";
+      }
+      if (looksLikeContextWindowFailure(body) && !body.includes("studio_routes_exhausted")) {
         if (isLocalContextWindowPreflightFailure(body)) {
-          return "Code Studio a bloqué l’appel avant de contacter le modèle : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Pour continuer, choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche indique l’estimation et le budget restants.";
+          return "Code Studio a bloqué l’appel avant de contacter le modèle : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Cette tentative a été arrêtée avant l’appel au modèle. Des opérations peuvent avoir réussi lors des tours précédents : consultez le détail de la tâche. Pour continuer, choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche indique l’estimation et le budget restants.";
         }
         return "Le fournisseur du modèle a refusé la requête parce que son contexte est trop volumineux. Vérifiez le détail de la tâche, puis choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif avant de relancer.";
       }
-      const hint = looksLikeTimeoutMessage(body)
-        ? "\n\n(Souvent un timeout réseau ou LLM — vous pouvez renvoyer la même consigne pour relancer.)"
+      if (body.includes("tool_protocol_error") || body.includes("LFM2 tool generation incomplete")) {
+        return `Le modèle a proposé un appel d’outil invalide pour cette étape. Cet appel a été refusé avant exécution. Le détail de la tâche conserve les autres opérations éventuelles.\n\n${body}\n\nVérifiez les outils autorisés pour le rôle et la compatibilité du modèle. Ce diagnostic ne prouve pas une panne réseau ni un manque de mémoire.`;
+      }
+      if (body.includes("studio_routes_exhausted")) {
+        return `Aucune route de modèle compatible n’a permis de poursuivre. Les tentatives automatiques sont arrêtées ; le ticket conserve son état et son checkpoint.\n\n${body}`;
+      }
+      const hint = looksLikeModelTransportFailure(body)
+        ? "\n\nConsultez le modèle et les tentatives dans le détail de la tâche. Vérifiez que le service du modèle répond. Utilisez « Reprendre la tâche » pour conserver le ticket et l’avancement enregistrés."
         : "";
-      return body.length > 2800 ? `${body.slice(0, 2800)}…${hint}` : `${body}${hint}`;
+      const diagnostic = body.replace(/^provider_generation_failed:\s*/, "Le fournisseur n’a pas terminé la génération : ");
+      return diagnostic.length > 2800 ? `${diagnostic.slice(0, 2800)}…${hint}` : `${diagnostic}${hint}`;
     }
     return "Échec sans détail persisté. Vérifiez l’onglet « Logs serveur », le journal de build, ou renvoyez la consigne pour une nouvelle tentative.";
   }

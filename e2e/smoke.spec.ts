@@ -2,6 +2,40 @@ import { test, expect, type Page } from "@playwright/test";
 
 const demoId = "00000000-0000-4000-8000-000000000001";
 
+test("provider timeout resumes its checkpoint without resubmitting the request", async ({page}) => {
+  let sends=0;let resumes=0;
+  const reason="provider_generation_failed: ollama/lfm2:24b: timeout. Les tentatives automatiques sont épuisées.";
+  await page.route("**/api/message",route=>{sends++;return route.fulfill({json:{task_id:demoId}});});
+  await page.route(`**/api/tasks/${demoId}/resume`,route=>{resumes++;return route.fulfill({json:{resumed:true,task_id:demoId}});});
+  await page.route(url=>url.pathname===`/api/tasks/${demoId}`,route=>route.fulfill({json:{task_id:demoId,status:resumes?"running":"failed",failure_detail:resumes?null:reason,progress:resumes?[{progress_pct:24,message:"Nouvelle tentative : ollama / lfm2:24b"}]:[],outcome:resumes?null:{schema_version:1,termination_reason:"timeout",result:"failed",reason,acceptance_verified:false,successful_tool_calls:0,failed_tool_calls:0,verification:[]}}}));
+  await page.goto("/");await selectDemoProject(page);
+  await page.getByRole("textbox",{name:"Message à l’agent"}).fill("Créer une Todo List");
+  await page.getByRole("button",{name:"Envoyer",exact:true}).click();
+  await expect(page.getByText(/Le fournisseur n’a pas terminé la génération/).first()).toBeVisible();
+  await page.locator(".chat-task-status > summary").click();
+  await page.getByRole("button",{name:"Reprendre la tâche",exact:true}).click();
+  await expect.poll(()=>resumes).toBe(1);
+  expect(sends).toBe(1);
+  await expect(page.locator(".chat-task-status")).toContainText("En cours");
+});
+
+test("stale failed Kanban ticket is blocked without a misleading progress bar", async ({page}) => {
+  let sends=0;let resumes=0;
+  await page.route("**/api/message",route=>{sends++;return route.fulfill({json:{task_id:demoId}});});
+  const ticket={id:"timeout-ticket",project_id:demoId,title:"Créer la Todo List",description:"Todo française",status:"in_progress",assigned_agent:"studio_fullstack",review_agent:"studio_reviewer",related_task_id:demoId,acceptance_criteria:[],evidence:{},created_at:"2026-10-22T19:14:00Z",updated_at:"2026-10-22T19:19:00Z"};
+  await page.route(url=>url.pathname===`/api/studio/projects/${demoId}/tickets`,route=>route.fulfill({json:{items:[ticket]}}));
+  await page.route(`**/api/studio/projects/${demoId}/tickets/timeout-ticket`,route=>route.fulfill({json:{ticket,timeline:[]}}));
+  await page.route(`**/api/tasks/${demoId}/resume`,route=>{resumes++;return route.fulfill({json:{resumed:true}});});
+  await page.route(url=>url.pathname===`/api/tasks/${demoId}`,route=>route.fulfill({json:{task_id:demoId,status:resumes?"running":"failed",assigned_agent:"studio_project_manager",failure_detail:resumes?null:"ollama/lfm2:24b: timeout",progress:[{progress_pct:resumes?24:100,message:resumes?"Reprise":"timeout"}]}}));
+  await page.goto("/");await selectDemoProject(page);await page.getByTestId("studio-kanban-tab").click();
+  const card=page.locator(".kanban-ticket-card").filter({hasText:"Créer la Todo List"});
+  await expect(card.locator(".kanban-status-badge")).toHaveText("Bloqué");
+  await expect(card.getByRole("progressbar")).toHaveCount(0);
+  await expect(card).toContainText("studio_project_manager");
+  await card.getByRole("button",{name:"Reprendre",exact:true}).click();
+  await expect.poll(()=>resumes).toBe(1);expect(sends).toBe(0);
+});
+
 test("tool approval reply keeps the request identifier from the current question", async ({ page }) => {
   let reply: Record<string, unknown> | null = null;
   await page.route(`**/api/tasks/${demoId}/human-input`, route => route.fulfill({ json: {
@@ -1316,6 +1350,29 @@ test("model selection and audit action are structured task fields", async ({ pag
   await page.getByRole("textbox", { name: "Message à l’agent" }).fill("/audit inspecter les dépendances");
   await page.getByRole("button", { name: "Envoyer", exact: true }).click();
   await expect.poll(() => sent).toMatchObject({ studio_model: { provider: "fixture", model: "code-test" }, studio_action: "audit", message: "inspecter les dépendances" });
+  expect((sent as { studio_model?: unknown }).studio_model).toEqual({ provider: "fixture", model: "code-test" });
+});
+
+test("model qualification is inert and its metadata never enters the execution contract", async ({ page }) => {
+  let sent: Record<string, unknown> | null = null;
+  let probe: unknown;
+  await page.route("**/api/router/studio-qualify", route => {
+    probe = route.request().postDataJSON();
+    return route.fulfill({ json: { qualification: { status: "qualified", detail: "Protocole vérifié sans opération projet", checked_at: "2026-10-23T00:00:00Z", latency_ms: 100 } } });
+  });
+  await page.route("**/api/message", route => { sent = route.request().postDataJSON(); return route.fulfill({ json: { task_id: demoId } }); });
+  await page.goto("/"); await selectDemoProject(page);
+  const select = page.getByRole("combobox", { name: "Modèle de la tâche" });
+  await select.selectOption({ label: "code-test · fixture" });
+  await page.locator(".composer-model-note > summary").click();
+  await page.getByRole("button", { name: "Vérifier les outils du modèle" }).click();
+  await expect(page.locator(".composer-model-note")).toContainText("Outils vérifiés");
+  expect(probe).toEqual({ provider: "fixture", model: "code-test" });
+  expect(sent).toBeNull();
+  await expect(select).toHaveValue(JSON.stringify({ provider: "fixture", model: "code-test" }));
+  await page.getByRole("textbox", { name: "Message à l’agent" }).fill("Lire le plan");
+  await page.getByRole("button", { name: "Envoyer", exact: true }).click();
+  await expect.poll(() => sent?.studio_model).toEqual({ provider: "fixture", model: "code-test" });
 });
 
 test("slash palette supports keyboard selection and rejects unknown commands", async ({ page }) => {
@@ -1415,7 +1472,7 @@ test("failed task recovery prepares a draft without replaying effects", async ({
   await expect(page.getByText(/Une nouvelle soumission crée une autre tâche/)).toBeVisible();
 });
 
-test("local context preflight explains that no request was sent and shows a workaround", async ({ page }) => {
+test("local context preflight explains the blocked attempt without denying earlier effects", async ({ page }) => {
   let sends = 0;
   await page.route("**/api/message", route => {
     sends++;
@@ -1436,7 +1493,7 @@ test("local context preflight explains that no request was sent and shows a work
 
   await expect(page.getByText("Contexte trop volumineux pour le modèle").first()).toBeVisible();
   await expect(page.getByText(/Code Studio a bloqué l’appel avant de contacter le modèle/)).toBeVisible();
-  await expect(page.getByText(/Aucun appel au modèle ni outil n’a été exécuté/).last()).toBeVisible();
+  await expect(page.getByText(/Des opérations peuvent avoir réussi lors des tours précédents/).last()).toBeVisible();
   await expect(page.locator(".chat-conversation-panel code").filter({ hasText: "AKASHA_OLLAMA_NUM_CTX" })).toBeVisible();
   await page.locator(".chat-task-status > summary").click();
   await expect(page.getByText(/bloqué l’appel localement avant de contacter le fournisseur/)).toBeVisible();
