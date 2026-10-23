@@ -538,7 +538,7 @@ try {
     const state=await api(`/api/tasks/${id}/goal`);assert.equal(state.state,"cancelled");assert.equal(state.cycles,0);return{id,goal:state};
   });
   await check(
-    "TypeScript build failure stays failed when Vite fallback succeeds",
+    "TypeScript build failure stays failed without a weaker fallback",
     async () => {
       const previous = project;
       try {
@@ -611,14 +611,11 @@ try {
         assert(
           row.outcome.verification.some(
             (check) =>
-              check.kind === "project_build" && check.status === "failed",
+              check.kind === "command" && check.verification === true && check.status === "failed",
           ),
         );
-        assert.match(row.failure_detail, /Vite fallback passed/);
-        assert.match(
-          await readFile(join(buildRoot, "dist/index.html"), "utf8"),
-          /assets/,
-        );
+        assert(row.outcome.verification.some(check=>check.kind==="command" && /TS2322/.test(check.diagnostic??"")));
+        assert.equal(await readFile(join(buildRoot,"dist/index.html"),"utf8").catch(()=>null),null,"No weaker bundler fallback may run");
         return { id, outcome: row.outcome, failure: row.failure_detail };
       } finally {
         project = previous;
@@ -643,6 +640,68 @@ try {
     assert.equal(row.outcome.successful_tool_calls,0);
     assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
+  });
+  await check("unified repair installs dependencies before a runtime-scheduled build and repairs TypeScript", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Unified repair",tech_stack:"Vite React TypeScript strict"},201);
+      const buildRoot=join(data,"studio-projects",project.id);
+      await writeFile(join(buildRoot,".npmrc"),"noproxy=registry.npmjs.org\n");
+      const bad='const value: string = "todo";\nconst invalid = value === 1;\nexport default function App() { return <main>{String(invalid)}</main>; }\n';
+      const good=bad.replace('value === 1','value === "todo"');
+      await writeFile(join(buildRoot,"src/App.tsx"),bad);
+      assert.equal(await stat(join(buildRoot,"node_modules")).catch(()=>null),null);
+      scripts.set("unified-worker",[
+        {text:"Le socle est pret pour verification."},
+        {...tool("read_file",{path:"workspace:/src/App.tsx"}),verify:(text,body)=>{
+          assert.match(text,/TS2367/);assert.match(text,/Phase: read/);assert.equal(body.tool_choice,"required");
+          const messages=body.messages??[];
+          assert(messages.some(message=>message.role==="tool"&&/added .*packages/.test(message.content)),"Install receipt must be in native history");
+          assert(messages.some(message=>message.role==="tool"&&/TS2367/.test(message.content)),"Build failure must have its own receipt");
+        }},
+        tool("write_file",{path:"workspace:/src/App.tsx",content:good}),
+        tool("run_command",{program:"npm",args:["run","build"],cwd:"workspace:/"}),
+        {text:"Build TypeScript et Vite verifie apres correction."},
+      ]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Verifier et reparer le socle",assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",acceptance_criteria:[{id:"build",text:"Le build reussit",kind:"command_ok",argv:["npm","run","build"]}]},201);
+      const parent=await task("unified-parent",[{text:"TOOL: delegate_to_agent studio_scaffold CASE:unified-worker Verifie le projet et corrige son build si necessaire."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:(response.ticket??response).id});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_scaffold"),"Unified repair worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert.equal(await readFile(join(buildRoot,"src/App.tsx"),"utf8"),good);
+      assert((await stat(join(buildRoot,"node_modules/typescript/package.json"))).isFile());
+      assert((await stat(join(buildRoot,"node_modules/.akasha-studio-inputs"))).isFile());
+      const command=row.outcome.verification.find(c=>c.kind==="command"&&c.verification===true);
+      assert.equal(command.status,"passed");assert.equal(command.attempts,2);
+      assert(row.outcome.verification.some(c=>c.kind==="project_build"&&c.source==="main_tool_loop"&&c.status==="passed"));
+      assert.equal(row.outcome.successful_tool_calls,4,"Install, read, write and final build belong to the same counters");
+      assert.equal(row.outcome.failed_tool_calls,1);
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return{id:row.id??row.task_id,outcome:row.outcome};
+    } finally {project=previous;}
+  });
+  await check("dependency preparation registry failure stops before build or source repair", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Dependency failure",tech_stack:"Vite React TypeScript strict"},201);
+      const buildRoot=join(data,"studio-projects",project.id);
+      const original=await readFile(join(buildRoot,"src/App.tsx"),"utf8");
+      await unlink(join(buildRoot,"package-lock.json"));
+      await writeFile(join(buildRoot,".npmrc"),"registry=http://127.0.0.1:9\nfetch-retries=0\nfetch-timeout=1000\n");
+      scripts.set("dependency-failure-worker",[{text:"Le socle peut etre verifie."}]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Verifier les dependances",assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",acceptance_criteria:[{id:"build",text:"Le build reussit",kind:"command_ok",argv:["npm","run","build"]}]},201);
+      const parent=await task("dependency-failure-parent",[{text:"TOOL: delegate_to_agent studio_scaffold CASE:dependency-failure-worker Verifie le projet."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:(response.ticket??response).id});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_scaffold"),"Dependency failure worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"failed",JSON.stringify(row));
+      assert.match(row.failure_detail,/studio_dependency_installation_failed/);assert.match(row.failure_detail,/registre|proxy/);
+      assert(row.outcome.verification.some(c=>c.kind==="dependency_installation"&&c.status==="failed"));
+      assert(!row.outcome.verification.some(c=>c.kind==="command"&&c.verification===true),"Build must not have run after failed install");
+      assert.equal(await readFile(join(buildRoot,"src/App.tsx"),"utf8"),original);
+      assert.equal(await stat(join(buildRoot,"dist")).catch(()=>null),null);
+      assert.equal(row.outcome.failed_tool_calls,1);
+      return{id:row.id??row.task_id,outcome:row.outcome};
+    } finally {project=previous;}
   });
   await check("Vite scaffold installs and TypeScript repair follows fresh compiler diagnostics", async () => {
     const previous=project;
