@@ -321,3 +321,12 @@ Une PR qui livre une phase **doit** mettre à jour ce fichier (cases cochées, n
 - Sans nouvelle vérification réussie après les modifications, le moteur rappelle le jalon après 12 tours et arrête la boucle après 24 tours. Une prolongation du budget exige un jalon vérifié récent sur une nouvelle révision ; répéter un build inchangé ne suffit pas. Le plafond reste de 96 tours. Les blocages `studio_no_verified_progress`, `studio_command_verification_failed` et `studio_round_budget_exhausted` ne déclenchent pas de redépart automatique inchangé du ticket.
 
 Ces contrôles concernent la progression et les vérifications techniques reconnues. Ils ne prouvent pas à eux seuls la conformité visuelle ou fonctionnelle de l'application générée. Une recette avec vrai LLM reste nécessaire.
+
+
+### Identité du Kanban et réparation des vérifications
+
+- `initial_backlog_root` est une identité attribuée par le moteur à la demande initiale. Les outils ne peuvent pas la définir. Le critère modifiable `initial-kanban-backlog` ne confère aucun rôle de coordination. La migration des anciens tickets concerne uniquement une demande chat sans parent ni clé de phase ; un critère copié sur un ticket de travail ne le promeut pas.
+- Les phases initiales conservent leur parent et leurs prérequis canoniques lors des mises à jour agent. Le dispatch de planification contrôle aussi les prérequis. Un ticket de validation reste un travail de spécialiste et attend son intégration.
+- Le premier build/test encore en échec conserve sa commande exacte et son diagnostic borné dans le checkpoint. Le moteur les réinjecte à chaque tour, y compris après reprise. Une installation ou une autre commande réussie n'efface pas cet échec.
+- Après deux inspections sans réparation, les outils d'exploration générale sont retirés du catalogue annoncé pour ce tour. Les lectures ciblées, modifications et commandes déjà permises restent disponibles. Le moteur ne fabrique ni code applicatif ni résultat de build : l'agent doit réparer puis réexécuter la commande exacte.
+- Recette technique ciblée : `CODE_STUDIO_CASE_FILTER="build repair|TypeScript build failure" npm run test:daemon:agentic` avec `CODE_STUDIO_DAEMON_BIN` pointant le binaire courant. Le fournisseur y est scripté ; la recette d'autonomie avec vrai LLM est distincte.

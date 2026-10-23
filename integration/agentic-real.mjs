@@ -189,6 +189,7 @@ await writeFile(
       "git",
       "gh",
       "node",
+      "npm",
       "cmd",
       "powershell",
       "typescript-language-server",
@@ -642,6 +643,59 @@ try {
     assert.equal(row.outcome.successful_tool_calls,0);
     assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
+  });
+  await check("build repair persists the exact missing entrypoint through surveys and reaches a fresh build", async () => {
+    const previous = project;
+    try {
+      project = await api("/api/studio/projects", "POST", {name:"Build repair",tech_stack:"Vite TypeScript"}, 201);
+      const buildRoot = join(data,"studio-projects",project.id);
+      await symlink(resolve("node_modules"),join(buildRoot,"node_modules"),process.platform === "win32" ? "junction" : "dir");
+      await writeFile(join(buildRoot,"package.json"),JSON.stringify({name:"build-repair",private:true,type:"module",scripts:{build:"vite build"}}));
+      await writeFile(join(buildRoot,"index.html"),'<div id="app"></div><script type="module" src="/src/main.tsx"></script>');
+      const command = {program:"npm",args:["run","build"],cwd:"workspace:/"};
+      const assertRepair = (text) => {
+        assert.match(text,/Repair the FIRST failing build\/test dependency/);
+        assert.match(text,/(?:Could not|Failed to) resolve.*src\/main\.tsx/);
+        assert.match(text,/missing local entry point/);
+      };
+      scripts.set("entrypoint-repair-worker",[
+        tool("run_command",command),
+        {...tool("read_file",{path:"workspace:/index.html"}),verify:assertRepair},
+        {...tool("read_file",{path:"workspace:/package.json"}),verify:assertRepair},
+        {...tool("write_file",fileArgs("src/main.tsx",'document.querySelector("#app").textContent = "Build repair verified";')),verify:(text,body)=>{
+          assertRepair(text);
+          const names=(body.tools??[]).flatMap(row=>row.function?.parameters?.properties?.tool?.enum??[row.function?.name]);
+          assert(names?.includes("write_file"));
+          assert(!names.includes("list_tools"));
+          assert(names.includes("read_file") && names.includes("run_command"));
+        }},
+        tool("run_command",command),
+        {text:"Le build est verifie apres correction de son entree manquante."},
+      ]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{
+        title:"Reparer le build",assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",
+        acceptance_criteria:[{id:"build",text:"La commande de build reussit",kind:"command_ok",argv:["npm","run","build"]}],
+      },201);
+      const ticket=response.ticket??response;
+      const parent=await task("entrypoint-repair-parent",[
+        {text:"TOOL: delegate_to_agent studio_scaffold CASE:entrypoint-repair-worker Repare le build du projet a partir de son diagnostic, puis verifie la commande."},
+        {text:"Resultat du specialiste recu."},
+      ],"studio_project_manager",{studio_ticket_id:ticket.id});
+      const child=await waitUntil(async()=>{
+        const tasks=await api("/api/tasks");
+        return (tasks.tasks??tasks).find(t=>t.parent_task_id===parent && t.assigned_agent==="studio_scaffold");
+      },"entrypoint repair worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert(row.outcome.failed_tool_calls>=1,"The original build must actually fail");
+      const checks=row.outcome.verification;
+      const build=checks.find(c=>c.kind==="command" && c.verification===true);
+      assert.equal(build.status,"passed");
+      assert.equal(build.attempts,2);
+      assert.match(await readFile(join(buildRoot,"dist/index.html"),"utf8"),/assets/);
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return {id:row.id??row.task_id,checks,failed_tool_calls:row.outcome.failed_tool_calls};
+    } finally {project=previous;}
   });
   await check("prose cannot attest a modification to an existing file without any executed tool", async () => {
     await writeFile(join(root,"existing-prose.txt"),"old");
