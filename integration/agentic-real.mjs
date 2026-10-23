@@ -652,7 +652,7 @@ try {
       await symlink(resolve("node_modules"),join(buildRoot,"node_modules"),process.platform === "win32" ? "junction" : "dir");
       await writeFile(join(buildRoot,"package.json"),JSON.stringify({name:"build-repair",private:true,type:"module",scripts:{build:"vite build"}}));
       await writeFile(join(buildRoot,"index.html"),'<div id="app"></div><script type="module" src="/src/main.tsx"></script>');
-      const command = {program:"npm",args:["run","build"],cwd:"workspace:/"};
+      const command = {program:"npm",args:["build"],cwd:"workspace:/"};
       const assertRepair = (text) => {
         assert.match(text,/Repair the FIRST failing build\/test dependency/);
         assert.match(text,/(?:Could not|Failed to) resolve.*src\/main\.tsx/);
@@ -662,12 +662,18 @@ try {
         tool("run_command",command),
         {...tool("read_file",{path:"workspace:/index.html"}),verify:assertRepair},
         {...tool("read_file",{path:"workspace:/package.json"}),verify:assertRepair},
+        tool("write_file",fileArgs("public/wrong-entry.tsx","This wrong path must never be written")),
         {...tool("write_file",fileArgs("src/main.tsx",'document.querySelector("#app").textContent = "Build repair verified";')),verify:(text,body)=>{
           assertRepair(text);
           const names=(body.tools??[]).flatMap(row=>row.function?.parameters?.properties?.tool?.enum??[row.function?.name]);
           assert(names?.includes("write_file"));
-          assert(!names.includes("list_tools"));
-          assert(names.includes("read_file") && names.includes("run_command"));
+          assert(names.every(name=>["write_file","write_code"].includes(name)));
+          assert.equal(body.tool_choice,"required");
+          const writeSchema=body.tools.find(row=>row.function?.name==="write_file")?.function?.parameters;
+          if(writeSchema) {
+            assert.deepEqual(writeSchema.properties.path.enum,["workspace:/src/main.tsx"]);
+            assert.equal(writeSchema.properties.content.enum,undefined,"The engine must not supply application content");
+          }
         }},
         tool("run_command",command),
         {text:"Le build est verifie apres correction de son entree manquante."},
@@ -687,7 +693,8 @@ try {
       },"entrypoint repair worker");
       const row=await finished(child.id??child.task_id);
       assert.equal(row.status,"completed",JSON.stringify(row));
-      assert(row.outcome.failed_tool_calls>=1,"The original build must actually fail");
+      assert(row.outcome.failed_tool_calls>=2,"The original build and wrong-path repair must actually fail");
+      assert.equal(await readFile(join(buildRoot,"public/wrong-entry.tsx"),"utf8").catch(()=>null),null);
       const checks=row.outcome.verification;
       const build=checks.find(c=>c.kind==="command" && c.verification===true);
       assert.equal(build.status,"passed");
