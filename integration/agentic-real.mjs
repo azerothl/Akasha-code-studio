@@ -641,6 +641,32 @@ try {
     assert.equal(await readFile(join(root,"NEVER-NO-EFFECT.md"),"utf8").catch(()=>null),null);
     return {id,outcome:row.outcome};
   });
+  await check("planning handoff ends at a verified board without another model reply", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Planning handoff",tech_stack:"Vite React TypeScript strict"},201);
+      const root=join(data,"studio-projects",project.id);
+      const original=await readFile(join(root,"src/App.tsx"),"utf8");
+      let phases=[];
+      scripts.set("planning-handoff",[
+        {...tool("studio_list_tickets",{}),delay:1000},
+        ...["foundation","features","integration","validation"].map(key=>tool("studio_update_ticket",()=>({
+          ticket_id:phases.find(t=>t.creation_key?.endsWith(`:${key}`)).id,
+          acceptance_criteria:[{text:{foundation:"Le socle React existant compile avec les entrees canoniques et TypeScript strict.",features:"Ajouter, terminer et supprimer une tache Todo avec persistence localStorage.",integration:"Les filtres Toutes, A faire et Terminees affichent les bonnes taches et le compteur.",validation:"Verifier build, tests Todo et apercu; consigner les resultats observes."}[key]}],
+        }))),
+      ]);
+      const sent=await api("/api/message","POST",{session_id:"validation-planning-handoff",studio_project_id:project.id,message:"CASE:planning-handoff Cree le projet Todo List avec ajout, suppression, filtres et persistence locale."});
+      phases=(await api(`/api/studio/projects/${project.id}/tickets`)).items.filter(t=>t.parent_ticket_id);
+      assert.equal(phases.length,4);
+      const row=await finished(sent.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert.equal(row.outcome.planning_verified,true);
+      assert.equal(requests.filter(r=>r.case==="planning-handoff"&&r.native).length,5,"Five board operations, no extra generation to finish planning");
+      assert.equal(await readFile(join(root,"src/App.tsx"),"utf8"),original);
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return {task_id:sent.task_id,outcome:row.outcome};
+    } finally {project=previous;}
+  });
   await check("supplied foundation verifies then hands off to review without product edits", async () => {
     const previous=project;
     try {
@@ -663,16 +689,14 @@ try {
           assert.match(text,/Supplied foundation boundary/);
           assert.deepEqual(body.tools.map(t=>t.function.name),["run_command"]);
         }},
-        {...tool("studio_update_ticket",{ticket_id:ticket,status:"review",evidence:{summary:"Configured build succeeded."}}),verify:(text,body)=>{
-          assert.match(text,/fresh successful receipt/);
-          assert.deepEqual(body.tools.map(t=>t.function.name),["studio_update_ticket"]);
-        }},
       ]);
       const parent=await task("foundation-parent",[{text:"TOOL: delegate_to_agent studio_scaffold CASE:foundation-worker Verifie uniquement le socle fourni."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:ticket});
       const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_scaffold"),"Foundation worker");
       const row=await finished(child.id??child.task_id);
       assert.equal(row.status,"completed",JSON.stringify(row));
       assert(row.outcome.verification.some(c=>c.kind==="foundation_handoff"&&c.status==="passed"&&c.product_acceptance===false));
+      const events=await api(`/api/tasks/${child.id??child.task_id}/events`);
+      assert.equal(events.events.filter(e=>e.event_type==="llm_call_started").length,1,"Verified handoff must not require a second model generation");
       assert.equal(await readFile(join(root,"src/App.tsx"),"utf8"),before);
       const final=await api(`/api/studio/projects/${project.id}/tickets`);
       assert.equal(final.items.find(t=>t.id===ticket).status,"review");
