@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-22T21:10:24.854Z",
+  "data": "C:\\Users\\azero\\AppData\\Local\\Temp\\studio-agentic-real-oi21eK",
+  "daemon_sha256": "7ef21c8957437eb9d476ed90706e2b9ff4e89536c70c51c78498113aa89eb620",
+  "model": "deterministic protocol fixture (not an LLM evaluation)",
+  "cases": [
+    {
+      "name": "real project creation and clean initial Git",
+      "status": "passed",
+      "ms": 614,
+      "evidence": {
+        "id": "e9f24681-04bf-4798-86fe-bd6bbb975677",
+        "head": "94cb3848b40065e9c9272c6055044a3e264ce00d"
+      }
+    },
+    {
+      "name": "partial web-only policy inherits Studio file and development access",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: write_file\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:412:70\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:295:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:401:3"
+    }
+  ],
+  "project": {
+    "id": "e9f24681-04bf-4798-86fe-bd6bbb975677",
+    "path": "C:\\Users\\azero\\AppData\\Local\\Temp\\studio-agentic-real-oi21eK\\studio-projects\\e9f24681-04bf-4798-86fe-bd6bbb975677"
+  },
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: write_file\n    at file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:412:70\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:295:22)\n    at async file:///E:/devs/Akasha-code-studio/integration/agentic-real.mjs:401:3",
+  "requests": []
+}

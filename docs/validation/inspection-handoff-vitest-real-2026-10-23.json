@@ -1,0 +1,4156 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-23T14:14:54.176465+00:00",
+  "method": {
+    "single_initial_request_per_project": true,
+    "manual_project_edits": false,
+    "additional_prompts": false,
+    "manual_install_build_preview": false,
+    "manual_retries": false,
+    "code_changes_and_restarts_between_terminal_executions_only": true,
+    "limitation": "Bounded API/event/ledger snapshots, not an exhaustive trace. Host Vite infrastructure is not Todo implementation."
+  },
+  "runs": [
+    {
+      "observed_at": "2026-10-23T13:50:37.133764+00:00",
+      "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+      "runtime": {
+        "at": "2026-10-23T13:44:01.450489+00:00",
+        "backend_commit": "a9b5e79",
+        "ui_commit": "4428654",
+        "binary_sha256": "d769d88fdc78bc3b9b5ed97a03c329abbe9746510dfbf8a6ff0b213390edb2f8",
+        "ui_url": "http://127.0.0.1:5179/",
+        "provider_profile": "Automatic Studio unchanged; real LLM",
+        "protocol": "One creation request; no edits, extra prompts, retry, command, preview start or restart during agent execution"
+      },
+      "board": {
+        "items": [
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-0",
+                "text": "Examiner le dépôt et sa stack existante (Vite 5+, React 18+, TypeScript strict). Ne créer que les éléments manquants. `workspace:/` est la racine : réutiliser `package.json`, `vite.config.ts`. Critère : architecture, point d'entrée (`src/main.tsx`) et commandes (`npm run dev/build/test`) identifiés."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-23T13:45:01.218509+00:00",
+            "creation_key": "initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:foundation",
+            "description": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application: réutilise ses manifests et ne crée pas un second projet imbriqué. Critère: l'architecture, le point d'entrée et les commandes du projet sont identifiés et cohérents avec la demande.\n\nCe ticket fait partie du backlog initial du ticket racine 946b1a59-6d72-41b8-913a-96b471a9e8bf; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Consigne les fichiers et les vérifications observées dans ce ticket avec studio_update_ticket; passe-le en review uniquement après vérification de ses critères, sans fermer le parent ni les autres tickets.",
+            "evidence": {
+              "resume_status": "in_progress",
+              "summary": "task_id=9da17e75-033b-4e22-9db6-66c73fae23eb, statut=failed, motif=timeout, cause=Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;",
+              "task_ids": [
+                "9da17e75-033b-4e22-9db6-66c73fae23eb"
+              ]
+            },
+            "id": "95501d39-bd1a-49ed-a8d8-6a10c7045149",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "946b1a59-6d72-41b8-913a-96b471a9e8bf",
+            "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+            "related_task_id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Établir le socle du projet",
+            "updated_at": "2026-10-23T13:48:32.203739400+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "request-scope",
+                "text": "Le résultat couvre le besoin décrit dans cette demande."
+              },
+              {
+                "id": "verification",
+                "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              },
+              {
+                "id": "initial-kanban-backlog",
+                "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+              }
+            ],
+            "assigned_agent": "studio_project_manager",
+            "created_at": "2026-10-23T13:45:01.205001100+00:00",
+            "description": "Crée le projet « Todo observé — progression et Vitest 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+            "evidence": {
+              "resume_status": "in_progress",
+              "summary": "task_id=fd6e30c7-86b0-43e4-aa2b-c83767057a83, statut=failed, motif=timeout, cause=Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;",
+              "task_ids": [
+                "fd6e30c7-86b0-43e4-aa2b-c83767057a83"
+              ]
+            },
+            "id": "946b1a59-6d72-41b8-913a-96b471a9e8bf",
+            "initial_backlog_root": true,
+            "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+            "related_task_id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+            "requested_by": "user_chat",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+            "updated_at": "2026-10-23T13:47:00.198718900+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-3",
+                "text": "Exécuter les contrôles adaptés (responsive design, navigation au clavier) et lancer `npm run build` puis l'aperçu depuis `workspace:/`. Critères : build réussi sans erreurs; tous les parcours utilisateurs testés manuellement sur mobile/desktop fonctionnent."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T13:45:01.251131900+00:00",
+            "creation_key": "initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:validation",
+            "depends_on_ticket_id": "66918001-51b9-4c14-817b-4c8d7141ed20",
+            "depends_on_ticket_ids": [
+              "66918001-51b9-4c14-817b-4c8d7141ed20"
+            ],
+            "description": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban.\n\nCe ticket fait partie du backlog initial du ticket racine 946b1a59-6d72-41b8-913a-96b471a9e8bf; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Consigne les fichiers et les vérifications observées dans ce ticket avec studio_update_ticket; passe-le en review uniquement après vérification de ses critères, sans fermer le parent ni les autres tickets.",
+            "evidence": {},
+            "id": "3bb0cfd0-7983-4b41-9f8d-886502f4bbf9",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "946b1a59-6d72-41b8-913a-96b471a9e8bf",
+            "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Valider le projet et le parcours utilisateur",
+            "updated_at": "2026-10-23T13:46:29.903197600+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-2",
+                "text": "Relier les composants métier à l'interface (`App.tsx`) et aux services (localStorage), en couvrant les états d'erreur (ex. tâche trop longue). Critère : le parcours principal (ajout → listage → filtrage) fonctionne de bout en bout dans `npm run dev`."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T13:45:01.240187400+00:00",
+            "creation_key": "initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:integration",
+            "depends_on_ticket_id": "72b0f170-735f-4dd2-a8a6-c30384e224ba",
+            "depends_on_ticket_ids": [
+              "72b0f170-735f-4dd2-a8a6-c30384e224ba"
+            ],
+            "description": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application.\n\nCe ticket fait partie du backlog initial du ticket racine 946b1a59-6d72-41b8-913a-96b471a9e8bf; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Consigne les fichiers et les vérifications observées dans ce ticket avec studio_update_ticket; passe-le en review uniquement après vérification de ses critères, sans fermer le parent ni les autres tickets.",
+            "evidence": {},
+            "id": "66918001-51b9-4c14-817b-4c8d7141ed20",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "946b1a59-6d72-41b8-913a-96b471a9e8bf",
+            "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Intégrer les fonctionnalités dans l'application",
+            "updated_at": "2026-10-23T13:46:29.871043900+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-1",
+                "text": "Implémenter chaque comportement métier (ajout tâche titre obligatoire, toggle terminée/rouvrir, suppression) avec des hooks React et store Zustand ou Context. Critère : chaque action déclenche une mise à jour de l'UI sans rechargement."
+              },
+              {
+                "id": "initial-phase-1b",
+                "text": "Implémenter le filtrage (Toutes / À faire / Terminées) avec un composant `<FilterButtons />` et la persistance dans `localStorage`. Critère : les filtres changent l'affichage instantanément."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T13:45:01.229252800+00:00",
+            "creation_key": "initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:features",
+            "depends_on_ticket_id": "95501d39-bd1a-49ed-a8d8-6a10c7045149",
+            "depends_on_ticket_ids": [
+              "95501d39-bd1a-49ed-a8d8-6a10c7045149"
+            ],
+            "description": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé.\n\nCe ticket fait partie du backlog initial du ticket racine 946b1a59-6d72-41b8-913a-96b471a9e8bf; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Consigne les fichiers et les vérifications observées dans ce ticket avec studio_update_ticket; passe-le en review uniquement après vérification de ses critères, sans fermer le parent ni les autres tickets.",
+            "evidence": {},
+            "id": "72b0f170-735f-4dd2-a8a6-c30384e224ba",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "946b1a59-6d72-41b8-913a-96b471a9e8bf",
+            "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Implémenter les fonctionnalités demandées",
+            "updated_at": "2026-10-23T13:46:29.838806400+00:00"
+          }
+        ]
+      },
+      "files": {
+        "files": [
+          ".akasha-studio-tickets.json",
+          ".gitignore",
+          "CODE_STUDIO_PLAN.md",
+          "DESIGN.md",
+          "STUDIO_SCAFFOLD.md",
+          "index.html",
+          "package-lock.json",
+          "package.json",
+          "src/App.tsx",
+          "src/main.tsx",
+          "src/test/setup.ts",
+          "tsconfig.json",
+          "vitest.config.ts"
+        ]
+      },
+      "tasks": [
+        {
+          "task_id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+          "assigned_agent": "studio_scaffold",
+          "status": "failed",
+          "created_at": "2026-10-23T13:47:43.954927500+00:00",
+          "updated_at": "2026-10-23T13:48:32.188856700+00:00",
+          "last_turn_model_used": "qwen3.5:9b",
+          "failure_detail": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Qwen did not produce the required complete tool call ; ollama/gpt-oss:20b: studio_qualification_timeout: aucun appel d'outil complet reçu en 20 s maximum ; vérifiez le service ou choisissez une a).",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "planning_verified": false,
+            "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Qwen did not produce the required complete tool call ; ollama/gpt-oss:20b: studio_qualification_timeout: aucun appel d'outil complet reçu en 20 s maximum ; vérifiez le service ou choisissez une a).",
+            "result": "partial",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 2,
+            "termination_reason": "timeout",
+            "verification": [
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "qwen3.5:9b",
+                "provider": "ollama",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "environment_revision": 1,
+                "first_unverified_round": null,
+                "first_verification_failure_round": null,
+                "identical_inspections": 0,
+                "inspection_calls": 0,
+                "inspection_rejections": 0,
+                "kind": "execution_progress",
+                "last_verified_round": 1,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed",
+                "verified_revision": 0
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              }
+            ]
+          },
+          "checkpoint": {
+            "round": 2,
+            "phase": "failed",
+            "max_tool_rounds": 64,
+            "waiting": null
+          },
+          "operations": [
+            {
+              "operation_id": "5aac6999-287e-4781-bca2-2b48de443be8",
+              "tool": "run_command",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:48:09.694248+00:00",
+              "result": {
+                "success": true,
+                "exit_code": 0,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "3550e75b-91cf-4a13-8ee1-24a68c1d86c2",
+              "tool": "run_command",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:48:11.917178600+00:00",
+              "result": {
+                "success": true,
+                "exit_code": 0,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:47:54.123792200+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 1352,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:47:54.137319200+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 1354,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:47:54.152310600+00:00",
+              "payload": {
+                "round": 1,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T13:48:12.092739500+00:00",
+              "payload": {
+                "round": 2
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:12.103179600+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:12.108099100+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:12.114344200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:12.123073500+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 6,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:12.127466500+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 14,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.574627900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 9463,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.592278400+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.603247900+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 18,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:48:21.612957800+00:00",
+              "payload": {
+                "round": 2,
+                "success": false
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T13:48:21.776490300+00:00",
+              "payload": {
+                "round": 2
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.784148400+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.789463+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.794438100+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.802155600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 5,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:21.809282700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 12,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:29.989989700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8198,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:30.000489300+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8201,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:48:30.007441800+00:00",
+              "payload": {
+                "round": 2,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T13:48:30.160098700+00:00",
+              "payload": {
+                "round": 3
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:30.168065100+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:30.177217200+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:30.182101400+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:30.190650100+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 5,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:30.199350300+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 16,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:32.139760200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 1955,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:32.150895+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:48:32.159889200+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 10,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:48:32.167764200+00:00",
+              "payload": {
+                "round": 3,
+                "success": false
+              }
+            },
+            {
+              "event_type": "task_escalated_to_human",
+              "at": "2026-10-23T13:48:32.221284300+00:00",
+              "payload": {
+                "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;"
+              }
+            },
+            {
+              "event_type": "task_failed",
+              "at": "2026-10-23T13:48:32.221491800+00:00",
+              "payload": {
+                "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Qwen did not produce the required complete tool call ; ollama/gpt-oss:20b: studio_qualification_timeout: aucun appel d'outil complet reçu en 20 s maximum ; vérifiez le service ou choisissez une a).",
+                "status": "failed"
+              }
+            },
+            {
+              "event_type": "studio_worker_state_changed",
+              "at": "2026-10-23T13:48:32.221491800+00:00",
+              "payload": {
+                "state": "failed"
+              }
+            }
+          ]
+        },
+        {
+          "task_id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+          "assigned_agent": "studio_project_manager",
+          "status": "failed",
+          "created_at": "2026-10-23T13:45:01.297303400+00:00",
+          "updated_at": "2026-10-23T13:47:00.177066400+00:00",
+          "last_turn_model_used": "qwen3.5:9b",
+          "failure_detail": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: studio_qualification_timeout: aucun appel d'outil complet reçu en 20 s maximum ; vérifiez le service ou choisissez une a).",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "planning_verified": false,
+            "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: studio_qualification_timeout: aucun appel d'outil complet reçu en 20 s maximum ; vérifiez le service ou choisissez une a).",
+            "result": "partial",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 9,
+            "termination_reason": "timeout",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "qwen3.5:9b",
+                "provider": "ollama",
+                "status": "passed"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "{\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:validation\",\"needs_refinement\":true,\"ticket_id\":\"3bb0cfd0-7983-4b41-9f8d-886502f4bbf9\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:integration\",\"needs_refinement\":true,\"ticket_id\":\"66918001-51b9-4c14-817b-4c8d7141ed20\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:features\",\"needs_refinement\":true,\"ticket_id\":\"72b0f170-735f-4dd2-a8a6-c30384e224ba\",\"title\":\"Implémenter les fonctionnalités demandées\"},{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:foundation\",\"needs_refinement\":true,\"ticket_id\":\"95501d39-bd1a-49ed-a8d8-6a10c7045149\",\"title\":\"Établir le socle du projet\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"946b1a59-6d72-41b8-913a-96b471a9e8bf\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+                "kind": "kanban_plan_repair",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "{\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:validation\",\"needs_refinement\":false,\"ticket_id\":\"3bb0cfd0-7983-4b41-9f8d-886502f4bbf9\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:integration\",\"needs_refinement\":false,\"ticket_id\":\"66918001-51b9-4c14-817b-4c8d7141ed20\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:features\",\"needs_refinement\":false,\"ticket_id\":\"72b0f170-735f-4dd2-a8a6-c30384e224ba\",\"title\":\"Implémenter les fonctionnalités demandées\"},{\"creation_key\":\"initial:946b1a59-6d72-41b8-913a-96b471a9e8bf:foundation\",\"needs_refinement\":true,\"ticket_id\":\"95501d39-bd1a-49ed-a8d8-6a10c7045149\",\"title\":\"Établir le socle du projet\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"946b1a59-6d72-41b8-913a-96b471a9e8bf\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+                "kind": "kanban_plan_repair",
+                "status": "retried"
+              },
+              {
+                "kind": "execution_progress",
+                "last_verified_round": 0,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed"
+              }
+            ]
+          },
+          "checkpoint": {
+            "round": 6,
+            "phase": "failed",
+            "max_tool_rounds": 64,
+            "waiting": null
+          },
+          "operations": [
+            {
+              "operation_id": "2fbc75a5-95c7-4450-8a85-062e3ecdf8be",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:45:32.768322500+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "7edd4a07-9817-4ccf-a542-25d87b22e5af",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:45:46.044873200+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "a8d7a738-26fd-4f43-b2c2-34fa36d030aa",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:29.812334600+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "2e6df38e-885f-4438-80f1-1fc95556ae0e",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:29.845740800+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "cf802467-0f50-48c8-b59b-7370db3d737f",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:29.878274500+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "d13eb44e-a06e-4575-9c9c-c6503a03a3c2",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:29.910776600+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "7c4a8140-da3c-4b98-9f10-8d6b3a14cdc4",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:34.206082900+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "1102f216-fa49-4205-ab3d-bbaabf32473e",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:51.535430500+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "c659d4af-b066-4a5d-bc43-72af40f671fb",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T13:46:55.143847100+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:34.415490300+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 15,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.393492+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 12994,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.406484+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 12998,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:46:47.411533500+00:00",
+              "payload": {
+                "round": 5,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T13:46:47.581926300+00:00",
+              "payload": {
+                "round": 5
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.587536900+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.595045200+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.599310100+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.606556200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 5,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:47.613605+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 11,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.490298900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 3892,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.500952900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 3895,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:46:51.505462100+00:00",
+              "payload": {
+                "round": 5,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T13:46:51.696031900+00:00",
+              "payload": {
+                "round": 6
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.705706+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.715188900+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.721761200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.729989700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 9,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:51.733695500+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 14,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.099427200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 3382,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.116644900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 3385,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:46:55.122287100+00:00",
+              "payload": {
+                "round": 6,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T13:46:55.337369200+00:00",
+              "payload": {
+                "round": 7
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.343298400+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.351189900+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.355509600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.364679600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:46:55.369714200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 14,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:47:00.128501400+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 4774,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:47:00.141524200+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T13:47:00.150870900+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 16,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T13:47:00.158985200+00:00",
+              "payload": {
+                "round": 7,
+                "success": false
+              }
+            },
+            {
+              "event_type": "task_escalated_to_human",
+              "at": "2026-10-23T13:47:00.175249800+00:00",
+              "payload": {
+                "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;"
+              }
+            },
+            {
+              "event_type": "task_failed",
+              "at": "2026-10-23T13:47:00.206454600+00:00",
+              "payload": {
+                "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: studio_qualification_timeout: aucun appel d'outil complet reçu en 20 s maximum ; vérifiez le service ou choisissez une a).",
+                "status": "failed"
+              }
+            },
+            {
+              "event_type": "studio_worker_state_changed",
+              "at": "2026-10-23T13:47:00.206454600+00:00",
+              "payload": {
+                "state": "failed"
+              }
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "at": "2026-10-23T13:45:35.805918+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 1,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:46:05.862366+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 2,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:46:35.967081+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 4,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:47:06.101788+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:47:36.254670+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:48:06.517907+00:00",
+          "states": {
+            "todo": 3,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+              "role": "studio_scaffold",
+              "status": "running",
+              "round": 0,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            },
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:48:36.691284+00:00",
+          "states": {
+            "todo": 3,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 2
+          },
+          "tasks": [
+            {
+              "id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+              "role": "studio_scaffold",
+              "status": "failed",
+              "round": 2,
+              "ok": 2,
+              "failed": 1,
+              "termination": "timeout"
+            },
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:49:06.793246+00:00",
+          "states": {
+            "todo": 3,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 2
+          },
+          "tasks": [
+            {
+              "id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+              "role": "studio_scaffold",
+              "status": "failed",
+              "round": 2,
+              "ok": 2,
+              "failed": 1,
+              "termination": "timeout"
+            },
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:49:36.905029+00:00",
+          "states": {
+            "todo": 3,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 2
+          },
+          "tasks": [
+            {
+              "id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+              "role": "studio_scaffold",
+              "status": "failed",
+              "round": 2,
+              "ok": 2,
+              "failed": 1,
+              "termination": "timeout"
+            },
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:50:07.007527+00:00",
+          "states": {
+            "todo": 3,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 2
+          },
+          "tasks": [
+            {
+              "id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+              "role": "studio_scaffold",
+              "status": "failed",
+              "round": 2,
+              "ok": 2,
+              "failed": 1,
+              "termination": "timeout"
+            },
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T13:50:37.133764+00:00",
+          "states": {
+            "todo": 3,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 2
+          },
+          "tasks": [
+            {
+              "id": "9da17e75-033b-4e22-9db6-66c73fae23eb",
+              "role": "studio_scaffold",
+              "status": "failed",
+              "round": 2,
+              "ok": 2,
+              "failed": 1,
+              "termination": "timeout"
+            },
+            {
+              "id": "fd6e30c7-86b0-43e4-aa2b-c83767057a83",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 6,
+              "ok": 9,
+              "failed": 0,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        }
+      ],
+      "preview_after_restart": {
+        "running": false,
+        "log": "",
+        "preview_inactive": true
+      },
+      "preview_limitation": "Read after terminal tasks and runtime restart; no preview start observed in execution evidence."
+    },
+    {
+      "observed_at": "2026-10-23T14:14:21.737535+00:00",
+      "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+      "runtime": {
+        "at": "2026-10-23T14:02:35.297903+00:00",
+        "backend_commit": "a959260",
+        "ui_commit": "ebb21f5",
+        "binary_sha256": "ed37b912e5269366642db16747425bc6b9cc1b1f9184e627eaeeef5284609e35",
+        "ui_url": "http://127.0.0.1:5179/",
+        "provider_profile": "Automatic Studio unchanged; real LLM",
+        "protocol": "One creation request; no manual project edits, additional prompts, retries, installation, build, preview start or runtime restart during execution"
+      },
+      "board": {
+        "items": [
+          {
+            "acceptance_criteria": [
+              {
+                "id": "request-scope",
+                "text": "Le résultat couvre le besoin décrit dans cette demande."
+              },
+              {
+                "id": "verification",
+                "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              },
+              {
+                "id": "initial-kanban-backlog",
+                "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+              }
+            ],
+            "assigned_agent": "studio_project_manager",
+            "created_at": "2026-10-23T14:03:07.913715300+00:00",
+            "description": "Crée le projet « Todo observé — transitions automatiques v2 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+            "evidence": {
+              "resume_status": "in_progress",
+              "summary": "task_id=3e930b4a-a44b-4bbf-9844-539c86b16599, statut=failed, motif=timeout, cause=Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;",
+              "task_ids": [
+                "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+                "3e930b4a-a44b-4bbf-9844-539c86b16599"
+              ]
+            },
+            "id": "e30cc9b3-744d-423c-841f-6cb530acf68d",
+            "initial_backlog_root": true,
+            "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+            "related_task_id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+            "requested_by": "user_chat",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+            "updated_at": "2026-10-23T14:13:27.435171400+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-0",
+                "text": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application; ne créer aucun dossier ou fichier supplémentaire dans ce dépôt ni ne modifier un projet imbriqué à la place. Critère: build réussi avec les fichiers nécessaires déjà présents ou ajoutés uniquement si manquants."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-23T14:03:07.925843300+00:00",
+            "creation_key": "initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation",
+            "description": "Ce ticket fait partie du backlog initial du ticket racine e30cc9b3-744d-423c-841f-6cb530acf68d; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents.",
+            "evidence": {},
+            "id": "f658a8de-1538-4d45-9c5c-6e3385ac1eee",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "e30cc9b3-744d-423c-841f-6cb530acf68d",
+            "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Établir le socle du projet",
+            "updated_at": "2026-10-23T14:05:35.000136900+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-3",
+                "text": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d'ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d'afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l'aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T14:03:07.959164500+00:00",
+            "creation_key": "initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation",
+            "depends_on_ticket_id": "f35b7e22-1891-49e9-9ef5-3df31503752d",
+            "depends_on_ticket_ids": [
+              "f35b7e22-1891-49e9-9ef5-3df31503752d"
+            ],
+            "description": "Ce ticket fait partie du backlog initial du ticket racine e30cc9b3-744d-423c-841f-6cb530acf68d; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`.",
+            "evidence": {},
+            "id": "8a0cdae1-3df6-49c8-8598-e7d4a5634cbf",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "e30cc9b3-744d-423c-841f-6cb530acf68d",
+            "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Valider le projet et le parcours utilisateur",
+            "updated_at": "2026-10-23T14:05:26.514283200+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-2",
+                "text": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T14:03:07.946658400+00:00",
+            "creation_key": "initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration",
+            "depends_on_ticket_id": "9cfe822f-f9d9-4a59-bf38-d9bbec56b01b",
+            "depends_on_ticket_ids": [
+              "9cfe822f-f9d9-4a59-bf38-d9bbec56b01b"
+            ],
+            "description": "Ce ticket fait partie du backlog initial du ticket racine e30cc9b3-744d-423c-841f-6cb530acf68d; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents.",
+            "evidence": {},
+            "id": "f35b7e22-1891-49e9-9ef5-3df31503752d",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "e30cc9b3-744d-423c-841f-6cb530acf68d",
+            "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Intégrer les fonctionnalités dans l'application",
+            "updated_at": "2026-10-23T14:05:15.248352400+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-1",
+                "text": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé."
+              },
+              {
+                "id": "feature-add-task",
+                "text": "Ajouter une tâche avec un titre obligatoire, gérer l'état vide initial."
+              },
+              {
+                "id": "feature-complete-task",
+                "text": "Terminer une tâche et la rouvrir par la suite."
+              },
+              {
+                "id": "feature-delete-task",
+                "text": "Supprimer une tâche."
+              },
+              {
+                "id": "feature-filter-tasks",
+                "text": "Filtrer entre Toutes / À faire / Terminées."
+              },
+              {
+                "id": "feature-counter",
+                "text": "Afficher un compteur de tâches et l'état vide."
+              },
+              {
+                "id": "feature-persistence",
+                "text": "Conserver les tâches après rechargement avec localStorage."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T14:03:07.937195800+00:00",
+            "creation_key": "initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features",
+            "depends_on_ticket_id": "f658a8de-1538-4d45-9c5c-6e3385ac1eee",
+            "depends_on_ticket_ids": [
+              "f658a8de-1538-4d45-9c5c-6e3385ac1eee"
+            ],
+            "description": "Ce ticket fait partie du backlog initial du ticket racine e30cc9b3-744d-423c-841f-6cb530acf68d; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Implémenter l'ajout de tâche (titre obligatoire), la complétion, le réouverture, la suppression et la persistance avec localStorage.",
+            "evidence": {},
+            "id": "9cfe822f-f9d9-4a59-bf38-d9bbec56b01b",
+            "initial_backlog_root": false,
+            "parent_ticket_id": "e30cc9b3-744d-423c-841f-6cb530acf68d",
+            "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Implémenter les fonctionnalités demandées",
+            "updated_at": "2026-10-23T14:05:06.770990300+00:00"
+          }
+        ]
+      },
+      "files": {
+        "files": [
+          ".akasha-studio-tickets.json",
+          ".gitignore",
+          "CODE_STUDIO_PLAN.md",
+          "DESIGN.md",
+          "STUDIO_SCAFFOLD.md",
+          "index.html",
+          "package-lock.json",
+          "package.json",
+          "src/App.tsx",
+          "src/main.tsx",
+          "src/test/setup.ts",
+          "tsconfig.json",
+          "vitest.config.ts"
+        ]
+      },
+      "tasks": [
+        {
+          "task_id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+          "assigned_agent": "studio_project_manager",
+          "status": "failed",
+          "created_at": "2026-10-23T14:03:07.995097700+00:00",
+          "updated_at": "2026-10-23T14:05:43.932917+00:00",
+          "last_turn_model_used": "qwen3.5:9b",
+          "failure_detail": "Planification Kanban incomplète : {\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":true,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration\",\"needs_refinement\":true,\"ticket_id\":\"f35b7e22-1891-49e9-9ef5-3df31503752d\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features\",\"needs_refinement\":false,\"ticket_id\":\"9cfe822f-f9d9-4a59-bf38-d9bbec56b01b\",\"title\":\"Implémenter les fonctionnalités demandées\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"e30cc9b3-744d-423c-841f-6cb530acf68d\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "planning_verified": false,
+            "reason": "Planification Kanban incomplète : {\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":true,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration\",\"needs_refinement\":true,\"ticket_id\":\"f35b7e22-1891-49e9-9ef5-3df31503752d\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features\",\"needs_refinement\":false,\"ticket_id\":\"9cfe822f-f9d9-4a59-bf38-d9bbec56b01b\",\"title\":\"Implémenter les fonctionnalités demandées\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"e30cc9b3-744d-423c-841f-6cb530acf68d\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+            "result": "partial",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 15,
+            "termination_reason": "verification_failed",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "qwen3.5:9b",
+                "provider": "ollama",
+                "status": "passed"
+              },
+              {
+                "detail": "{\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration\",\"needs_refinement\":true,\"ticket_id\":\"f35b7e22-1891-49e9-9ef5-3df31503752d\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features\",\"needs_refinement\":true,\"ticket_id\":\"9cfe822f-f9d9-4a59-bf38-d9bbec56b01b\",\"title\":\"Implémenter les fonctionnalités demandées\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":true,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"e30cc9b3-744d-423c-841f-6cb530acf68d\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+                "kind": "kanban_plan_repair",
+                "status": "retried"
+              },
+              {
+                "detail": "{\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration\",\"needs_refinement\":true,\"ticket_id\":\"f35b7e22-1891-49e9-9ef5-3df31503752d\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features\",\"needs_refinement\":false,\"ticket_id\":\"9cfe822f-f9d9-4a59-bf38-d9bbec56b01b\",\"title\":\"Implémenter les fonctionnalités demandées\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":false,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"e30cc9b3-744d-423c-841f-6cb530acf68d\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+                "kind": "kanban_plan_repair",
+                "status": "retried"
+              },
+              {
+                "kind": "execution_progress",
+                "last_verified_round": 0,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed"
+              },
+              {
+                "detail": "{\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":true,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration\",\"needs_refinement\":true,\"ticket_id\":\"f35b7e22-1891-49e9-9ef5-3df31503752d\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features\",\"needs_refinement\":false,\"ticket_id\":\"9cfe822f-f9d9-4a59-bf38-d9bbec56b01b\",\"title\":\"Implémenter les fonctionnalités demandées\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"e30cc9b3-744d-423c-841f-6cb530acf68d\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+                "kind": "kanban_plan",
+                "status": "failed"
+              }
+            ]
+          },
+          "checkpoint": {
+            "round": 12,
+            "phase": "failed",
+            "max_tool_rounds": 64,
+            "waiting": null
+          },
+          "operations": [
+            {
+              "operation_id": "db57e672-1f94-420d-aca8-154258ec5b6c",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:03:38.758071100+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "1e8a2ffe-0720-48fb-87a8-45bdd0b0354c",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:02.731591900+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "e57cc278-f6f2-482a-9ea2-4452548bbc60",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:02.762048700+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "c86dd047-0e7f-40da-9046-30048ec94376",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:02.798103300+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "e44a2ad0-0faa-4e0d-8747-b1f11f15c8b9",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:02.829887400+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "4a5cf7dd-547e-4ccf-8609-7ad45acbcd8c",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:14.237830200+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "d4f993c5-2f8e-495d-a081-0cfc51b39ad8",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:24.480973+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "8ca86478-7ddb-42b0-866f-ed716d9be106",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:34.123375300+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "30457c18-bc52-4d57-aa0f-5679de335076",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:39.787243500+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "1c25a792-f8ec-421a-b659-3748aa8fc09a",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:48.154053400+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "25b27de9-233d-4d16-9825-5e6a4ea28c0a",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:04:56.560519300+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "aa8579e3-8feb-4d65-b7ba-c9710508b9c3",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:05:06.779323300+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "b096962e-fab8-44f9-983f-1dc8fcbdb5a5",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:05:15.256812200+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "5e0a6e44-8044-43ae-804f-e01cf6292a6b",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:05:26.521807900+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "9e90101c-981f-4bc9-82d5-2c09fda31f35",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:05:35.008527400+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:15.197679700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8216,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:05:15.220244700+00:00",
+              "payload": {
+                "round": 10,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T14:05:15.445212900+00:00",
+              "payload": {
+                "round": 11
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:15.455630700+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:15.461633+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:15.467173700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:15.479500800+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 12,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:15.484746600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 18,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.473057600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 11009,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.488049900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 11012,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:05:26.493892+00:00",
+              "payload": {
+                "round": 11,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T14:05:26.696067100+00:00",
+              "payload": {
+                "round": 12
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.703179100+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.707826500+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.713067900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.726674900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 13,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:26.732469600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 18,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:34.934543800+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8224,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:34.951323100+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8227,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:05:34.972338900+00:00",
+              "payload": {
+                "round": 12,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T14:05:35.164083+00:00",
+              "payload": {
+                "round": 13
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:35.174431100+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:35.182055800+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:35.186899700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:35.204544300+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 15,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:35.209736600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 22,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:43.899489200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8714,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:05:43.911113400+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 8717,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:05:43.916422200+00:00",
+              "payload": {
+                "round": 13,
+                "success": true
+              }
+            },
+            {
+              "event_type": "task_escalated_to_human",
+              "at": "2026-10-23T14:05:43.961821700+00:00",
+              "payload": {
+                "reason": "Planification Kanban incomplète : {\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":true,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744"
+              }
+            },
+            {
+              "event_type": "task_failed",
+              "at": "2026-10-23T14:05:43.961869200+00:00",
+              "payload": {
+                "reason": "Planification Kanban incomplète : {\"context\":{\"existing_work_tickets\":[{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:foundation\",\"needs_refinement\":true,\"ticket_id\":\"f658a8de-1538-4d45-9c5c-6e3385ac1eee\",\"title\":\"Établir le socle du projet\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:validation\",\"needs_refinement\":true,\"ticket_id\":\"8a0cdae1-3df6-49c8-8598-e7d4a5634cbf\",\"title\":\"Valider le projet et le parcours utilisateur\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:integration\",\"needs_refinement\":true,\"ticket_id\":\"f35b7e22-1891-49e9-9ef5-3df31503752d\",\"title\":\"Intégrer les fonctionnalités dans l'application\"},{\"creation_key\":\"initial:e30cc9b3-744d-423c-841f-6cb530acf68d:features\",\"needs_refinement\":false,\"ticket_id\":\"9cfe822f-f9d9-4a59-bf38-d9bbec56b01b\",\"title\":\"Implémenter les fonctionnalités demandées\"}],\"instruction\":\"Update the existing phase ticket IDs. A retained scaffold criterion does not invalidate added specific criteria. Do not recreate a phase. Planning completion is checked from the board; app acceptance remains separate.\",\"root_ticket_id\":\"e30cc9b3-744d-423c-841f-6cb530acf68d\"},\"error\":\"initial_plan_incomplete\",\"problems\":[\"Add specific acceptance criteria to every seeded phase; keep at least three work tickets and a real dependency. Existing phase titles may be retained.\"]}",
+                "status": "failed"
+              }
+            },
+            {
+              "event_type": "studio_worker_state_changed",
+              "at": "2026-10-23T14:05:43.961869200+00:00",
+              "payload": {
+                "state": "failed"
+              }
+            }
+          ]
+        },
+        {
+          "task_id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+          "assigned_agent": "studio_project_manager",
+          "status": "failed",
+          "created_at": "2026-10-23T14:11:13.001159900+00:00",
+          "updated_at": "2026-10-23T14:13:27.421180600+00:00",
+          "last_turn_model_used": "qwen3.5:9b",
+          "failure_detail": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Invalid Qwen parameter acceptance_criteria: expected `,` or `}` at line 1 column  ; ollama/gpt-oss:20b: ollama: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs)).",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "planning_verified": false,
+            "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Invalid Qwen parameter acceptance_criteria: expected `,` or `}` at line 1 column  ; ollama/gpt-oss:20b: ollama: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs)).",
+            "result": "partial",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 1,
+            "termination_reason": "timeout",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "qwen3.5:9b",
+                "provider": "ollama",
+                "status": "passed"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "kind": "execution_progress",
+                "last_verified_round": 0,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              }
+            ]
+          },
+          "checkpoint": {
+            "round": 2,
+            "phase": "failed",
+            "max_tool_rounds": 64,
+            "waiting": null
+          },
+          "operations": [
+            {
+              "operation_id": "4fb4da4f-cfa7-44cb-b2fe-e1cca55c4c7c",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:11:44.174231100+00:00",
+              "result": {
+                "success": true,
+                "result_unknown": false,
+                "file_effects": []
+              }
+            },
+            {
+              "operation_id": "f376ed5b-910f-40a0-a798-d83cd9084a6c",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "updated_at": "2026-10-23T14:12:42.275121700+00:00",
+              "result": {
+                "success": false,
+                "result_unknown": false,
+                "file_effects": [],
+                "diagnostic_excerpt": "[studio_update_ticket] title_invalid"
+              }
+            }
+          ],
+          "events": [
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.583390400+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 12066,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.597578800+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.608560100+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 13,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:12:05.618246900+00:00",
+              "payload": {
+                "round": 2,
+                "success": false
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T14:12:05.775683400+00:00",
+              "payload": {
+                "round": 2
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.784140200+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.790019500+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.795733700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.803972800+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 6,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:05.808905+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 14,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.228225400+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 36435,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "first_token",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.242764100+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 36440,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:12:42.251083800+00:00",
+              "payload": {
+                "round": 2,
+                "success": true
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T14:12:42.452330400+00:00",
+              "payload": {
+                "round": 3
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.459196+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.464622800+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.475119700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.482670900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 6,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:12:42.487603400+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 13,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.480698700+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 26008,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.491425600+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.500308300+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 10,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:13:08.509902400+00:00",
+              "payload": {
+                "round": 3,
+                "success": false
+              }
+            },
+            {
+              "event_type": "bounded_native_model_wait",
+              "at": "2026-10-23T14:13:08.744788100+00:00",
+              "payload": {
+                "round": 3
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.751705900+00:00",
+              "payload": {
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.756588+00:00",
+              "payload": {
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.761273100+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.769701900+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 5,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:08.774501600+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 13,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:27.366070200+00:00",
+              "payload": {
+                "attempt": 1,
+                "elapsed_ms": 18607,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:27.393336300+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_provider_attempt",
+              "at": "2026-10-23T14:13:27.401459700+00:00",
+              "payload": {
+                "attempt": 2,
+                "elapsed_ms": 10,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama"
+              }
+            },
+            {
+              "event_type": "llm_call_finished",
+              "at": "2026-10-23T14:13:27.409322+00:00",
+              "payload": {
+                "round": 3,
+                "success": false
+              }
+            },
+            {
+              "event_type": "task_escalated_to_human",
+              "at": "2026-10-23T14:13:27.450485600+00:00",
+              "payload": {
+                "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;"
+              }
+            },
+            {
+              "event_type": "task_failed",
+              "at": "2026-10-23T14:13:27.450501500+00:00",
+              "payload": {
+                "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Invalid Qwen parameter acceptance_criteria: expected `,` or `}` at line 1 column  ; ollama/gpt-oss:20b: ollama: timeout (HTTP request deadline exceeded; logs should include base_url, model, timeout_secs)).",
+                "status": "failed"
+              }
+            },
+            {
+              "event_type": "studio_worker_state_changed",
+              "at": "2026-10-23T14:13:27.450501500+00:00",
+              "payload": {
+                "state": "failed"
+              }
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "at": "2026-10-23T14:03:19.629614+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 0,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:03:49.707976+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 1,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:04:19.803329+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 3,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:04:49.899891+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 7,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:05:19.976315+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 10,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:05:50.120465+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:06:20.205426+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:06:50.322268+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:07:20.389760+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:07:50.453075+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:08:20.527934+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:08:50.637555+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:09:20.714968+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:09:50.783935+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:10:20.872612+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:10:50.979858+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:11:21.079049+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 0,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:11:51.212447+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 1,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:12:21.327587+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 1,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:12:51.485447+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 2,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:13:21.584830+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 1,
+            "review": 0,
+            "done": 0,
+            "blocked": 0
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "running",
+              "round": 2,
+              "ok": null,
+              "failed": null,
+              "termination": null
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:13:51.656432+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 2,
+              "ok": 1,
+              "failed": 1,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        },
+        {
+          "at": "2026-10-23T14:14:21.737535+00:00",
+          "states": {
+            "todo": 4,
+            "in_progress": 0,
+            "review": 0,
+            "done": 0,
+            "blocked": 1
+          },
+          "tasks": [
+            {
+              "id": "3b04fe5e-4a34-4925-a654-84e14f0897fc",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 12,
+              "ok": 15,
+              "failed": 0,
+              "termination": "verification_failed"
+            },
+            {
+              "id": "3e930b4a-a44b-4bbf-9844-539c86b16599",
+              "role": "studio_project_manager",
+              "status": "failed",
+              "round": 2,
+              "ok": 1,
+              "failed": 1,
+              "termination": "timeout"
+            }
+          ],
+          "file_count": 13
+        }
+      ],
+      "preview": {
+        "running": false,
+        "log": "",
+        "preview_inactive": true
+      }
+    }
+  ],
+  "final_disk_state": [
+    {
+      "project_id": "deff0da5-453f-4b7f-957a-dc8595fe2db5",
+      "read_at": "2026-10-23T14:14:54.151115+00:00",
+      "files": {
+        "src/App.tsx": {
+          "sha256": "916930099fb610777e9cff996a2d9806dedacdb325d7f6f3fd210cbf0023fa85",
+          "unchanged_from_template": true
+        },
+        "src/main.tsx": {
+          "sha256": "f2d9d690e95ea51837effc6b3fe0d08905f7d0c082a3ada3c64335f7a3fcb596",
+          "unchanged_from_template": true
+        },
+        "package.json": {
+          "sha256": "0cd092e71eefec0762b798ee2df3adf0431ed7515744a51a5a700a2981873eb3",
+          "unchanged_from_template": true
+        },
+        "tsconfig.json": {
+          "sha256": "2442f38b94fe20ad417d991f9eaac32eb3ab398860c334291f428e35edf45862",
+          "unchanged_from_template": true
+        },
+        "vitest.config.ts": {
+          "sha256": "f055ce14cbd63e94a9f3949b2507fcd686a819cb00467f4a41c6ab7e39be5fca",
+          "unchanged_from_template": true
+        },
+        "src/test/setup.ts": {
+          "sha256": "675e473d1041326dc6e83dfb4e62391b025617f98522a56caa71cbcfbb601af5",
+          "unchanged_from_template": true
+        }
+      },
+      "node_modules_exists": true,
+      "test_files": [],
+      "duplicate_src_vitest_config": false
+    },
+    {
+      "project_id": "3c93110c-e1ee-413a-b9cb-160f4174024e",
+      "read_at": "2026-10-23T14:14:54.167848+00:00",
+      "files": {
+        "src/App.tsx": {
+          "sha256": "916930099fb610777e9cff996a2d9806dedacdb325d7f6f3fd210cbf0023fa85",
+          "unchanged_from_template": true
+        },
+        "src/main.tsx": {
+          "sha256": "f2d9d690e95ea51837effc6b3fe0d08905f7d0c082a3ada3c64335f7a3fcb596",
+          "unchanged_from_template": true
+        },
+        "package.json": {
+          "sha256": "0cd092e71eefec0762b798ee2df3adf0431ed7515744a51a5a700a2981873eb3",
+          "unchanged_from_template": true
+        },
+        "tsconfig.json": {
+          "sha256": "2442f38b94fe20ad417d991f9eaac32eb3ab398860c334291f428e35edf45862",
+          "unchanged_from_template": true
+        },
+        "vitest.config.ts": {
+          "sha256": "f055ce14cbd63e94a9f3949b2507fcd686a819cb00467f4a41c6ab7e39be5fca",
+          "unchanged_from_template": true
+        },
+        "src/test/setup.ts": {
+          "sha256": "675e473d1041326dc6e83dfb4e62391b025617f98522a56caa71cbcfbb601af5",
+          "unchanged_from_template": true
+        }
+      },
+      "node_modules_exists": false,
+      "test_files": [],
+      "duplicate_src_vitest_config": false
+    }
+  ],
+  "tests": {
+    "daemon_unit": {
+      "passed": 708,
+      "ignored": 1
+    },
+    "ui_unit": {
+      "passed": 41
+    },
+    "ui_playwright_mocked": {
+      "passed": 52
+    },
+    "ui_build": "passed; existing chunk-size warning",
+    "daemon_creation_final": {
+      "passed": 1,
+      "skipped": 1
+    },
+    "scripted_agentic": {
+      "passed": 11,
+      "full_suite_revalidated": false
+    }
+  },
+  "scripted_evidence": {
+    "daemon_sha256": "ed37b912e5269366642db16747425bc6b9cc1b1f9184e627eaeeef5284609e35",
+    "model": "deterministic protocol fixture (not an LLM evaluation)",
+    "cases": [
+      {
+        "name": "real project creation and clean initial Git",
+        "status": "passed",
+        "ms": 615,
+        "evidence": {
+          "id": "a649b8d8-602a-48c5-8abd-cfdaa2d19dae",
+          "head": "f7da583362f4dde9d71cfa419b82598c007dd041"
+        }
+      },
+      {
+        "name": "TypeScript build failure stays failed without a weaker fallback",
+        "status": "passed",
+        "ms": 3443,
+        "evidence": {
+          "id": "b9761ee7-09aa-43e8-ae4b-3b6e325d39c5",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "planning_verified": false,
+            "reason": "studio_command_verification_failed: vérifications en échec ou périmées après des modifications : [\"npm\",\"workspace:/\",[\"run\",\"build\"]]: failed. Aucun succès de livraison n'est confirmé.",
+            "result": "failed",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 0,
+            "termination_reason": "verification_failed",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "diagnostic": "[run_command] failed: exit 2 (stdout 118 bytes, stderr 0 bytes) exit 2 stdout: > build\n> tsc --noEmit && vite build\n\nmain.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'. stderr: ",
+                "environment_revision": 0,
+                "exit_code": 2,
+                "first_failed_round": 1,
+                "kind": "command",
+                "retry_hint": null,
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "failed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "first_verification_failure_round": 1,
+                "kind": "execution_progress",
+                "last_verified_round": 0,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed"
+              },
+              {
+                "attempt": 1,
+                "kind": "command_verification_retry",
+                "pending": [
+                  "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]: failed"
+                ],
+                "status": "retried"
+              },
+              {
+                "attempt": 2,
+                "kind": "command_verification_retry",
+                "pending": [
+                  "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]: failed"
+                ],
+                "status": "retried"
+              },
+              {
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "project_verification_plan",
+                "status": "passed"
+              }
+            ]
+          },
+          "failure": "studio_command_verification_failed: vérifications en échec ou périmées après des modifications : [\"npm\",\"workspace:/\",[\"run\",\"build\"]]: failed. Aucun succès de livraison n'est confirmé."
+        }
+      },
+      {
+        "name": "planning handoff ends at a verified board without another model reply",
+        "status": "passed",
+        "ms": 3475,
+        "evidence": {
+          "task_id": "ab59c704-015f-4586-85cb-49bbca0ef050",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "planning_verified": true,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 5,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "kind": "execution_progress",
+                "last_verified_round": 0,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed"
+              },
+              {
+                "detail": "Planification vérifiée. Les tickets prêts seront confiés aux spécialistes par le scheduler ; l'application reste à implémenter et valider.",
+                "kind": "kanban_plan",
+                "ready_ticket_ids": [
+                  "a6f38412-74c5-480d-bdf7-ec71ed99647c"
+                ],
+                "status": "passed",
+                "task_id": "ab59c704-015f-4586-85cb-49bbca0ef050"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "supplied foundation verifies then hands off to review without product edits",
+        "status": "passed",
+        "ms": 9950,
+        "evidence": {
+          "task_id": "7aaa27ad-f8ce-465d-a2a2-ab13bd15eae5",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "planning_verified": false,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 3,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "environment_revision": 1,
+                "first_unverified_round": null,
+                "first_verification_failure_round": null,
+                "identical_inspections": 0,
+                "inspection_calls": 0,
+                "inspection_rejections": 0,
+                "kind": "execution_progress",
+                "last_verified_round": 1,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed",
+                "verified_revision": 0
+              },
+              {
+                "kind": "foundation_handoff",
+                "product_acceptance": false,
+                "source": "main_tool_loop",
+                "status": "passed",
+                "ticket_id": "24fe9325-f457-4fbe-b58a-eb948e62f68f"
+              },
+              {
+                "kind": "project_build",
+                "source": "main_tool_loop",
+                "status": "passed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "bounded inspection makes a specialist implement after repeated identical reads",
+        "status": "passed",
+        "ms": 10853,
+        "evidence": {
+          "task_id": "3ef83209-b7bc-428b-b823-c6cbdfa9c5b0",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "planning_verified": false,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 5,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 5,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 5,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "environment_revision": 1,
+                "first_unverified_round": null,
+                "first_verification_failure_round": null,
+                "identical_inspections": 0,
+                "inspection_calls": 0,
+                "inspection_fingerprint": "b00e23d697f80074d2344a0af4b2d81028575aaa7a576095720983e0b222689e",
+                "inspection_rejections": 0,
+                "kind": "execution_progress",
+                "last_verified_round": 5,
+                "repair_inspections": 0,
+                "revision": 1,
+                "source_changed": true,
+                "status": "passed",
+                "verified_revision": 1
+              },
+              {
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "project_verification_plan",
+                "status": "passed"
+              },
+              {
+                "kind": "project_build",
+                "source": "main_tool_loop",
+                "status": "passed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Vitest scaffold runs DOM matchers and strict TSX tests without rewriting configuration",
+        "status": "passed",
+        "ms": 13060,
+        "evidence": {
+          "task_id": "2e43f568-c1e1-48be-9660-ecba229f9bda",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "planning_verified": false,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 4,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 2,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"test\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 2,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 3,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "environment_revision": 1,
+                "first_unverified_round": null,
+                "first_verification_failure_round": null,
+                "identical_inspections": 0,
+                "inspection_calls": 0,
+                "inspection_rejections": 0,
+                "kind": "execution_progress",
+                "last_verified_round": 2,
+                "repair_inspections": 0,
+                "revision": 1,
+                "source_changed": true,
+                "status": "passed",
+                "verified_revision": 1
+              },
+              {
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "project_verification_plan",
+                "status": "passed"
+              },
+              {
+                "kind": "project_build",
+                "source": "main_tool_loop",
+                "status": "passed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "unified repair installs dependencies before a runtime-scheduled build and repairs TypeScript",
+        "status": "passed",
+        "ms": 11794,
+        "evidence": {
+          "id": "41105a46-4aee-4d63-a3f4-bfc3499d6e74",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "planning_verified": false,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 4,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "check_round": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "compiler_repair_read",
+                "path": "workspace:/src/App.tsx",
+                "status": "passed"
+              },
+              {
+                "attempts": 2,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 4,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "environment_revision": 1,
+                "first_unverified_round": null,
+                "first_verification_failure_round": null,
+                "identical_inspections": 0,
+                "inspection_calls": 0,
+                "inspection_rejections": 0,
+                "kind": "execution_progress",
+                "last_verified_round": 4,
+                "repair_inspections": 0,
+                "revision": 1,
+                "source_changed": true,
+                "status": "passed",
+                "verified_revision": 1
+              },
+              {
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "project_verification_plan",
+                "status": "passed"
+              },
+              {
+                "kind": "project_build",
+                "source": "main_tool_loop",
+                "status": "passed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "unified repair aligns incompatible Vitest peer versions before retrying installation",
+        "status": "passed",
+        "ms": 22950,
+        "evidence": {
+          "id": "8bda9c2b-9185-4cd1-8eba-7e21081d1c35",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 2,
+            "planning_verified": false,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 4,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 1,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "failed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"install\",\"--include=dev\",\"--no-audit\",\"--no-fund\"]]",
+                "diagnostic": "[run_command] failed: exit 1 (stdout 0 bytes, stderr 1150 bytes) exit 1 stdout:  stderr: npm error code ERESOLVE\nnpm error ERESOLVE unable to resolve dependency tree\nnpm error\nnpm error While resolving: studio-app@0.0.0\nnpm error Found: @vitest/ui@3.2.7\nnpm error node_modules/@vitest/ui\nnpm error   dev @vitest/ui@\"3.2.7\" from the root project\nnpm error\nnpm error Could not resolve dependency:\nnpm error peerOptional @vitest/ui@\"5.0.5\" from vitest@5.0.5\nnpm error node_modules/vitest\nnpm error   dev vitest@\"5.0.5\" from the root project\nnpm error   peer vitest@\"5.0.5\" from @vitest/browser-playwright@5.0.5\nnpm error   node_modules/@vitest/browser-playwright\nnpm error     peerOptional @vitest/browser-playwright@\"5.0.5\" from vitest@5.0.5\nnpm error   5 more (@vitest/browser-preview, ...)\nnpm error\nnpm error Fix the upstream dependency conflict, or retry\nnpm error this command with --force or --legacy-peer-deps\nnpm error to accept an incorrect (and potentially broken) dependency resolution.\nnpm error\nnpm error\nnpm error For a full report see:\nnpm error E:\\packages\\npm\\_logs\\2026-10-23T14_00_38_064Z-eresolve-report.txt\nnpm error A complete log of this run can be found in: E:\\packages\\npm\\_logs\\2026-10-23T14_00_38_064Z-debug-0.log",
+                "kind": "dependency_installation",
+                "repairable": true,
+                "resolved_round": 4,
+                "revision": 0,
+                "round": 1,
+                "status": "passed"
+              },
+              {
+                "check_round": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"install\",\"--include=dev\",\"--no-audit\",\"--no-fund\"]]",
+                "kind": "compiler_repair_read",
+                "path": "workspace:/package.json",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 4,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "attempts": 1,
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "environment_revision": 1,
+                "exit_code": 0,
+                "kind": "command",
+                "revision": 1,
+                "round": 5,
+                "source": "tool_executor",
+                "status": "passed",
+                "tool": "run_command",
+                "verification": true
+              },
+              {
+                "environment_revision": 1,
+                "first_unverified_round": null,
+                "first_verification_failure_round": null,
+                "identical_inspections": 0,
+                "inspection_calls": 0,
+                "inspection_rejections": 0,
+                "kind": "execution_progress",
+                "last_verified_round": 5,
+                "repair_inspections": 0,
+                "revision": 1,
+                "source_changed": true,
+                "status": "passed",
+                "verified_revision": 1
+              },
+              {
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "project_verification_plan",
+                "status": "passed"
+              },
+              {
+                "kind": "project_build",
+                "source": "main_tool_loop",
+                "status": "passed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "dependency preparation registry failure stops before build or source repair",
+        "status": "passed",
+        "ms": 7939,
+        "evidence": {
+          "id": "489a4535-29f4-40a3-b71d-ae25a081ed20",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "planning_verified": false,
+            "reason": "studio_dependency_installation_failed: installation des dépendances impossible ; le build n'a pas été lancé et aucune réparation de source n'est autorisée pour masquer cet échec. Vérifier la connexion, le proxy et le registre npm configuré, puis reprendre le checkpoint.\n{\"error\":null,\"exit_code\":1,\"file_effects\":[],\"file_version\":null,\"operation_id\":\"d280ea1b-5dcf-4350-a6dd-158ecd97bc46\",\"output\":\"[run_command] failed: exit 1 (stdout 0 bytes, stderr 1152 bytes) exit 1 stdout:  stderr: npm error code ECONNREFUSED\\nnpm error syscall connect\\nnpm error errno ECONNREFUSED\\nnpm error FetchError: request to http://127.0.0.1:9/@testing-library%2fdom failed, reason: connect ECONNREFUSED 127.0.0.1:9\\nnpm error     at ClientRequest.<anonymous> (C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\nvm\\\\v22.20.0\\\\node_modules\\\\npm\\\\node_modules\\\\minipass-fetch\\\\lib\\\\index.js:130:14)\\nnpm error     at ClientRequest.emit (node:events:519:28)\\nnpm error     at emitErrorEvent (node:_http_client:105:11)\\nnpm error     at _destroy (node:_http_client:898:9)\\nnpm error     at onSocketNT (node:_http_client:918:5)\\nnpm error     at process.processTicksAndRejections (node:internal/process/task_queues:91:21) {\\nnpm error   code: 'ECONNREFUSED',\\nnpm error   errno: 'ECONNREFUSED',\\nnpm error   syscall: 'connect',\\nnpm error   address: '127.0.0.1',\\nnpm error   port: 9,\\nnpm error   type: 'system',\\nnpm error   requiredBy: '.'\\nnpm error }\\nnpm error\\nnpm error If you are behind a proxy, please make sure that the\\nnpm error 'proxy' config is set properly.  See: 'npm help config'\\nnpm error A complete log of this run can be found in: E:\\\\packages\\\\npm\\\\_logs\\\\2026-10-23T14_01_05_493Z-debug-0.log\",\"result_unknown\":false,\"schema_version\":1,\"success\":false,\"tool\":\"run_command\",\"truncated\":false}",
+            "result": "failed",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 0,
+            "termination_reason": "verification_failed",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "fixture",
+                "provider": "openai",
+                "status": "passed"
+              },
+              {
+                "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+                "kind": "project_verification_plan",
+                "status": "passed"
+              },
+              {
+                "environment_revision": 0,
+                "exit_code": 1,
+                "kind": "command",
+                "revision": 0,
+                "round": 1,
+                "source": "tool_executor",
+                "status": "failed",
+                "tool": "run_command",
+                "verification": false
+              },
+              {
+                "kind": "execution_progress",
+                "last_verified_round": 0,
+                "repair_inspections": 0,
+                "revision": 0,
+                "status": "passed"
+              },
+              {
+                "detail": "studio_dependency_installation_failed: installation des dépendances impossible ; le build n'a pas été lancé et aucune réparation de source n'est autorisée pour masquer cet échec. Vérifier la connexion, le proxy et le registre npm configuré, puis reprendre le checkpoint.\n{\"error\":null,\"exit_code\":1,\"file_effects\":[],\"file_version\":null,\"operation_id\":\"d280ea1b-5dcf-4350-a6dd-158ecd97bc46\",\"output\":\"[run_command] failed: exit 1 (stdout 0 bytes, stderr 1152 bytes) exit 1 stdout:  stderr: npm error code ECONNREFUSED\\nnpm error syscall connect\\nnpm error errno ECONNREFUSED\\nnpm error FetchError: request to http://127.0.0.1:9/@testing-library%2fdom failed, reason: connect ECONNREFUSED 127.0.0.1:9\\nnpm error     at ClientRequest.<anonymous> (C:\\\\Users\\\\azero\\\\AppData\\\\Local\\\\nvm\\\\v22.20.0\\\\node_modules\\\\npm\\\\node_modules\\\\minipass-fetch\\\\lib\\\\index.js:130:14)\\nnpm error     at ClientRequest.emit (node:events:519:28)\\nnpm error     at emitErrorEvent (node:_http_client:105:11)\\nnpm error     at _destroy (node:_http_client:898:9)\\nnpm error     at onSocketNT (node:_http_client:918:5)\\nnpm error     at process.processTicksAndRejections (node:internal/process/task_queues:91:21) {\\nnpm error   code: 'ECONNREFUSED',\\nnpm error   errno: 'ECONNREFUSED',\\nnpm error   syscall: 'connect',\\nnpm error   address: '127.0.0.1',\\nnpm error   port: 9,\\nnpm error   type: 'system',\\nnpm error   requiredBy: '.'\\nnpm error }\\nnpm error\\nnpm error If you are behind a proxy, please make sure that the\\nnpm error 'proxy' config is set properly.  See: 'npm help config'\\nnpm error A complete log of this run can be found in: E:\\\\packages\\\\npm\\\\_logs\\\\2026-10-23T14_01_05_493Z-debug-0.log\",\"result_unknown\":false,\"schema_version\":1,\"success\":false,\"tool\":\"run_command\",\"truncated\":false}",
+                "kind": "dependency_installation",
+                "status": "failed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Vite scaffold installs and TypeScript repair follows fresh compiler diagnostics",
+        "status": "passed",
+        "ms": 19808,
+        "evidence": {
+          "id": "b58d26ac-74ad-46a8-83f9-3631146daaab",
+          "checks": [
+            {
+              "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+              "kind": "provider_route_recovered",
+              "model": "fixture",
+              "provider": "openai",
+              "status": "passed"
+            },
+            {
+              "environment_revision": 0,
+              "exit_code": 0,
+              "kind": "command",
+              "revision": 0,
+              "round": 1,
+              "source": "tool_executor",
+              "status": "passed",
+              "tool": "run_command",
+              "verification": false
+            },
+            {
+              "check_round": 12,
+              "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+              "kind": "compiler_repair_read",
+              "path": "workspace:/src/App.tsx",
+              "status": "passed"
+            },
+            {
+              "attempts": 4,
+              "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+              "environment_revision": 1,
+              "exit_code": 0,
+              "kind": "command",
+              "revision": 3,
+              "round": 15,
+              "source": "tool_executor",
+              "status": "passed",
+              "tool": "run_command",
+              "verification": true
+            },
+            {
+              "environment_revision": 1,
+              "first_unverified_round": null,
+              "first_verification_failure_round": null,
+              "identical_inspections": 0,
+              "inspection_calls": 0,
+              "inspection_fingerprint": "b00e23d697f80074d2344a0af4b2d81028575aaa7a576095720983e0b222689e",
+              "inspection_rejections": 0,
+              "kind": "execution_progress",
+              "last_verified_round": 15,
+              "repair_inspections": 0,
+              "revision": 3,
+              "source_changed": true,
+              "status": "passed",
+              "verified_revision": 3
+            },
+            {
+              "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+              "kind": "project_verification_plan",
+              "status": "passed"
+            },
+            {
+              "kind": "project_build",
+              "source": "main_tool_loop",
+              "status": "passed"
+            }
+          ],
+          "failed_tool_calls": 5
+        }
+      },
+      {
+        "name": "build repair persists the exact missing entrypoint through surveys and reaches a fresh build",
+        "status": "passed",
+        "ms": 5761,
+        "evidence": {
+          "id": "e8e0f401-0fac-45a9-9779-afda28f46ba6",
+          "checks": [
+            {
+              "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+              "kind": "provider_route_recovered",
+              "model": "fixture",
+              "provider": "openai",
+              "status": "passed"
+            },
+            {
+              "attempts": 2,
+              "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+              "environment_revision": 0,
+              "exit_code": 0,
+              "kind": "command",
+              "revision": 1,
+              "round": 6,
+              "source": "tool_executor",
+              "status": "passed",
+              "tool": "run_command",
+              "verification": true
+            },
+            {
+              "first_unverified_round": null,
+              "first_verification_failure_round": null,
+              "identical_inspections": 0,
+              "inspection_calls": 0,
+              "inspection_fingerprint": "fda046d4901fb7d38f0c694bd1f455e6758898898bb0433f4ff4581744684898",
+              "inspection_rejections": 0,
+              "kind": "execution_progress",
+              "last_verified_round": 6,
+              "repair_inspections": 0,
+              "revision": 1,
+              "source_changed": true,
+              "status": "passed",
+              "verified_revision": 1
+            },
+            {
+              "command_key": "[\"npm\",\"workspace:/\",[\"run\",\"build\"]]",
+              "kind": "project_verification_plan",
+              "status": "passed"
+            },
+            {
+              "kind": "project_build",
+              "source": "main_tool_loop",
+              "status": "passed"
+            }
+          ],
+          "failed_tool_calls": 2
+        }
+      }
+    ]
+  },
+  "final_runtime_state": {
+    "read_at": "2026-10-23T14:14:33.549034+00:00",
+    "active_tasks": [],
+    "daemon_healthy": true
+  }
+}

@@ -1,0 +1,2428 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-10-23",
+  "observation_ended_at": "2026-10-22T23:10:30.001747+00:00",
+  "observation_end_reason": "blocked after one automatic planning retry; no task active at this reading; future scheduler attempts not evaluated",
+  "code_revisions": {
+    "daemon": "690442a1c07152341b2cce51380756da0cf5fbb3",
+    "ui": "05047d015acc4336bf9ee84fd855de320acda34d"
+  },
+  "daemon_sha256": "6ac506c0510874920a9602082d07290a0874441d6fc9764f6f4eef5539ed68c5",
+  "interventions_during_each_run": [],
+  "between_runs": [
+    "After attempt 1: eligible fallback filtering, context-specific protocol repair and concise diagnostics committed before attempt 2",
+    "After attempt 2: aggregate context copy fix committed; Studio profile changed before attempt 3 to GPT-OSS primary and Qwen fallback, both 32768 tokens"
+  ],
+  "attempts": [
+    {
+      "project_id": "5810e103-30dd-42be-b1ec-7e1d027c6887",
+      "tasks": [
+        {
+          "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258",
+          "created_at": "2026-10-23T00:45:53.097654+02:00",
+          "status": "failed",
+          "assigned_agent": "studio_project_manager",
+          "failure_detail": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed ; akasha_embedded/default: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible ; akasha_core/core: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible. Aucune route Studio utilisable après les tentatives bornées (budget maximum : 299 s). Le scheduler ne répétera pas cette demande inchangée. Vérifiez les outils du modèle depuis son sélecteur. Pour reprendre depui).",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed ; akasha_embedded/default: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible ; akasha_core/core: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible. Aucune route Studio utilisable après les tentatives bornées (budget maximum : 299 s). Le scheduler ne répétera pas cette demande inchangée. Vérifiez les outils du modèle depuis son sélecteur. Pour reprendre depui).",
+            "result": "failed",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 0,
+            "termination_reason": "provider_error",
+            "verification": [
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              }
+            ]
+          },
+          "last_turn_model_used": null,
+          "attempts": [
+            {
+              "at": "2026-10-22T22:45:53.341061400+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:45:53.347533500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "qualification": {
+                    "checked_at": "2026-10-22T22:39:30.006020800+00:00",
+                    "context_window_tokens": 32768,
+                    "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+                    "latency_ms": 5873,
+                    "status": "qualified"
+                  }
+                },
+                "elapsed_ms": 4,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:45:53.350984600+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 10,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.635695700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "provider_error",
+                  "error": "ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 9296,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.646143200+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "qualifying",
+                "provider": "akasha_embedded",
+                "timeout_ms": 145299
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.652869500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 8,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded",
+                "timeout_ms": 145299
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.656749700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "qualifying",
+                "provider": "akasha_core",
+                "timeout_ms": 290584
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.663199900+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 4,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core",
+                "timeout_ms": 290584
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.784097500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.790668600+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "qualification",
+                  "error": "ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.794628600+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "qualifying",
+                "provider": "akasha_embedded",
+                "timeout_ms": 149945
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.800931900+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded",
+                "timeout_ms": 149945
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.804366200+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "qualifying",
+                "provider": "akasha_core",
+                "timeout_ms": 299880
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.810517500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core",
+                "timeout_ms": 299880
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.927109300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.933515800+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "qualification",
+                  "error": "ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.937186800+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "qualifying",
+                "provider": "akasha_embedded",
+                "timeout_ms": 149945
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.943313200+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded",
+                "timeout_ms": 149945
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.946656700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "qualifying",
+                "provider": "akasha_core",
+                "timeout_ms": 299880
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:02.953056500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core",
+                "timeout_ms": 299880
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:03.076095500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:03.083001600+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "qualification",
+                  "error": "ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 4,
+                "max_attempts": 3,
+                "model": "qwen3.5:9b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 99966
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:03.086594400+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "qualifying",
+                "provider": "akasha_embedded",
+                "timeout_ms": 149944
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:03.093225500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded",
+                "timeout_ms": 149944
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-23T00:46:03.09703+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "qualifying",
+                "provider": "akasha_core",
+                "timeout_ms": 299878
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            },
+            {
+              "at": "2026-10-22T22:46:03.103240200+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 3,
+                "detail": {
+                  "class": "qualification",
+                  "error": "studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible"
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 3,
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core",
+                "timeout_ms": 299878
+              },
+              "schema_version": 1,
+              "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+            }
+          ],
+          "report": {
+            "done": [],
+            "failed": [
+              "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed ; akasha_embedded/default: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible ; akasha_core/core: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible. Aucune route Studio utilisable après les tentatives bornées (budget maximum : 299 s). Le scheduler ne répétera pas cette demande inchangée. Vérifiez les outils du modèle depuis son sélecteur. Pour reprendre depui)."
+            ],
+            "needs_review": [],
+            "next_steps": [
+              "Consulter le diagnostic, rétablir le fournisseur si nécessaire, puis reprendre cette tâche depuis son checkpoint et son ticket existant."
+            ],
+            "outcome": {
+              "acceptance_verified": false,
+              "confirmed_file_mutation": false,
+              "failed_tool_calls": 0,
+              "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed ; akasha_embedded/default: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible ; akasha_core/core: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible. Aucune route Studio utilisable après les tentatives bornées (budget maximum : 299 s). Le scheduler ne répétera pas cette demande inchangée. Vérifiez les outils du modèle depuis son sélecteur. Pour reprendre depui).",
+              "result": "failed",
+              "schema_version": 1,
+              "status": "failed",
+              "successful_tool_calls": 0,
+              "termination_reason": "provider_error",
+              "verification": [
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                }
+              ]
+            },
+            "status": "failed",
+            "task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258",
+            "transcript_path": "C:\\Users\\azero\\akasha\\transcripts\\a7abc086-e13e-44b2-b001-0e4f9ebae258.json"
+          }
+        }
+      ],
+      "board": {
+        "items": [
+          {
+            "acceptance_criteria": [
+              {
+                "id": "request-scope",
+                "text": "Le résultat couvre le besoin décrit dans cette demande."
+              },
+              {
+                "id": "verification",
+                "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              },
+              {
+                "id": "initial-kanban-backlog",
+                "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+              }
+            ],
+            "assigned_agent": "studio_project_manager",
+            "created_at": "2026-10-22T22:45:53.043749300+00:00",
+            "description": "Crée le projet « Todo observé — 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+            "evidence": {
+              "resume_status": "in_progress",
+              "summary": "task_id=a7abc086-e13e-44b2-b001-0e4f9ebae258, statut=failed, motif=provider_error, cause=Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed ; akasha_embedded/default: studio_tool_transport_unsupported: le moteur embarqué n'annonce pas de transport natif d'outils ; configurez une route Studio compatible ; akasha_core/core: studio_to",
+              "task_ids": [
+                "a7abc086-e13e-44b2-b001-0e4f9ebae258"
+              ]
+            },
+            "id": "09619156-0245-4bf4-a730-c7e9aa6ba48e",
+            "project_id": "5810e103-30dd-42be-b1ec-7e1d027c6887",
+            "related_task_id": "a7abc086-e13e-44b2-b001-0e4f9ebae258",
+            "requested_by": "user_chat",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+            "updated_at": "2026-10-22T22:46:03.135962900+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-3",
+                "text": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:45:53.080038800+00:00",
+            "creation_key": "initial:09619156-0245-4bf4-a730-c7e9aa6ba48e:validation",
+            "depends_on_ticket_id": "37a9745b-6023-41fa-8976-739ba2f33934",
+            "depends_on_ticket_ids": [
+              "37a9745b-6023-41fa-8976-739ba2f33934"
+            ],
+            "description": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban.\n\nCe ticket fait partie du backlog initial du ticket racine 09619156-0245-4bf4-a730-c7e9aa6ba48e; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "346c3ef6-f51b-4b99-a3f3-2ac4e25300e2",
+            "parent_ticket_id": "09619156-0245-4bf4-a730-c7e9aa6ba48e",
+            "project_id": "5810e103-30dd-42be-b1ec-7e1d027c6887",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Valider le projet et le parcours utilisateur",
+            "updated_at": "2026-10-22T22:45:53.080042700+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-2",
+                "text": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-23T00:45:53.071393+02:00",
+            "creation_key": "initial:09619156-0245-4bf4-a730-c7e9aa6ba48e:integration",
+            "depends_on_ticket_id": "45b3cbcc-3253-4f79-b1a9-0bec4070e208",
+            "depends_on_ticket_ids": [
+              "45b3cbcc-3253-4f79-b1a9-0bec4070e208"
+            ],
+            "description": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application.\n\nCe ticket fait partie du backlog initial du ticket racine 09619156-0245-4bf4-a730-c7e9aa6ba48e; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "37a9745b-6023-41fa-8976-739ba2f33934",
+            "parent_ticket_id": "09619156-0245-4bf4-a730-c7e9aa6ba48e",
+            "project_id": "5810e103-30dd-42be-b1ec-7e1d027c6887",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Intégrer les fonctionnalités dans l'application",
+            "updated_at": "2026-10-22T22:45:53.071396700+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-1",
+                "text": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:45:53.062313400+00:00",
+            "creation_key": "initial:09619156-0245-4bf4-a730-c7e9aa6ba48e:features",
+            "depends_on_ticket_id": "97d4765b-41e0-4620-a0c0-b7bd7ce64fa5",
+            "depends_on_ticket_ids": [
+              "97d4765b-41e0-4620-a0c0-b7bd7ce64fa5"
+            ],
+            "description": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé.\n\nCe ticket fait partie du backlog initial du ticket racine 09619156-0245-4bf4-a730-c7e9aa6ba48e; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "45b3cbcc-3253-4f79-b1a9-0bec4070e208",
+            "parent_ticket_id": "09619156-0245-4bf4-a730-c7e9aa6ba48e",
+            "project_id": "5810e103-30dd-42be-b1ec-7e1d027c6887",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Implémenter les fonctionnalités demandées",
+            "updated_at": "2026-10-22T22:45:53.062318200+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-0",
+                "text": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application: réutilise ses manifests et ne crée pas un second projet imbriqué. Critère: l'architecture, le point d'entrée et les commandes du projet sont identifiés et cohérents avec la demande."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-22T22:45:53.053515400+00:00",
+            "creation_key": "initial:09619156-0245-4bf4-a730-c7e9aa6ba48e:foundation",
+            "description": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application: réutilise ses manifests et ne crée pas un second projet imbriqué. Critère: l'architecture, le point d'entrée et les commandes du projet sont identifiés et cohérents avec la demande.\n\nCe ticket fait partie du backlog initial du ticket racine 09619156-0245-4bf4-a730-c7e9aa6ba48e; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "97d4765b-41e0-4620-a0c0-b7bd7ce64fa5",
+            "parent_ticket_id": "09619156-0245-4bf4-a730-c7e9aa6ba48e",
+            "project_id": "5810e103-30dd-42be-b1ec-7e1d027c6887",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Établir le socle du projet",
+            "updated_at": "2026-10-22T22:45:53.053521200+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "project_id": "00d359cc-92fb-4eab-8b91-6a7f38e9b9cb",
+      "tasks": [
+        {
+          "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23",
+          "created_at": "2026-10-22T22:54:28.936580900+00:00",
+          "status": "failed",
+          "assigned_agent": "studio_project_manager",
+          "failure_detail": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before c).",
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 0,
+            "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before c).",
+            "result": "partial",
+            "schema_version": 1,
+            "status": "failed",
+            "successful_tool_calls": 1,
+            "termination_reason": "provider_error",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "qwen3.5:9b",
+                "provider": "ollama",
+                "status": "passed"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              }
+            ]
+          },
+          "last_turn_model_used": "qwen3.5:9b",
+          "attempts": [
+            {
+              "at": "2026-10-22T22:54:39.183891100+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 5463,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "succeeded",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-23T00:54:39.320292+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_embedded/default: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:39.324078900+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:39.327513500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:39.333534200+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "qualification": {
+                    "checked_at": "2026-10-22T22:54:32.650522400+00:00",
+                    "context_window_tokens": 32768,
+                    "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+                    "latency_ms": 3457,
+                    "status": "qualified"
+                  }
+                },
+                "elapsed_ms": 3,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:39.336746800+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 9,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.783803700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "provider_error",
+                  "error": "ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 2458,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.792591300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 297439
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.799166700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before contacting the model; estimated input is about 14832 tokens for a configured 16384-token window, leaving 0 tokens after the safety margin, below the 512-token minimum response budget. The estimate includes protected system/user instructions, tool schemas, and recent execution. Nothing was sent and no instructions were discarded. Workaround: choose a model with a larger context window, raise this provider's effective context setting (for Ollama, model_options.<model>.num_ctx or AKASHA_OLLAMA_NUM_CTX) if available memory permits, or reduce optional prompt/tool context."
+                },
+                "elapsed_ms": 9,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 297439
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.923339300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_embedded/default: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.927611300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.931596100+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-23T00:54:41.938119+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "qualification": {
+                    "checked_at": "2026-10-22T22:54:32.650522400+00:00",
+                    "context_window_tokens": 32768,
+                    "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+                    "latency_ms": 3457,
+                    "status": "qualified"
+                  }
+                },
+                "elapsed_ms": 4,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:41.942284400+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 10,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.005080500+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "provider_error",
+                  "error": "ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 2075,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.012796800+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 297822
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.019264300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before contacting the model; estimated input is about 15036 tokens for a configured 16384-token window, leaving 0 tokens after the safety margin, below the 512-token minimum response budget. The estimate includes protected system/user instructions, tool schemas, and recent execution. Nothing was sent and no instructions were discarded. Workaround: choose a model with a larger context window, raise this provider's effective context setting (for Ollama, model_options.<model>.num_ctx or AKASHA_OLLAMA_NUM_CTX) if available memory permits, or reduce optional prompt/tool context."
+                },
+                "elapsed_ms": 8,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 297822
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.146390800+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_embedded/default: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.150532700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.154460100+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.161036400+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "qualification": {
+                    "checked_at": "2026-10-22T22:54:32.650522400+00:00",
+                    "context_window_tokens": 32768,
+                    "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+                    "latency_ms": 3457,
+                    "status": "qualified"
+                  }
+                },
+                "elapsed_ms": 4,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:44.164608700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 10,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-23T00:54:46.534324+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "provider_error",
+                  "error": "ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 2381,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-23T00:54:46.543348+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 297515
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:46.550480300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before contacting the model; estimated input is about 15240 tokens for a configured 16384-token window, leaving 0 tokens after the safety margin, below the 512-token minimum response budget. The estimate includes protected system/user instructions, tool schemas, and recent execution. Nothing was sent and no instructions were discarded. Workaround: choose a model with a larger context window, raise this provider's effective context setting (for Ollama, model_options.<model>.num_ctx or AKASHA_OLLAMA_NUM_CTX) if available memory permits, or reduce optional prompt/tool context."
+                },
+                "elapsed_ms": 9,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 297515
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-23T00:54:46.680648+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_embedded/default: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "default",
+                "phase": "skipped",
+                "provider": "akasha_embedded"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:46.684960400+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "detail": {
+                  "class": "qualification",
+                  "error": "akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils"
+                },
+                "model": "core",
+                "phase": "skipped",
+                "provider": "akasha_core"
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-23T00:54:46.688949+02:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:46.695519400+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "qualification": {
+                    "checked_at": "2026-10-22T22:54:32.650522400+00:00",
+                    "context_window_tokens": 32768,
+                    "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+                    "latency_ms": 3457,
+                    "status": "qualified"
+                  }
+                },
+                "elapsed_ms": 4,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "qualified",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:46.699293300+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": null,
+                "elapsed_ms": 10,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "started",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:47.921766900+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 1,
+                "detail": {
+                  "class": "provider_error",
+                  "error": "ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_list_tickets, studio_create_ticket, studio_update_ticket]; nothing executed"
+                },
+                "elapsed_ms": 1235,
+                "max_attempts": 2,
+                "model": "qwen3.5:9b",
+                "phase": "failed",
+                "provider": "ollama",
+                "timeout_ms": 149949
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:47.930377600+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": null,
+                "elapsed_ms": 0,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "qualifying",
+                "provider": "ollama",
+                "timeout_ms": 298662
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            },
+            {
+              "at": "2026-10-22T22:54:47.937776700+00:00",
+              "event_type": "llm_provider_attempt",
+              "kind": "llm_provider_attempt",
+              "payload": {
+                "attempt": 2,
+                "detail": {
+                  "class": "qualification",
+                  "error": "api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before contacting the model; estimated input is about 15445 tokens for a configured 16384-token window, leaving 0 tokens after the safety margin, below the 512-token minimum response budget. The estimate includes protected system/user instructions, tool schemas, and recent execution. Nothing was sent and no instructions were discarded. Workaround: choose a model with a larger context window, raise this provider's effective context setting (for Ollama, model_options.<model>.num_ctx or AKASHA_OLLAMA_NUM_CTX) if available memory permits, or reduce optional prompt/tool context."
+                },
+                "elapsed_ms": 9,
+                "max_attempts": 2,
+                "model": "gpt-oss:20b",
+                "phase": "skipped",
+                "provider": "ollama",
+                "timeout_ms": 298662
+              },
+              "schema_version": 1,
+              "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+            }
+          ],
+          "report": {
+            "done": [],
+            "failed": [
+              "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before c)."
+            ],
+            "needs_review": [],
+            "next_steps": [
+              "Consulter le diagnostic, rétablir le fournisseur si nécessaire, puis reprendre cette tâche depuis son checkpoint et son ticket existant."
+            ],
+            "outcome": {
+              "acceptance_verified": false,
+              "confirmed_file_mutation": false,
+              "failed_tool_calls": 0,
+              "reason": "Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ; ollama/qwen3.5:9b: ollama: api error: tool_protocol_error: Unadvertised Qwen function \"delegate_to_agent\"; advertised functions: [studio_lis ; ollama/gpt-oss:20b: api error: context_window_exceeded: context_window_preflight_rejected: local context guard stopped this request before c).",
+              "result": "partial",
+              "schema_version": 1,
+              "status": "failed",
+              "successful_tool_calls": 1,
+              "termination_reason": "provider_error",
+              "verification": [
+                {
+                  "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                  "kind": "provider_route_recovered",
+                  "model": "qwen3.5:9b",
+                  "provider": "ollama",
+                  "status": "passed"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                }
+              ]
+            },
+            "status": "failed",
+            "task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23",
+            "transcript_path": "C:\\Users\\azero\\akasha\\transcripts\\c6fb3f80-c355-4233-bb33-81a4cb6a6c23.json"
+          }
+        }
+      ],
+      "board": {
+        "items": [
+          {
+            "acceptance_criteria": [
+              {
+                "id": "request-scope",
+                "text": "Le résultat couvre le besoin décrit dans cette demande."
+              },
+              {
+                "id": "verification",
+                "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              },
+              {
+                "id": "initial-kanban-backlog",
+                "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+              }
+            ],
+            "assigned_agent": "studio_project_manager",
+            "created_at": "2026-10-23T00:54:28.874687+02:00",
+            "description": "Crée le projet « Todo observé — repli corrigé 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+            "evidence": {
+              "resume_status": "in_progress",
+              "summary": "task_id=c6fb3f80-c355-4233-bb33-81a4cb6a6c23, statut=failed, motif=provider_error, cause=Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;",
+              "task_ids": [
+                "c6fb3f80-c355-4233-bb33-81a4cb6a6c23"
+              ]
+            },
+            "id": "1b91e67c-a11f-4454-b5c7-dbb10da5dccd",
+            "project_id": "00d359cc-92fb-4eab-8b91-6a7f38e9b9cb",
+            "related_task_id": "c6fb3f80-c355-4233-bb33-81a4cb6a6c23",
+            "requested_by": "user_chat",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+            "updated_at": "2026-10-22T22:54:47.974316400+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-3",
+                "text": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:54:28.919441100+00:00",
+            "creation_key": "initial:1b91e67c-a11f-4454-b5c7-dbb10da5dccd:validation",
+            "depends_on_ticket_id": "7b074295-d513-45fc-8457-2cd2ee34297b",
+            "depends_on_ticket_ids": [
+              "7b074295-d513-45fc-8457-2cd2ee34297b"
+            ],
+            "description": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban.\n\nCe ticket fait partie du backlog initial du ticket racine 1b91e67c-a11f-4454-b5c7-dbb10da5dccd; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "5da400ee-2015-4123-9301-e3cb1f7fadbf",
+            "parent_ticket_id": "1b91e67c-a11f-4454-b5c7-dbb10da5dccd",
+            "project_id": "00d359cc-92fb-4eab-8b91-6a7f38e9b9cb",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Valider le projet et le parcours utilisateur",
+            "updated_at": "2026-10-22T22:54:28.919447700+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-2",
+                "text": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:54:28.908319600+00:00",
+            "creation_key": "initial:1b91e67c-a11f-4454-b5c7-dbb10da5dccd:integration",
+            "depends_on_ticket_id": "d5de7c59-1100-45f1-bda4-c4e5df65a24b",
+            "depends_on_ticket_ids": [
+              "d5de7c59-1100-45f1-bda4-c4e5df65a24b"
+            ],
+            "description": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application.\n\nCe ticket fait partie du backlog initial du ticket racine 1b91e67c-a11f-4454-b5c7-dbb10da5dccd; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "7b074295-d513-45fc-8457-2cd2ee34297b",
+            "parent_ticket_id": "1b91e67c-a11f-4454-b5c7-dbb10da5dccd",
+            "project_id": "00d359cc-92fb-4eab-8b91-6a7f38e9b9cb",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Intégrer les fonctionnalités dans l'application",
+            "updated_at": "2026-10-22T22:54:28.908326600+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-1",
+                "text": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:54:28.898944200+00:00",
+            "creation_key": "initial:1b91e67c-a11f-4454-b5c7-dbb10da5dccd:features",
+            "depends_on_ticket_id": "b21bc862-f0a7-43c3-b182-fea679fa8691",
+            "depends_on_ticket_ids": [
+              "b21bc862-f0a7-43c3-b182-fea679fa8691"
+            ],
+            "description": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé.\n\nCe ticket fait partie du backlog initial du ticket racine 1b91e67c-a11f-4454-b5c7-dbb10da5dccd; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "d5de7c59-1100-45f1-bda4-c4e5df65a24b",
+            "parent_ticket_id": "1b91e67c-a11f-4454-b5c7-dbb10da5dccd",
+            "project_id": "00d359cc-92fb-4eab-8b91-6a7f38e9b9cb",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Implémenter les fonctionnalités demandées",
+            "updated_at": "2026-10-22T22:54:28.898951700+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-0",
+                "text": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application: réutilise ses manifests et ne crée pas un second projet imbriqué. Critère: l'architecture, le point d'entrée et les commandes du projet sont identifiés et cohérents avec la demande."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-22T22:54:28.886845600+00:00",
+            "creation_key": "initial:1b91e67c-a11f-4454-b5c7-dbb10da5dccd:foundation",
+            "description": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application: réutilise ses manifests et ne crée pas un second projet imbriqué. Critère: l'architecture, le point d'entrée et les commandes du projet sont identifiés et cohérents avec la demande.\n\nCe ticket fait partie du backlog initial du ticket racine 1b91e67c-a11f-4454-b5c7-dbb10da5dccd; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "b21bc862-f0a7-43c3-b182-fea679fa8691",
+            "parent_ticket_id": "1b91e67c-a11f-4454-b5c7-dbb10da5dccd",
+            "project_id": "00d359cc-92fb-4eab-8b91-6a7f38e9b9cb",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Établir le socle du projet",
+            "updated_at": "2026-10-22T22:54:28.886853100+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+      "tasks": [
+        {
+          "task_id": "476de4d7-16e7-4185-90e8-a850694d366d",
+          "created_at": "2026-10-22T22:58:13.304544600+00:00",
+          "status": "completed",
+          "assigned_agent": "studio_project_manager",
+          "failure_detail": null,
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 1,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 24,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "status": "passed"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              },
+              {
+                "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                "failure_kind": "native_tool_protocol",
+                "kind": "tool_protocol_retry",
+                "status": "retried"
+              }
+            ]
+          },
+          "last_turn_model_used": "gpt-oss:20b",
+          "attempts": [],
+          "report": {
+            "done": [],
+            "failed": [],
+            "needs_review": [
+              "L’exécution est terminée, mais les critères ne sont pas tous vérifiés. La progression à 100 % ne vaut pas validation du résultat."
+            ],
+            "next_steps": [
+              "Relire le diff studio et exécuter une vérification locale.",
+              "Si résultat valide, poursuivre avec la prochaine sous-tâche planifiée."
+            ],
+            "outcome": {
+              "acceptance_verified": false,
+              "confirmed_file_mutation": false,
+              "failed_tool_calls": 1,
+              "reason": null,
+              "result": "succeeded",
+              "schema_version": 1,
+              "status": "completed",
+              "successful_tool_calls": 24,
+              "termination_reason": "success",
+              "verification": [
+                {
+                  "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                  "kind": "provider_route_recovered",
+                  "model": "gpt-oss:20b",
+                  "provider": "ollama",
+                  "status": "passed"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                },
+                {
+                  "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+                  "failure_kind": "native_tool_protocol",
+                  "kind": "tool_protocol_retry",
+                  "status": "retried"
+                }
+              ]
+            },
+            "status": "completed",
+            "task_id": "476de4d7-16e7-4185-90e8-a850694d366d",
+            "transcript_path": "C:\\Users\\azero\\akasha\\transcripts\\476de4d7-16e7-4185-90e8-a850694d366d.json"
+          },
+          "operations": [
+            {
+              "operation_id": "73cce0f7-a1c3-457a-a4fb-c8277e269934",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "b9c97cc0-31ee-4a73-a3d3-69555563ef63",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "cc8f43dc-1af7-4588-9b72-aead5028e317",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "635dc39f-8b0a-4839-b2ae-bc62063fbf45",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "16320861-ae37-4ecd-85b8-cc525a77fd44",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "d14b6d7e-d70b-4e47-99d2-6d6485397fb0",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "9abf1352-16fd-4970-8d59-9c40a7f1cebd",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "a6e8d2d4-6a49-453b-842e-8533904851d6",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "a1935edf-7943-444c-937e-124e22735f76",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "cbb5b45c-bb3b-474d-b960-6b52bfaffdaf",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "49074627-5bdb-43ff-ae3f-b74e17dfc4fb",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "4fbd0df9-7146-4159-8e50-8fda23446dba",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "ac6301dc-8776-4bc8-b34c-53fc7de765a0",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "d4c4cb5d-f46d-41cf-8841-70066c2884ae",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "cd54cab1-c1b1-44e2-b8cc-339893ca9797",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "91d7e206-bc0b-4222-9993-c582d4dd78a3",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "e27ae6a6-5c29-4903-984d-06bdcd85deef",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "f8b6f0d9-388e-4369-8ebd-e947d863af57",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "21280769-40b7-43d4-851e-783f7fc9ad2b",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "d5722e0c-5af4-43fd-86f3-4ddd93a36152",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "4a8bc5a4-f968-4121-bdf7-1236fddb024d",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "ca971dd4-7881-462f-aa18-8309347b30f4",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "643de144-65ff-417e-9e4e-4ea467e7e806",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "6e48a867-d343-49e3-8a3c-804180a70cc7",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            }
+          ]
+        },
+        {
+          "task_id": "6d087a0d-dd6b-4c72-b5d1-d0304af4871c",
+          "created_at": "2026-10-22T23:07:36.868793700+00:00",
+          "status": "completed",
+          "assigned_agent": "studio_project_manager",
+          "failure_detail": null,
+          "outcome": {
+            "acceptance_verified": false,
+            "confirmed_file_mutation": false,
+            "failed_tool_calls": 2,
+            "reason": null,
+            "result": "succeeded",
+            "schema_version": 1,
+            "status": "completed",
+            "successful_tool_calls": 4,
+            "termination_reason": "success",
+            "verification": [
+              {
+                "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                "kind": "provider_route_recovered",
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "status": "passed"
+              }
+            ]
+          },
+          "last_turn_model_used": "gpt-oss:20b",
+          "attempts": [],
+          "report": {
+            "done": [],
+            "failed": [],
+            "needs_review": [
+              "L’exécution est terminée, mais les critères ne sont pas tous vérifiés. La progression à 100 % ne vaut pas validation du résultat."
+            ],
+            "next_steps": [
+              "Relire le diff studio et exécuter une vérification locale.",
+              "Si résultat valide, poursuivre avec la prochaine sous-tâche planifiée."
+            ],
+            "outcome": {
+              "acceptance_verified": false,
+              "confirmed_file_mutation": false,
+              "failed_tool_calls": 2,
+              "reason": null,
+              "result": "succeeded",
+              "schema_version": 1,
+              "status": "completed",
+              "successful_tool_calls": 4,
+              "termination_reason": "success",
+              "verification": [
+                {
+                  "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+                  "kind": "provider_route_recovered",
+                  "model": "gpt-oss:20b",
+                  "provider": "ollama",
+                  "status": "passed"
+                }
+              ]
+            },
+            "status": "completed",
+            "task_id": "6d087a0d-dd6b-4c72-b5d1-d0304af4871c",
+            "transcript_path": "C:\\Users\\azero\\akasha\\transcripts\\6d087a0d-dd6b-4c72-b5d1-d0304af4871c.json"
+          },
+          "operations": [
+            {
+              "operation_id": "d0b63f98-f86f-41d1-9234-ded255235a4c",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "8a82fc47-00fa-4e1f-8dc9-533c56ab019d",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": false,
+              "error": null,
+              "failure_output": "[studio_create_ticket] parent_ticket_not_found"
+            },
+            {
+              "operation_id": "60886533-d4d5-47d6-99e4-895549d03e8e",
+              "tool": "studio_create_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "b0352904-ecd1-4fbc-95ee-3a8c740b8ff9",
+              "tool": "studio_update_ticket",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            },
+            {
+              "operation_id": "129981b3-151d-436f-a56d-1b5807c97a60",
+              "tool": "studio_list_tickets",
+              "state": "completed",
+              "success": true,
+              "error": null,
+              "failure_output": null
+            }
+          ]
+        }
+      ],
+      "board": {
+        "items": [
+          {
+            "acceptance_criteria": [
+              {
+                "id": "request-scope",
+                "text": "Le résultat couvre le besoin décrit dans cette demande."
+              },
+              {
+                "id": "verification",
+                "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              },
+              {
+                "id": "initial-kanban-backlog",
+                "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+              }
+            ],
+            "assigned_agent": "studio_project_manager",
+            "created_at": "2026-10-22T22:58:13.247758900+00:00",
+            "description": "Crée le projet « Todo observé — profil 32k 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+            "evidence": {
+              "summary": "Vérification incomplète : task_id=6d087a0d-dd6b-4c72-b5d1-d0304af4871c, run completed while ticket remained in_progress, acceptance_verified=false, confirmed_file_mutation=false, failed_tool_calls=2, details=no structured tool failure details",
+              "task_ids": [
+                "476de4d7-16e7-4185-90e8-a850694d366d",
+                "6d087a0d-dd6b-4c72-b5d1-d0304af4871c"
+              ]
+            },
+            "id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "related_task_id": "6d087a0d-dd6b-4c72-b5d1-d0304af4871c",
+            "requested_by": "user_chat",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+            "updated_at": "2026-10-22T23:08:36.852811700+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "init-socle",
+                "text": "Initialiser Vite, React 18, TS, ESLint, Prettier, tsconfig, et créer index.tsx, App.tsx, global.css, vite.config.ts."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-22T23:08:18.832470400+00:00",
+            "creation_key": "init-socle-001",
+            "description": "Mettre en place le socle du projet Vite+React+TS, configurer ESLint, Prettier et créer les fichiers de base.",
+            "evidence": {},
+            "id": "272da12e-e845-437f-b31d-01a24ae8e7dd",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "studio_project_manager",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Initialiser le socle Vite+React+TS",
+            "updated_at": "2026-10-22T23:08:18.832470400+00:00"
+          },
+          {
+            "acceptance_criteria": [],
+            "assigned_agent": "studio_project_manager",
+            "created_at": "2026-10-22T23:01:18.257353100+00:00",
+            "creation_key": "init-impl-001",
+            "description": "Supprimé car remplacé par tickets spécifiques.",
+            "evidence": {},
+            "id": "9d025bc4-0ad0-4124-b340-dc98cd2c947b",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "studio_project_manager",
+            "review_agent": "studio_reviewer",
+            "status": "blocked",
+            "title": "Ticket générique supprimé",
+            "updated_at": "2026-10-22T23:08:17.106968800+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "socle-setup",
+                "text": "Initialiser Vite, React 18, TS, ESLint, Prettier, tsconfig, et créer index.tsx, App.tsx, global.css, et le fichier vite.config.ts."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-22T22:58:13.259184700+00:00",
+            "creation_key": "initial:db9256f4-3616-4cc1-b693-ac82594c00cf:foundation",
+            "description": "Établir le socle du projet Vite + React + TS, configurer ESLint, Prettier, tsconfig, et initialiser les fichiers de base (index.tsx, App.tsx, global.css).",
+            "evidence": {},
+            "id": "c176acff-b7da-489e-9039-1b208d33f9bf",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Établir le socle du projet",
+            "updated_at": "2026-10-22T23:00:31.181946500+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-socle",
+                "text": "Créer le socle du projet Vite + React + TypeScript, configurer ESLint, Prettier, tsconfig, et initialiser les fichiers de base (index.tsx, App.tsx, global.css)."
+              }
+            ],
+            "assigned_agent": "studio_scaffold",
+            "created_at": "2026-10-22T23:00:09.860681600+00:00",
+            "creation_key": "delegate:scaffold:initial-socle",
+            "description": "Créer le socle du projet Vite + React + TypeScript, configurer ESLint, Prettier, tsconfig, et initialiser les fichiers de base (index.tsx, App.tsx, global.css).",
+            "evidence": {},
+            "id": "6be8d635-28df-4585-8eb8-37f29cf1a1a0",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "studio_project_manager",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Créer le socle du projet",
+            "updated_at": "2026-10-22T23:00:09.860681600+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "build-success",
+                "text": "L'application se compile sans erreurs avec la commande `npm run build`."
+              },
+              {
+                "id": "test-success",
+                "text": "Tous les tests Vitest passent avec un rapport de couverture suffisant (≥80 %)."
+              },
+              {
+                "id": "preview-run",
+                "text": "L'application démarre correctement en mode preview (`npm run preview`) et est accessible sur http://localhost:4173."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:59:06.932261700+00:00",
+            "creation_key": "initial:db9256f4-3616-4cc1-b693-ac82594c00cf:build-test-preview",
+            "depends_on_ticket_id": "6688701e-8cc2-4559-8f0a-01f6806df3bd",
+            "depends_on_ticket_ids": [
+              "6688701e-8cc2-4559-8f0a-01f6806df3bd",
+              "c50f7a8b-b20d-4d36-98af-0b31df40dc1d"
+            ],
+            "description": "Vérifier le build, les tests et lancer l'aperçu de l'application.",
+            "evidence": {},
+            "id": "fdad438f-d67f-479d-b0b6-8962f57087e1",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "studio_project_manager",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Vérifier build, tests et preview",
+            "updated_at": "2026-10-22T22:59:06.932261700+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "integrate-app",
+                "text": "Intégrer les composants TodoList, TaskForm, Filters, Counter, EmptyState dans App.tsx, gérer l’état global via React Context ou useReducer."
+              },
+              {
+                "id": "integrate-localstorage",
+                "text": "Initialiser l’état depuis localStorage au démarrage, et persister chaque mise à jour."
+              },
+              {
+                "id": "integrate-ui",
+                "text": "Assurer que la structure HTML respecte les exigences d’accessibilité (labels, ARIA, tabindex)."
+              },
+              {
+                "id": "integrate-tests",
+                "text": "Écrire un test d’intégration qui vérifie l’ajout, la suppression, le filtrage et la persistance dans l’UI."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:58:13.277753300+00:00",
+            "creation_key": "initial:db9256f4-3616-4cc1-b693-ac82594c00cf:integration",
+            "depends_on_ticket_id": "121833f4-e9e2-48f7-9758-944867c104f9",
+            "depends_on_ticket_ids": [
+              "121833f4-e9e2-48f7-9758-944867c104f9"
+            ],
+            "description": "Intégrer les fonctionnalités dans l’application, gérer l’état global et la persistance.",
+            "evidence": {},
+            "id": "6688701e-8cc2-4559-8f0a-01f6806df3bd",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Intégrer les fonctionnalités dans l'application",
+            "updated_at": "2026-10-22T22:59:03.097496100+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "test-add-task",
+                "text": "Test de l’ajout d’une tâche avec validation du champ titre obligatoire."
+              },
+              {
+                "id": "test-toggle-complete",
+                "text": "Test de la mise à jour de l’état d’une tâche (terminée/ouverte)."
+              },
+              {
+                "id": "test-delete",
+                "text": "Test de la suppression d’une tâche."
+              },
+              {
+                "id": "test-filter",
+                "text": "Test du filtrage des tâches selon les catégories Toutes / À faire / Terminées."
+              },
+              {
+                "id": "test-persistence",
+                "text": "Test de la persistance des tâches dans localStorage lors du rechargement."
+              },
+              {
+                "id": "test-ui-interactions",
+                "text": "Test des interactions utilisateur (clics, raccourcis clavier) via Vitest + Testing Library."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:58:56.735303+00:00",
+            "creation_key": "initial:db9256f4-3616-4cc1-b693-ac82594c00cf:tests",
+            "depends_on_ticket_id": "121833f4-e9e2-48f7-9758-944867c104f9",
+            "depends_on_ticket_ids": [
+              "121833f4-e9e2-48f7-9758-944867c104f9"
+            ],
+            "description": "Écrire des tests Vitest couvrant la logique de gestion des tâches, le filtrage, la persistance et les interactions utilisateur.",
+            "evidence": {},
+            "id": "c50f7a8b-b20d-4d36-98af-0b31df40dc1d",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "studio_project_manager",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Écrire des tests Vitest pour la logique",
+            "updated_at": "2026-10-22T22:58:56.735303+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "impl-add-task",
+                "text": "Ajouter un champ de saisie pour le titre d’une tâche avec validation obligatoire. Le bouton « Ajouter » crée la tâche avec un identifiant unique, l’état « non terminée », et l’affiche dans la liste."
+              },
+              {
+                "id": "impl-toggle-complete",
+                "text": "Permettre de marquer une tâche comme terminée via un bouton ou une case à cocher, qui met à jour son état et le style visuel."
+              },
+              {
+                "id": "impl-reopen",
+                "text": "Offrir la possibilité de rouvrir une tâche terminée, rétablissant son état « non terminée »."
+              },
+              {
+                "id": "impl-delete",
+                "text": "Supprimer une tâche de la liste et du stockage via un bouton « Supprimer »."
+              },
+              {
+                "id": "impl-filter",
+                "text": "Mettre en place des filtres « Toutes », « À faire », « Terminées » qui affichent respectivement toutes les tâches, les tâches non terminées, et les tâches terminées."
+              },
+              {
+                "id": "impl-counter",
+                "text": "Afficher un compteur indiquant le nombre total de tâches et le nombre de tâches terminées."
+              },
+              {
+                "id": "impl-empty-state",
+                "text": "Quand aucune tâche n’est présente, afficher un message d’état vide convivial."
+              },
+              {
+                "id": "impl-persistence",
+                "text": "Sauvegarder l’état des tâches dans localStorage et les recharger au démarrage de l’application."
+              },
+              {
+                "id": "impl-accessibility",
+                "text": "Garantir l’accessibilité clavier (tabulation, raccourcis, ARIA) pour tous les éléments interactifs."
+              },
+              {
+                "id": "impl-responsiveness",
+                "text": "La mise en page doit rester fonctionnelle et lisible sur les largeurs d’écran mobiles et desktop."
+              },
+              {
+                "id": "impl-tests",
+                "text": "Écrire des tests Vitest pour la logique de gestion des tâches, le filtrage, et la persistance."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:58:13.268372400+00:00",
+            "creation_key": "initial:db9256f4-3616-4cc1-b693-ac82594c00cf:features",
+            "depends_on_ticket_id": "c176acff-b7da-489e-9039-1b208d33f9bf",
+            "depends_on_ticket_ids": [
+              "c176acff-b7da-489e-9039-1b208d33f9bf"
+            ],
+            "description": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables.",
+            "evidence": {},
+            "id": "121833f4-e9e2-48f7-9758-944867c104f9",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Implémenter les fonctionnalités demandées",
+            "updated_at": "2026-10-22T22:58:48.365818300+00:00"
+          },
+          {
+            "acceptance_criteria": [
+              {
+                "id": "initial-phase-3",
+                "text": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban."
+              },
+              {
+                "id": "request-behavior-0",
+                "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+              }
+            ],
+            "assigned_agent": "studio_fullstack",
+            "created_at": "2026-10-22T22:58:13.286912300+00:00",
+            "creation_key": "initial:db9256f4-3616-4cc1-b693-ac82594c00cf:validation",
+            "depends_on_ticket_id": "6688701e-8cc2-4559-8f0a-01f6806df3bd",
+            "depends_on_ticket_ids": [
+              "6688701e-8cc2-4559-8f0a-01f6806df3bd"
+            ],
+            "description": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban.\n\nCe ticket fait partie du backlog initial du ticket racine db9256f4-3616-4cc1-b693-ac82594c00cf; lis sa description pour connaître la demande complète. Tous les fichiers de cette application restent sous la racine canonique `workspace:/`; inspecte et réutilise la stack existante au lieu de créer un projet imbriqué. Ne modifie pas le suivi directement: rapporte les fichiers et les résultats au chef de projet via Code Studio.",
+            "evidence": {},
+            "id": "6d3aa390-057f-455d-86c6-4c512a9952f3",
+            "parent_ticket_id": "db9256f4-3616-4cc1-b693-ac82594c00cf",
+            "project_id": "2daf95e8-dded-4440-a499-c66f97742af1",
+            "requested_by": "system_initial_backlog",
+            "review_agent": "studio_reviewer",
+            "status": "todo",
+            "title": "Valider le projet et le parcours utilisateur",
+            "updated_at": "2026-10-22T22:58:13.286916800+00:00"
+          }
+        ]
+      },
+      "files": {
+        "files": [
+          ".akasha-studio-tickets.json",
+          "CODE_STUDIO_PLAN.md",
+          "DESIGN.md"
+        ]
+      },
+      "active_task_ids_at_reading": [],
+      "configured_studio_routes": {
+        "primary": {
+          "provider": "ollama",
+          "model": "gpt-oss:20b",
+          "config": {
+            "max_tokens": 4096,
+            "num_ctx": 32768,
+            "thinking_level": "low"
+          }
+        },
+        "fallback": [
+          {
+            "provider": "ollama",
+            "model": "qwen3.5:9b",
+            "config": {
+              "max_tokens": 8192,
+              "num_ctx": 32768,
+              "thinking_level": "off"
+            }
+          },
+          {
+            "provider": "akasha_embedded",
+            "model": "default",
+            "config": null
+          },
+          {
+            "provider": "akasha_core",
+            "model": "core",
+            "config": null
+          },
+          {
+            "provider": "ollama",
+            "model": "gpt-oss:20b",
+            "config": {
+              "max_tokens": 4096,
+              "num_ctx": 16384,
+              "thinking_level": "low"
+            }
+          }
+        ],
+        "constraints": null
+      }
+    }
+  ],
+  "technical_validation": {
+    "ui_unit_tests_passed": 37,
+    "llm_tests_passed": 107,
+    "daemon_studio_tests_passed": 188,
+    "full_playwright_passed": 51,
+    "ui_build": "passed",
+    "daemon_build": "passed embedded",
+    "scripted_recovery_status": "passed",
+    "scripted_recovery_cases": [
+      {
+        "name": "fallback with heartbeat and no partial tool execution",
+        "task": "3bf1bfa4-7204-48d1-912c-0b6ba8fb5272"
+      },
+      {
+        "name": "pinned timeout, blocked ticket, truthful report and same-task resume",
+        "task": "cf52e6c3-7f8d-4c0b-b4b5-8c44079959ca"
+      }
+    ],
+    "real_gpt32k_qualification": {
+      "at": "2026-10-22T22:56:39.018Z",
+      "kind": "real configured providers, inert tool qualification only",
+      "cases": [
+        {
+          "provider": "ollama",
+          "model": "gpt-oss:20b",
+          "qualification": {
+            "checked_at": "2026-10-22T22:56:50.253943500+00:00",
+            "context_window_tokens": 32768,
+            "detail": "Appel d'outil structuré vérifié sans exécution ; contexte configuré et latence du probe enregistrés. La livraison du projet reste à valider.",
+            "latency_ms": 11214,
+            "status": "qualified"
+          },
+          "passed": true
+        }
+      ]
+    },
+    "ci_code_studio_05047d0": "passed on Ubuntu and Windows",
+    "ci_akasha_690442a": "CPU jobs passed; GPU smoke pending"
+  },
+  "not_validated": [
+    "Todo source generation",
+    "specialist implementation dispatch",
+    "autonomous file access and commands in real Todo scenario",
+    "design adherence",
+    "Todo interactions",
+    "app tests and build",
+    "preview",
+    "recovery after a real file mutation"
+  ]
+}

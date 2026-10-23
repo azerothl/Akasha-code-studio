@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { STUDIO_ACTIONS } from "./studioActions";
 import { Button } from "./components/ui/button";
@@ -32,6 +32,7 @@ export function StudioComposer({
   onOptions,
   projectId,
   taskId,
+  busy = false,
 }: {
   text: string;
   onText: (text: string) => void;
@@ -39,6 +40,7 @@ export function StudioComposer({
   onOptions: Dispatch<SetStateAction<ComposerExecution>>;
   projectId: string | null;
   taskId?: string;
+  busy?: boolean;
 }) {
   const [catalog, setCatalog] = useState<api.StudioExecutionCatalog | null>(
     null,
@@ -46,6 +48,15 @@ export function StudioComposer({
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const [cursor, setCursor] = useState(0);
+  const [qualifying, setQualifying] = useState(false);
+  const [qualificationNote, setQualificationNote] = useState("");
+  const qualificationController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    qualificationController.current?.abort();
+    setQualifying(false);
+    setQualificationNote("");
+    return () => qualificationController.current?.abort();
+  }, [options.model]);
   useEffect(() => {
     const controller = new AbortController();
     setCatalog(null);
@@ -150,7 +161,7 @@ export function StudioComposer({
           {catalog?.models.map((item) => (
             <option
               key={`${item.provider}/${item.model}`}
-              value={JSON.stringify(item)}
+              value={JSON.stringify({ provider: item.provider, model: item.model })}
             >
               {item.model} · {item.provider}
             </option>
@@ -180,6 +191,23 @@ export function StudioComposer({
             ? ` Fenêtre Ollama effective : ${selectedModel.context_window_tokens.toLocaleString("fr-FR")} tokens.`
             : " Fenêtre de contexte fournie par la configuration du fournisseur."}
           </p>
+          {selectedModel?.qualification ? <p className="hint">{selectedModel.qualification.status === "qualified" ? "Outils vérifiés" : "Modèle écarté temporairement"} : {selectedModel.qualification.detail}</p> : <p className="hint">Les outils de ce modèle seront vérifiés avant la première exécution.</p>}
+          <Button size="sm" variant="ghost" disabled={!selectedModel || qualifying || busy} onClick={() => {
+            if (!selectedModel) return;
+            const controller = new AbortController();
+            qualificationController.current?.abort();
+            qualificationController.current = controller;
+            setQualifying(true);
+            setQualificationNote("Vérification du protocole d’outils, sans modifier les fichiers…");
+            void api.qualifyStudioModel(selectedModel, controller.signal).then(result => {
+              if (controller.signal.aborted) return;
+              setQualificationNote(result.error ?? result.qualification?.detail ?? "Résultat de vérification indisponible.");
+              if (result.qualification) setCatalog(previous => previous ? { ...previous, models: previous.models.map(model => model.provider === selectedModel.provider && model.model === selectedModel.model ? { ...model, qualification: result.qualification } : model) } : previous);
+            }).catch((error: unknown) => {
+              if (!controller.signal.aborted) setQualificationNote(String(error));
+            }).finally(() => { if (!controller.signal.aborted) setQualifying(false); });
+          }}>{qualifying ? "Vérification…" : "Vérifier les outils du modèle"}</Button>
+          {qualificationNote ? <p className="hint" role="status">{qualificationNote}</p> : null}
         </details>
       ) : null}
       {goal ? (
