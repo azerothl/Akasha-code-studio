@@ -4608,5 +4608,709 @@
         }
       ]
     }
-  ]
+  ],
+  "followup_after_blocking_points": {
+    "at": "2026-10-23T00:01:29.970658+00:00",
+    "active_tasks": [
+      {
+        "assigned_agent": "studio_fullstack",
+        "created_at": "2026-10-22T23:59:35.615807800+00:00",
+        "id": "1288d4cd-db4d-4477-9154-c4fb77cb3a9c",
+        "label": "Suivi automatique des tickets Kanban ouverts",
+        "parent_task_id": null,
+        "session_id": null,
+        "status": "running",
+        "updated_at": "2026-10-22T23:59:35.681926100+00:00"
+      }
+    ],
+    "projects": [
+      {
+        "project_id": "6847b26e-b76d-423f-8fe7-237b5b672f93",
+        "task_id": "5a296496-7632-45e6-b4c4-c4c79bda9f8f",
+        "status": "failed",
+        "outcome": {
+          "acceptance_verified": false,
+          "confirmed_file_mutation": false,
+          "failed_tool_calls": 2,
+          "planning_verified": false,
+          "reason": "TOOL_JSON: {\"arguments\":{\"content\":\"<!doctype html>\\n<html lang=\\\"fr\\\">\\n  <head>\\n    <meta charset=\\\"UTF-8\\\" />\\n    <link rel=\\\"icon\\\" type=\\\"image/svg+xml\\\" href=\\\"/vite.svg\\\" />\\n    <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\" />\\n    <title>Projet Vite + React</title>\\n  </head>\\n  <body>\\n    <div id=\\\"root\\\"></div>\\n    <script type=\\\"module\\\" src=\\\"/src/main.tsx\\\"></script>\\n  </body>\\n</html>\",\"path\":\"workspace:/index.html\"},\"schema_version\":1,\"tool\":\"write_file\"}\n\n[Limite de tours d'outils atteinte.]",
+          "result": "partial",
+          "schema_version": 1,
+          "status": "failed",
+          "successful_tool_calls": 94,
+          "termination_reason": "tool_round_limit",
+          "verification": [
+            {
+              "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+              "failure_kind": "native_tool_protocol",
+              "kind": "tool_protocol_retry",
+              "status": "retried"
+            },
+            {
+              "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+              "failure_kind": "native_tool_protocol",
+              "kind": "tool_protocol_retry",
+              "status": "retried"
+            },
+            {
+              "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+              "kind": "provider_route_recovered",
+              "model": "qwen3.5:9b",
+              "provider": "ollama",
+              "status": "passed"
+            }
+          ]
+        },
+        "board": {
+          "items": [
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "request-scope",
+                  "text": "Le résultat couvre le besoin décrit dans cette demande."
+                },
+                {
+                  "id": "verification",
+                  "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+                },
+                {
+                  "id": "request-behavior-0",
+                  "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+                },
+                {
+                  "id": "initial-kanban-backlog",
+                  "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+                }
+              ],
+              "assigned_agent": "studio_project_manager",
+              "created_at": "2026-10-22T23:30:33.388807200+00:00",
+              "description": "Crée le projet « Todo observé — handoff Kanban 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+              "evidence": {
+                "summary": "Vérification incomplète : task_id=917d8951-e6d5-4ef2-8736-da20f03cf02a, run completed while ticket remained in_progress, acceptance_verified=false, confirmed_file_mutation=false, failed_tool_calls=1, details=Le protocole natif a rejeté l'appel avant son exécution. | Le protocole natif a rejeté l'appel avant son exécution.",
+                "task_ids": [
+                  "e1e263c3-c6d6-4c71-b613-f2b7ff5fc990",
+                  "21e800eb-bdad-4b99-bc0e-e8387c4168cf",
+                  "917d8951-e6d5-4ef2-8736-da20f03cf02a"
+                ]
+              },
+              "id": "bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7",
+              "project_id": "6847b26e-b76d-423f-8fe7-237b5b672f93",
+              "related_task_id": "917d8951-e6d5-4ef2-8736-da20f03cf02a",
+              "requested_by": "user_chat",
+              "review_agent": "studio_reviewer",
+              "status": "blocked",
+              "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+              "updated_at": "2026-10-22T23:58:35.547057100+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "setup-project",
+                  "text": "Initialiser le projet Vite + React + TypeScript."
+                },
+                {
+                  "id": "structure",
+                  "text": "Créer la structure de dossiers src/, public/, etc."
+                },
+                {
+                  "id": "dependencies",
+                  "text": "Installer les dépendances de base (react, react-dom, typescript, vite)."
+                },
+                {
+                  "id": "config",
+                  "text": "Configurer Vite, tsconfig, linter, formateur."
+                },
+                {
+                  "id": "readme",
+                  "text": "Créer un README.md avec description et instructions de démarrage."
+                },
+                {
+                  "id": "git-init",
+                  "text": "Initialiser le dépôt Git avec un commit initial."
+                }
+              ],
+              "assigned_agent": "studio_scaffold",
+              "created_at": "2026-10-22T23:30:33.398527200+00:00",
+              "creation_key": "initial:bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7:foundation",
+              "description": "Initialiser le projet Vite + React + TypeScript, créer la structure de dossiers src/, public/, installer les dépendances (react, react-dom, typescript, vite), configurer Vite, tsconfig, linter, formateur, et créer un README.md avec description et instructions. Initialiser aussi le dépôt Git.",
+              "evidence": {
+                "resume_status": "in_progress",
+                "summary": "task_id=5a296496-7632-45e6-b4c4-c4c79bda9f8f, statut=failed, motif=tool_round_limit, cause=TOOL_JSON: {\"arguments\":{\"content\":\"<!doctype html>\\n<html lang=\\\"fr\\\">\\n  <head>\\n    <meta charset=\\\"UTF-8\\\" />\\n    <link rel=\\\"icon\\\" type=\\\"image/svg+xml\\\" href=\\\"/vite.svg\\\" />\\n    <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\" />\\n    <title>Projet Vite + React</title>\\n  </head>\\n  <body>\\n    <div id=\\\"root\\\"></div>\\n    <script type=\\\"module\\\" src=\\\"/src/main.tsx\\\"></script>\\n  </body>\\n</html>\",\"path\":\"workspace:/index.html\"},\"schema_version\":1,\"tool\":\"writ",
+                "task_ids": [
+                  "5a296496-7632-45e6-b4c4-c4c79bda9f8f"
+                ]
+              },
+              "id": "e5a032fb-cfd0-4b1d-aecb-86a754569128",
+              "parent_ticket_id": "bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7",
+              "project_id": "6847b26e-b76d-423f-8fe7-237b5b672f93",
+              "related_task_id": "5a296496-7632-45e6-b4c4-c4c79bda9f8f",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "blocked",
+              "title": "Établir le socle du projet",
+              "updated_at": "2026-10-22T23:58:18.883885500+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "build-success",
+                  "text": "Le build Vite réussit sans erreur."
+                },
+                {
+                  "id": "preview-launch",
+                  "text": "L’aperçu s’ouvre sur workspace:/ et affiche la Todo List."
+                },
+                {
+                  "id": "localstorage-persistence",
+                  "text": "Les tâches persistées dans localStorage sont rechargées après un rafraîchissement."
+                },
+                {
+                  "id": "accessibility-keyboard",
+                  "text": "Toutes les actions (ajout, suppression, filtrage) sont accessibles au clavier."
+                },
+                {
+                  "id": "responsive-layout",
+                  "text": "L’interface s’adapte aux résolutions mobiles, tablettes et bureau."
+                },
+                {
+                  "id": "tests-executed",
+                  "text": "Les tests unitaires et d’intégration passent."
+                },
+                {
+                  "id": "error-handling",
+                  "text": "Les erreurs (ex. titre vide) sont gérées et affichées."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:30:33.424002500+00:00",
+              "creation_key": "initial:bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7:validation",
+              "depends_on_ticket_id": "76f62699-6940-4c6b-ac9d-d42b9bb15727",
+              "depends_on_ticket_ids": [
+                "76f62699-6940-4c6b-ac9d-d42b9bb15727"
+              ],
+              "description": "Exécuter les contrôles adaptés au dépôt et parcourir l'application sur les tailles d'écran pertinentes. Lance le build et l'aperçu depuis la racine canonique `workspace:/`; ne valide pas un autre projet imbriqué à la place. Critères: build et vérifications applicables réussis; tout défaut distinct découvert est consigné dans un ticket Kanban.",
+              "evidence": {},
+              "id": "1da9a69c-5921-4d95-8055-c0705c786f38",
+              "parent_ticket_id": "bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7",
+              "project_id": "6847b26e-b76d-423f-8fe7-237b5b672f93",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Valider le projet et le parcours utilisateur",
+              "updated_at": "2026-10-22T23:46:36.276983500+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "initial-phase-2",
+                  "text": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application."
+                },
+                {
+                  "id": "request-behavior-0",
+                  "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+                },
+                {
+                  "id": "integration-ui-connected",
+                  "text": "Les composants React sont correctement montés et affichés dans l’interface."
+                },
+                {
+                  "id": "integration-state-sync",
+                  "text": "Les actions d'UI déclenchent les mises à jour d'état appropriées dans le store."
+                },
+                {
+                  "id": "integration-service-connection",
+                  "text": "Les services (localStorage, API simulée) sont correctement connectés et leurs appels fonctionnent."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:30:33.415494900+00:00",
+              "creation_key": "initial:bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7:integration",
+              "depends_on_ticket_id": "5bbbc371-8487-4e9e-b477-3740c4e95c15",
+              "depends_on_ticket_ids": [
+                "5bbbc371-8487-4e9e-b477-3740c4e95c15"
+              ],
+              "description": "Relier les fonctionnalités à l'interface, à l'état et aux services déjà présents, en couvrant les états d'erreur pertinents. Critère: le parcours principal fonctionne de bout en bout dans l'application.",
+              "evidence": {},
+              "id": "76f62699-6940-4c6b-ac9d-d42b9bb15727",
+              "parent_ticket_id": "bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7",
+              "project_id": "6847b26e-b76d-423f-8fe7-237b5b672f93",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Intégrer les fonctionnalités dans l'application",
+              "updated_at": "2026-10-22T23:45:33.465546300+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "initial-phase-1",
+                  "text": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé."
+                },
+                {
+                  "id": "request-behavior-0",
+                  "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+                },
+                {
+                  "id": "add-task-title-required",
+                  "text": "Le champ titre est obligatoire ; l’UI refuse l’ajout si vide."
+                },
+                {
+                  "id": "add-task",
+                  "text": "Ajouter une nouvelle tâche avec titre affiché dans la liste."
+                },
+                {
+                  "id": "mark-complete",
+                  "text": "Marquer une tâche comme terminée, mise à jour de l’état UI."
+                },
+                {
+                  "id": "reopen-task",
+                  "text": "Réouvrir une tâche terminée, remise dans la liste active."
+                },
+                {
+                  "id": "delete-task",
+                  "text": "Supprimer une tâche, mise à jour de la liste."
+                },
+                {
+                  "id": "filter-all",
+                  "text": "Filtrer Toutes affiche toutes les tâches."
+                },
+                {
+                  "id": "filter-active",
+                  "text": "Filtrer À faire affiche uniquement les tâches non terminées."
+                },
+                {
+                  "id": "filter-completed",
+                  "text": "Filtrer Terminées affiche uniquement les tâches terminées."
+                },
+                {
+                  "id": "counter-display",
+                  "text": "Un compteur affiche le nombre de tâches restantes."
+                },
+                {
+                  "id": "empty-state-display",
+                  "text": "Lorsque aucune tâche reste, un état vide est affiché."
+                },
+                {
+                  "id": "persistence-localstorage",
+                  "text": "Les tâches sont sauvegardées dans localStorage et rechargées après rafraîchissement."
+                },
+                {
+                  "id": "accessibility",
+                  "text": "Toutes les actions sont accessibles via le clavier, avec focus visible et rôles ARIA appropriés."
+                },
+                {
+                  "id": "responsive",
+                  "text": "L’interface s’adapte aux tailles d’écran mobiles, tablettes et bureau."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:30:33.406793700+00:00",
+              "creation_key": "initial:bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7:features",
+              "depends_on_ticket_id": "e5a032fb-cfd0-4b1d-aecb-86a754569128",
+              "depends_on_ticket_ids": [
+                "e5a032fb-cfd0-4b1d-aecb-86a754569128"
+              ],
+              "description": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder ni parcours principal simulé.",
+              "evidence": {},
+              "id": "5bbbc371-8487-4e9e-b477-3740c4e95c15",
+              "parent_ticket_id": "bc8563bb-4e26-4ef9-9f68-1bd79ed5e3f7",
+              "project_id": "6847b26e-b76d-423f-8fe7-237b5b672f93",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Implémenter les fonctionnalités demandées",
+              "updated_at": "2026-10-22T23:38:42.166326100+00:00"
+            }
+          ]
+        },
+        "files": {
+          "files": [
+            ".akasha-studio-tickets.json",
+            "CODE_STUDIO_PLAN.md",
+            "DESIGN.md",
+            "index.html",
+            "package.json",
+            "src/App.tsx",
+            "src/index.css",
+            "src/main.tsx",
+            "src/vite-env.d.ts",
+            "tsconfig.json",
+            "tsconfig.node.json",
+            "vite.config.ts"
+          ]
+        },
+        "recent_tool_failures": []
+      },
+      {
+        "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+        "task_id": "8ee9915d-c6b3-450e-97b5-8432afe9b26a",
+        "status": "completed",
+        "outcome": {
+          "acceptance_verified": false,
+          "confirmed_file_mutation": false,
+          "failed_tool_calls": 4,
+          "planning_verified": false,
+          "reason": null,
+          "result": "succeeded",
+          "schema_version": 1,
+          "status": "completed",
+          "successful_tool_calls": 18,
+          "termination_reason": "success",
+          "verification": [
+            {
+              "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+              "kind": "provider_route_recovered",
+              "model": "gpt-oss:20b",
+              "provider": "ollama",
+              "status": "passed"
+            },
+            {
+              "detail": "Subsequent turns advertise the full currently permitted native catalogue; permissions are still checked at invocation.",
+              "kind": "native_catalogue_discovery",
+              "status": "expanded"
+            },
+            {
+              "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+              "kind": "provider_route_recovered",
+              "model": "qwen3.5:9b",
+              "provider": "ollama",
+              "status": "passed"
+            },
+            {
+              "exit_code": -4058,
+              "kind": "command",
+              "source": "tool_executor",
+              "status": "failed",
+              "tool": "run_command"
+            },
+            {
+              "detail": "Le protocole natif a rejeté l'appel avant son exécution.",
+              "failure_kind": "native_tool_protocol",
+              "kind": "tool_protocol_retry",
+              "status": "retried"
+            },
+            {
+              "detail": "Le fournisseur a retourné une génération complète; cette route configurée est préférée pour les tours suivants.",
+              "kind": "provider_route_recovered",
+              "model": "gpt-oss:20b",
+              "provider": "ollama",
+              "status": "passed"
+            },
+            {
+              "exit_code": -4058,
+              "kind": "command",
+              "source": "tool_executor",
+              "status": "failed",
+              "tool": "run_command"
+            },
+            {
+              "exit_code": null,
+              "kind": "project_build",
+              "status": "not_run"
+            }
+          ]
+        },
+        "board": {
+          "items": [
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "features-1",
+                  "text": "Ajouter une tâche via un formulaire avec champ titre obligatoire. La tâche apparaît dans la liste, l'UI met à jour le compteur et l'état vide disparaît."
+                },
+                {
+                  "id": "features-2",
+                  "text": "Les données de la tâche sont persistées dans localStorage et récupérées après rechargement."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:55:07.844253400+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:add-task",
+              "description": "Implémenter l'ajout d'une tâche avec champ titre obligatoire, mise à jour UI et persistance localStorage.",
+              "evidence": {
+                "task_ids": [
+                  "1288d4cd-db4d-4477-9154-c4fb77cb3a9c"
+                ]
+              },
+              "id": "dfdb74d9-e2dd-44ed-8198-78ae938297f2",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "related_task_id": "1288d4cd-db4d-4477-9154-c4fb77cb3a9c",
+              "requested_by": "studio_project_manager",
+              "review_agent": "studio_reviewer",
+              "status": "in_progress",
+              "title": "Ajouter une tâche",
+              "updated_at": "2026-10-22T23:59:35.632357200+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "validation-1",
+                  "text": "Exécuter le build, les tests unitaires et le lint. Les sorties doivent être sans erreurs et les logs de build indiquent un succès."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:44:07.166947400+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:validation",
+              "description": "Vérifier le build et les tests du projet.",
+              "evidence": {
+                "summary": "Vérification incomplète : task_id=8ee9915d-c6b3-450e-97b5-8432afe9b26a, run completed while ticket remained in_progress, acceptance_verified=false, confirmed_file_mutation=false, failed_tool_calls=4, details=Le protocole natif a rejeté l'appel avant son exécution.",
+                "task_ids": [
+                  "8ee9915d-c6b3-450e-97b5-8432afe9b26a"
+                ]
+              },
+              "id": "ce690611-be3f-4c17-bcee-4757aabdba1b",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "related_task_id": "8ee9915d-c6b3-450e-97b5-8432afe9b26a",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "blocked",
+              "title": "Valider le projet et le parcours utilisateur",
+              "updated_at": "2026-10-22T23:59:35.579928700+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "bug-1",
+                  "text": "Project should contain a valid package.json that allows npm install and build."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:58:31.358129200+00:00",
+              "creation_key": "bug:missing-package-json",
+              "description": "The repository root lacks a package.json file, preventing npm install and build. Running `npm install` fails with ENOENT. This blocks automated verification and user onboarding.",
+              "evidence": {},
+              "id": "0a7ac9bd-4f72-45b9-b57b-0efdc393a21f",
+              "parent_ticket_id": "ce690611-be3f-4c17-bcee-4757aabdba1b",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "requested_by": "studio_project_manager",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Bug: missing package.json",
+              "updated_at": "2026-10-22T23:58:31.358129200+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "features-5",
+                  "text": "Filtrer les tâches par statut (Toutes, À faire, Terminées). Le filtre met à jour l'affichage et le compteur sans rechargement."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:55:11.512356100+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:filter-tasks",
+              "description": "Implémenter le filtrage des tâches par statut.",
+              "evidence": {},
+              "id": "393b0476-157d-43f2-be91-9f4cf90a2a14",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "requested_by": "studio_project_manager",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Filter …",
+              "updated_at": "2026-10-22T23:55:48.929925700+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "features-3",
+                  "text": "Marquer une tâche comme terminée, puis la rouvrir. L'état de la tâche change visuellement et le compteur s'ajuste."
+                },
+                {
+                  "id": "features-4",
+                  "text": "Supprimer une tâche. Elle disparaît de la liste, le compteur s'ajuste, et l'état vide réapparaît si aucune tâche reste."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:55:09.823012400+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:mark-reopen",
+              "description": "Implémenter la logique de terminer, rouvrir et supprimer une tâche.",
+              "evidence": {},
+              "id": "b7556738-aa4e-4b4f-991c-d085c0195af2",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "requested_by": "studio_project_manager",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Mark …",
+              "updated_at": "2026-10-22T23:55:45.710270100+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "integration-1",
+                  "text": "Les tâches créées, mises à jour et supprimées sont correctement affichées dans l'interface et persistées après rechargement."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:44:07.158521400+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:integration",
+              "depends_on_ticket_id": "393b0476-157d-43f2-be91-9f4cf90a2a14",
+              "depends_on_ticket_ids": [
+                "393b0476-157d-43f2-be91-9f4cf90a2a14",
+                "b7556738-aa4e-4b4f-991c-d085c0195af2",
+                "dfdb74d9-e2dd-44ed-8198-78ae938297f2"
+              ],
+              "description": "Intégrer les fonctionnalités d'ajout, de mise à jour et de suppression dans l'application.",
+              "evidence": {},
+              "id": "b27e02f1-5df1-419d-b757-51f2abf44072",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Intégrer les fonctionnalités",
+              "updated_at": "2026-10-22T23:55:30.937798800+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "request-scope",
+                  "text": "Le résultat couvre le besoin décrit dans cette demande."
+                },
+                {
+                  "id": "verification",
+                  "text": "Les vérifications pertinentes du projet sont exécutées et leurs résultats consignés."
+                },
+                {
+                  "id": "request-behavior-0",
+                  "text": "Résultat à démontrer : Petite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu."
+                },
+                {
+                  "id": "initial-kanban-backlog",
+                  "text": "Avant l'implémentation, la première demande est décomposée dans le Kanban en tickets de portée claire, avec critères vérifiables et dépendances explicites pour le socle, les fonctionnalités demandées, l'intégration et la validation."
+                }
+              ],
+              "assigned_agent": "studio_project_manager",
+              "created_at": "2026-10-22T23:44:07.130168+00:00",
+              "description": "Crée le projet « Todo observé — phases fiables 23-10-2026 » selon ce résumé :\n\nPetite webapp Todo List en français, avec une interface sobre, responsive et accessible au clavier. Permettre d’ajouter une tâche avec un titre obligatoire, de la terminer puis la rouvrir, de la supprimer, de filtrer Toutes / À faire / Terminées et d’afficher un compteur et un état vide. Conserver les tâches après rechargement avec localStorage. Respecter la stack et les consignes du projet. Vérifier le build et les tests pertinents, puis démarrer l’aperçu.",
+              "evidence": {
+                "task_ids": [
+                  "1a6a8a5b-3e84-49ab-a0e3-22f4df79f2a6",
+                  "84a4d963-a0ce-4a78-ab65-f66d2c92deda"
+                ]
+              },
+              "id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "related_task_id": "84a4d963-a0ce-4a78-ab65-f66d2c92deda",
+              "requested_by": "user_chat",
+              "review_agent": "studio_reviewer",
+              "status": "in_progress",
+              "title": "Petite webapp Todo List en français, avec une interface sobre, responsive et accessi…",
+              "updated_at": "2026-10-22T23:53:35.588359400+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "initial-phase-0",
+                  "text": "Examiner le dépôt et sa stack, réutiliser la structure existante et ne créer que les éléments de socle réellement absents. `workspace:/` est la racine canonique de l'application: r"
+                },
+                {
+                  "id": "foundation-1",
+                  "text": "Installer les dépendances et vérifier que le projet compile sans erreurs."
+                },
+                {
+                  "id": "foundation-2",
+                  "text": "Créer la configuration Vite, React, TypeScript, ESLint, Prettier."
+                },
+                {
+                  "id": "foundation-3",
+                  "text": "Mettre en place la structure de dossiers: src/, public/, tests/."
+                }
+              ],
+              "assigned_agent": "studio_scaffold",
+              "created_at": "2026-10-22T23:44:07.141001600+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:foundation",
+              "description": "",
+              "evidence": {
+                "resume_status": "in_progress",
+                "summary": "task_id=9dc5a189-1db7-4116-abef-2abb25dbdc2b, statut=failed, motif=provider_error, cause=Sorry, I couldn't get a response (error: studio_routes_exhausted: provider_generation_failed: aucune route Studio utilisable (budget maximal 299 s). Reprise : vérifiez les outils du modèle ; rétablissez la route ou modifiez le profil Studio, puis reprenez le checkpoint. Un autre modèle choisi dans le chat concerne une nouvelle demande. Le scheduler ne répète pas cette demande inchangée. Détails : akasha_core/core: studio_tool_transport_unsupported: moteur embarqué sans transport natif d'outils ;",
+                "task_ids": [
+                  "9dc5a189-1db7-4116-abef-2abb25dbdc2b"
+                ]
+              },
+              "id": "6c38b3a0-3d9f-4004-a45b-285684a5f28d",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "related_task_id": "9dc5a189-1db7-4116-abef-2abb25dbdc2b",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "blocked",
+              "title": "Établir le socle du projet",
+              "updated_at": "2026-10-22T23:46:38.383944400+00:00"
+            },
+            {
+              "acceptance_criteria": [
+                {
+                  "id": "initial-phase-1",
+                  "text": "Implémenter les comportements et fonctionnalités décrits dans la demande, avec des critères vérifiables. Critère: chaque comportement demandé possède une implémentation réelle, sans placeholder."
+                },
+                {
+                  "id": "features-1",
+                  "text": "Ajouter une tâche via un formulaire avec champ titre obligatoire."
+                },
+                {
+                  "id": "features-2",
+                  "text": "Marquer une tâche comme terminée et permettre de la rouvrir."
+                },
+                {
+                  "id": "features-3",
+                  "text": "Supprimer une tâche et mettre à jour le compteur."
+                },
+                {
+                  "id": "features-4",
+                  "text": "Filtrer les tâches par statut (Toutes, À faire, Terminées) et afficher l’état vide."
+                },
+                {
+                  "id": "features-5",
+                  "text": "Persisting tasks dans localStorage et récupérer après rechargement."
+                }
+              ],
+              "assigned_agent": "studio_fullstack",
+              "created_at": "2026-10-22T23:44:07.150111500+00:00",
+              "creation_key": "initial:5d4d0168-4d32-4937-a85f-bfc15b5ff77d:features",
+              "depends_on_ticket_id": "6c38b3a0-3d9f-4004-a45b-285684a5f28d",
+              "depends_on_ticket_ids": [
+                "6c38b3a0-3d9f-4004-a45b-285684a5f28d"
+              ],
+              "description": "",
+              "evidence": {},
+              "id": "382339e9-9fdd-4d05-bcb5-b95c1f3c26d4",
+              "parent_ticket_id": "5d4d0168-4d32-4937-a85f-bfc15b5ff77d",
+              "project_id": "fbc49a96-7819-4242-bc9c-828222b3ccc6",
+              "requested_by": "system_initial_backlog",
+              "review_agent": "studio_reviewer",
+              "status": "todo",
+              "title": "Implémenter les fonctionnalités demandées",
+              "updated_at": "2026-10-22T23:45:10.871722200+00:00"
+            }
+          ]
+        },
+        "files": {
+          "files": [
+            ".akasha-studio-tickets.json",
+            "CODE_STUDIO_PLAN.md",
+            "DESIGN.md",
+            "index.html",
+            "package-lock.json",
+            "package.json",
+            "src/App.tsx",
+            "src/index.css",
+            "src/main.tsx"
+          ]
+        },
+        "recent_tool_failures": [
+          {
+            "tool": "run_command",
+            "error": "[run_command] failed: exit -4058 (stdout 0 bytes, stderr 521 bytes) exit -4058 stdout:  stderr: npm error code ENOENT\nnpm error syscall open\nnpm error path C:\\Users\\azero\\akasha\\studio-projects\\fbc49a96-7819-4242-bc9c-828222b3ccc6\\package.json\nnpm error errno -4058\nnpm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open 'C:\\Users\\azero\\akasha\\studio-projects\\***\\package.json'\nnpm error enoent This is related to npm not being able to find a file.\nnpm error enoent\nnpm error A complete log of this run can be found in: E:\\packages\\npm\\_logs\\2026-10-22T23_57_50_903Z-debug-0.log"
+          },
+          {
+            "tool": "run_command",
+            "error": "[run_command] Corrected malformed arguments: `program` already names `npm`, so its duplicate first entry was removed from `args`. The correct shape is program `npm` with args [\"run\", \"build\"].\n[run_command] failed: exit -4058 (stdout 0 bytes, stderr 521 bytes) exit -4058 stdout:  stderr: npm error code ENOENT\nnpm error syscall open\nnpm error path C:\\Users\\azero\\akasha\\studio-projects\\fbc49a96-7819-4242-bc9c-828222b3ccc6\\package.json\nnpm error errno -4058\nnpm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open 'C:\\Users\\azero\\akasha\\studio-projects\\***\\package.json'\nnpm error enoent This is related to npm not being able to find a file.\nnpm error enoent\nnpm error A complete log of this run can be found in: E:\\packages\\npm\\_logs\\2026-10-22T23_56_50_844Z-debug-0.log"
+          }
+        ]
+      }
+    ]
+  }
 }

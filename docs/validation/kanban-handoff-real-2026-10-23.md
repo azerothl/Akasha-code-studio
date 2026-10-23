@@ -1,6 +1,6 @@
 # Kanban et passage à l'implémentation — recette réelle du 23 octobre 2026
 
-**Planification et dispatch observés avec de vrais modèles ; livraison autonome toujours non validée.** Les agents ont précisé les tickets existants, le scheduler a lancé des spécialistes et l'un d'eux a produit des fichiers React. Aucun build, test applicatif, verdict de revue ou aperçu jouable n'a été obtenu dans la fenêtre observée.
+**Planification et dispatch observés avec de vrais modèles ; livraison autonome toujours non validée.** Les agents ont précisé les tickets existants, le scheduler a lancé des spécialistes et des fichiers React ont été produits. Aucun build réussi, test applicatif réussi, verdict de revue ou aperçu jouable n'a été obtenu dans la fenêtre observée.
 
 ## Livraison Git et versions
 
@@ -69,12 +69,20 @@ Projet `fbc49a96-7819-4242-bc9c-828222b3ccc6` — « Todo observé — phases fi
 
 La trace de chat reste attachée à la première tâche : elle ne reflète pas à elle seule les spécialistes et reprises du projet. Aucune livraison n'est déclarée validée à partir du seul texte « Exécution terminée ».
 
+## Relevé complémentaire après les points bloquants
+
+Le scheduler étant resté démarré, le suivi de publication constate aussi :
+
+- Le worker du projet A finit par échouer avec `tool_round_limit`, après expiration de l'attente humaine sans réponse : **94 outils réussis, 2 en échec**, acceptation non vérifiée. Son tableau compte deux tickets bloqués et trois à faire. Le nombre d'appels réussis n'est pas assimilé à un nombre de modifications utiles.
+- Dans le projet B, le travail supplémentaire `8ee9915d-c6b3-450e-97b5-8432afe9b26a` termine `completed` avec **18 outils réussis, 4 en échec**, mais `acceptance_verified=false`. Des commandes npm ont échoué avec `ENOENT` parce que `package.json` n'existait pas au moment de leur exécution. Des fichiers ont été créés ensuite ; cela ne transforme pas les commandes précédentes en vérifications réussies.
+- Au dernier relevé complémentaire, ce second tableau compte neuf tickets et un autre travail automatique est actif. Il n'a pas été arrêté. Le rapport s'arrête aux blocages vérifiés et aux snapshots joints ; il ne prétend pas que toutes les reprises futures ont fini ni que le daemon est inactif.
+
 ## Améliorations restantes
 
 1. **P0 — Découverte d'outils bornée par le contexte.** Éviter que `list_tools` élargisse systématiquement le schéma à tout le catalogue. Permettre une découverte par nom / famille, calculer le coût avant expansion et garder une réserve de réponse. Vérifier le parcours réel découverte → lecture → écriture → build aux fenêtres prises en charge, sans retirer silencieusement les instructions protégées. Contournement de configuration : une fenêtre plus grande peut être essayée si la mémoire disponible le permet ; elle n'a pas été changée pendant la recette et ne constitue pas une correction de cette expansion.
 2. **P0 — Progrès vérifiable avant prolongation.** Détecter les réécritures répétées du même socle et le manque de passage aux vérifications. Les extensions doivent dépendre de nouveaux jalons observés, avec un budget global du projet, et non du seul nombre d'appels réussis. Une limite à 96 tours borne le traitement mais ne le rend pas productif.
 3. **P1 — Suivi agrégé et diagnostic de blocage.** Relier le chat au ticket global, aux spécialistes et aux reprises ; afficher les blocages descendants et l'attente humaine. Distinguer succès d'outil, erreur de protocole avant exécution, fin d'un passage et acceptation de l'application.
-4. **P1 — Contrats des tickets supplémentaires.** Les phases canoniques conservent leurs rôles, mais les tickets découverts ensuite peuvent encore recevoir un reviewer inexistant avant réparation. Valider les noms de rôles dès la mutation et vérifier leurs vrais prérequis pour empêcher un travail de contourner un socle bloqué.
+4. **P1 — Contrats des tickets supplémentaires.** Les phases canoniques conservent leurs rôles, mais les tickets découverts ensuite peuvent encore recevoir un reviewer inexistant avant réparation. Valider les noms de rôles dès la mutation et vérifier leurs vrais prérequis pour empêcher un travail de contourner un socle bloqué. Contrôler la présence du manifest avant npm et exiger un nouveau résultat de vérification après une correction ; un arrêt normal du modèle avec des contrôles en échec ne doit pas être présenté comme une livraison.
 
 ## Preuves
 
