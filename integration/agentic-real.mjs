@@ -680,6 +680,43 @@ try {
       return{id:row.id??row.task_id,outcome:row.outcome};
     } finally {project=previous;}
   });
+  await check("unified repair aligns incompatible Vitest peer versions before retrying installation", async () => {
+    const previous=project;
+    try {
+      project=await api("/api/studio/projects","POST",{name:"Peer repair",tech_stack:"Vite React TypeScript strict"},201);
+      const buildRoot=join(data,"studio-projects",project.id);
+      const originalApp=await readFile(join(buildRoot,"src/App.tsx"),"utf8");
+      const manifest=JSON.parse(await readFile(join(buildRoot,"package.json"),"utf8"));
+      manifest.devDependencies["@vitest/ui"]="3.2.7";
+      await writeFile(join(buildRoot,"package.json"),JSON.stringify(manifest,null,2));
+      await writeFile(join(buildRoot,".npmrc"),"noproxy=registry.npmjs.org\n");
+      const corrected=structuredClone(manifest);corrected.devDependencies["@vitest/ui"]="5.0.5";
+      scripts.set("peer-repair-worker",[
+        {text:"Le socle peut etre verifie."},
+        {...tool("read_file",{path:"workspace:/package.json"}),verify:(text,body)=>{
+          assert.match(text,/Dependency repair boundary/);assert.match(text,/ERESOLVE/);assert.match(text,/Phase: read/);
+          assert.equal(body.tool_choice,"required");
+          assert.deepEqual(body.tools.map(t=>t.function.name),["read_file"]);
+          assert.deepEqual(body.tools[0].function.parameters.properties.path.enum,["workspace:/package.json"]);
+        }},
+        tool("write_file",{path:"workspace:/package.json",content:JSON.stringify(corrected,null,2)}),
+        tool("run_command",{program:"npm",args:["install","--include=dev","--no-audit","--no-fund"],cwd:"workspace:/"}),
+        {text:"Versions compatibles installees, verifier le build."},
+        {text:"Le build du socle a reussi."},
+      ]);
+      const response=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{title:"Verifier les versions des dependances",assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",acceptance_criteria:[{id:"build",text:"Le build reussit",kind:"command_ok",argv:["npm","run","build"]}]},201);
+      const parent=await task("peer-repair-parent",[{text:"TOOL: delegate_to_agent studio_scaffold CASE:peer-repair-worker Verifie le projet et repare les incompatibilites de dependances."},{text:"Resultat recu."}],"studio_project_manager",{studio_ticket_id:(response.ticket??response).id});
+      const child=await waitUntil(async()=>((await api("/api/tasks")).tasks??[]).find(t=>t.parent_task_id===parent&&t.assigned_agent==="studio_scaffold"),"Peer repair worker");
+      const row=await finished(child.id??child.task_id);
+      assert.equal(row.status,"completed",JSON.stringify(row));
+      assert.equal(await readFile(join(buildRoot,"src/App.tsx"),"utf8"),originalApp);
+      assert.equal(JSON.parse(await readFile(join(buildRoot,"package.json"),"utf8")).devDependencies["@vitest/ui"],"5.0.5");
+      assert(row.outcome.verification.some(c=>c.kind==="dependency_installation"&&c.repairable===true&&c.status==="passed"));
+      assert(row.outcome.verification.some(c=>c.kind==="project_build"&&c.status==="passed"));
+      assert.equal(report.fixtureError,undefined,JSON.stringify(report.fixtureErrors));
+      return {id:row.id??row.task_id,outcome:row.outcome};
+    } finally {project=previous;}
+  });
   await check("dependency preparation registry failure stops before build or source repair", async () => {
     const previous=project;
     try {
