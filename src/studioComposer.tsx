@@ -67,6 +67,18 @@ export function StudioComposer({
     ? STUDIO_ACTIONS.filter((item) => item.name.startsWith(text.slice(1)))
     : [];
   const goal = /^\/goal(?:\s|$)/.test(text);
+  const selectedModel = options.model
+    ? (() => {
+        try {
+          const selected = JSON.parse(options.model) as { provider?: string; model?: string };
+          return catalog?.models.find(
+            (item) => item.provider === selected.provider && item.model === selected.model,
+          );
+        } catch {
+          return undefined;
+        }
+      })()
+    : undefined;
   const choose = (name: string) => {
     onText(`/${name} `);
     requestAnimationFrame(() =>
@@ -164,6 +176,9 @@ export function StudioComposer({
           Route demandée : {JSON.parse(options.model).model}. Le daemon signale
           une erreur si elle est indisponible. Le modèle réellement observé
           apparaît dans le contexte.
+          {selectedModel?.context_window_tokens
+            ? ` Fenêtre Ollama effective : ${selectedModel.context_window_tokens.toLocaleString("fr-FR")} tokens.`
+            : " Fenêtre de contexte fournie par la configuration du fournisseur."}
           </p>
         </details>
       ) : null}
