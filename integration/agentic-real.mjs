@@ -514,7 +514,15 @@ try {
     await writeFile(join(root,"GOAL-COMMAND.md"),"incorrect");
     const goal={...goalContract("GOAL-COMMAND.md"),criteria:{criteria:[{id:"command",kind:"command_ok",text:"Requested file matches committed content",argv:["git","diff","--exit-code","--","GOAL-COMMAND.md"]}]}};
     const id=await task("goal-command",[{text:"Il faut encore vérifier."},tool("read_file",{path:"workspace:/GOAL-COMMAND.md"}),tool("write_file",{path:"workspace:/GOAL-COMMAND.md",content:"expected",expected_version:createHash("sha256").update("incorrect").digest("hex")}),{text:"Contenu corrigé."}],"studio_scaffold",{studio_action:"goal",studio_goal:goal});
-    const row=await finished(id);const state=await api(`/api/tasks/${id}/goal`);assert.equal(row.status,"completed",JSON.stringify(row));assert.equal(state.cycles,3);return{id,goal:state};
+    const row=await finished(id);const state=await api(`/api/tasks/${id}/goal`);
+    assert.equal(row.status,"completed",JSON.stringify(row));
+    // One failed verification, then one successful verification after the
+    // actual repair. A source read is not a verification cycle.
+    assert.equal(state.cycles,2);
+    assert.equal(state.state,"completed");
+    assert.equal(await readFile(join(root,"GOAL-COMMAND.md"),"utf8"),"expected");
+    assert.equal(git(root,"diff","--exit-code","--","GOAL-COMMAND.md"),"");
+    return{id,goal:state};
   });
   await check("goal pause preserves state before explicit resume",async()=>{
     const id=await task("goal-pause",[{text:"Préparation suspendue.",delay:2000}],"studio_scaffold",{studio_action:"goal",studio_goal:goalContract("GOAL-PAUSED.md")});
@@ -576,10 +584,26 @@ try {
           join(buildRoot, "main.ts"),
           'const bad: number = "intentional TS2322"; document.body.textContent = String(bad);',
         );
-        const id = await task("build-truth", [
-          { text: "La modification demandée est terminée." },
-        ]);
-        const row = await finished(id);
+        // The HTTP root is the coordinator. Exercise build verification on
+        // the delegated implementation worker, where project scripts may run.
+        scripts.set("build-truth-worker", [{ text: "La modification demandée est terminée." }]);
+        const ticketResponse=await api(`/api/studio/projects/${project.id}/tickets`,"POST",{
+          title:"Vérifier le build TypeScript",description:"Contrôler les erreurs de compilation sans les masquer.",
+          assigned_agent:"studio_scaffold",review_agent:"studio_reviewer",
+          acceptance_criteria:[{id:"build",text:"Le build TypeScript réussit",kind:"command_ok",argv:["npm","run","build"]}],
+        },201);
+        const ticket=ticketResponse.ticket??ticketResponse;
+        const parent=await task("build-truth-parent",[
+          {text:"TOOL: delegate_to_agent studio_scaffold CASE:build-truth-worker Vérifie le build du projet et rapporte son résultat."},
+          {text:"Vérification du spécialiste reçue."},
+        ],"studio_project_manager",{studio_ticket_id:ticket.id});
+        const child=await waitUntil(async()=>{
+          const tasks=await api("/api/tasks");
+          return (tasks.tasks??tasks).find(task=>task.parent_task_id===parent&&task.assigned_agent==="studio_scaffold");
+        },"build verification worker");
+        const id=child.id??child.task_id;
+        const row=await finished(id);
+        assert.equal(row.assigned_agent,"studio_scaffold");
         assert.equal(row.status, "failed");
         assert.equal(row.outcome.termination_reason, "verification_failed");
         assert.equal(row.outcome.acceptance_verified, false);
