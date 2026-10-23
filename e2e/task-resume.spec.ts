@@ -271,7 +271,7 @@ test("local context preflight points to model selection without retrying the sam
   await page.getByRole("button", { name: "Envoyer", exact: true }).click();
 
   await page.locator(".chat-task-status > summary").click();
-  await expect(page.locator(".task-recovery-context")).toContainText("Aucun appel au modèle ni outil");
+  await expect(page.locator(".task-recovery-context")).toContainText("Des opérations peuvent avoir réussi lors des tours précédents");
   await page.getByRole("button", { name: "Choisir un modèle", exact: true }).first().click();
   const modelSelect = page.getByRole("combobox", { name: "Modèle de la tâche" });
   await expect(modelSelect).toBeFocused();

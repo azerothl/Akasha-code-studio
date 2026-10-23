@@ -52,7 +52,8 @@ describe("Code Studio context-window recovery copy", () => {
       "context_window_exceeded: context_window_preflight_rejected: estimated input exceeds the configured context",
     );
     expect(message).toContain("avant de contacter le modèle");
-    expect(message).toContain("Aucun appel au modèle ni outil n’a été exécuté");
+    expect(message).toContain("Des opérations peuvent avoir réussi lors des tours précédents");
+    expect(message).not.toContain("Aucun appel au modèle ni outil");
     expect(message).toContain("AKASHA_OLLAMA_NUM_CTX");
   });
 
@@ -61,5 +62,25 @@ describe("Code Studio context-window recovery copy", () => {
     expect(message).toContain("fournisseur du modèle a refusé");
     expect(message).toContain("fenêtre plus grande");
     expect(message).not.toContain("avant de contacter le modèle");
+  });
+});
+
+
+describe("bounded execution diagnostics", () => {
+  it("explains a loop without suggesting a service outage or an unchanged retry", () => {
+    const message=chatMessageForTerminalTask("failed",undefined,"studio_no_verified_progress: 24 rounds");
+    expect(message).toContain("sans vérification réussie");
+    expect(message).toContain("ne relancera pas automatiquement");
+    expect(message).not.toContain("service du modèle");
+  });
+  it("does not claim delivery when checks failed or became stale", () => {
+    const message=chatMessageForTerminalTask("failed",undefined,"studio_command_verification_failed: npm run build: stale");
+    expect(message).toContain("projet n’est pas validé");
+    expect(message).toContain("périmé");
+  });
+  it("explains the bounded stop and preserves user control over resumption", () => {
+    const message=chatMessageForTerminalTask("failed",undefined,"studio_round_budget_exhausted");
+    expect(message).toContain("relance automatique est arrêtée");
+    expect(message).toContain("reprise explicite");
   });
 });

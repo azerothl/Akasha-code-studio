@@ -104,9 +104,18 @@ export function chatMessageForTerminalTask(
           ? last
           : detail || null;
     if (body) {
+      if (body.includes("studio_no_verified_progress")) {
+        return "L’agent a été arrêté après des modifications répétées sans vérification réussie. Ses fichiers et son checkpoint sont conservés. Consultez le dernier diagnostic de build ou de test avant de reprendre ; le Kanban ne relancera pas automatiquement la même boucle.";
+      }
+      if (body.includes("studio_command_verification_failed")) {
+        return `Le build ou les tests restent en échec, ou leur résultat est périmé après des modifications. L’agent a épuisé ses tentatives de correction ; le projet n’est pas validé. Consultez les commandes et leurs diagnostics dans le détail de la tâche avant de reprendre.\n\n${body}`;
+      }
+      if (body.includes("studio_round_budget_exhausted")) {
+        return "Le budget de travail est atteint sans nouveau jalon vérifié pour autoriser une prolongation. Les changements sont conservés et la relance automatique est arrêtée. Consultez le Kanban et les vérifications avant une reprise explicite.";
+      }
       if (looksLikeContextWindowFailure(body) && !body.includes("studio_routes_exhausted")) {
         if (isLocalContextWindowPreflightFailure(body)) {
-          return "Code Studio a bloqué l’appel avant de contacter le modèle : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Aucun appel au modèle ni outil n’a été exécuté. Pour continuer, choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche indique l’estimation et le budget restants.";
+          return "Code Studio a bloqué l’appel avant de contacter le modèle : la demande, les règles, les outils et le contexte récent ne tenaient pas dans la fenêtre configurée. Cette tentative a été arrêtée avant l’appel au modèle. Des opérations peuvent avoir réussi lors des tours précédents : consultez le détail de la tâche. Pour continuer, choisissez un modèle avec une fenêtre plus grande ou augmentez le contexte Ollama (`model_options.<modèle>.num_ctx` / `AKASHA_OLLAMA_NUM_CTX`) si la mémoire disponible le permet. Le détail de la tâche indique l’estimation et le budget restants.";
         }
         return "Le fournisseur du modèle a refusé la requête parce que son contexte est trop volumineux. Vérifiez le détail de la tâche, puis choisissez un modèle à fenêtre plus grande, augmentez le contexte configuré si les ressources le permettent, ou réduisez le contexte facultatif avant de relancer.";
       }

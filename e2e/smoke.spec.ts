@@ -1472,7 +1472,7 @@ test("failed task recovery prepares a draft without replaying effects", async ({
   await expect(page.getByText(/Une nouvelle soumission crée une autre tâche/)).toBeVisible();
 });
 
-test("local context preflight explains that no request was sent and shows a workaround", async ({ page }) => {
+test("local context preflight explains the blocked attempt without denying earlier effects", async ({ page }) => {
   let sends = 0;
   await page.route("**/api/message", route => {
     sends++;
@@ -1493,7 +1493,7 @@ test("local context preflight explains that no request was sent and shows a work
 
   await expect(page.getByText("Contexte trop volumineux pour le modèle").first()).toBeVisible();
   await expect(page.getByText(/Code Studio a bloqué l’appel avant de contacter le modèle/)).toBeVisible();
-  await expect(page.getByText(/Aucun appel au modèle ni outil n’a été exécuté/).last()).toBeVisible();
+  await expect(page.getByText(/Des opérations peuvent avoir réussi lors des tours précédents/).last()).toBeVisible();
   await expect(page.locator(".chat-conversation-panel code").filter({ hasText: "AKASHA_OLLAMA_NUM_CTX" })).toBeVisible();
   await page.locator(".chat-task-status > summary").click();
   await expect(page.getByText(/bloqué l’appel localement avant de contacter le fournisseur/)).toBeVisible();

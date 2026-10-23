@@ -311,3 +311,13 @@ Une PR qui livre une phase **doit** mettre à jour ce fichier (cases cochées, n
 
 - Daemon : `crates/akasha-daemon/src/api_studio.rs`, `studio.rs`, `api.rs` (`POST /api/message`, `run_message_via_llm`).
 - Guide utilisateur : section *Code Studio* dans `spec/user_guide.md` (dépôt Akasha).
+
+
+### Contexte, progression et vérifications fraîches
+
+- `list_tools` sans argument renvoie un index de noms, sans les schémas. La découverte ciblée d'un nom autorisé n'ajoute que ce seul outil au catalogue natif ; les découvertes ne s'accumulent pas. Un schéma individuel dépassant 16 Kio est refusé avec un diagnostic de budget. Les permissions restent vérifiées à chaque invocation.
+- Les commandes npm du projet vérifient le dossier, le manifeste et le script demandé avant de lancer un processus. Un manifeste absent produit `npm_manifest_missing`, `process_started: false` et une instruction de correction pour l'agent. Le moteur ne génère aucun fichier applicatif à sa place.
+- Après modification réelle de fichiers, les anciens résultats de build/tests deviennent périmés. Une nouvelle réussite de la même commande les remplace comme état courant, avec le nombre de tentatives ; le journal des opérations conserve les échecs antérieurs. Une réponse finale prématurée reçoit au plus deux demandes automatiques de réparation/vérification, puis échoue explicitement.
+- Sans nouvelle vérification réussie après les modifications, le moteur rappelle le jalon après 12 tours et arrête la boucle après 24 tours. Une prolongation du budget exige un jalon vérifié récent sur une nouvelle révision ; répéter un build inchangé ne suffit pas. Le plafond reste de 96 tours. Les blocages `studio_no_verified_progress`, `studio_command_verification_failed` et `studio_round_budget_exhausted` ne déclenchent pas de redépart automatique inchangé du ticket.
+
+Ces contrôles concernent la progression et les vérifications techniques reconnues. Ils ne prouvent pas à eux seuls la conformité visuelle ou fonctionnelle de l'application générée. Une recette avec vrai LLM reste nécessaire.
