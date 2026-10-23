@@ -46,7 +46,7 @@ The UI sends requests to `/api/*` and the daemon performs file, git, task, previ
 Before using Code Studio:
 
 - Akasha daemon must be running and reachable.
-- Node.js 18+ is recommended for frontend development workflows.
+- Node.js 22.12+, 24.x, or 26+ is required by the published package and recommended for frontend development workflows.
 - Git should be installed if you use evolutions and merges.
 - For project preview/build commands, required toolchains must exist on your machine.
 
